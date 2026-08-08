@@ -215,24 +215,74 @@ def main():
         A = frames[part][0]
         conf[part] = (Qp, sp, a, A)
 
-    # ---- vertex assignment: dominant skin weight -> mario part
-    joint_names = names
+    # ---- vertex assignment: accumulate skin weight per mario part.
+    # vpart = dominant part; vweights = {part: weight} per vertex, used to
+    # widen the seam-overlap band (N64 models overlap flesh at joints).
     vpart = []
+    vweights = []
     for ji, wt in zip(jix, wts):
-        best, bw = None, -1.0
+        acc = {}
         for k in range(4):
-            if wt[k] > bw:
-                bw = wt[k]
-                best = joint_names[ji[k]]
-        vpart.append(bone_map.get(best, (6, 11))[0])
+            if wt[k] <= 0.0:
+                continue
+            part = bone_map.get(names[ji[k]], (6, 11))[0]
+            acc[part] = acc.get(part, 0.0) + wt[k]
+        if not acc:
+            acc = {6: 1.0}
+        vweights.append(acc)
+        vpart.append(max(acc, key=acc.get))
 
-    # ---- transform vertices into world (per their part's conform)
-    world = []
-    for i, v in enumerate(pos):
-        Q, s, a, A = conf[vpart[i]]
+    # ---- per-MESHY-BONE maps for LBS authoring. Each meshy bone uses its
+    # mario part's rotation+scale but is translation-anchored so the
+    # bone's own node lands exactly on the mario joint it corresponds to
+    # (shoulders -> 7/13, neck -> 11, head -> 12, chain bones -> chain
+    # joints). Adjacent maps then AGREE at every pivot, so blending only
+    # interpolates small local rotation differences — no baked beams,
+    # blobs, or branch-point flaps. Bones with no mario counterpart
+    # (Spine*, head_end, ToeBase...) inherit their part's map unchanged.
+    def mario_o(j):
+        return frames[j][0]
+
+    bone_target = {
+        "Hips": mario_o(6),
+        "neck": mario_o(11), "Head": mario_o(12),
+        posx + "Shoulder": mario_o(7), negx + "Shoulder": mario_o(13),
+        posx + "Arm": mario_o(8), posx + "ForeArm": mario_o(9), posx + "Hand": mario_o(10),
+        negx + "Arm": mario_o(14), negx + "ForeArm": mario_o(15), negx + "Hand": mario_o(16),
+        posx + "UpLeg": mario_o(19), posx + "Leg": mario_o(20), posx + "Foot": mario_o(21),
+        negx + "UpLeg": mario_o(24), negx + "Leg": mario_o(25), negx + "Foot": mario_o(26),
+    }
+
+    def bone_apply(bname, v):
+        part = bone_map.get(bname, (6, 11))[0]
+        Q, s, a, A = conf[part]
+        tgt = bone_target.get(bname)
+        if tgt is not None:
+            a = jpos[name_idx[bname]]
+            A = tgt
         d = [v[k]-a[k] for k in range(3)]
         d = mat_apply(Q, d)
-        world.append([d[k]*s + A[k] for k in range(3)])
+        return [d[k]*s + A[k] for k in range(3)]
+
+    # ---- authored world position = linear-blend skinning over the
+    # per-bone maps with the real skin weights. At spawn the mesh is an
+    # exact smooth skinned pose: gapless, no baked stretch, and every
+    # duplicated copy of a boundary triangle is IDENTICAL at rest (tears
+    # only open as joints deviate from spawn, and the overlap copies mask
+    # them from both sides — the vanilla N64 approach).
+    world = []
+    for i, v in enumerate(pos):
+        ji, wt = jix[i], wts[i]
+        tot = sum(max(w, 0.0) for w in wt) or 1.0
+        acc = [0.0, 0.0, 0.0]
+        for k in range(4):
+            if wt[k] <= 0.0:
+                continue
+            bw = bone_apply(names[ji[k]], v)
+            for c in range(3):
+                acc[c] += bw[c] * wt[k] / tot
+        world.append(acc)
+
 
     def vcolor(i):
         if img is None:
@@ -241,10 +291,19 @@ def main():
         u = min(0.999, max(0.0, u)); vv = min(0.999, max(0.0, vv))
         return img.getpixel((int(u*img.width), int(vv*img.height)))
 
-    # ---- overlap duplication + island filter (same as v8)
+    # ---- overlap duplication + island filter. A triangle goes into every
+    # part that is dominant for one of its verts, PLUS every part where
+    # some vert carries >= OVERLAP_W skin weight — a wide overlap band at
+    # joints (hips, shoulders); copies are identical at rest (LBS above).
+    OVERLAP_W = 0.3
     parts = {}
     for t in tris:
-        for j in {vpart[i] for i in t}:
+        owners = {vpart[i] for i in t}
+        for i in t:
+            for part, w in vweights[i].items():
+                if w >= OVERLAP_W:
+                    owners.add(part)
+        for j in owners:
             parts.setdefault(j, []).append(t)
 
     def largest_components(rtris, min_tris=8):
