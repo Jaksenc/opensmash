@@ -141,7 +141,10 @@ def classify(v, bb):
     ELBOW_X = 0.55   # fraction of arm span
     HAND_X = 0.80
 
-    if abs(xr) > ARM_X and h > SH - 0.12:
+    # Arms occupy a bounded horizontal band at shoulder height in a T-pose.
+    # The upper bound matters: wide geometry ABOVE the band (bicorne tips,
+    # hair, pauldrons) belongs to the head/torso, not the arms.
+    if abs(xr) > ARM_X and SH - 0.12 < h < SH + 0.10:
         side = "r" if xr > 0 else "l"
         a = abs(xr)
         if a > HAND_X:
@@ -189,6 +192,57 @@ REGION_AXIS = {
 }
 
 
+
+
+# Bone segments for nearest-bone assignment: part joint -> (endpoint joint or
+# stub direction). Distal parts get a stub along their local axis.
+PART_BONES = {
+    6: 11,        # chest -> neck
+    12: None,     # head: upward stub
+    8: 9, 9: 10, 10: None,      # right arm chain; hand stub
+    14: 15, 15: 16, 16: None,   # left arm chain
+    19: 20, 20: 22, 24: 25, 25: 27,  # legs (shin -> foot joint)
+}
+STUB = {12: (0, 34, 0)}  # head stub upward; hands extend along forearm dir
+
+
+def seg_dist(p, a, b):
+    ab = [b[i] - a[i] for i in range(3)]
+    ap = [p[i] - a[i] for i in range(3)]
+    denom = sum(x * x for x in ab) or 1e-9
+    t = max(0.0, min(1.0, sum(ap[i] * ab[i] for i in range(3)) / denom))
+    q = [a[i] + t * ab[i] for i in range(3)]
+    return sum((p[i] - q[i]) ** 2 for i in range(3)) ** 0.5
+
+
+def nearest_bone_assign(world_pts, jworld):
+    """Assign each world-space vertex to the nearest part bone segment.
+    Returns a list of part-joint ids."""
+    segs = []
+    for j, child in PART_BONES.items():
+        a = jworld(j)
+        if child is not None:
+            b = jworld(child)
+        elif j in STUB:
+            b = [a[i] + STUB[j][i] for i in range(3)]
+        else:
+            # hand stubs: extend along forearm->hand direction
+            fore = 9 if j == 10 else 15
+            fa, fb = jworld(fore), a
+            d = normalize([fb[i] - fa[i] for i in range(3)])
+            b = [a[i] + 14 * d[i] for i in range(3)]
+        segs.append((j, a, b))
+    out = []
+    for p in world_pts:
+        best, bestd = None, 1e18
+        for j, a, b in segs:
+            d = seg_dist(p, a, b)
+            if d < bestd:
+                best, bestd = j, d
+        out.append(best)
+    return out
+
+
 def bone_vec_for_joint(joints, j):
     """Game bone vector for joint j = local translate of its first child
     with geometry (falls back to a downward stub)."""
@@ -229,6 +283,9 @@ def mat_apply(m, v):
 def main():
     glb_path, skel_path, out_path = sys.argv[1], sys.argv[2], sys.argv[3]
     frames_path = sys.argv[4] if len(sys.argv) > 4 else None
+    scale_mul = 1.0
+    if "--scale" in sys.argv:
+        scale_mul = float(sys.argv[sys.argv.index("--scale") + 1])
     pos, uv, tris, img = load_mesh(glb_path)
     joints = load_skeleton(skel_path) if not frames_path else None
     frames = load_frames(frames_path) if frames_path else None
@@ -246,7 +303,7 @@ def main():
     ground = min(jys) - 8.0
     head_y = max(jys)
     skel_height = (head_y - ground) * 1.22
-    S = skel_height / (bb["ymax"] - bb["ymin"])
+    S = scale_mul * skel_height / (bb["ymax"] - bb["ymin"])
     root_x = jworld(0)[0] if 0 in all_j else 0.0
 
     def to_world(v):
@@ -274,18 +331,54 @@ def main():
         u = min(0.999, max(0.0, u)); v = min(0.999, max(0.0, v))
         return img.getpixel((int(u * img.width), int(v * img.height)))
 
+    # Final assignment: nearest-bone in posed world space — robust across
+    # morphologies (hats -> head bone, coat tails -> nearest of chest/thigh)
+    # with no per-character thresholds. The band classifier above is used
+    # ONLY to pick arm vertices for pre-posing.
+    world_pts = [to_world(p) for p in posed]
+    vjoint = nearest_bone_assign(world_pts, jworld)
+
+    # Overlap duplication: a triangle is emitted into EVERY part that owns
+    # at least one of its vertices — overlapping flesh at joints (the
+    # authentic N64 approach) instead of gaps or spikes.
     parts = {}
     for t in tris:
-        regs = [vreg[i] for i in t]
-        # strict assignment: seam-crossing tris become gaps (authentic N64
-        # joint separation) instead of stretching into spikes when the two
-        # joint frames diverge under animation.
-        if regs[0] == regs[1] == regs[2] and regs[0] in REGION_TO_JOINT:
-            parts.setdefault(regs[0], []).append(t)
+        for j in {vjoint[i] for i in t}:
+            parts.setdefault(j, []).append(t)
+
+    # Robustness: drop tiny disconnected islands per part (misclassified
+    # fragments read as floating specks riding the wrong joint).
+    def largest_components(rtris, min_tris=8):
+        parent = {}
+        def find(a):
+            while parent[a] != a:
+                parent[a] = parent[parent[a]]
+                a = parent[a]
+            return a
+        def union(a, b):
+            ra, rb = find(a), find(b)
+            if ra != rb:
+                parent[ra] = rb
+        for t in rtris:
+            for i in t:
+                parent.setdefault(i, i)
+            union(t[0], t[1]); union(t[0], t[2])
+        comps = {}
+        for t in rtris:
+            comps.setdefault(find(t[0]), []).append(t)
+        if not comps:
+            return []
+        biggest = max(len(v) for v in comps.values())
+        keep = []
+        for v in comps.values():
+            if len(v) >= min_tris or len(v) == biggest:
+                keep.extend(v)
+        return keep
+    parts = {reg: largest_components(rtris) for reg, rtris in parts.items()}
 
     out_parts = []
-    for reg, rtris in sorted(parts.items()):
-        joint = REGION_TO_JOINT[reg]
+    for joint, rtris in sorted(parts.items()):
+        reg = str(joint)
         o = jworld(joint)
         Rinv = inv3(frames[joint][1]) if frames else None
         used = sorted({i for t in rtris for i in t})
