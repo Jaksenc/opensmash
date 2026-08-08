@@ -201,75 +201,77 @@ def main():
     xs = [p[0] for p in pos]; ys = [p[1] for p in pos]
     bb = {"xmax": max(abs(min(xs)), abs(max(xs))), "ymin": min(ys), "ymax": max(ys)}
 
-    # classify vertices -> regions
+    # classify in T-pose space BEFORE any re-posing
     vreg = [classify(p, bb) for p in pos]
 
-    # sample vertex colors
+    # ---- global mapping: mesh space -> skeleton world space ----
+    # Skeleton height: ground (below lowest joint) to head-top allowance.
+    jys = [j["world"][1] for j in joints.values()]
+    ground = min(jys) - 8.0
+    head_y = max(jys)
+    skel_height = (head_y - ground) * 1.22   # head joint is not the crown
+    S = skel_height / (bb["ymax"] - bb["ymin"])
+    root_x = joints[0]["world"][0] if 0 in joints else 0.0
+
+    def to_world(v):
+        return [root_x + v[0] * S, ground + (v[1] - bb["ymin"]) * S, v[2] * S]
+
+    # ---- pre-pose arms: rotate T-pose arm verts about the shoulder so the
+    # arm axis matches the dumped skeleton's shoulder->hand direction ----
+    posed = [list(p) for p in pos]
+    for side, sh_j, hand_j, sign in (("r", 8, 10, 1), ("l", 14, 16, -1)):
+        if sh_j not in joints or hand_j not in joints:
+            continue
+        sh_w, hd_w = joints[sh_j]["world"], joints[hand_j]["world"]
+        target = normalize([hd_w[i] - sh_w[i] for i in range(3)])
+        # target is in world; mesh axes == world axes under to_world (pure scale)
+        R = rot_between((sign, 0, 0), target)
+        # shoulder pivot in mesh space: inverse-map the shoulder joint world pos
+        pivot = [(sh_w[0] - root_x) / S, (sh_w[1] - ground) / S + bb["ymin"], sh_w[2] / S]
+        arm_regions = {side + "upperarm", side + "forearm", side + "hand"}
+        for i, r in enumerate(vreg):
+            if r in arm_regions:
+                d = [posed[i][k] - pivot[k] for k in range(3)]
+                d = mat_apply(R, d)
+                posed[i] = [pivot[k] + d[k] for k in range(3)]
+
+    # ---- colors ----
     def vcolor(i):
         if img is None:
             return (200, 200, 200)
         u, v = uv[i]
-        x = min(img.width - 1, max(0, int(u * img.width)))
-        y = min(img.height - 1, max(0, int(v * img.height)))
-        return img.getpixel((x, y))
+        u = min(0.999, max(0.0, u)); v = min(0.999, max(0.0, v))
+        return img.getpixel((int(u * img.width), int(v * img.height)))
 
-    # assign triangles to the majority region of their vertices
+    # ---- assign tris to parts, emit joint-local (translation only) ----
     parts = {}
     for t in tris:
         regs = [vreg[i] for i in t]
         reg = max(set(regs), key=regs.count)
-        if reg not in REGION_TO_JOINT:
-            continue
-        parts.setdefault(reg, []).append(t)
+        if reg in REGION_TO_JOINT:
+            parts.setdefault(reg, []).append(t)
 
-    # per-region: gather verts, build local frame, align to game bone
     out_parts = []
     for reg, rtris in sorted(parts.items()):
         joint = REGION_TO_JOINT[reg]
+        jw = joints[joint]["world"]
         used = sorted({i for t in rtris for i in t})
         remap = {gi: li for li, gi in enumerate(used)}
-
-        pts = [list(pos[i]) for i in used]
-        # proximal anchor: the end of the part nearest the torso along the axis
-        axis = REGION_AXIS[reg]
-        dots = [sum(p[i] * axis[i] for i in range(3)) for p in pts]
-        dmin, dmax = min(dots), max(dots)
-        length_mesh = (dmax - dmin) or 1.0
-        # anchor plane at proximal end; centroid in the other two axes
-        prox = [p for p, d in zip(pts, dots) if d < dmin + 0.15 * length_mesh]
-        anchor = [sum(p[i] for p in prox) / len(prox) for i in range(3)]
-        # keep anchor on the axis line through region centroid
-        pts = [[p[i] - anchor[i] for i in range(3)] for p in pts]
-
-        bone = bone_vec_for_joint(joints, joint)
-        blen = math.sqrt(sum(c * c for c in bone))
-        if reg in ("head", "chest"):  # non-chained parts: scale by height heuristic
-            blen = max(blen, 40.0)
-        scale = blen / length_mesh if length_mesh else 1.0
-        # game fighters are much larger than the ~2-unit GLB; hands/head keep
-        # their proportional scale from their own bone lengths
-        R = rot_between(axis, normalize(bone) if blen > 1e-3 else [0, -1, 0])
-
         overts = []
-        for li, gi in enumerate(used):
-            p = [c * scale for c in pts[li]]
-            p = mat_apply(R, p)
+        for gi in used:
+            w = to_world(posed[gi])
             r, g, b = vcolor(gi)[:3]
-            overts.append([round(p[0], 2), round(p[1], 2), round(p[2], 2), r, g, b])
-
+            overts.append([round(w[0] - jw[0], 2), round(w[1] - jw[1], 2),
+                           round(w[2] - jw[2], 2), r, g, b])
         out_parts.append({
-            "joint": joint,
-            "region": reg,
-            "verts": overts,
+            "joint": joint, "region": reg, "verts": overts,
             "tris": [[remap[a], remap[b], remap[c]] for a, b, c in rtris],
         })
 
     json.dump({"parts": out_parts}, open(out_path, "w"))
     total_v = sum(len(p["verts"]) for p in out_parts)
     total_t = sum(len(p["tris"]) for p in out_parts)
-    print(f"bundle: {len(out_parts)} parts, {total_v} verts, {total_t} tris -> {out_path}")
-    for p in out_parts:
-        print(f"  {p['region']:<10} joint={p['joint']:<3} v={len(p['verts']):<6} t={len(p['tris'])}")
+    print(f"bundle v3: {len(out_parts)} parts, {total_v} verts, {total_t} tris, scale={S:.1f} -> {out_path}")
 
 
 def write_binary(bundle_json_path, out_path):
