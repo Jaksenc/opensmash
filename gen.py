@@ -95,6 +95,31 @@ def cmd_download(args):
     print(json.dumps({"saved": args.out, "bytes": os.path.getsize(args.out)}))
 
 
+def cmd_rig(args):
+    with open(args.glb, "rb") as f:
+        data_uri = ("data:model/gltf-binary;base64,"
+                    + base64.b64encode(f.read()).decode())
+    body = {"model_url": data_uri, "height_meters": args.height}
+    out = http(f"{MESHY}/v1/rigging", "POST", MESHY_HDR, body, timeout=300)
+    print(json.dumps(out))
+
+
+def cmd_rigstatus(args):
+    out = http(f"{MESHY}/v1/rigging/{args.task_id}", "GET", MESHY_HDR)
+    print(json.dumps({k: out.get(k) for k in
+                      ("id", "status", "progress", "task_error", "result")}))
+
+
+def cmd_rigdownload(args):
+    out = http(f"{MESHY}/v1/rigging/{args.task_id}", "GET", MESHY_HDR)
+    url = (out.get("result") or {}).get("rigged_character_glb_url")
+    if not url:
+        print(json.dumps({"error": "no rigged glb url", "status": out.get("status")}))
+        sys.exit(1)
+    urllib.request.urlretrieve(url, args.out)
+    print(json.dumps({"saved": args.out, "bytes": os.path.getsize(args.out)}))
+
+
 def cmd_image(args):
     if args.api == "openai":
         out = http("https://api.openai.com/v1/images/generations", "POST",
@@ -130,6 +155,9 @@ def main():
     s = sub.add_parser("status"); s.add_argument("task_id"); s.add_argument("--kind", default="text"); s.set_defaults(fn=cmd_status)
     d = sub.add_parser("download"); d.add_argument("task_id"); d.add_argument("out"); d.add_argument("--kind", default="text"); d.set_defaults(fn=cmd_download)
     m = sub.add_parser("image"); m.add_argument("prompt"); m.add_argument("out"); m.add_argument("--api", default="openai"); m.add_argument("--model", default="gpt-image-2"); m.set_defaults(fn=cmd_image)
+    r = sub.add_parser("rig"); r.add_argument("glb"); r.add_argument("--height", type=float, default=1.7); r.set_defaults(fn=cmd_rig)
+    rs = sub.add_parser("rigstatus"); rs.add_argument("task_id"); rs.set_defaults(fn=cmd_rigstatus)
+    rd = sub.add_parser("rigdownload"); rd.add_argument("task_id"); rd.add_argument("out"); rd.set_defaults(fn=cmd_rigdownload)
 
     args = p.parse_args()
     args.fn(args)

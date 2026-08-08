@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>OpenSmash bundle viewer</title>
+<style>
+  body { background:#14141c; color:#cfcfe0; font:13px -apple-system,Helvetica,sans-serif;
+         margin:0; padding:12px; }
+  #panels { display:flex; gap:12px; }
+  canvas { background:#1d1d28; border:1px solid #333; }
+  .label { text-align:center; margin:4px 0; color:#9a9ab8; }
+  #controls { margin:10px 0; display:flex; gap:14px; align-items:center; flex-wrap:wrap; }
+  #controls label { user-select:none; }
+  input[type=range] { vertical-align:middle; }
+  #frameNo { font-weight:bold; color:#fff; min-width:130px; display:inline-block; }
+  button { background:#2a2a3a; color:#cfcfe0; border:1px solid #444; padding:3px 10px;
+           border-radius:4px; cursor:pointer; }
+  #seamStats { color:#e8b04a; }
+</style>
+</head>
+<body>
+<div id="controls">
+  <button id="playBtn">▶ play</button>
+  <span id="frameNo"></span>
+  <input type="range" id="frame" min="0" max="0" value="0" style="width:340px">
+  <label>yaw <input type="range" id="yaw" min="-180" max="180" value="0" style="width:120px"></label>
+  <label>zoom <input type="range" id="zoom" min="30" max="300" value="100" style="width:90px"></label>
+  <label><input type="checkbox" id="mesh" checked> mesh</label>
+  <label><input type="checkbox" id="wire"> wireframe</label>
+  <label><input type="checkbox" id="skel" checked> skeleton</label>
+  <label><input type="checkbox" id="seams"> seam divergence</label>
+  <span id="seamStats"></span>
+</div>
+<div id="panels">
+  <div><div class="label">P1 — injected bundle</div><canvas id="c0" width="560" height="660"></canvas></div>
+  <div><div class="label">P2 — vanilla Mario (skeleton reference)</div><canvas id="c1" width="560" height="660"></canvas></div>
+</div>
+<div style="margin-top:8px;color:#77778f">←/→ step 1 frame · shift+←/→ step 10 · space play/pause</div>
+<script>
+"use strict";
+let DATA=null, BUNDLE=null, dupGroups=[], triDup=null;
+
+const BUNDLE_URL=new URLSearchParams(location.search).get("bundle")||"napoleon-bundle-v9.json";
+Promise.all([fetch("frames.json").then(r=>r.json()),
+             fetch(BUNDLE_URL).then(r=>r.json())])
+.then(([d,b])=>{ DATA=d; BUNDLE=b; init(); });
+
+const $=id=>document.getElementById(id);
+
+function xf(v,fr){ // joint-local -> world (row-vector: v·R + o)
+  const R=fr.R,o=fr.o;
+  return [v[0]*R[0][0]+v[1]*R[1][0]+v[2]*R[2][0]+o[0],
+          v[0]*R[0][1]+v[1]*R[1][1]+v[2]*R[2][1]+o[1],
+          v[0]*R[0][2]+v[1]*R[1][2]+v[2]*R[2][2]+o[2]];
+}
+
+function poseVerts(playerFrame){
+  // -> per part: array of world [x,y,z] (null if joint missing this frame)
+  return BUNDLE.parts.map(part=>{
+    const fr=playerFrame.joints[part.joint];
+    if(!fr) return null;
+    return part.verts.map(v=>xf(v,fr));
+  });
+}
+
+function findDuplicates(){
+  // tris duplicated across parts (overlap seams): match by quantized
+  // frame-0 world centroid+vertex positions
+  const f0=DATA.frames[0].players[0]; if(!f0) return;
+  const posed=poseVerts(f0);
+  const map=new Map();
+  triDup=BUNDLE.parts.map(p=>p.tris.map(()=>-1));
+  BUNDLE.parts.forEach((part,pi)=>{
+    const w=posed[pi]; if(!w) return;
+    part.tris.forEach((t,ti)=>{
+      const key=t.map(i=>w[i].map(c=>Math.round(c*4)).join(","))
+                 .sort().join("|");
+      if(!map.has(key)) map.set(key,[]);
+      map.get(key).push([pi,ti]);
+    });
+  });
+  dupGroups=[...map.values()].filter(g=>g.length>1);
+  dupGroups.forEach((g,gi)=>g.forEach(([pi,ti])=>{triDup[pi][ti]=gi;}));
+}
+
+function divergence(posed){
+  // per dup group: max distance between matching verts of the copies
+  return dupGroups.map(g=>{
+    let worst=0;
+    const [p0,t0]=g[0], w0=posed[p0];
+    if(!w0) return 0;
+    const tri0=BUNDLE.parts[p0].tris[t0].map(i=>w0[i]);
+    for(let k=1;k<g.length;k++){
+      const [pk,tk]=g[k], wk=posed[pk];
+      if(!wk) continue;
+      const trik=BUNDLE.parts[pk].tris[tk].map(i=>wk[i]);
+      // match verts by nearest (copies may reorder)
+      for(const a of tri0){
+        let best=1e9;
+        for(const b of trik){
+          const d=Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2]);
+          if(d<best)best=d;
+        }
+        if(best>worst)worst=best;
+      }
+    }
+    return worst;
+  });
+}
+
+function project(w,yaw,cx,cy,cz,scale,W,H){
+  const c=Math.cos(yaw),s=Math.sin(yaw);
+  const x=(w[0]-cx)*c+(w[2]-cz)*s;
+  const z=-(w[0]-cx)*s+(w[2]-cz)*c;
+  const y=w[1]-cy;
+  return [W/2+x*scale, H*0.82-y*scale, z];
+}
+
+function drawPanel(ctx,playerFrame,drawMesh,W,H){
+  ctx.clearRect(0,0,W,H);
+  if(!playerFrame){ctx.fillText("no data",20,20);return;}
+  const yaw=$("yaw").value*Math.PI/180;
+  const scale=$("zoom").value/100*0.9;
+  const root=playerFrame.joints[0]||playerFrame.joints[1];
+  if(!root){ctx.fillText("no root",20,20);return;}
+  const cx=root.o[0],cz=root.o[2];
+  const cy=root.o[1];
+
+  const showSeams=$("seams").checked, wire=$("wire").checked;
+  let divs=null;
+  if(drawMesh&&($("mesh").checked)){
+    const posed=poseVerts(playerFrame);
+    if(showSeams) divs=divergence(posed);
+    const tris=[];
+    BUNDLE.parts.forEach((part,pi)=>{
+      const w=posed[pi]; if(!w) return;
+      const scr=w.map(p=>project(p,yaw,cx,cy,cz,scale,W,H));
+      part.tris.forEach((t,ti)=>{
+        const a=scr[t[0]],b=scr[t[1]],c=scr[t[2]];
+        const ux=b[0]-a[0],uy=b[1]-a[1],wx=c[0]-a[0],wy=c[1]-a[1];
+        const nz=ux*wy-uy*wx; // screen-space normal (y down): backface + shade
+        let col;
+        const gi=triDup?triDup[pi][ti]:-1;
+        if(showSeams&&gi>=0){
+          const d=divs[gi];
+          const r=Math.min(1,d/8); // 8 world units = full red
+          col=`rgb(${Math.round(80+175*r)},${Math.round(200-160*r)},60)`;
+        } else {
+          const shade=0.55+0.45*Math.max(0,-nz/(Math.hypot(ux,uy)*Math.hypot(wx,wy)+1e-6));
+          const vr=(part.verts[t[0]][3]+part.verts[t[1]][3]+part.verts[t[2]][3])/3;
+          const vg=(part.verts[t[0]][4]+part.verts[t[1]][4]+part.verts[t[2]][4])/3;
+          const vb=(part.verts[t[0]][5]+part.verts[t[1]][5]+part.verts[t[2]][5])/3;
+          col=`rgb(${Math.round(vr*shade)},${Math.round(vg*shade)},${Math.round(vb*shade)})`;
+        }
+        tris.push([(a[2]+b[2]+c[2])/3,a,b,c,col]);
+      });
+    });
+    tris.sort((p,q)=>p[0]-q[0]);
+    for(const [,a,b,c,col] of tris){
+      ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.lineTo(c[0],c[1]);
+      ctx.closePath();
+      if(wire){ctx.strokeStyle=col;ctx.lineWidth=0.6;ctx.stroke();}
+      else{ctx.fillStyle=col;ctx.fill();}
+    }
+    if(showSeams&&divs){
+      const worst=Math.max(0,...divs);
+      $("seamStats").textContent=
+        ` ${dupGroups.length} dup tris, worst divergence ${worst.toFixed(1)}u`;
+    }
+  }
+  if($("skel").checked){
+    ctx.lineWidth=1.5;
+    for(const j in playerFrame.joints){
+      const pj=DATA.parents[j];
+      const fr=playerFrame.joints[j];
+      const p=project(fr.o,yaw,cx,cy,cz,scale,W,H);
+      if(pj>=0&&playerFrame.joints[pj]){
+        const q=project(playerFrame.joints[pj].o,yaw,cx,cy,cz,scale,W,H);
+        ctx.strokeStyle="rgba(120,200,255,0.85)";
+        ctx.beginPath();ctx.moveTo(p[0],p[1]);ctx.lineTo(q[0],q[1]);ctx.stroke();
+      }
+      ctx.fillStyle="#ffd24a";
+      ctx.fillRect(p[0]-1.5,p[1]-1.5,3,3);
+      ctx.fillStyle="rgba(255,210,74,0.7)";
+      ctx.font="9px sans-serif";
+      ctx.fillText(j,p[0]+3,p[1]-2);
+    }
+  }
+}
+
+let playing=false,timer=null;
+function render(){
+  const fi=+$("frame").value;
+  const f=DATA.frames[fi];
+  const p0=f.players[0],p1=f.players[1];
+  $("frameNo").textContent=`frame ${f.t}  st=${p0?p0.st:"-"} / ${p1?p1.st:"-"}`;
+  drawPanel($("c0").getContext("2d"),p0,true,560,660);
+  drawPanel($("c1").getContext("2d"),p1,false,560,660);
+}
+
+function init(){
+  $("frame").max=DATA.frames.length-1;
+  findDuplicates();
+  for(const id of["frame","yaw","zoom","mesh","wire","skel","seams"])
+    $(id).addEventListener("input",render);
+  $("playBtn").onclick=()=>{
+    playing=!playing;
+    $("playBtn").textContent=playing?"⏸ pause":"▶ play";
+    if(playing) timer=setInterval(()=>{
+      $("frame").value=(+$("frame").value+1)%DATA.frames.length; render();
+    },50);
+    else clearInterval(timer);
+  };
+  document.addEventListener("keydown",e=>{
+    if(e.key===" "){e.preventDefault();$("playBtn").click();}
+    const step=e.shiftKey?10:1;
+    if(e.key==="ArrowRight"){$("frame").value=Math.min(+$("frame").max,+$("frame").value+step);render();}
+    if(e.key==="ArrowLeft"){$("frame").value=Math.max(0,+$("frame").value-step);render();}
+  });
+  render();
+}
+</script>
+</body>
+</html>
