@@ -15,12 +15,22 @@ from PIL import Image, ImageDraw
 
 
 def load_skeleton(path):
+    """Prefers SKELDUMP2 full frames; falls back to SKELDUMP positions.
+    Returns {joint: (o, R|None)}."""
     joints = {}
-    pat = re.compile(r"SKELDUMP: joint=(\d+) parent=(-?\d+) world=\(([^)]+)\)")
+    pat2 = re.compile(r"SKELDUMP2: joint=(\d+) o=\(([^)]+)\) x=\(([^)]+)\) y=\(([^)]+)\) z=\(([^)]+)\)")
+    pat1 = re.compile(r"SKELDUMP: joint=(\d+) parent=(-?\d+) world=\(([^)]+)\)")
     for line in open(path):
-        m = pat.search(line)
+        m = pat2.search(line)
         if m:
-            joints[int(m.group(1))] = [float(x) for x in m.group(3).split(",")]
+            j = int(m.group(1))
+            o = [float(v) for v in m.group(2).split(",")]
+            R = [[float(v) for v in m.group(k).split(",")] for k in (3, 4, 5)]
+            joints[j] = (o, R)
+            continue
+        m = pat1.search(line)
+        if m and int(m.group(1)) not in joints:
+            joints[int(m.group(1))] = ([float(x) for x in m.group(3).split(",")], None)
     return joints
 
 
@@ -31,11 +41,17 @@ def main():
 
     tris = []  # (depth, screen_pts, color)
     for part in bundle["parts"]:
-        jw = joints.get(part["joint"])
-        if jw is None:
+        fr = joints.get(part["joint"])
+        if fr is None:
             continue
-        verts = [(v[0] + jw[0], v[1] + jw[1], v[2] + jw[2], v[3], v[4], v[5])
-                 for v in part["verts"]]
+        jw, R = fr
+        def xf(v):
+            if R is None:
+                return (v[0] + jw[0], v[1] + jw[1], v[2] + jw[2])
+            return (v[0]*R[0][0] + v[1]*R[1][0] + v[2]*R[2][0] + jw[0],
+                    v[0]*R[0][1] + v[1]*R[1][1] + v[2]*R[2][1] + jw[1],
+                    v[0]*R[0][2] + v[1]*R[1][2] + v[2]*R[2][2] + jw[2])
+        verts = [xf(v) + (v[3], v[4], v[5]) for v in part["verts"]]
         for a, b, c in part["tris"]:
             va, vb, vc = verts[a], verts[b], verts[c]
             # normal z for a cheap headlight

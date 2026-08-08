@@ -91,6 +91,39 @@ def load_skeleton(path):
     return joints
 
 
+
+
+def load_frames(path):
+    """SKELDUMP2 lines -> {joint: (o, R)} with R rows = world basis vectors
+    (row-vector convention: world = local . R + o)."""
+    frames = {}
+    pat = re.compile(r"SKELDUMP2: joint=(\d+) o=\(([^)]+)\) x=\(([^)]+)\) y=\(([^)]+)\) z=\(([^)]+)\)")
+    for line in open(path):
+        m = pat.search(line)
+        if m:
+            j = int(m.group(1))
+            o = [float(v) for v in m.group(2).split(",")]
+            R = [[float(v) for v in m.group(k).split(",")] for k in (3, 4, 5)]
+            frames[j] = (o, R)
+    return frames
+
+
+def inv3(m):
+    a, b, c = m[0]; d, e, f = m[1]; g, h, i = m[2]
+    A = e*i - f*h; B = -(d*i - f*g); C = d*h - e*g
+    det = a*A + b*B + c*C
+    if abs(det) < 1e-12:
+        det = 1e-12
+    return [[A/det, -(b*i - c*h)/det, (b*f - c*e)/det],
+            [B/det, (a*i - c*g)/det, -(a*f - c*d)/det],
+            [C/det, -(a*h - b*g)/det, (a*e - b*d)/det]]
+
+
+def row_apply(v, m):
+    """Row-vector times matrix: v . m"""
+    return [v[0]*m[0][i] + v[1]*m[1][i] + v[2]*m[2][i] for i in range(3)]
+
+
 # --------------------------------------------------- semantic chop (T-pose)
 # Region predicates in normalized mesh space: x right+, y up+, z forward+,
 # height normalized to [0,1] (feet=0, head top=1), width to arm span.
@@ -195,38 +228,37 @@ def mat_apply(m, v):
 
 def main():
     glb_path, skel_path, out_path = sys.argv[1], sys.argv[2], sys.argv[3]
+    frames_path = sys.argv[4] if len(sys.argv) > 4 else None
     pos, uv, tris, img = load_mesh(glb_path)
-    joints = load_skeleton(skel_path)
+    joints = load_skeleton(skel_path) if not frames_path else None
+    frames = load_frames(frames_path) if frames_path else None
 
     xs = [p[0] for p in pos]; ys = [p[1] for p in pos]
     bb = {"xmax": max(abs(min(xs)), abs(max(xs))), "ymin": min(ys), "ymax": max(ys)}
-
-    # classify in T-pose space BEFORE any re-posing
     vreg = [classify(p, bb) for p in pos]
 
-    # ---- global mapping: mesh space -> skeleton world space ----
-    # Skeleton height: ground (below lowest joint) to head-top allowance.
-    jys = [j["world"][1] for j in joints.values()]
+    # world origins per joint (from frames when present)
+    def jworld(j):
+        return frames[j][0] if frames else joints[j]["world"]
+
+    all_j = sorted(frames.keys() if frames else joints.keys())
+    jys = [jworld(j)[1] for j in all_j]
     ground = min(jys) - 8.0
     head_y = max(jys)
-    skel_height = (head_y - ground) * 1.22   # head joint is not the crown
+    skel_height = (head_y - ground) * 1.22
     S = skel_height / (bb["ymax"] - bb["ymin"])
-    root_x = joints[0]["world"][0] if 0 in joints else 0.0
+    root_x = jworld(0)[0] if 0 in all_j else 0.0
 
     def to_world(v):
         return [root_x + v[0] * S, ground + (v[1] - bb["ymin"]) * S, v[2] * S]
 
-    # ---- pre-pose arms: rotate T-pose arm verts about the shoulder so the
-    # arm axis matches the dumped skeleton's shoulder->hand direction ----
     posed = [list(p) for p in pos]
     for side, sh_j, hand_j, sign in (("r", 8, 10, 1), ("l", 14, 16, -1)):
-        if sh_j not in joints or hand_j not in joints:
+        if sh_j not in all_j or hand_j not in all_j:
             continue
-        sh_w, hd_w = joints[sh_j]["world"], joints[hand_j]["world"]
+        sh_w, hd_w = jworld(sh_j), jworld(hand_j)
         target = normalize([hd_w[i] - sh_w[i] for i in range(3)])
-        # target is in world; mesh axes == world axes under to_world (pure scale)
         R = rot_between((sign, 0, 0), target)
-        # shoulder pivot in mesh space: inverse-map the shoulder joint world pos
         pivot = [(sh_w[0] - root_x) / S, (sh_w[1] - ground) / S + bb["ymin"], sh_w[2] / S]
         arm_regions = {side + "upperarm", side + "forearm", side + "hand"}
         for i, r in enumerate(vreg):
@@ -235,7 +267,6 @@ def main():
                 d = mat_apply(R, d)
                 posed[i] = [pivot[k] + d[k] for k in range(3)]
 
-    # ---- colors ----
     def vcolor(i):
         if img is None:
             return (200, 200, 200)
@@ -243,35 +274,37 @@ def main():
         u = min(0.999, max(0.0, u)); v = min(0.999, max(0.0, v))
         return img.getpixel((int(u * img.width), int(v * img.height)))
 
-    # ---- assign tris to parts, emit joint-local (translation only) ----
     parts = {}
     for t in tris:
         regs = [vreg[i] for i in t]
-        reg = max(set(regs), key=regs.count)
-        if reg in REGION_TO_JOINT:
-            parts.setdefault(reg, []).append(t)
+        # strict assignment: seam-crossing tris become gaps (authentic N64
+        # joint separation) instead of stretching into spikes when the two
+        # joint frames diverge under animation.
+        if regs[0] == regs[1] == regs[2] and regs[0] in REGION_TO_JOINT:
+            parts.setdefault(regs[0], []).append(t)
 
     out_parts = []
     for reg, rtris in sorted(parts.items()):
         joint = REGION_TO_JOINT[reg]
-        jw = joints[joint]["world"]
+        o = jworld(joint)
+        Rinv = inv3(frames[joint][1]) if frames else None
         used = sorted({i for t in rtris for i in t})
         remap = {gi: li for li, gi in enumerate(used)}
         overts = []
         for gi in used:
             w = to_world(posed[gi])
+            d = [w[k] - o[k] for k in range(3)]
+            if Rinv is not None:
+                d = row_apply(d, Rinv)   # into the joint's true rest frame
             r, g, b = vcolor(gi)[:3]
-            overts.append([round(w[0] - jw[0], 2), round(w[1] - jw[1], 2),
-                           round(w[2] - jw[2], 2), r, g, b])
+            overts.append([round(d[0], 2), round(d[1], 2), round(d[2], 2), r, g, b])
         out_parts.append({
             "joint": joint, "region": reg, "verts": overts,
             "tris": [[remap[a], remap[b], remap[c]] for a, b, c in rtris],
         })
 
     json.dump({"parts": out_parts}, open(out_path, "w"))
-    total_v = sum(len(p["verts"]) for p in out_parts)
-    total_t = sum(len(p["tris"]) for p in out_parts)
-    print(f"bundle v3: {len(out_parts)} parts, {total_v} verts, {total_t} tris, scale={S:.1f} -> {out_path}")
+    print(f"bundle v4: {len(out_parts)} parts, frames={'yes' if frames else 'NO'}, scale={S:.1f} -> {out_path}")
 
 
 def write_binary(bundle_json_path, out_path):
