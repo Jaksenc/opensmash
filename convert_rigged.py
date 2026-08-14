@@ -213,6 +213,31 @@ def main():
     ax_sorted = sorted(ax_scales)
     s_perp = ax_sorted[len(ax_sorted)//2]
 
+    # ---- global facing alignment R_face. rot_between() alone is the
+    # MINIMAL rotation between bone directions — twist about the bone
+    # axis is unconstrained, so a torso that is vertical in both spaces
+    # keeps the GLB's facing (+z, at the camera) regardless of which way
+    # Mario actually faces (the identity test's vanilla twin exposed
+    # this). Build the exact triad rotation taking the mesh (up,
+    # shoulder-lateral) frame onto Mario's (torso-axis, shoulder-lateral)
+    # spawn frame, and compose every per-bone Q on top of it.
+    def triad(up, lat):
+        u = normalize(list(up))
+        l = [lat[k] - u[k]*sum(lat[j]*u[j] for j in range(3)) for k in range(3)]
+        l = normalize(l)
+        f = [u[1]*l[2]-u[2]*l[1], u[2]*l[0]-u[0]*l[2], u[0]*l[1]-u[1]*l[0]]
+        return [u, l, f]  # rows
+
+    m_up = [jpos[name_idx["neck"]][k] - jpos[name_idx["Hips"]][k] for k in range(3)]
+    m_lat = [jpos[name_idx[posx+"Arm"]][k] - jpos[name_idx[negx+"Arm"]][k] for k in range(3)]
+    g_up = [frames[11][0][k] - frames[6][0][k] for k in range(3)]
+    g_lat = [frames[8][0][k] - frames[14][0][k] for k in range(3)]
+    Tm, Tg = triad(m_up, m_lat), triad(g_up, g_lat)
+    # R_face = Tg^T . Tm  (row-triads: mesh coords -> triad coords via Tm,
+    # reconstruct in mario world via Tg^T)
+    R_face = [[sum(Tg[a][r] * Tm[a][c] for a in range(3))
+               for c in range(3)] for r in range(3)]
+
     for part, (prox, dist) in seg.items():
         a = jpos[name_idx[prox]]
         if part in INHERIT:
@@ -224,7 +249,13 @@ def main():
         Mv = [B[i]-A[i] for i in range(3)]
         mlen = math.sqrt(sum(c*c for c in mv)) or 1e-9
         Mlen = math.sqrt(sum(c*c for c in Mv)) or 1e-9
-        Q = rot_between(mv, Mv)
+        # face-align first, then the minimal per-bone correction — the
+        # residual twist is applied around an already-correctly-facing
+        # character instead of the GLB's camera-facing frame
+        mv_f = mat_apply(R_face, mv)
+        Qres = rot_between(mv_f, Mv)
+        Q = [[sum(Qres[r][k]*R_face[k][c] for k in range(3))
+              for c in range(3)] for r in range(3)]
         u = [c/mlen for c in mv]
         conf[part] = (Q, Mlen/mlen, s_perp, u, a, A)
 
