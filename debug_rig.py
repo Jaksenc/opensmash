@@ -44,9 +44,31 @@ def main():
         (negx+" shin", (negx+"Leg", negx+"Foot"), (25, 26)),
     ]
     print(f"{'bone':>14} {'mesh_len':>9} {'mario_len':>9} {'scale':>7}")
+    scales = {}
     for label, (ma, mb), (ga, gb) in pairs:
         L1, L2 = mlen(ma, mb), glen(ga, gb)
-        print(f"{label:>14} {L1:9.4f} {L2:9.2f} {L2/max(L1,1e-9):7.1f}")
+        scales[label] = L2/max(L1, 1e-9)
+        print(f"{label:>14} {L1:9.4f} {L2:9.2f} {scales[label]:7.1f}")
+
+    # ---- rig acceptance gate: Meshy auto-rigging is stochastic and can
+    # place joints asymmetrically or collapse a bone (seen: a left knee
+    # 4cm from the ankle -> conform scale x1773 -> shredded leg). Reject
+    # such rigs before conversion.
+    fails = []
+    for name in ("uparm", "forearm", "thigh", "shin"):
+        l = scales.get(posx+" "+name) or scales.get("Left "+name)
+        r = scales.get(negx+" "+name) or scales.get("Right "+name)
+        if l and r and max(l, r)/min(l, r) > 1.35:
+            fails.append(f"asymmetric {name}: L/R scale ratio {max(l,r)/min(l,r):.2f}")
+    smax, smin = max(scales.values()), min(scales.values())
+    if smax/smin > 3.0:
+        fails.append(f"scale spread {smax/smin:.1f}x (max {smax:.0f} / min {smin:.0f})")
+    if fails:
+        print("RIG GATE: FAIL")
+        for f in fails:
+            print("  -", f)
+    else:
+        print("RIG GATE: PASS")
 
     # weight spread: how many parts hold >=0.12 / >=0.3 per vertex
     bone_map = build_bone_map(names, jpos)

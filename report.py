@@ -101,11 +101,15 @@ def render_frame_textured(bundle, atlas, frame, player, size, zoom):
 
 # ------------------------------------------------------------------ metrics
 def hole_metric(img, bg=(29, 29, 40)):
-    """Interior background pixels enclosed by the silhouette."""
+    """Seam holes: interior background enclosed by the silhouette, MINUS
+    wide enclosed regions (space between limbs is legitimately enclosed —
+    a stride pose encloses the crotch gap). A region counts as a seam
+    hole only if it is thin: no pixel farther than 4px from geometry.
+    Wide enclosed regions are tinted amber in the annotation, seam holes
+    red."""
     W, H = img.size
     px = img.load()
     is_bg = [[px[x, y] == bg for x in range(W)] for y in range(H)]
-    # flood fill outside-background from borders
     seen = [[False]*W for _ in range(H)]
     stack = ([(x, 0) for x in range(W)] + [(x, H-1) for x in range(W)]
              + [(0, y) for y in range(H)] + [(W-1, y) for y in range(H)])
@@ -115,13 +119,59 @@ def hole_metric(img, bg=(29, 29, 40)):
             continue
         seen[y][x] = True
         stack.extend([(x+1, y), (x-1, y), (x, y+1), (x, y-1)])
-    holes = [(x, y) for y in range(H) for x in range(W)
-             if is_bg[y][x] and not seen[y][x]]
+    enclosed = [[is_bg[y][x] and not seen[y][x] for x in range(W)]
+                for y in range(H)]
+
+    # group enclosed pixels into regions; classify by max depth from edge
+    lab = [[-1]*W for _ in range(H)]
+    regions = []
+    for y0 in range(H):
+        for x0 in range(W):
+            if not enclosed[y0][x0] or lab[y0][x0] >= 0:
+                continue
+            rid = len(regions)
+            comp = []
+            st = [(x0, y0)]
+            lab[y0][x0] = rid
+            while st:
+                x, y = st.pop()
+                comp.append((x, y))
+                for nx, ny in ((x+1, y), (x-1, y), (x, y+1), (x, y-1)):
+                    if 0 <= nx < W and 0 <= ny < H and enclosed[ny][nx] \
+                            and lab[ny][nx] < 0:
+                        lab[ny][nx] = rid
+                        st.append((nx, ny))
+            regions.append(comp)
+
+    def max_depth(comp):
+        cs = set(comp)
+        depth = {p: 0 for p in comp
+                 if any(q not in cs for q in
+                        ((p[0]+1, p[1]), (p[0]-1, p[1]),
+                         (p[0], p[1]+1), (p[0], p[1]-1)))}
+        frontier = list(depth)
+        d = 0
+        while frontier:
+            d += 1
+            nxt = []
+            for (x, y) in frontier:
+                for q in ((x+1, y), (x-1, y), (x, y+1), (x, y-1)):
+                    if q in cs and q not in depth:
+                        depth[q] = d
+                        nxt.append(q)
+            frontier = nxt
+        return d
+
     annotated = img.copy()
     ap = annotated.load()
-    for x, y in holes:
-        ap[x, y] = (255, 40, 40)
-    return len(holes), annotated
+    seam_px = 0
+    for comp in regions:
+        thin = max_depth(comp) <= 4
+        for x, y in comp:
+            ap[x, y] = (255, 40, 40) if thin else (200, 150, 40)
+        if thin:
+            seam_px += len(comp)
+    return seam_px, annotated
 
 
 def find_dups(bundle, frame0, player):
