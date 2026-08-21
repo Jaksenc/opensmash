@@ -445,3 +445,15 @@ Build: convert_rigged.py --mild-color --no-profile --flatten
 - Result joey-skinned.osb: recognizable in play, clean stance/moves.
 Build: convert_rigged.py --mild-color --no-profile --flatten
   joey3-meshy-rigged.glb mario-frames.skel joey-bundle.json
+
+## P3 (2026-08-21) — third character, photo-referenced
+- Reference photos recovered from the session transcript JSONL (user
+  images are base64 in user-role messages) -> refs/p3-face.png (and
+  refs/joey-*.png). gpt-image-2 images/edits with --ref gave a near-
+  photo likeness on pass 2 (p3b-tpose.png).
+- Both providers run: Meshy (4k) clean + forward; Tripo decimated fine
+  via collapse-aware decimation (53k->2.5k) but faced BACKWARD — toe
+  cue misread sneaker heels. Added --flip-facing manual override.
+  Used Meshy. 3 torn tris. In-game: strong likeness, clean.
+Build: convert_rigged.py --mild-color --no-profile --flatten
+  p3-meshy-rigged.glb mario-frames.skel p3-meshy-bundle.json

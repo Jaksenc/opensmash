@@ -376,7 +376,7 @@ def main():
         argv = argv[:pi] + argv[pi + 2:]
     else:
         project_source_path = None
-    args = [a for a in argv if a not in ("--autoskin", "--reskin", "--mild-color", "--redchest", "--bluelegs", "--brownhair", "--capfix", "--vanillaflat", "--flatten", "--debleed", "--no-profile", "--no-smooth-disp", "--smooth-disp", "--no-smooth-weights")]
+    args = [a for a in argv if a not in ("--autoskin", "--reskin", "--mild-color", "--redchest", "--bluelegs", "--brownhair", "--capfix", "--vanillaflat", "--flatten", "--debleed", "--no-profile", "--no-smooth-disp", "--smooth-disp", "--no-smooth-weights", "--flip-facing")]
     autoskin = "--autoskin" in sys.argv
     glb_path, frames_path, out_path = args[0], args[1], args[2]
     loader = load_autoskin if autoskin else load_rigged
@@ -583,7 +583,10 @@ def main():
                     _dv2 = sum(_off[k]*_upn[k] for k in range(3))
                     _toe_h = [_off[k] - _dv2*_upn[k] for k in range(3)]
                     print("facing fix: weak toe signal, using head-offset fallback")
-            if sum(_toe_h[k]*_fwd[k] for k in range(3)) < 0:
+            _flip = sum(_toe_h[k]*_fwd[k] for k in range(3)) < 0
+            if "--flip-facing" in sys.argv:
+                _flip = not _flip   # manual override when the toe cue misreads a shoe
+            if _flip:
                 posx, negx = negx, posx
                 print(f"facing fix: forward cue opposes fwd triad -> swapped sides "
                       f"(posx={posx})")
