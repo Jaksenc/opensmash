@@ -457,3 +457,14 @@ Build: convert_rigged.py --mild-color --no-profile --flatten
   Used Meshy. 3 torn tris. In-game: strong likeness, clean.
 Build: convert_rigged.py --mild-color --no-profile --flatten
   p3-meshy-rigged.glb mario-frames.skel p3-meshy-bundle.json
+
+## Sizing + "supersize" (2026-08-21)
+- "Supersize head" = Mario's TAUNT camera zoom, not a scale mechanic
+  (SSB64 has no mushroom; SSB64_TEST_SCALE=2.0 hook added to ftmanager
+  spawn — uniform TopN scale renders correctly). What the zoom exposed
+  was SIZING: Joey 397 / Mao 379 tall vs vanilla 446.
+- Root cause: limbs+torso are locked to Mario's bone lengths, so height
+  is set by the HEAD; Mario's head is 197u (44% of height), a human
+  head at global scale ~124u. FIX (general): head part gets its own
+  scale so its top lands at the vanilla head top (clamp s_perp..2.4x).
+  Joey now 468 tall; in-game height parity at idle and taunt zoom.

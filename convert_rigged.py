@@ -741,12 +741,36 @@ def main():
 
     # distal parts (head/hands/feet): parent's rotation, isotropic global
     # scale (no bone to span), own anchors
+    # head scale (general): limbs/torso are locked to the target skeleton's
+    # bone lengths, so standing height is fixed by the HEAD. Smash heads
+    # are ~40% of height; a human-proportioned head at the global scale
+    # leaves the fighter visibly short. Scale the head part so its top
+    # lands at the vanilla head top (clamped to keep it sane).
+    s_head = s_perp
+    try:
+        _vp_path2 = os.path.join(os.path.dirname(os.path.abspath(__file__)), "vanilla-mario-parts.json")
+        if os.path.exists(_vp_path2) and 12 in frames and "Head" in name_idx:
+            _vp2 = json.load(open(_vp_path2))
+            _o12, _R12 = frames[12]
+            _vtop = max(_o12[1] + v[0]*_R12[0][1] + v[1]*_R12[1][1] + v[2]*_R12[2][1]
+                        for v in _vp2["12"])
+            _vhead_h = _vtop - _o12[1]
+            _mh = jpos[name_idx["Head"]][1]
+            _mtop = max(p[1] for p in pos)
+            _mhead_h = max(1e-6, _mtop - _mh)
+            s_head = _vhead_h / _mhead_h
+            s_head = max(s_perp, min(2.4 * s_perp, s_head))
+            print(f"head scale: x{s_head:.1f} (global x{s_perp:.1f}) so head top "
+                  f"matches vanilla ({_vhead_h:.0f} above head joint)")
+    except (KeyError, IndexError, ValueError):
+        pass
     for part in INHERIT:
         parent = INHERIT[part]
         Qp = conf[parent][0]
         a = jpos[name_idx[seg[part][0]]]
         A = frames[part][0]
-        conf[part] = (Qp, s_perp, s_perp, [0.0, 1.0, 0.0], a, A)
+        sp_ = s_head if part == 12 else s_perp
+        conf[part] = (Qp, sp_, sp_, [0.0, 1.0, 0.0], a, A)
 
     # feet get their OWN rotation: inheriting the calf's rotation leaves
     # the shoe pointing along the shin, i.e. toe-backward in the ankle
