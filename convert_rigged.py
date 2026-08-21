@@ -145,7 +145,50 @@ def load_rigged(path):
 
     # skinned vertices live in mesh space == skin space for Meshy rigs
     # (mesh node has identity transform; verify silently via skeleton root)
+    pos, nrm, uv, tris, jix, wts = decimate_if_dense(pos, nrm, uv, tris, jix, wts)
     return pos, nrm, uv, tris, img, jix, wts, names, jpos
+
+
+def decimate_if_dense(pos, nrm, uv, tris, jix, wts, max_verts=9000, target_tris=4200):
+    """General: providers don't reliably honor face limits (a Tripo rig
+    came back at 80k verts). The port needs u16 indices and a few-k-tri
+    fighter, so simplify dense inputs with quadric collapse and remap
+    attributes (uv, normal, skin weights) from the nearest original vert."""
+    if len(pos) <= max_verts or len(tris) <= int(target_tris * 1.15):
+        return pos, nrm, uv, tris, jix, wts
+    try:
+        import numpy as np
+        import fast_simplification
+    except ImportError as e:
+        print(f"decimate: {len(pos)} verts but no simplifier available ({e})")
+        return pos, nrm, uv, tris, jix, wts
+    P = np.asarray(pos, np.float64); F = np.asarray(tris, np.int64)
+    red = max(0.0, 1.0 - target_tris / max(1, len(F)))
+    P2, F2, collapses = fast_simplification.simplify(P, F, target_reduction=red,
+                                                     return_collapses=True)
+    # attribute remap through the collapse history: each surviving vertex
+    # takes uv/normal/weights from an original vertex that collapsed INTO
+    # it (same UV island), never from a spatial neighbour on another island
+    _, _, mapping = fast_simplification.replay_simplification(P, F, collapses)
+    mapping = np.asarray(mapping)
+    idx = np.full(len(P2), -1, np.int64)
+    for i_orig in range(len(mapping) - 1, -1, -1):
+        j = int(mapping[i_orig])
+        if 0 <= j < len(P2):
+            idx[j] = i_orig
+    # any survivor without a recorded source falls back to nearest original
+    if (idx < 0).any():
+        from scipy.spatial import cKDTree
+        _, near = cKDTree(P).query(P2[idx < 0])
+        idx[idx < 0] = near
+    pos2 = [tuple(map(float, p)) for p in P2]
+    uv2 = [uv[i] for i in idx]
+    nrm2 = [nrm[i] for i in idx] if nrm is not None else None
+    jix2 = [list(jix[i]) for i in idx]
+    wts2 = [list(wts[i]) for i in idx]
+    tris2 = [tuple(int(k) for k in f) for f in F2]
+    print(f"decimate: {len(pos)} verts / {len(tris)} tris -> {len(pos2)} / {len(tris2)}")
+    return pos2, nrm2, uv2, tris2, jix2, wts2
 
 
 TRIPO2MESHY = {

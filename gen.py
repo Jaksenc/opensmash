@@ -120,12 +120,51 @@ def cmd_rigdownload(args):
     print(json.dumps({"saved": args.out, "bytes": os.path.getsize(args.out)}))
 
 
+def _refs(args):
+    refs = list(getattr(args, "ref", None) or [])
+    return [r for r in refs if r]
+
+
+def _mime(path):
+    p = path.lower()
+    if p.endswith(".jpg") or p.endswith(".jpeg"):
+        return "image/jpeg"
+    if p.endswith(".webp"):
+        return "image/webp"
+    return "image/png"
+
+
 def cmd_image(args):
+    refs = _refs(args)
     if args.api == "openai":
-        out = http("https://api.openai.com/v1/images/generations", "POST",
-                   {"Authorization": f"Bearer {ENV['OPENAI_API_KEY']}"},
-                   {"model": args.model, "prompt": args.prompt, "size": "1024x1024"},
-                   timeout=300)
+        if refs:
+            # images/edits with reference photos (multipart)
+            import uuid
+            boundary = uuid.uuid4().hex
+            body = b""
+            def field(name, value):
+                return (f"--{boundary}\r\nContent-Disposition: form-data; name=\"{name}\"\r\n\r\n{value}\r\n").encode()
+            body += field("model", args.model)
+            body += field("prompt", args.prompt)
+            body += field("size", "1024x1024")
+            for r in refs:
+                with open(r, "rb") as rf:
+                    data = rf.read()
+                body += (f"--{boundary}\r\nContent-Disposition: form-data; name=\"image[]\"; "
+                         f"filename=\"{os.path.basename(r)}\"\r\nContent-Type: {_mime(r)}\r\n\r\n").encode()
+                body += data + b"\r\n"
+            body += f"--{boundary}--\r\n".encode()
+            req = urllib.request.Request(
+                "https://api.openai.com/v1/images/edits", body,
+                {"Authorization": f"Bearer {ENV['OPENAI_API_KEY']}",
+                 "Content-Type": f"multipart/form-data; boundary={boundary}"})
+            with urllib.request.urlopen(req, timeout=300) as resp:
+                out = json.loads(resp.read())
+        else:
+            out = http("https://api.openai.com/v1/images/generations", "POST",
+                       {"Authorization": f"Bearer {ENV['OPENAI_API_KEY']}"},
+                       {"model": args.model, "prompt": args.prompt, "size": "1024x1024"},
+                       timeout=300)
         item = out["data"][0]
         if "b64_json" in item:
             png = base64.b64decode(item["b64_json"])
@@ -133,9 +172,9 @@ def cmd_image(args):
             png = urllib.request.urlopen(item["url"]).read()
     else:  # gemini
         parts = [{"text": args.prompt}]
-        if getattr(args, "ref", None):
-            with open(args.ref, "rb") as rf:
-                parts.append({"inlineData": {"mimeType": "image/png",
+        for r in refs:
+            with open(r, "rb") as rf:
+                parts.append({"inlineData": {"mimeType": _mime(r),
                               "data": base64.b64encode(rf.read()).decode()}})
         out = http(
             f"https://generativelanguage.googleapis.com/v1beta/models/{args.model}:generateContent",
@@ -159,7 +198,7 @@ def main():
     i = sub.add_parser("img3d"); i.add_argument("image"); i.add_argument("--polycount", type=int, default=10000); i.set_defaults(fn=cmd_img3d)
     s = sub.add_parser("status"); s.add_argument("task_id"); s.add_argument("--kind", default="text"); s.set_defaults(fn=cmd_status)
     d = sub.add_parser("download"); d.add_argument("task_id"); d.add_argument("out"); d.add_argument("--kind", default="text"); d.set_defaults(fn=cmd_download)
-    m = sub.add_parser("image"); m.add_argument("prompt"); m.add_argument("out"); m.add_argument("--api", default="openai"); m.add_argument("--model", default="gpt-image-2"); m.add_argument("--ref", default=None); m.set_defaults(fn=cmd_image)
+    m = sub.add_parser("image"); m.add_argument("prompt"); m.add_argument("out"); m.add_argument("--api", default="openai"); m.add_argument("--model", default="gpt-image-2"); m.add_argument("--ref", action="append", default=None); m.set_defaults(fn=cmd_image)
     r = sub.add_parser("rig"); r.add_argument("glb"); r.add_argument("--height", type=float, default=1.7); r.set_defaults(fn=cmd_rig)
     rs = sub.add_parser("rigstatus"); rs.add_argument("task_id"); rs.set_defaults(fn=cmd_rigstatus)
     rd = sub.add_parser("rigdownload"); rd.add_argument("task_id"); rd.add_argument("out"); rd.set_defaults(fn=cmd_rigdownload)

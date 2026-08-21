@@ -423,3 +423,25 @@ Build: convert_rigged.py --mild-color --no-profile --flatten
   gptmao-rigged.glb mario-frames.skel gptmao-bundle.json (Meshy
   --polycount 4000 from gpt-mao.png). No --project-source (it smeared
   this face; the bake was already good).
+
+## Joey Flynn (2026-08-21) — second real-person character, end to end
+- Source: gpt-image-2 text-described N64-model T-pose, 3 iterations
+  (v3 = messy gray-on-top curls, big amber glasses, dark beard, fair
+  skin, chain, pocket tee, full jeans, fisherman sandals). Reference
+  photos weren't on disk (chat attachments); gen.py now takes repeatable
+  --ref (OpenAI images/edits multipart + Gemini multi-inline) for a
+  photo-referenced likeness pass when photos are dropped in refs/.
+- Providers: Tripo ACCEPTS private individuals (its block is public
+  figures). But its rig came back 67k-80k verts ignoring face_limit,
+  and convert_model rejected every param shape. Tripo CDN now 403s
+  urllib's default UA (tripo.py sends a curl UA). Meshy --polycount
+  4000 -> 7.5k verts, clean.
+- New general stage: decimate_if_dense (fast_simplification quadric
+  collapse, attributes remapped THROUGH THE COLLAPSE HISTORY — nearest-
+  vertex remap scrambles fragmented provider atlases). Skips when the
+  mesh is already near target (first version re-remapped a 7.5k mesh
+  and scrambled its texture).
+- Converter: joint repair fired (knees at 7-8% H), 4 torn tris.
+- Result joey-skinned.osb: recognizable in play, clean stance/moves.
+Build: convert_rigged.py --mild-color --no-profile --flatten
+  joey3-meshy-rigged.glb mario-frames.skel joey-bundle.json

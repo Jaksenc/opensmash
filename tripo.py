@@ -70,7 +70,9 @@ def cmd_download(a):
         print(json.dumps({"error": "no model url", "output_keys": list(out.keys()),
                           "status": d.get("status")}))
         sys.exit(1)
-    urllib.request.urlretrieve(url, a.out)
+    req = urllib.request.Request(url, headers={"User-Agent": "curl/8.0"})
+    with urllib.request.urlopen(req, timeout=600) as r, open(a.out, "wb") as f:
+        f.write(r.read())
     print(json.dumps({"saved": a.out, "bytes": os.path.getsize(a.out)}))
 
 
