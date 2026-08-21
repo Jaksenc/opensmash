@@ -132,10 +132,15 @@ def cmd_image(args):
         else:
             png = urllib.request.urlopen(item["url"]).read()
     else:  # gemini
+        parts = [{"text": args.prompt}]
+        if getattr(args, "ref", None):
+            with open(args.ref, "rb") as rf:
+                parts.append({"inlineData": {"mimeType": "image/png",
+                              "data": base64.b64encode(rf.read()).decode()}})
         out = http(
             f"https://generativelanguage.googleapis.com/v1beta/models/{args.model}:generateContent",
             "POST", {"x-goog-api-key": ENV["GEMINI_API_KEY"]},
-            {"contents": [{"parts": [{"text": args.prompt}]}],
+            {"contents": [{"parts": parts}],
              "generationConfig": {"responseModalities": ["IMAGE"]}},
             timeout=300)
         parts = out["candidates"][0]["content"]["parts"]
@@ -154,7 +159,7 @@ def main():
     i = sub.add_parser("img3d"); i.add_argument("image"); i.add_argument("--polycount", type=int, default=10000); i.set_defaults(fn=cmd_img3d)
     s = sub.add_parser("status"); s.add_argument("task_id"); s.add_argument("--kind", default="text"); s.set_defaults(fn=cmd_status)
     d = sub.add_parser("download"); d.add_argument("task_id"); d.add_argument("out"); d.add_argument("--kind", default="text"); d.set_defaults(fn=cmd_download)
-    m = sub.add_parser("image"); m.add_argument("prompt"); m.add_argument("out"); m.add_argument("--api", default="openai"); m.add_argument("--model", default="gpt-image-2"); m.set_defaults(fn=cmd_image)
+    m = sub.add_parser("image"); m.add_argument("prompt"); m.add_argument("out"); m.add_argument("--api", default="openai"); m.add_argument("--model", default="gpt-image-2"); m.add_argument("--ref", default=None); m.set_defaults(fn=cmd_image)
     r = sub.add_parser("rig"); r.add_argument("glb"); r.add_argument("--height", type=float, default=1.7); r.set_defaults(fn=cmd_rig)
     rs = sub.add_parser("rigstatus"); rs.add_argument("task_id"); rs.set_defaults(fn=cmd_rigstatus)
     rd = sub.add_parser("rigdownload"); rd.add_argument("task_id"); rd.add_argument("out"); rd.set_defaults(fn=cmd_rigdownload)
