@@ -791,6 +791,7 @@ def main():
     # leaves the fighter visibly short. Scale the head part so its top
     # lands at the vanilla head top (clamped to keep it sane).
     s_head = s_perp
+    _mhead_h = 1.0
     try:
         _vp_path2 = os.path.join(os.path.dirname(os.path.abspath(__file__)), "vanilla-mario-parts.json")
         if os.path.exists(_vp_path2) and 12 in frames and "Head" in name_idx:
@@ -1066,6 +1067,19 @@ def main():
             a = jpos[name_idx[bname]]
             A = tgt
         d = [v[k]-a[k] for k in range(3)]
+        if part == 12 and s_head != s_perp:
+            # head scale ramps in with height above the head joint: body
+            # scale at the neck/chin, full head scale from the face line
+            # up. An isotropic scale about the joint stretched the neck
+            # band into a cone (very visible at the taunt camera zoom).
+            hj = jpos[name_idx["Head"]]
+            hy = sum((v[k] - hj[k]) * m_upn[k] for k in range(3))
+            t = min(1.0, max(0.0, hy / max(1e-6, 0.25 * _mhead_h)))
+            t = t * t * (3 - 2 * t)
+            s_loc = s_perp + (s_head - s_perp) * t
+            d = [c * s_loc for c in d]
+            d = mat_apply(Q, d)
+            return [d[k] + A[k] for k in range(3)]
         ax = d[0]*u[0] + d[1]*u[1] + d[2]*u[2]
         d = [u[k]*ax*s_ax + (d[k] - u[k]*ax)*sp for k in range(3)]
         d = mat_apply(Q, d)
