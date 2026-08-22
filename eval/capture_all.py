@@ -3,7 +3,7 @@
    python3 eval/capture_all.py [--once]"""
 import os, subprocess, sys, time
 HERE = os.path.dirname(os.path.abspath(__file__)); PIPE = os.path.dirname(HERE)
-CELLS = os.path.join(HERE, "cells")
+CELLS = os.environ.get("EVAL_OUT", os.path.join(HERE, "cells"))
 once = "--once" in sys.argv
 idle = 0
 while True:

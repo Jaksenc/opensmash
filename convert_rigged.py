@@ -583,7 +583,42 @@ def main():
                     _dv2 = sum(_off[k]*_upn[k] for k in range(3))
                     _toe_h = [_off[k] - _dv2*_upn[k] for k in range(3)]
                     print("facing fix: weak toe signal, using head-offset fallback")
-            _flip = sum(_toe_h[k]*_fwd[k] for k in range(3)) < 0
+            # PRIMARY cue: the face. Skin-coloured texels on the head
+            # cluster on the front (hair/hats are not skin); their
+            # horizontal offset from the head joint points forward. Works
+            # for any human character; toes remain the fallback.
+            _face_h = None
+            if img is not None and "Head" in name_idx and "neck" in name_idx:
+                try:
+                    import numpy as _npf2
+                    _hsvF = _npf2.asarray(img.convert("HSV"), _npf2.int16)
+                    _W0, _H0 = img.size
+                    _hj = jpos[name_idx["Head"]]; _ny = jpos[name_idx["neck"]][1]
+                    _acc = [0.0, 0.0, 0.0]; _nsk = 0
+                    for vi in range(len(pos)):
+                        if pos[vi][1] <= _ny:
+                            continue
+                        _u, _v = uv[vi]
+                        _x = min(_W0-1, max(0, int(_u*_W0))); _y = min(_H0-1, max(0, int(_v*_H0)))
+                        _h, _s_, _vv = _hsvF[_y, _x]
+                        if 3 <= _h <= 30 and 35 <= _s_ <= 190 and _vv >= 110:
+                            for k in range(3): _acc[k] += pos[vi][k] - _hj[k]
+                            _nsk += 1
+                    if _nsk >= 120:
+                        _acc = [c/_nsk for c in _acc]
+                        _dv3 = sum(_acc[k]*_upn[k] for k in range(3))
+                        _face_h = [_acc[k] - _dv3*_upn[k] for k in range(3)]
+                        _fm = math.sqrt(sum(c*c for c in _face_h))
+                        if _fm < 0.01 * _Hf:
+                            _face_h = None
+                        else:
+                            print(f"facing: face cue from {_nsk} skin verts (|offset| {_fm/_Hf*100:.1f}% H)")
+                except Exception as _e:
+                    _face_h = None
+            if _face_h is not None:
+                _flip = sum(_face_h[k]*_fwd[k] for k in range(3)) < 0
+            else:
+                _flip = sum(_toe_h[k]*_fwd[k] for k in range(3)) < 0
             if "--flip-facing" in sys.argv:
                 _flip = not _flip   # manual override when the toe cue misreads a shoe
             if _flip:
@@ -718,7 +753,16 @@ def main():
         # references corresponding.
         mvn = [c/mlen for c in mv]
         Mvn = [c/Mlen for c in Mv]
-        if abs(sum(mvn[k]*m_fwd[k] for k in range(3))) < 0.75:
+        # twist reference must be non-parallel to the bone in BOTH spaces:
+        # the mesh arm is lateral (T-pose) but Mario's REAR forearm in the
+        # spawn stance points almost along forward, so choosing by the
+        # mesh bone alone built a degenerate game-side triad -> the rear
+        # forearm rendered twisted/flattened on every character.
+        _dm_f = abs(sum(mvn[k]*m_fwd[k] for k in range(3)))
+        _dg_f = abs(sum(Mvn[k]*g_fwd[k] for k in range(3)))
+        _dm_u = abs(sum(mvn[k]*m_upn[k] for k in range(3)))
+        _dg_u = abs(sum(Mvn[k]*g_upn[k] for k in range(3)))
+        if max(_dm_f, _dg_f) <= max(_dm_u, _dg_u):
             ref_m, ref_g = m_fwd, g_fwd
         else:
             ref_m, ref_g = m_upn, g_upn

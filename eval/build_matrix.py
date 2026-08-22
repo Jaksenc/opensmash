@@ -17,8 +17,13 @@ import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 PIPE = os.path.dirname(HERE)
-OUT = os.path.join(HERE, "cells")
+OUT = os.environ.get("EVAL_OUT", os.path.join(HERE, "cells"))
 STATE = os.environ.get("EVAL_STATE", os.path.join(HERE, "state.json"))
+TORN_GATE = int(os.environ.get("EVAL_TORN_GATE", "80"))
+
+
+def cdef_shares(c):
+    return bool(c.get("shares_image_with") or c.get("shares_mesh_with"))
 
 N64_TEMPLATE = (
     "A screenshot of a very low-poly 1996 Nintendo 64 fighting-game character "
@@ -202,7 +207,7 @@ def main():
     ap.add_argument("--stage", default="all")
     a = ap.parse_args()
     chars = json.load(open(os.path.join(HERE, "characters.json")))
-    cfgs = json.load(open(os.path.join(HERE, "configs.json")))
+    cfgs = json.load(open(os.environ.get("EVAL_CONFIGS", os.path.join(HERE, "configs.json"))))
     chs = a.chars.split(",") if a.chars else list(chars)
     cfs = a.configs.split(",") if a.configs else list(cfgs)
     st = load_state()
@@ -223,8 +228,29 @@ def main():
             if not rigged or a.stage == "mesh":
                 continue
             osb = stage_convert(ch, cf, cfgs[cf], img, rigged, st)
+            # QA gate: torn-triangle count (>80 = corrupted in play). Re-roll
+            # the mesh once, then the image once, before giving up.
+            import re as _re
+            attempts = cell.get("attempts", 0)
+            while osb and attempts < 2:
+                lg = open(os.path.join(cell_dir(ch, cf), "convert.log")).read()
+                m = _re.search(r"torn-tri cut: (\d+)", lg)
+                torn = int(m.group(1)) if m else 0
+                cell["torn"] = torn
+                if torn <= TORN_GATE:
+                    break
+                attempts += 1; cell["attempts"] = attempts
+                log(f"[{key}] GATE: torn={torn} > {TORN_GATE}, re-roll #{attempts}")
+                d = cell_dir(ch, cf)
+                for f_ in ("bundle.osb", "bundle.json", "bundle-atlas.png", "rigged.glb", "base.glb"):
+                    if os.path.exists(os.path.join(d, f_)): os.remove(os.path.join(d, f_))
+                if attempts >= 2 and not cdef_shares(cfgs[cf]):
+                    if os.path.exists(os.path.join(d, "tpose.png")): os.remove(os.path.join(d, "tpose.png"))
+                    img = stage_image(ch, chars[ch], cf, cfgs[cf], st)
+                rigged = stage_mesh(ch, cf, cfgs[cf], img, st) if img else None
+                osb = stage_convert(ch, cf, cfgs[cf], img, rigged, st) if rigged else None
             cell["osb"] = osb
-            cell["done"] = bool(osb)
+            cell["done"] = bool(osb) and cell.get("torn", 0) <= TORN_GATE
             save_state(st)
             log(f"[{key}] {'DONE' if osb else 'incomplete'}")
     save_state(st)

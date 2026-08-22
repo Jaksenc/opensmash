@@ -80,7 +80,7 @@ def main():
     p = argparse.ArgumentParser()
     sub = p.add_subparsers(dest="cmd", required=True)
     u = sub.add_parser("upload"); u.add_argument("image"); u.set_defaults(fn=cmd_upload)
-    i = sub.add_parser("img3d"); i.add_argument("image_token"); i.add_argument("--faces", type=int, default=4000); i.add_argument("--model", default=None); i.set_defaults(fn=cmd_img3d)
+    i = sub.add_parser("img3d"); i.add_argument("image_token"); i.add_argument("--faces", type=int, default=4000); i.add_argument("--model", default="v3.0-20250812"); i.set_defaults(fn=cmd_img3d)
     r = sub.add_parser("rig"); r.add_argument("task_id"); r.set_defaults(fn=cmd_rig)
     s = sub.add_parser("status"); s.add_argument("task_id"); s.set_defaults(fn=cmd_status)
     d = sub.add_parser("download"); d.add_argument("task_id"); d.add_argument("out"); d.set_defaults(fn=cmd_download)
