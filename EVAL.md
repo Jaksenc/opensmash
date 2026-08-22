@@ -503,3 +503,16 @@ Build: convert_rigged.py --mild-color --no-profile --flatten
   video.
 - PRODUCTION RECIPE: gpt-image-2 + Mario style ref -> Tripo v3 (4k
   faces) -> convert --no-profile --flatten + gates.
+
+## Taunt distortion — resolved at the engine (2026-08-22)
+- Mario's taunt = extreme limb rotations + the fighter WALKS TOWARD THE
+  CAMERA (the "2x growth"). Skinned generated meshes distort there.
+- Tried and REJECTED in play: weight sharpening (narrow joint bands)
+  and rigid overlapping parts w/ caps (--sharpen/--rigid, now opt-in):
+  both worse in general gameplay than smooth skinning.
+- FIX (engine, general): port_osb5_skin_update holds the pose during
+  nFTCommonStatusAppeal — snapshot all joints relative to the hips on
+  entry, re-pose with the live hips frame each tick so root motion is
+  kept. Fighter presents in its stance while stepping to the camera.
+  SSB64_TAUNT_ANIMATE=1 disables the hold. Head-scale now ramps in
+  above the head joint (neck cone fix). play/*.osb rebuilt.
