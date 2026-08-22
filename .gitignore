@@ -1,2 +1,7 @@
 .env
 __pycache__/
+eval/cells/
+eval/ratings.jsonl
+eval/state*.json
+eval/*.log
+eval/pairs.json

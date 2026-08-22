@@ -10,6 +10,7 @@ Usage:
               [--replay eval-tour.rpl] [--dump] [--keep-full]
 """
 import argparse
+import json
 import os
 import shutil
 import subprocess
@@ -52,6 +53,7 @@ def main():
         "SSB64_SCREENSHOT_FRAMES": frame_list,
         "SSB64_SCREENSHOT_DIR": shots,
         "SSB64_MAX_FRAMES": str(stop + 20),
+        "SSB64_SCREENSHOT_RAW": "1",   # raw BGRA dumps; encoded below with ffmpeg
     })
     if args.bundle:
         env["SSB64_INJECT_BUNDLE"] = os.path.abspath(args.bundle)
@@ -60,6 +62,16 @@ def main():
     if args.dump:
         env["SSB64_DUMP_FRAMES"] = "2200"
 
+    # pin the window so every capture has identical framing (the game
+    # re-saves whatever size/position the OS gave it on each exit)
+    cfg_path = os.path.join(BUILD, "BattleShip.cfg.json")
+    try:
+        cfg = json.load(open(cfg_path))
+        cfg.setdefault("Window", {}).update({"Width": 1280, "Height": 658, "PositionX": 0, "PositionY": 40,
+                                             "Fullscreen": {"Enabled": False}})
+        json.dump(cfg, open(cfg_path, "w"), indent=1)
+    except Exception as e:
+        print("warn: could not pin window config:", e)
     if os.path.exists(LOG):
         os.remove(LOG)
     subprocess.run(["./BattleShip"], cwd=BUILD, env=env,
@@ -67,14 +79,34 @@ def main():
                    check=True)
     shutil.copy(LOG, os.path.join(out, "run.log"))
 
-    n = 0
-    for name in sorted(os.listdir(shots)):
-        if not name.endswith(".png"):
-            continue
-        img = Image.open(os.path.join(shots, name))
-        h = int(img.height * args.width / img.width)
-        img.resize((args.width, h), Image.LANCZOS).save(os.path.join(out, name))
-        n += 1
+    # raw -> png (full res into shots/, downscaled into out/) via ffmpeg,
+    # in parallel; PNG encoding off the game's render thread.
+    import struct
+    from concurrent.futures import ThreadPoolExecutor
+
+    def convert(name):
+        rp = os.path.join(shots, name)
+        with open(rp, "rb") as f:
+            w, h = struct.unpack("<II", f.read(8))
+        base = name[:-4]
+        full = os.path.join(shots, base + ".png")
+        small = os.path.join(out, base + ".png")
+        sh = int(h * args.width / w) // 2 * 2
+        common = ["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "bgra",
+                  "-s", f"{w}x{h}", "-i", "pipe:0"]
+        with open(rp, "rb") as f:
+            f.seek(8)
+            data = f.read()
+        outs = ["-vf", f"scale={args.width}:{sh}:flags=lanczos", "-frames:v", "1", small]
+        if args.keep_full:
+            subprocess.run(common + ["-frames:v", "1", full], input=data, check=True)
+        subprocess.run(common + outs, input=data, check=True)
+        os.remove(rp)
+
+    raws = sorted(n for n in os.listdir(shots) if n.endswith(".raw"))
+    with ThreadPoolExecutor(max_workers=6) as ex:
+        list(ex.map(convert, raws))
+    n = len(raws)
     if not args.keep_full:
         shutil.rmtree(shots)
 

@@ -1,0 +1,7 @@
+{
+  "A": {"label": "gpt-image-2 text → Meshy", "image_api": "openai", "style_ref": null, "mesh": "meshy", "convert_extra": []},
+  "B": {"label": "gpt-image-2 + Mario style ref → Meshy", "image_api": "openai", "style_ref": "vg7-tpose.png", "mesh": "meshy", "convert_extra": []},
+  "C": {"label": "Gemini + Mario style ref → Meshy", "image_api": "gemini", "style_ref": "vg7-tpose.png", "mesh": "meshy", "convert_extra": []},
+  "D": {"label": "gpt-image-2 text → Tripo", "image_api": "openai", "style_ref": null, "mesh": "tripo", "convert_extra": [], "shares_image_with": "A"},
+  "E": {"label": "A + source-projection texture", "image_api": "openai", "style_ref": null, "mesh": "meshy", "convert_extra": ["--project-source"], "shares_image_with": "A", "shares_mesh_with": "A"}
+}
