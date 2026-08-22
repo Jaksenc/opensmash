@@ -485,3 +485,21 @@ Build: convert_rigged.py --mild-color --no-profile --flatten
   * systematic LEFT-limb artifacts (black band, flattened arm, skinny
     leg) across characters/arms -> converter bug to root-cause.
 - Next: gates + re-roll, left-limb bug, Tripo face limit, rerun A/B only.
+
+## Tournament round 2 (2026-08-22) — same images, fixed converter, Tripo v3
+- Fixes in this pass: rear-forearm twist (degenerate game-side triad),
+  face-detector facing gate (Haar on payload renders; caught obama-B2,
+  joey-AT), torn-tri gate + re-roll, Tripo model_version v3.0-20250812
+  (honors face_limit; default model ignores it).
+- Human BT: BT 3.32 >> A1 0.90, AT 0.89, A2 0.45, B2 0.41, B1 0.04.
+  BT beat B2 11/12, won 5/6 characters. Tripo ACCEPTS all Mario-styled
+  (B) images incl. Mao/Obama -> style ref fixes the filter too.
+- Controls: B1->B2 11/12 for new converter; A1->A2 human preferred
+  OLD 4/6 (obama, queen not re-rolled) -> open question (head scale?
+  twist?). Judge said A2 6/6 — disagrees.
+- Judge agreement collapsed to 47% (kappa 0.14): geometry-weighted
+  instructions made it fixate on hand shards in stills; human judged
+  motion, 7 ties. Judge = gross-failure detector only until it sees
+  video.
+- PRODUCTION RECIPE: gpt-image-2 + Mario style ref -> Tripo v3 (4k
+  faces) -> convert --no-profile --flatten + gates.

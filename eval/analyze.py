@@ -17,7 +17,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 
 def load(rater):
     out = []
-    for line in open(os.path.join(HERE, "ratings.jsonl")):
+    for line in open(os.environ.get("EVAL_RATINGS", os.path.join(HERE, "ratings.jsonl"))):
         r = json.loads(line)
         if r.get("rater") == rater:
             out.append(r)
@@ -62,7 +62,7 @@ def main():
     ap.add_argument("--rater", default="tom")
     ap.add_argument("--judge", default="judge")
     a = ap.parse_args()
-    cfgs = json.load(open(os.path.join(HERE, "configs.json")))
+    cfgs = json.load(open(os.environ.get("EVAL_CONFIGS", os.path.join(HERE, "configs.json"))))
     chars = json.load(open(os.path.join(HERE, "characters.json")))
     recs = load(a.rater)
     if not recs:
@@ -72,7 +72,7 @@ def main():
     print(f"== {len(recs)} comparisons by {a.rater}")
     print("Overall technique ranking (Bradley-Terry strength; higher = preferred):")
     for i in sorted(items, key=lambda k: -p[k]):
-        print(f"  {i}  {p[i]:5.2f}   wins {wins[i]:.1f}   {cfgs[i]['label']}")
+        print(f"  {i}  {p[i]:5.2f}   wins {wins[i]:.1f}   {cfgs.get(i, {}).get('label', '')}")
     # head-to-head matrix
     print("\nHead-to-head win rate (row beats column):")
     hh = collections.defaultdict(lambda: [0.0, 0])
@@ -96,7 +96,7 @@ def main():
         order = " > ".join(f"{i}({pc[i]:.1f})" for i in sorted(its, key=lambda k: -pc[k]))
         print(f"  {chars[ch]['display']:<20s} {order}")
     # judge agreement
-    jrecs = {r["id"]: r for r in load(a.judge)} if os.path.exists(os.path.join(HERE, "ratings.jsonl")) else {}
+    jrecs = {r["id"]: r for r in load(a.judge)} if True else {}
     both = [(r, jrecs[r["id"]]) for r in recs if r["id"] in jrecs]
     if both:
         agree = sum(1 for h, j in both if h["choice"] == j["choice"])

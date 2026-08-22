@@ -193,6 +193,18 @@ def stage_convert(ch, cf, cdef_cfg, img, rigged, st):
         log(f"[{ch}-{cf}] CONVERT FAILED: {out[-300:].strip()}")
         return None
     open(os.path.join(d, "convert.log"), "w").write(out)
+    # facing verification gate: frontal-face detector on the payload render;
+    # if the face is on the back view, reconvert with --flip-facing.
+    rcv, vout = run(["python3", os.path.join(HERE, "verify_facing.py"), bundle], timeout=600)
+    verdict = (vout.strip().splitlines() or ["unknown"])[0].strip()
+    log(f"[{ch}-{cf}] facing check: {verdict}")
+    if verdict == "back":
+        log(f"[{ch}-{cf}] facing gate: reconverting with --flip-facing")
+        rc, out = run(cmd + ["--flip-facing"], timeout=1200)
+        if rc == 0:
+            open(os.path.join(d, "convert.log"), "a").write("\n--- reconverted with --flip-facing ---\n" + out)
+            rcv, vout = run(["python3", os.path.join(HERE, "verify_facing.py"), bundle], timeout=600)
+            log(f"[{ch}-{cf}] facing check after flip: {(vout.strip().splitlines() or ['unknown'])[0]}")
     rc, out = run(["python3", "convert_rigged.py", "--binary5", bundle, osb], timeout=600)
     if rc != 0 or not os.path.exists(osb):
         st.setdefault("errors", []).append({"cell": f"{ch}-{cf}", "stage": "binary5", "out": out[-400:]})

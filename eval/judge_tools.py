@@ -7,7 +7,7 @@ import json, os, sys, time
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 def prompt(bi, bs):
-    pairs = json.load(open(os.path.join(HERE, "pairs.json")))
+    pairs = json.load(open(os.environ.get("EVAL_PAIRS", os.path.join(HERE, "pairs.json"))))
     batch = pairs[bi*bs:(bi+1)*bs]
     lines = ["You are an impartial visual QA judge for generated Super Smash Bros 64 fighters.",
              "For each comparison below, read BOTH sheet images (each sheet = 29 frames of the same replay;",
@@ -17,15 +17,15 @@ def prompt(bi, bs):
              "Decide which of LEFT or RIGHT is the better fighter overall, or TIE if genuinely indistinguishable.",
              "Return ONLY a JSON list: [{\"id\": <id>, \"choice\": \"left\"|\"right\"|\"tie\", \"reason\": \"<one sentence>\"}, ...]", ""]
     for p in batch:
-        L = os.path.join(HERE, "cells", f"{p['char']}-{p['left']}", "sheet.png")
-        R = os.path.join(HERE, "cells", f"{p['char']}-{p['right']}", "sheet.png")
+        L = os.path.join(os.environ.get("EVAL_OUT", os.path.join(HERE, "cells")), f"{p['char']}-{p['left']}", "sheet.png")
+        R = os.path.join(os.environ.get("EVAL_OUT", os.path.join(HERE, "cells")), f"{p['char']}-{p['right']}", "sheet.png")
         lines.append(f"Comparison id={p['id']} character={p['display']}\n  LEFT sheet: {L}\n  RIGHT sheet: {R}")
     print("\n".join(lines))
 
 def ingest(path):
-    pairs = {p["id"]: p for p in json.load(open(os.path.join(HERE, "pairs.json")))}
+    pairs = {p["id"]: p for p in json.load(open(os.environ.get("EVAL_PAIRS", os.path.join(HERE, "pairs.json"))))}
     verdicts = json.load(open(path))
-    with open(os.path.join(HERE, "ratings.jsonl"), "a") as f:
+    with open(os.environ.get("EVAL_RATINGS", os.path.join(HERE, "ratings.jsonl")), "a") as f:
         for v in verdicts:
             p = pairs[v["id"]]
             f.write(json.dumps({"id": p["id"], "char": p["char"], "left": p["left"], "right": p["right"],

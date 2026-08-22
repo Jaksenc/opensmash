@@ -18,7 +18,9 @@ import time
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-RATINGS = os.path.join(HERE, "ratings.jsonl")
+CELLS = os.environ.get("EVAL_OUT", os.path.join(HERE, "cells"))
+PAIRS = os.environ.get("EVAL_PAIRS", os.path.join(HERE, "pairs.json"))
+RATINGS = os.environ.get("EVAL_RATINGS", os.path.join(HERE, "ratings.jsonl"))
 RATER = "anon"
 
 
@@ -54,7 +56,7 @@ class H(SimpleHTTPRequestHandler):
         if self.path == "/":
             self.path = "/ui/index.html"
         elif self.path.startswith("/pairs.json"):
-            pairs = json.load(open(os.path.join(HERE, "pairs.json")))
+            pairs = json.load(open(PAIRS))
             pub = [{"id": p["id"], "char": p["char"], "display": p["display"],
                     "left_clip": f"/cells/{p['char']}-{p['left']}/clip.mp4",
                     "right_clip": f"/cells/{p['char']}-{p['right']}/clip.mp4",
@@ -68,8 +70,8 @@ class H(SimpleHTTPRequestHandler):
             chars = json.load(open(os.path.join(HERE, "characters.json")))
             cells = []
             for ch in chars:
-                for cf in "ABCDE":
-                    d = os.path.join(HERE, "cells", f"{ch}-{cf}")
+                for cf in sorted({d_.split("-", 1)[1] for d_ in os.listdir(CELLS) if d_.startswith(ch + "-")}):
+                    d = os.path.join(CELLS, f"{ch}-{cf}")
                     if os.path.exists(os.path.join(d, "clip.mp4")):
                         cells.append({"cell": f"{ch}-{cf}", "display": chars[ch]["display"], "clip": f"/cells/{ch}-{cf}/clip.mp4"})
             random.Random(7).shuffle(cells)   # hide technique order; stable across reloads
@@ -85,6 +87,14 @@ class H(SimpleHTTPRequestHandler):
             return self._json(out)
         elif self.path.startswith("/progress"):
             return self._json({"rated": sorted(rated_ids(RATER)), "rater": RATER})
+        if self.path.startswith("/cells/"):
+            fp = os.path.join(CELLS, self.path[len("/cells/"):].split("?")[0])
+            if os.path.exists(fp):
+                ctype = "video/mp4" if fp.endswith(".mp4") else "image/png"
+                data = open(fp, "rb").read()
+                self.send_response(200); self.send_header("Content-Type", ctype)
+                self.send_header("Content-Length", str(len(data))); self.end_headers()
+                self.wfile.write(data); return
         return super().do_GET()
 
     def do_POST(self):
@@ -99,7 +109,7 @@ class H(SimpleHTTPRequestHandler):
             return self._json({"error": "nope"}, 404)
         n = int(self.headers.get("Content-Length", 0))
         body = json.loads(self.rfile.read(n))
-        pairs = {p["id"]: p for p in json.load(open(os.path.join(HERE, "pairs.json")))}
+        pairs = {p["id"]: p for p in json.load(open(PAIRS))}
         p = pairs[body["id"]]
         rec = {"id": p["id"], "char": p["char"], "left": p["left"], "right": p["right"],
                "choice": body["choice"], "ms": body.get("ms"), "rater": RATER, "t": time.time()}

@@ -609,7 +609,7 @@ def main():
                         _dv3 = sum(_acc[k]*_upn[k] for k in range(3))
                         _face_h = [_acc[k] - _dv3*_upn[k] for k in range(3)]
                         _fm = math.sqrt(sum(c*c for c in _face_h))
-                        if _fm < 0.01 * _Hf:
+                        if _fm < 0.04 * _Hf:   # weak offsets misfire (beards, hats)
                             _face_h = None
                         else:
                             print(f"facing: face cue from {_nsk} skin verts (|offset| {_fm/_Hf*100:.1f}% H)")
