@@ -1,0 +1,11 @@
+[
+  {"id": "obama:B:C", "choice": "left", "reason": "B is clean with a crisp black suit; C has thin stretched shard geometry jutting from the arms in most frames and a muddier grey suit texture."},
+  {"id": "mao:A:E", "choice": "left", "reason": "E is an actual Mao fighter with a readable face and grey tunic; A failed to load and renders as plain vanilla Mario."},
+  {"id": "joey:A:E", "choice": "tie", "reason": "E and A render visually indistinguishably in every frame (same face, hair, glasses, outfit, and poses) with no geometry or texture differences to separate them."},
+  {"id": "thomas:A:C", "choice": "right", "reason": "A has fuller hair, rounder Smash-64 proportions, and intact hands; C shows flat grey shard-like hands sticking out and a harsher, less cohesive look."},
+  {"id": "lincoln:B:D", "choice": "right", "reason": "B has a clean suit, readable face and beard, and a tall slim Lincoln silhouette; D is darker, muddier, and the face is far less legible."},
+  {"id": "lincoln:C:E", "choice": "left", "reason": "Both have arm shards, but E has long black stretched spike arms and a hunched squashed body in every frame, while C keeps a readable face and pose despite some white shards."},
+  {"id": "queen:A:B", "choice": "left", "reason": "A has a sharper face, defined hat, black gloves and shoes; B is a washed-out lilac blob with a blurrier face and less outfit definition."},
+  {"id": "joey:C:E", "choice": "left", "reason": "C has slightly crisper face and glasses detail with no artifacts; E is nearly identical but a touch blurrier in the face."},
+  {"id": "mao:B:C", "choice": "right", "reason": "C has a clean rounder face and intact hands; B shows thin stretched spike geometry off the hands and a flatter, less readable face."}
+]

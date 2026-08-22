@@ -1,0 +1,11 @@
+[
+  {"id": "queen:B:C", "choice": "left", "reason": "C (left) has the clearest Queen likeness with curly white hair, pearls and intact clothing, while B (right) shows jagged torn shards on the skirt and a mangled handbag."},
+  {"id": "joey:B:C", "choice": "tie", "reason": "Cannot judge: the RIGHT sheet joey-B/sheet.png does not exist (no screenshots captured), so no comparison was possible; C on its own reads as a clean, recognizable fighter."},
+  {"id": "obama:C:E", "choice": "right", "reason": "E (right) has a clean intact suit and good Obama face, whereas C (left) has large torn shard geometry sticking out of both shoulders of the jacket."},
+  {"id": "queen:B:D", "choice": "right", "reason": "D (left) has a smeared, distorted face and stretched jagged skirt geometry; B (right) keeps a recognizable Queen face despite some skirt shards."},
+  {"id": "lincoln:D:E", "choice": "left", "reason": "D (left) is a clean intact Lincoln with proper coat and readable face, while E (right) has large horizontal coat shards and a flattened, stretched body in the taunt frames."},
+  {"id": "mao:A:C", "choice": "right", "reason": "A (left) never rendered the generated fighter at all (top row is plain vanilla Mario in every frame), while C (right) is a clean, recognizable Mao in a grey suit with intact geometry."},
+  {"id": "lincoln:A:D", "choice": "left", "reason": "D (left) is clean and intact, whereas A (right) shows the same torn coat shards and stretched silhouette seen in E."},
+  {"id": "queen:A:D", "choice": "right", "reason": "A (right) is a clean, intact Queen with a clear face and hat, while D (left) has a distorted face and jagged stretched skirt geometry."},
+  {"id": "joey:B:D", "choice": "tie", "reason": "Cannot judge: the RIGHT sheet joey-B/sheet.png does not exist; D on its own is poor (hair, shirt and jeans are shredded into shards), so B would likely win if it renders at all."}
+]

@@ -61,11 +61,40 @@ class H(SimpleHTTPRequestHandler):
                     "left_sheet": f"/cells/{p['char']}-{p['left']}/sheet.png",
                     "right_sheet": f"/cells/{p['char']}-{p['right']}/sheet.png"} for p in pairs]
             return self._json(pub)
+        elif self.path == "/triage":
+            self.path = "/ui/triage.html"
+        elif self.path.startswith("/cells.json"):
+            import random
+            chars = json.load(open(os.path.join(HERE, "characters.json")))
+            cells = []
+            for ch in chars:
+                for cf in "ABCDE":
+                    d = os.path.join(HERE, "cells", f"{ch}-{cf}")
+                    if os.path.exists(os.path.join(d, "clip.mp4")):
+                        cells.append({"cell": f"{ch}-{cf}", "display": chars[ch]["display"], "clip": f"/cells/{ch}-{cf}/clip.mp4"})
+            random.Random(7).shuffle(cells)   # hide technique order; stable across reloads
+            for i, c in enumerate(cells):
+                c["idx"] = i + 1
+            return self._json(cells)
+        elif self.path.startswith("/triage.json"):
+            out = {}
+            tp = os.path.join(HERE, "triage.jsonl")
+            if os.path.exists(tp):
+                for line in open(tp):
+                    r = json.loads(line); out[r["cell"]] = r
+            return self._json(out)
         elif self.path.startswith("/progress"):
             return self._json({"rated": sorted(rated_ids(RATER)), "rater": RATER})
         return super().do_GET()
 
     def do_POST(self):
+        if self.path == "/tag":
+            n = int(self.headers.get("Content-Length", 0))
+            body = json.loads(self.rfile.read(n))
+            with open(os.path.join(HERE, "triage.jsonl"), "a") as f:
+                f.write(json.dumps({"cell": body["cell"], "tags": body.get("tags", []), "note": body.get("note", ""),
+                                    "rater": RATER, "t": time.time()}) + "\n")
+            return self._json({"ok": True})
         if self.path != "/rate":
             return self._json({"error": "nope"}, 404)
         n = int(self.headers.get("Content-Length", 0))

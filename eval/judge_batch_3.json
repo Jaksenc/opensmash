@@ -1,0 +1,11 @@
+[
+  {"id": "thomas:D:E", "choice": "left", "reason": "E (left) has a cleaner, brighter face and chunkier Smash-64 proportions, while D's face is muddier/darker and the body reads skinnier and less toy-like."},
+  {"id": "mao:B:E", "choice": "left", "reason": "B (left) is smoothly shaded and intact, whereas E has blocky dark shading artifacts across the legs and torso that look like broken normals or texture shards."},
+  {"id": "obama:A:B", "choice": "left", "reason": "B (left) has a clearer face, visible blue tie and lapel detail, while A's suit is a flat dark blob with less facial definition."},
+  {"id": "lincoln:A:E", "choice": "tie", "reason": "The two sheets are pixel-identical (1 differing pixel), so there is nothing to distinguish."},
+  {"id": "obama:A:E", "choice": "tie", "reason": "The two sheets are effectively pixel-identical (~74 differing pixels of noise), so they are indistinguishable."},
+  {"id": "joey:B:E", "choice": "left", "reason": "E (left) renders a clean, recognizable Joey with intact textures, while cell joey-B produced no sheet/frames at all (no render to judge)."},
+  {"id": "joey:A:B", "choice": "left", "reason": "A (left) renders a clean, intact Joey, while cell joey-B produced no sheet/frames at all (no render to judge)."},
+  {"id": "thomas:B:C", "choice": "left", "reason": "C (left) faces the camera with a readable face, whereas B is rotated backwards so only the back of the head shows in every frame with no face visible."},
+  {"id": "joey:D:E", "choice": "left", "reason": "E (left) has clean skin, shirt and jeans textures, while D's body is covered in fragmented, shattered-looking texture shards on the face, shirt and legs."}
+]

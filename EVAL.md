@@ -468,3 +468,20 @@ Build: convert_rigged.py --mild-color --no-profile --flatten
   head at global scale ~124u. FIX (general): head part gets its own
   scale so its top lands at the vanilla head top (clamp s_perp..2.4x).
   Joey now 468 tall; in-game height parity at idle and taunt zoom.
+
+## Tournament round 1 (2026-08-22) — 6 chars x 5 arms, 52 human A/B + LLM judge
+- Human BT: E 1.43 > B 1.23 > A 0.98 = C 0.98 > D 0.38. Judge: C>A>B>E>D.
+  Agreement 87% (91% non-tie), kappa 0.77. E~A visually (2-5% atlas
+  px) -> E's lead is noise; D (Tripo) robustly worst for both.
+- Triage tags joined with converter diagnostics:
+  * torn-tri count separates corrupted Meshy cells perfectly:
+    shards/corrupt >=107, clean <=102 -> GATE at ~80.
+  * D failures = OUR decimation (texture remap on fragmented atlas)
+    + inflated head scale (580-750) — not Tripo mesh quality. Tripo
+    used to honor face_limit (2.7k-vert Mario rigs); find regression.
+  * facing wrong: thomas-B only (converter flipped on sneakers) ->
+    add VLM facing-verification gate.
+  * C (Gemini) most shards (4/6) despite crisp faces -> drop.
+  * systematic LEFT-limb artifacts (black band, flattened arm, skinny
+    leg) across characters/arms -> converter bug to root-cause.
+- Next: gates + re-roll, left-limb bug, Tripo face limit, rerun A/B only.

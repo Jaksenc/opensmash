@@ -1,0 +1,13 @@
+[
+  {"id": "mao:A:E", "choice": "tie", "reason": "The two sheets are pixel-for-pixel indistinguishable: same blurry face, same stubby arms tapering into the torso, same animation."},
+  {"id": "queen:A:E", "choice": "tie", "reason": "Identical renders in every frame (same hat, dress, handbag and arm geometry), so no basis to prefer either."},
+  {"id": "queen:D:E", "choice": "left", "reason": "E has a recognizable, clean Queen face and intact arms, while D's face is squashed and squinting with a muddy grey-tinted dress and torn-looking limbs."},
+  {"id": "mao:A:B", "choice": "left", "reason": "B has proper articulated arms and hands and a sharper, more Mao-like face, whereas A's arms collapse into thin stubs and the face is smeared."},
+  {"id": "joey:B:E", "choice": "left", "reason": "E has rounded, intact arms and a clean shirt, while B's forearm renders as a flat triangular shard sticking out of the sleeve."},
+  {"id": "joey:A:B", "choice": "left", "reason": "A keeps intact rounded arms and a clean likeness, whereas B's right arm is a flat paper-thin shard despite a comparable face."},
+  {"id": "joey:B:C", "choice": "right", "reason": "C has the clearest likeness (glasses, beard, curly hair, pocketed shirt) with solid arms, while B suffers a flat shard arm and a blurrier face."},
+  {"id": "mao:A:C", "choice": "right", "reason": "C has a crisp, recognizable Mao face with a proper collared jacket and real arms, while A's arms are shrunken stubs and the face is washed out."},
+  {"id": "joey:B:D", "choice": "right", "reason": "D's texture is badly corrupted with dark splotches bleeding across the skin, shirt and jeans and misaligned glasses, so B's single flat arm is the lesser flaw."},
+  {"id": "queen:C:E", "choice": "right", "reason": "C has the strongest Queen likeness (rosy face, white curls, hat, pearls, handbag) with cleaner dress texture, while E's face is paler and less defined."},
+  {"id": "queen:B:E", "choice": "left", "reason": "E has rounded intact hands and keeps the handbag, while B, though its face is slightly sharper, has an arm that renders as a flat triangular shard and loses the handbag."}
+]
