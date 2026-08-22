@@ -376,7 +376,7 @@ def main():
         argv = argv[:pi] + argv[pi + 2:]
     else:
         project_source_path = None
-    args = [a for a in argv if a not in ("--autoskin", "--reskin", "--mild-color", "--redchest", "--bluelegs", "--brownhair", "--capfix", "--vanillaflat", "--flatten", "--debleed", "--no-profile", "--no-smooth-disp", "--smooth-disp", "--no-smooth-weights", "--flip-facing")]
+    args = [a for a in argv if a not in ("--autoskin", "--reskin", "--mild-color", "--redchest", "--bluelegs", "--brownhair", "--capfix", "--vanillaflat", "--flatten", "--debleed", "--no-profile", "--no-smooth-disp", "--smooth-disp", "--no-smooth-weights", "--flip-facing", "--sharpen", "--rigid")]
     autoskin = "--autoskin" in sys.argv
     glb_path, frames_path, out_path = args[0], args[1], args[2]
     loader = load_autoskin if autoskin else load_rigged
@@ -484,12 +484,73 @@ def main():
     if n_clamp:
         print(f"influence clamp: {n_clamp} verts lost anatomically-impossible limb weights")
 
+    # ---- weight sharpening (general, default): vanilla fighters are RIGID
+    # parts; provider skin weights spread each bone's influence over a
+    # wide band, which flattens limbs into wedges in sharp bends (taunt,
+    # smashes). Keep each vertex rigid to its dominant bone and blend only
+    # inside a narrow geometric band around each joint, toward the bone's
+    # hierarchy neighbour on that side. Deterministic, provider-independent.
+    if "--sharpen" in sys.argv:   # experimental: rigid-to-bone weights with narrow joint bands (opt-in)
+        _nS = {n: i for i, n in enumerate(names)}
+        _parent = {}
+        for _side in ("Left", "Right"):
+            for a_, b_ in (("Spine02", _side+"Shoulder"), (_side+"Shoulder", _side+"Arm"), (_side+"Arm", _side+"ForeArm"),
+                           (_side+"ForeArm", _side+"Hand"), ("Hips", _side+"UpLeg"), (_side+"UpLeg", _side+"Leg"),
+                           (_side+"Leg", _side+"Foot"), (_side+"Foot", _side+"ToeBase")):
+                if a_ in _nS and b_ in _nS: _parent[_nS[b_]] = _nS[a_]
+        for a_, b_ in (("Hips", "Spine"), ("Spine", "Spine01"), ("Spine01", "Spine02"), ("Spine02", "neck"), ("neck", "Head"), ("Head", "head_end")):
+            if a_ in _nS and b_ in _nS: _parent[_nS[b_]] = _nS[a_]
+        _children = {}
+        for c_, p_ in _parent.items(): _children.setdefault(p_, []).append(c_)
+        _ysS = [p[1] for p in pos]; _HS = max(_ysS) - min(_ysS)
+        BAND = 0.045 * _HS          # half-width of the blend band at a joint
+        def _proj(pt, a_, b_):
+            ab = [b_[k]-a_[k] for k in range(3)]; L2 = sum(c*c for c in ab) or 1e-9
+            return sum((pt[k]-a_[k])*ab[k] for k in range(3)) / L2
+        n_sharp = 0
+        for vi in range(len(pos)):
+            kd = max(range(4), key=lambda k: wts[vi][k]); b = jix[vi][kd]
+            if wts[vi][kd] <= 0: continue
+            v = pos[vi]
+            # candidate joints: this bone's root (blend toward parent) and
+            # each child's root (blend toward that child)
+            best = None   # (weight_other, other_bone)
+            if b in _parent:
+                jroot = jpos[b]; par = _parent[b]
+                # distance along the bone from its root; negative = past root toward parent
+                ref = jpos[_children[b][0]] if b in _children and _children[b] else None
+                if ref is not None:
+                    t = _proj(v, jroot, ref) * math.dist(jroot, ref)
+                else:
+                    t = math.dist(v, jroot)
+                if t < BAND:
+                    w_par = 0.5 * (1.0 - max(-1.0, min(1.0, t / BAND)))
+                    best = (w_par, par)
+            for ch in _children.get(b, []):
+                jc = jpos[ch]
+                cref = jpos[_children[ch][0]] if ch in _children and _children[ch] else None
+                if cref is not None:
+                    t = _proj(v, jc, cref) * math.dist(jc, cref)   # >0 = past the child joint into the child bone
+                else:
+                    t = -math.dist(v, jc)
+                if t > -BAND:
+                    w_ch = 0.5 * (1.0 + max(-1.0, min(1.0, t / BAND)))
+                    if best is None or w_ch > best[0]:
+                        best = (w_ch, ch)
+            if best is None or best[0] <= 0.0:
+                jix[vi] = [b, b, b, b]; wts[vi] = [1.0, 0.0, 0.0, 0.0]
+            else:
+                w_o = min(0.5, best[0])   # never let the neighbour dominate this side of the joint
+                jix[vi] = [b, best[1], b, b]; wts[vi] = [1.0 - w_o, w_o, 0.0, 0.0]
+            n_sharp += 1
+        print(f"weight sharpening: {n_sharp} verts rigid-to-bone with {BAND/_HS*100:.1f}%H joint blend bands")
+
     # ---- provider bone-weight smoothing (general): hard per-bone weight
     # boundaries between bones whose retarget maps disagree tear the mesh
     # at spawn. Diffuse the PROVIDER weights over the position-welded
     # mesh graph (top-4 kept) so disagreeing maps blend over a band —
     # every bone's rotation is preserved, unlike smoothing positions.
-    if "--no-smooth-weights" not in sys.argv:
+    if "--no-smooth-weights" not in sys.argv and "--sharpen" not in sys.argv:
         _wk2 = {}
         for _i, _p in enumerate(pos):
             _wk2.setdefault((round(_p[0], 3), round(_p[1], 3), round(_p[2], 3)), []).append(_i)
@@ -2104,9 +2165,86 @@ def main():
             if n_wrap:
                 print(f"cap shrinkwrap: {n_wrap} flare verts pulled to {LIM:.3f} "
                       f"(median head radius {r_med:.3f})")
+    # ---- RIGID PARTS (general, default): build the fighter the way
+    # vanilla fighters are built. A connected skinned mesh MUST stretch
+    # triangles that span a joint when the limb swings (rear-shoulder
+    # flaps at the taunt, wedge arms in smashes); rigid overlapping parts
+    # never stretch — they rotate and interpenetrate. Each vertex goes
+    # 100% to its dominant part; every joint-spanning triangle is
+    # duplicated into BOTH parts (one ring of overlap); each part's open
+    # boundary rings at joints are fan-capped so the pieces are closed.
+    rigid_world, rigid_uv, rigid_n, rigid_w, rigid_tris = [], [], [], [], []
+    if "--rigid" in sys.argv:   # experimental: rigid overlapping parts (rejected in play — stays opt-in)
+        dom = [max(vweights[i], key=vweights[i].get) for i in range(len(world))]
+        copies = {}   # (orig vert, part) -> new index
+        def _copy(i, part):
+            key = (i, part)
+            if key not in copies:
+                copies[key] = len(rigid_world)
+                rigid_world.append(world[i]); rigid_uv.append(uv[i]); rigid_n.append(vnormal(i))
+                rigid_w.append({part: 1.0})
+            return copies[key]
+        part_tris = {}
+        for t in tris:
+            parts_here = {dom[i] for i in t}
+            for part in parts_here:          # mixed tris -> duplicated into every part touched (overlap)
+                nt = tuple(_copy(i, part) for i in t)
+                rigid_tris.append(nt); part_tris.setdefault(part, []).append(nt)
+        # caps: boundary loops per part (edges used once within the part)
+        import collections as _cl
+        H_r = max(p[1] for p in pos) - min(p[1] for p in pos)
+        n_caps = 0; n_cap_tris = 0
+        for part, plist in part_tris.items():
+            ecount = _cl.Counter()
+            for a_, b_, c_ in plist:
+                for e in ((a_, b_), (b_, c_), (c_, a_)):
+                    ecount[tuple(sorted(e))] += 1
+            bedges = [e for e, n in ecount.items() if n == 1]
+            nbr = _cl.defaultdict(list)
+            for a_, b_ in bedges:
+                nbr[a_].append(b_); nbr[b_].append(a_)
+            seen = set()
+            for start in list(nbr):
+                if start in seen or len(nbr[start]) != 2:
+                    continue
+                loop = [start]; prev = None; cur = start
+                while True:
+                    seen.add(cur)
+                    nxt = [x for x in nbr[cur] if x != prev]
+                    if not nxt: break
+                    nx = nxt[0]
+                    if nx == start: break
+                    if nx in seen: break
+                    loop.append(nx); prev, cur = cur, nx
+                if len(loop) < 3:
+                    continue
+                # spatial sanity in WORLD units relative to height: a joint
+                # ring is compact; reject sprawling fake loops
+                P_ = [rigid_world[i] for i in loop]
+                cen = [sum(q[k] for q in P_) / len(P_) for k in range(3)]
+                rad = max(math.dist(q, cen) for q in P_)
+                emax = max(math.dist(rigid_world[loop[i]], rigid_world[loop[(i + 1) % len(loop)]]) for i in range(len(loop)))
+                if rad > 0.22 * (max(w_[1] for w_ in world) - min(w_[1] for w_ in world)) or emax > 0.12 * (max(w_[1] for w_ in world) - min(w_[1] for w_ in world)):
+                    continue
+                ci = len(rigid_world)
+                rigid_world.append(tuple(cen)); rigid_uv.append(rigid_uv[loop[0]])
+                nsum = [sum(rigid_n[i][k] for i in loop) for k in range(3)]
+                nl_ = math.sqrt(sum(c * c for c in nsum)) or 1e-9
+                rigid_n.append([c / nl_ for c in nsum]); rigid_w.append({part: 1.0})
+                for i in range(len(loop)):
+                    rigid_tris.append((loop[i], loop[(i + 1) % len(loop)], ci)); n_cap_tris += 1
+                n_caps += 1
+        print(f"rigid parts: {len(rigid_world)} verts ({len(world)} orig), {len(rigid_tris)} tris, "
+              f"{n_caps} joint caps ({n_cap_tris} tris)")
+        world = rigid_world; uv = rigid_uv; vweights = rigid_w; tris = [list(t) for t in rigid_tris]
+        pos = [pos[0]] * 0 or pos   # bind pos no longer aligned; stretch test below is skipped for rigid
+        _rigid_done = True
+    else:
+        _rigid_done = False
+
     sk_verts = []
     for i in range(len(world)):
-        n = vnormal(i)
+        n = rigid_n[i] if _rigid_done else vnormal(i)
         u, vv = uv[i]
         wl = [(p, w) for p, w in vweights[i].items()]
         sk_verts.append([round(world[i][0], 3), round(world[i][1], 3),
@@ -2129,6 +2267,8 @@ def main():
     _dbg_torn = []
     for t in tris:
         torn = False
+        if _rigid_done:
+            sk_tris.append(list(t)); continue
         for a2, b2 in ((t[0], t[1]), (t[1], t[2]), (t[0], t[2])):
             db = sum((pos[a2][k] - pos[b2][k]) ** 2 for k in range(3)) ** 0.5
             dw = sum((world[a2][k] - world[b2][k]) ** 2 for k in range(3)) ** 0.5
