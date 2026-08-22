@@ -31,7 +31,8 @@ N64_TEMPLATE = (
     "legs clearly apart with a gap between the feet, plain light-gray "
     "background, roughly 800 triangles, facial features painted flat onto the "
     "texture. The character: {desc}. Chunky fighter proportions: oversized "
-    "head, short thick legs, big blocky hands. Flat solid colors with faint "
+    "head, short thick legs, big blocky hands, hands empty (nothing held, "
+    "nothing hanging from the arms). Flat solid colors with faint "
     "per-face shading, crisp boundaries, faceted low-poly look."
 )
 STYLE_NOTE = (" Match the art style, proportions, pose, framing and background of "
