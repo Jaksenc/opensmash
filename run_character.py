@@ -68,9 +68,18 @@ def sh(cmd, timeout=900):
 
 
 def tripo_json(out):
-    """tripo.py prints one JSON object (possibly {'code':0,'data':...})."""
-    obj = json.loads(out.strip().splitlines()[-1])
-    return obj.get("data", obj)
+    """tripo.py prints one JSON object (possibly {'code':0,'data':...}).
+    Some Tripo status payloads embed raw control characters — fall back to
+    regex field extraction rather than dying on strict JSON."""
+    i = out.index("{")
+    try:
+        obj = json.loads(out[i:], strict=False)
+        return obj.get("data", obj)
+    except json.JSONDecodeError:
+        fields = dict(re.findall(r'"(\w+)"\s*:\s*"([^"\x00-\x1f]*)"', out))
+        if "status" in fields or "task_id" in fields or "image_token" in fields:
+            return fields
+        raise
 
 
 def stage_needed(path, force, name):
