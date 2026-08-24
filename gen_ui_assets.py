@@ -31,6 +31,7 @@ PORTRAIT_W, PORTRAIT_H = 48, 45
 PORTRAIT_DRAW_W, PORTRAIT_DRAW_H = 45, 43
 NAME_W, NAME_H, NAME_DRAW_W = 48, 16, 47
 STOCK_W, STOCK_H = 16, 10
+VS_W, VS_H, VS_DRAW_W = 48, 12, 35  # 1P VS-splash name, I4
 
 
 def load_atlas(prefix="glyph"):
@@ -220,10 +221,28 @@ def main():
     stock_enc = encode(ci4, STOCK_W, STOCK_H, 4)
     pal_enc = u32rev(b"".join(bytes(((v >> 8) & 0xFF, v & 0xFF)) for v in pal))
 
+    # ---- VS-splash name: bold caps scaled into the 35x12 draw area (I4) ----
+    vtxt = compose_name(name)
+    vb = vtxt.getbbox()
+    vtxt = vtxt.crop(vb)
+    vs = min(VS_DRAW_W / vtxt.width, 11 / vtxt.height)
+    if vs < 1:
+        vtxt = vtxt.resize((max(1, round(vtxt.width * vs)), max(1, round(vtxt.height * vs))),
+                           Image.LANCZOS)
+    vim = Image.new("RGBA", (VS_W, VS_H), (0, 0, 0, 0))
+    vim.alpha_composite(vtxt, (0, max(0, (VS_H - vtxt.height) // 2)))
+    nib = []
+    for y in range(VS_H):
+        for x in range(VS_W):
+            r, g, b, al = vim.getpixel((x, y))
+            nib.append((((r + g + b) // 3) * al // 255) >> 4)
+    vs_logical = bytes((nib[i] << 4) | nib[i + 1] for i in range(0, len(nib), 2))
+    vs_enc = encode(vs_logical, VS_W, VS_H, 4)
+
     with open(a.out, "wb") as f:
-        f.write(b"OSBU" + portrait_enc + name_enc + stock_enc + pal_enc)
+        f.write(b"OSBU" + portrait_enc + name_enc + stock_enc + pal_enc + vs_enc)
     print(f"{a.out}: portrait {len(portrait_enc)}B name {len(name_enc)}B "
-          f"stock {len(stock_enc)}B pal {len(pal_enc)}B")
+          f"stock {len(stock_enc)}B pal {len(pal_enc)}B vs {len(vs_enc)}B")
 
     if a.preview:
         pv = Image.new("RGBA", (48 * 4 + 16, 45 * 4 + 16 * 4 + 10 * 8 + 36), (30, 30, 30, 255))

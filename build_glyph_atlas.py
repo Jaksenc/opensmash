@@ -30,8 +30,10 @@ BOLD_CUTS = {  # letter -> (source sprite, x0, x1); cuts at top-gap midpoints
  "E": ("ness",15,22), "N": ("ness",4,15),
  "P": ("pikachu",4,11), "C": ("pikachu",30,38), "H": ("pikachu",38,46),
  "U": ("pikachu",48,57),
- "J": ("purin",3,10), "G": ("purin",13,21), "L": ("purin",27,34),
+ "J": ("purin",3,10), "G": ("purin",13,21), "L": ("purin",27,33),
  "Y": ("purin",34,40), "B": ("kirby",29,38),
+ # L's right edge stops before Y's first column (a 1px Y sliver otherwise
+ # shows whenever L ends a word)
 }
 
 
