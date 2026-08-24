@@ -158,15 +158,15 @@ def main():
         portrait_enc += encode(bytes(logical[off:off + w * h * 4]), w, h, 32)
         off += w * h * 4
 
-    # ---- name (IA8) ----
-    nm = Image.new("RGBA", (NAME_W, NAME_H), (0, 0, 0, 0))
+    # ---- name: raw IA8 canvas (64x16) — the engine re-encodes into the
+    # target fighter's own sprite geometry (40/48/64 wide varies) ----
+    nm = Image.new("RGBA", (64, NAME_H), (0, 0, 0, 0))
     ptxt = compose_name(name)
     pb = ptxt.getbbox()
     # vanilla panel names are left-aligned with the face starting ~col 5
     nm.alpha_composite(ptxt.crop(pb), (3, pb[1] if pb else 0))
-    name_logical = bytes(((nm.getpixel((x, y))[0] >> 4) << 4) | (nm.getpixel((x, y))[3] >> 4)
-                         for y in range(NAME_H) for x in range(NAME_W))
-    name_enc = encode(name_logical, NAME_W, NAME_H, 8)
+    name_enc = bytes(((nm.getpixel((x, y))[0] >> 4) << 4) | (nm.getpixel((x, y))[3] >> 4)
+                     for y in range(NAME_H) for x in range(64))
 
     # ---- stock icon (drawn area = left 8x10 of the 16x10 bitmap) ----
     if a.stock_art:
@@ -221,7 +221,8 @@ def main():
     stock_enc = encode(ci4, STOCK_W, STOCK_H, 4)
     pal_enc = u32rev(b"".join(bytes(((v >> 8) & 0xFF, v & 0xFF)) for v in pal))
 
-    # ---- VS-splash name: bold caps scaled into the 35x12 draw area (I4) ----
+    # ---- VS-splash name: raw intensity canvas (64x12), engine packs to
+    # the target's I4 geometry ----
     vtxt = compose_name(name)
     vb = vtxt.getbbox()
     vtxt = vtxt.crop(vb)
@@ -229,18 +230,13 @@ def main():
     if vs < 1:
         vtxt = vtxt.resize((max(1, round(vtxt.width * vs)), max(1, round(vtxt.height * vs))),
                            Image.LANCZOS)
-    vim = Image.new("RGBA", (VS_W, VS_H), (0, 0, 0, 0))
+    vim = Image.new("RGBA", (64, VS_H), (0, 0, 0, 0))
     vim.alpha_composite(vtxt, (0, max(0, (VS_H - vtxt.height) // 2)))
-    nib = []
-    for y in range(VS_H):
-        for x in range(VS_W):
-            r, g, b, al = vim.getpixel((x, y))
-            nib.append((((r + g + b) // 3) * al // 255) >> 4)
-    vs_logical = bytes((nib[i] << 4) | nib[i + 1] for i in range(0, len(nib), 2))
-    vs_enc = encode(vs_logical, VS_W, VS_H, 4)
+    vs_enc = bytes((lambda p: (p[0] + p[1] + p[2]) // 3 * p[3] // 255)(vim.getpixel((x, y)))
+                   for y in range(VS_H) for x in range(64))
 
     with open(a.out, "wb") as f:
-        f.write(b"OSBU" + portrait_enc + name_enc + stock_enc + pal_enc + vs_enc)
+        f.write(b"OSBV" + portrait_enc + name_enc + stock_enc + pal_enc + vs_enc)
     print(f"{a.out}: portrait {len(portrait_enc)}B name {len(name_enc)}B "
           f"stock {len(stock_enc)}B pal {len(pal_enc)}B vs {len(vs_enc)}B")
 

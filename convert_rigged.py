@@ -368,8 +368,21 @@ INHERIT = {12: 6, 10: 9, 16: 15, 22: 20, 27: 25}
 # mario joint)  e.g. hand part anchors mesh Hand node onto mario joint 10.
 
 
+TARGET_MAP = None
+TARGET_PARTS_JSON = None
+
+
 def main():
     argv = sys.argv[1:]
+    global TARGET_MAP, TARGET_PARTS_JSON
+    if "--target" in argv:
+        ti = argv.index("--target")
+        _prof = json.load(open(argv[ti + 1]))
+        TARGET_MAP = {int(k): int(v) for k, v in _prof["map"].items()}
+        TARGET_PARTS_JSON = _prof.get("parts")
+        argv = argv[:ti] + argv[ti + 2:]
+        print(f"target skeleton: {_prof.get('name', '?')} "
+              f"({len(TARGET_MAP)} canonical parts mapped)")
     if "--project-source" in argv:
         pi = argv.index("--project-source")
         project_source_path = argv[pi + 1]
@@ -377,6 +390,7 @@ def main():
     else:
         project_source_path = None
     args = [a for a in argv if a not in ("--autoskin", "--reskin", "--mild-color", "--redchest", "--bluelegs", "--brownhair", "--capfix", "--vanillaflat", "--flatten", "--debleed", "--no-profile", "--no-smooth-disp", "--smooth-disp", "--no-smooth-weights", "--flip-facing", "--sharpen", "--rigid")]
+    # (--target consumed above with its argument)
     autoskin = "--autoskin" in sys.argv
     glb_path, frames_path, out_path = args[0], args[1], args[2]
     loader = load_autoskin if autoskin else load_rigged
@@ -598,6 +612,11 @@ def main():
         jix, wts = auto_skin.reskin(pos, tris, names, jpos, jix, wts)
         print("reskin: disciplined weights on the Meshy skeleton")
     frames = load_frames(frames_path)
+    if TARGET_MAP is not None:
+        # the skel dump is keyed by the TARGET fighter's joint ids; the
+        # converter reasons in canonical (Mario) part ids throughout, so
+        # remap here and translate back when the bundle is written.
+        frames = {c: frames[t] for c, t in TARGET_MAP.items() if t in frames}
     name_idx = {n: i for i, n in enumerate(names)}
 
     posx = "Left" if jpos[name_idx["LeftArm"]][0] > jpos[name_idx["RightArm"]][0] else "Right"
@@ -742,7 +761,7 @@ def main():
         # target top = highest head-part vertex of the vanilla fighter
         # (local -> world via the head joint's spawn frame), else neck
         _mtop = frames[11][0][1]
-        _vp_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "vanilla-mario-parts.json")
+        _vp_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), TARGET_PARTS_JSON or "vanilla-mario-parts.json")
         if os.path.exists(_vp_path):
             _vp = json.load(open(_vp_path))
             if "12" in _vp and 12 in frames:
@@ -854,7 +873,7 @@ def main():
     s_head = s_perp
     _mhead_h = 1.0
     try:
-        _vp_path2 = os.path.join(os.path.dirname(os.path.abspath(__file__)), "vanilla-mario-parts.json")
+        _vp_path2 = os.path.join(os.path.dirname(os.path.abspath(__file__)), TARGET_PARTS_JSON or "vanilla-mario-parts.json")
         if os.path.exists(_vp_path2) and 12 in frames and "Head" in name_idx:
             _vp2 = json.load(open(_vp_path2))
             _o12, _R12 = frames[12]
@@ -2303,15 +2322,22 @@ def main():
                     for i in t:
                         bw = ", ".join(f"{names[jix[i][k]]}:{wts[i][k]:.2f}" for k in range(4) if wts[i][k] > 0)
                         print(f"    bind=({pos[i][0]:.3f},{pos[i][1]:.3f},{pos[i][2]:.3f}) world=({world[i][0]:.0f},{world[i][1]:.0f},{world[i][2]:.0f}) [{bw}]")
-    skinned = {"joint_ids": sk_joint_ids, "verts": sk_verts,
+    _emit = (lambda j: TARGET_MAP[j]) if TARGET_MAP is not None else (lambda j: j)
+    if TARGET_MAP is not None:
+        for v in sk_verts:
+            v[8] = [(_emit(j), w) for j, w in v[8]]
+    skinned = {"joint_ids": [_emit(j) for j in sk_joint_ids], "verts": sk_verts,
                "tris": sk_tris,
                # the joint frames the world verts were authored against —
                # the game binds against THESE, not whatever pose the
                # fighter happens to be in when the mesh attaches
-               "bind_frames": {str(j): {"o": list(frames[j][0]),
-                                        "R": [list(r) for r in frames[j][1]]}
+               "bind_frames": {str(_emit(j)): {"o": list(frames[j][0]),
+                                               "R": [list(r) for r in frames[j][1]]}
                                for j in sk_joint_ids if j in frames}}
 
+    if TARGET_MAP is not None:
+        for p in out_parts:
+            p["joint"] = TARGET_MAP.get(p["joint"], p["joint"])
     json.dump({"parts": out_parts, "atlas": atlas_path.rsplit("/", 1)[-1],
                "skinned": skinned},
               open(out_path, "w"))
