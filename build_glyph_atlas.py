@@ -159,6 +159,14 @@ def tile_cut(im, a, b):
                 gp[x - a, y] = (r, gr, bl, 255)
             elif lum > 80 and tan(r, gr, bl):
                 gp[x - a, y] = (r, gr, bl, 110)
+    # despeckle: drop pixels with no orthogonal neighbor
+    for x in range(g.width):
+        for y in range(TILE_GH):
+            if gp[x, y][3]:
+                n = sum(1 for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))
+                        if 0 <= x + dx < g.width and 0 <= y + dy < TILE_GH and gp[x + dx, y + dy][3])
+                if n == 0:
+                    gp[x, y] = (0, 0, 0, 0)
     return g
 
 
@@ -220,6 +228,11 @@ def main():
     # fox overrides give the widest F/O/X (3-letter tile)
     fox = Image.open(os.path.join(REFS, "tile_fox.png"))
     tile["F"], tile["O"], tile["X"] = tile_cut(fox, 4, 10), tile_cut(fox, 10, 17), tile_cut(fox, 17, 25)
+    # yoshi gives clean Y/H; link gives clean L/I (JIGGLYPUFF is too dense)
+    yo = Image.open(os.path.join(REFS, "tile_yoshi.png"))
+    tile["Y"], tile["H"] = tile_cut(yo, 4, 10), tile_cut(yo, 25, 31)
+    lk = Image.open(os.path.join(REFS, "tile_link.png"))
+    tile["L"], tile["I"] = tile_cut(lk, 4, 10), tile_cut(lk, 11, 15)
     tile = synth_tile(tile)
 
     for pref in ("glyph", "tileglyph"):
