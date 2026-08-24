@@ -1,0 +1,28 @@
+tripo rig folded: 41 joints -> 23 canonical
+influence clamp: 308 verts lost anatomically-impossible limb weights
+weight smoothing: provider bone weights diffused 3 iters
+facing: face cue from 260 skin verts (|offset| 7.1% H)
+global scale: height-normalized 440.8 -> 455.0
+head scale: x515.3 (global x455.0) so head top matches vanilla (197 above head joint)
+side fix: 116 leg/foot weights mirrored to match geometry
+side fix (bones): 116 verts' provider leg bones mirrored
+midline purge: 73 cross-side verts cleaned
+torso map: vertical x334.5, lateral x368.5 (hip ratio 339.8, shoulder ratio 399.5), depth x455.0
+flatten: albedo V pulled to bin medians
+cap claim: 568 crown verts -> 100% Head
+torn-tri cut: 8 triangles stretched >3x by the retarget dropped
+bundle v9 (rigged retarget): 14 parts, 4123 verts, 6769 tris -> /Users/tdimson/projects/opensmash/pipeline/eval/round3/cells/queen-BT/bundle.json
+  joint  6:  1163 v  1826 t
+  joint  8:   124 v   208 t
+  joint  9:   124 v   236 t
+  joint 10:    91 v   170 t
+  joint 12:  1080 v  1739 t
+  joint 14:   140 v   247 t
+  joint 15:   146 v   258 t
+  joint 16:    89 v   166 t
+  joint 19:   193 v   271 t
+  joint 20:   231 v   419 t
+  joint 22:   168 v   299 t
+  joint 24:   227 v   305 t
+  joint 25:   208 v   400 t
+  joint 27:   139 v   225 t

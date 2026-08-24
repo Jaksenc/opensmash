@@ -5,3 +5,5 @@ eval/ratings.jsonl
 eval/state*.json
 eval/*.log
 eval/pairs.json
+eval/*/cells/*/shots/
+eval/*/cells/*/shots-full/
