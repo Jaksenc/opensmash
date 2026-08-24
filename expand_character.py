@@ -33,7 +33,8 @@ FORBIDDEN = ["handbag", "purse", "bag", "cane", "walking stick", "sword", "umbre
              "broom", "axe", "hammer", "bat", "racket", "ball", "clipboard", "tablet", "laptop"]
 
 SYSTEM = """You write one-line visual descriptions of characters for a low-poly fighting-game character pipeline.
-Output ONLY a JSON object {"display": <name>, "desc": <description>}.
+Output ONLY a JSON object {"display": <name>, "short": <short name>, "desc": <description>}.
+"short" is the in-game roster name: UPPERCASE A-Z only, at most 7 characters, no spaces or punctuation, instantly recognizable (prefer the name the character is best known by: MARIO, PIKACHU, QUEEN, WEIRDAL, LINCOLN, OBAMA).
 The description is a single sentence (60-110 words) starting with the character's name, covering: face (shape, skin tone, notable features), hair/facial hair, eyes, and ONE iconic outfit described as flat solid colors from head to toe including shoes.
 HARD RULES:
 - Worn or attached items are allowed (hats, glasses, watches, jewelry, belts, badges, headphones, capes that are part of the outfit).
