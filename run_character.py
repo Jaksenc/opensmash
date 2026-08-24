@@ -103,7 +103,8 @@ def main():
             cmd += ["--photo", a.photo]
         open(F("character.json"), "w").write(sh(cmd, timeout=180))
     cdef = json.loads(open(F("character.json")).read())
-    short = (a.short or re.sub(r"[^A-Za-z]", "", cdef["display"]).upper())[:7]
+    short = (a.short or cdef.get("short") or re.sub(r"[^A-Za-z]", "", cdef["display"]).upper())
+    short = re.sub(r"[^A-Z]", "", short.upper())[:7]
     log(f"character: {cdef['display']} (short: {short})")
 
     # 2. tpose -----------------------------------------------------------
