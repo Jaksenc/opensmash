@@ -2281,6 +2281,26 @@ def main():
     # world edge far longer than its bind edge times the global scale;
     # big flat low-poly panels (long bind edges) are legitimate and are
     # kept. Drop only if some edge stretched > 3x.
+    # The cut threshold is RELATIVE to the median edge stretch: on extreme
+    # target skeletons (DK's gorilla arms) the legitimate baseline stretch
+    # is itself ~3x, and an absolute threshold deletes valid geometry.
+    # baseline per PART: a gorilla-armed target stretches whole limbs
+    # legitimately; a global median (torso-dominated) misses that.
+    _part_ratios = {}
+    for t in tris:
+        pr = vpart[t[0]]
+        for a2, b2 in ((t[0], t[1]), (t[1], t[2]), (t[0], t[2])):
+            db = sum((pos[a2][k] - pos[b2][k]) ** 2 for k in range(3)) ** 0.5
+            dw = sum((world[a2][k] - world[b2][k]) ** 2 for k in range(3)) ** 0.5
+            if db > 1e-6:
+                _part_ratios.setdefault(pr, []).append(dw / (db * s_perp))
+    _part_med = {}
+    for pr, rs in _part_ratios.items():
+        rs.sort()
+        _part_med[pr] = rs[len(rs) // 2]
+    def _cut_for(t):
+        m = max(_part_med.get(vpart[i], 1.0) for i in t)
+        return max(3.0, 3.0 * m)
     sk_tris = []
     n_degen = 0
     _dbg_torn = []
@@ -2288,10 +2308,11 @@ def main():
         torn = False
         if _rigid_done:
             sk_tris.append(list(t)); continue
+        _cut = _cut_for(t)
         for a2, b2 in ((t[0], t[1]), (t[1], t[2]), (t[0], t[2])):
             db = sum((pos[a2][k] - pos[b2][k]) ** 2 for k in range(3)) ** 0.5
             dw = sum((world[a2][k] - world[b2][k]) ** 2 for k in range(3)) ** 0.5
-            if dw > 3.0 * max(db, 0.01) * s_perp and dw > 0.06 * s_perp:
+            if dw > _cut * max(db, 0.01) * s_perp and dw > 0.06 * s_perp:
                 torn = True
                 break
         if torn:
@@ -2301,8 +2322,8 @@ def main():
             continue
         sk_tris.append(list(t))
     if n_degen:
-        print(f"torn-tri cut: {n_degen} triangles stretched >3x by the "
-              f"retarget dropped")
+        print(f"torn-tri cut: {n_degen} triangles beyond 3x their part's "
+              f"median stretch dropped")
         if _dbg_torn:
             import collections as _cl
             _ysd = [p[1] for p in pos]; _Hd = max(_ysd) - min(_ysd); _y0d = min(_ysd)
