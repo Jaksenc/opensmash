@@ -191,7 +191,8 @@ def main():
     wav = F("announcer.wav")
     if stage_needed(wav, force, "voice"):
         log("voice: generating announcer clip")
-        sh(["python3", "generate_announcer.py", cdef["display"], "--out", wav], timeout=300)
+        sh(["python3", "announcer_voice.py", cdef["display"], "--slug", slug,
+            "--out", wav, "--no-stage"], timeout=300)
 
     # 9. stage -----------------------------------------------------------
     if os.path.isdir(WEBDIST):
