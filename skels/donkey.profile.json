@@ -23,5 +23,8 @@
   "26": 27,
   "27": 28
  },
- "parts": "vanilla-donkey-parts.canonical.json"
+ "parts": "vanilla-donkey-parts.canonical.json",
+ "blank_extra": [
+  5
+ ]
 }

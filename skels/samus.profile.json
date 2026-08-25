@@ -23,5 +23,8 @@
   "26": 34,
   "27": 35
  },
- "parts": "vanilla-samus-parts.canonical.json"
+ "parts": "vanilla-samus-parts.canonical.json",
+ "blank_extra": [
+  5
+ ]
 }

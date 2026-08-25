@@ -23,5 +23,8 @@
   "26": 27,
   "27": 28
  },
- "parts": "vanilla-pikachu-parts.canonical.json"
+ "parts": "vanilla-pikachu-parts.canonical.json",
+ "blank_extra": [
+  5
+ ]
 }

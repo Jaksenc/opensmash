@@ -22,6 +22,7 @@ import json
 import os
 import math
 import struct
+import re
 import sys
 
 from PIL import Image
@@ -370,16 +371,20 @@ INHERIT = {12: 6, 10: 9, 16: 15, 22: 20, 27: 25}
 
 TARGET_MAP = None
 TARGET_PARTS_JSON = None
+TARGET_BLANK_EXTRA = []
+TARGET_SNAP_ACCS = []
 
 
 def main():
     argv = sys.argv[1:]
-    global TARGET_MAP, TARGET_PARTS_JSON
+    global TARGET_MAP, TARGET_PARTS_JSON, TARGET_BLANK_EXTRA, TARGET_SNAP_ACCS
     if "--target" in argv:
         ti = argv.index("--target")
         _prof = json.load(open(argv[ti + 1]))
         TARGET_MAP = {int(k): int(v) for k, v in _prof["map"].items()}
         TARGET_PARTS_JSON = _prof.get("parts")
+        TARGET_BLANK_EXTRA = [int(j) for j in _prof.get("blank_extra", [])]
+        TARGET_SNAP_ACCS = [int(j) for j in _prof.get("snap_accessories", [])]
         argv = argv[:ti] + argv[ti + 2:]
         print(f"target skeleton: {_prof.get('name', '?')} "
               f"({len(TARGET_MAP)} canonical parts mapped)")
@@ -2261,17 +2266,8 @@ def main():
     else:
         _rigid_done = False
 
-    sk_verts = []
-    for i in range(len(world)):
-        n = rigid_n[i] if _rigid_done else vnormal(i)
-        u, vv = uv[i]
-        wl = [(p, w) for p, w in vweights[i].items()]
-        sk_verts.append([round(world[i][0], 3), round(world[i][1], 3),
-                         round(world[i][2], 3),
-                         round(min(1.0, max(0.0, u)), 4),
-                         round(min(1.0, max(0.0, vv)), 4),
-                         round(n[0], 3), round(n[1], 3), round(n[2], 3),
-                         wl])
+    # (sk_verts is emitted AFTER the weld/cut passes below so the blended
+    #  weights and closed gaps actually reach the bundle)
     # degenerate-connectivity filter (general): providers occasionally
     # emit long internal bridge triangles (fused-limb webbing, remesh
     # artifacts). Real surface edges on these meshes are a few percent
@@ -2294,7 +2290,26 @@ def main():
         _ADJ.add(frozenset((_pa, _ch)))
     _welded = 0
     _welded_verts = set()
-    for _pass in range(2):
+    # degenerate-mapping guard (same rationale as the torn-edge weld guard
+    # below): on crush-class targets (Kirby/Purin-style, whole humanoid
+    # onto 1-2 joints) cross-part stretch is pervasive and welding pulls
+    # the entire mesh into itself until it is invisible. Weld only when
+    # tears are LOCAL.
+    _cross_torn = 0
+    for t in tris:
+        for a2, b2 in ((t[0], t[1]), (t[1], t[2]), (t[0], t[2])):
+            pa_, pb_ = vpart[a2], vpart[b2]
+            if pa_ == pb_ or frozenset((pa_, pb_)) not in _ADJ:
+                continue
+            db = sum((pos[a2][k] - pos[b2][k]) ** 2 for k in range(3)) ** 0.5
+            dw = sum((world[a2][k] - world[b2][k]) ** 2 for k in range(3)) ** 0.5
+            if dw > 2.5 * max(db, 0.01) * s_perp and dw > 0.06 * s_perp:
+                _cross_torn += 1
+    if _cross_torn > max(120, int(0.05 * len(tris))):
+        print(f"seam weld: skipped ({_cross_torn} torn cross-part edges is "
+              f"global crush, not local seams)")
+    else:
+     for _pass in range(2):
         for t in tris:
             for a2, b2 in ((t[0], t[1]), (t[1], t[2]), (t[0], t[2])):
                 pa_, pb_ = vpart[a2], vpart[b2]
@@ -2343,6 +2358,65 @@ def main():
     def _cut_for(t):
         m = max(_part_med.get(vpart[i], 1.0) for i in t)
         return max(3.0, 3.0 * m)
+    # torn-edge weld (general): a torn edge INSIDE a part (or across
+    # adjacent parts) is real surface whose endpoint weights diverged —
+    # coat verts sharing torso+arm influence tear when the target's
+    # proportions separate those joints. Cutting leaves visible holes
+    # (exposed once the vanilla body underneath is blanked); instead give
+    # both endpoints the same averaged weights so the edge moves as one,
+    # and close the world gap. Non-adjacent-part bridges (hand-to-hip
+    # webbing) are garbage and still get cut below.
+    _torn_welded = 0
+    # degenerate-mapping guard: when torn edges are pervasive (crush-class
+    # targets like Kirby, where a whole humanoid maps onto 1-2 joints),
+    # welding averages weights across the entire mesh and collapses it to
+    # a point. Welding is for LOCAL tears; if more than ~5% of the mesh is
+    # "torn", the stretch is global and legitimate — keep the mesh as-is.
+    _torn_edge_count = 0
+    if not _rigid_done:
+        for t in tris:
+            _cut = _cut_for(t)
+            for a2, b2 in ((t[0], t[1]), (t[1], t[2]), (t[0], t[2])):
+                pa_, pb_ = vpart[a2], vpart[b2]
+                if pa_ != pb_ and frozenset((pa_, pb_)) not in _ADJ:
+                    continue
+                db = sum((pos[a2][k] - pos[b2][k]) ** 2 for k in range(3)) ** 0.5
+                dw = sum((world[a2][k] - world[b2][k]) ** 2 for k in range(3)) ** 0.5
+                if dw > _cut * max(db, 0.01) * s_perp and dw > 0.06 * s_perp:
+                    _torn_edge_count += 1
+    _torn_weld_ok = _torn_edge_count <= max(60, int(0.05 * len(tris)))
+    if not _torn_weld_ok and _torn_edge_count:
+        print(f"torn-edge weld: skipped ({_torn_edge_count} torn edges is "
+              f"global crush, not local tears)")
+    if not _rigid_done and _torn_weld_ok:
+        for _pass in range(2):
+            for t in tris:
+                _cut = _cut_for(t)
+                for a2, b2 in ((t[0], t[1]), (t[1], t[2]), (t[0], t[2])):
+                    pa_, pb_ = vpart[a2], vpart[b2]
+                    if pa_ != pb_ and frozenset((pa_, pb_)) not in _ADJ:
+                        continue
+                    db = sum((pos[a2][k] - pos[b2][k]) ** 2 for k in range(3)) ** 0.5
+                    dw = sum((world[a2][k] - world[b2][k]) ** 2 for k in range(3)) ** 0.5
+                    if dw <= _cut * max(db, 0.01) * s_perp or dw <= 0.06 * s_perp:
+                        continue
+                    mix = {}
+                    for src_ in (vweights[a2], vweights[b2]):
+                        for p_, w_ in src_.items():
+                            mix[p_] = mix.get(p_, 0.0) + 0.5 * w_
+                    tot = sum(mix.values()) or 1.0
+                    nb = {p_: w_ / tot for p_, w_ in
+                          sorted(mix.items(), key=lambda kv: -kv[1])[:4]}
+                    vweights[a2] = dict(nb)
+                    vweights[b2] = dict(nb)
+                    mid = [(world[a2][k] + world[b2][k]) * 0.5 for k in range(3)]
+                    world[a2] = tuple(world[a2][k] + 0.9 * (mid[k] - world[a2][k]) for k in range(3))
+                    world[b2] = tuple(world[b2][k] + 0.9 * (mid[k] - world[b2][k]) for k in range(3))
+                    _torn_welded += 1
+                    _welded_verts.add(a2)
+                    _welded_verts.add(b2)
+    if _torn_welded:
+        print(f"torn-edge weld: {_torn_welded} in-part edges closed instead of cut")
     sk_tris = []
     n_degen = 0
     _dbg_torn = []
@@ -2387,6 +2461,17 @@ def main():
                     for i in t:
                         bw = ", ".join(f"{names[jix[i][k]]}:{wts[i][k]:.2f}" for k in range(4) if wts[i][k] > 0)
                         print(f"    bind=({pos[i][0]:.3f},{pos[i][1]:.3f},{pos[i][2]:.3f}) world=({world[i][0]:.0f},{world[i][1]:.0f},{world[i][2]:.0f}) [{bw}]")
+    sk_verts = []
+    for i in range(len(world)):
+        n = rigid_n[i] if _rigid_done else vnormal(i)
+        u, vv = uv[i]
+        wl = [(p, w) for p, w in vweights[i].items()]
+        sk_verts.append([round(world[i][0], 3), round(world[i][1], 3),
+                         round(world[i][2], 3),
+                         round(min(1.0, max(0.0, u)), 4),
+                         round(min(1.0, max(0.0, vv)), 4),
+                         round(n[0], 3), round(n[1], 3), round(n[2], 3),
+                         wl])
     _emit = (lambda j: TARGET_MAP[j]) if TARGET_MAP is not None else (lambda j: j)
     if TARGET_MAP is not None:
         for v in sk_verts:
@@ -2398,7 +2483,51 @@ def main():
                # fighter happens to be in when the mesh attaches
                "bind_frames": {str(_emit(j)): {"o": list(frames[j][0]),
                                                "R": [list(r) for r in frames[j][1]]}
-                               for j in sk_joint_ids if j in frames}}
+                               for j in sk_joint_ids if j in frames},
+               # joints whose vanilla geometry must be hidden: every target
+               # joint the profile maps a canonical body joint onto (chain
+               # joints like the neck often carry geometry on non-Mario
+               # skeletons — Yoshi's joint 7 holds most of his head), plus
+               # profile "blank_extra" for body joints outside the map
+               # (Yoshi's hips at 5). Unmapped joints are accessories
+               # (sword/shield/tie/tail/ears) and keep vanilla DLs +
+               # modelpart behavior 1:1.
+               "blank_ids": sorted(({_emit(j) for j in sk_joint_ids}
+                                    | (set(TARGET_MAP.values())
+                                       if TARGET_MAP is not None else set())
+                                    | set(TARGET_BLANK_EXTRA)) - {0})}
+
+    # accessory snap: vanilla accessories (tail, sword, ...) attach at their
+    # vanilla bind offset from the parent joint, which sits flush against
+    # the VANILLA body. The replacement mesh has different proportions, so
+    # profile "snap_accessories" roots get a parent-local delta that moves
+    # the root onto the nearest replacement-mesh surface point (slightly
+    # embedded so it reads as attached). The engine re-applies the delta
+    # after animation each tick; child joints ride along.
+    if TARGET_SNAP_ACCS:
+        raw_frames = load_frames(frames_path)
+        accs = []
+        for aj in TARGET_SNAP_ACCS:
+            if aj not in raw_frames:
+                print(f"snap_accessories: joint {aj} missing frame, skipped")
+                continue
+            ro = raw_frames[aj][0]
+            best_i, bd = None, 1e30
+            for i, v in enumerate(sk_verts):
+                d2 = (v[0]-ro[0])**2 + (v[1]-ro[1])**2 + (v[2]-ro[2])**2
+                if d2 < bd:
+                    bd, best_i = d2, i
+            # pin the root to this VERTEX at runtime: the engine already
+            # skins every vertex each tick, so the root follows the true
+            # surface through any pose (anchoring to a single joint frame
+            # drifts in crouches; a static parent-local delta is worse).
+            # embed slightly along the inward normal so the accessory base
+            # reads as attached without its geometry clipping far inside.
+            accs.append({"joint": aj, "vert": best_i, "embed": 10.0})
+            print(f"snap_accessories: joint {aj} pinned to vert {best_i} "
+                  f"({math.sqrt(bd):.1f} world units away at bind), embed 10")
+        if accs:
+            skinned["accessories"] = accs
 
     if TARGET_MAP is not None:
         for p in out_parts:
@@ -2558,6 +2687,21 @@ def write_binary5(bundle_json_path, out_path):
                 for r in range(3):
                     f.write(struct.pack("<fff", R[0][r], R[1][r], R[2][r]))
             print("binary5: embedded bind skeleton (BIND section)")
+        blank_ids = sk.get("blank_ids", joint_ids)
+        f.write(b"BLNK")
+        f.write(struct.pack("<I", len(blank_ids)))
+        for j in blank_ids:
+            f.write(struct.pack("<I", j))
+        if set(blank_ids) != set(joint_ids):
+            print(f"binary5: blank list {sorted(blank_ids)} "
+                  f"(+{sorted(set(blank_ids) - set(joint_ids))} beyond skinned set)")
+        accs = sk.get("accessories", [])
+        if accs:
+            f.write(b"ACC2")
+            f.write(struct.pack("<I", len(accs)))
+            for a in accs:
+                f.write(struct.pack("<IIf", a["joint"], a["vert"], a["embed"]))
+            print(f"binary5: {len(accs)} accessory vertex pin(s) (ACC2 section)")
     print(f"binary5 (CPU-skinned): {len(verts)} verts, {len(tris)} tris, "
           f"{len(joint_ids)} joints -> {out_path}")
 

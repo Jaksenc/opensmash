@@ -23,5 +23,9 @@
   "26": 27,
   "27": 28
  },
- "parts": "vanilla-captain-parts.canonical.json"
+ "parts": "vanilla-captain-parts.canonical.json",
+ "blank_extra": [
+  5,
+  18
+ ]
 }
