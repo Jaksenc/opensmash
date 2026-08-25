@@ -35,3 +35,21 @@ generate_announcer(character_name, output_wav)
 
 The function sends the supplied name as one TTS request, adding only a final
 exclamation mark unless `append_exclamation=False` is passed.
+
+## In-game injection
+
+`run_character.py` runs this as its `voice` stage (output
+`play/ui/<slug>/announcer.wav`), stages the clip into
+`web-dist/bundles/<slug>.wav`, and adds `&inject_voice=bundles/<slug>.wav`
+to the play URL.
+
+Game side, the web shell fetches the clip into MEMFS and sets
+`SSB64_INJECT_VOICE`. `port/audio/voice_inject.c` mixes the WAV straight
+into the 32 kHz output; a hook in `func_800269C0_275C0` (n_env.c) swaps it
+in whenever the injected fkind's announcer name would play (character
+select, VS results winner announce, etc.), so there is no FGM sample-length
+limit. VS results also stretches the hardcoded 60-tic gap before the crowd
+cheer to fit longer clips (`port_voice_results_extra_wait_tics`).
+
+Known gaps: the clip ignores the in-game voice-volume slider, and only the
+name line is generated (team-battle / 1P-mode announcer lines stay vanilla).
