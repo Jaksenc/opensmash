@@ -132,31 +132,145 @@ update();
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("test_shots")
-    ap.add_argument("ref_shots")
+    ap.add_argument("ref_shots", nargs="?", default=None)
     ap.add_argument("out")
+    ap.add_argument("--split", action="store_true",
+                    help="single dual-fighter run: left half = test (P1), right half = reference (P2)")
     ap.add_argument("--name", default="eval")
     ap.add_argument("--labels", default=None, help="replay sidecar json with tour marks")
     args = ap.parse_args()
     labels = LABELS
     if args.labels and os.path.exists(args.labels):
         marks = json.load(open(args.labels))["marks"]
-        # +40: game frames elapsed before the scene consumes replay ticks
-        labels = {t + 40: lab for t, lab in marks
+        # capture frames are replay ticks — marks align directly
+        labels = {t: lab for t, lab in marks
                   if not lab.startswith(("pre-", "idle", "face", "reface"))}
 
     def frames_in(d):
         return {int(m.group(1)) for n in os.listdir(d)
                 if (m := re.match(r"frame_(\d+)\.png$", n))}
 
-    frames = sorted(frames_in(args.test_shots) & frames_in(args.ref_shots))
-    if not frames:
-        raise SystemExit("no common frames between the two runs")
-    for run, src in (("test", args.test_shots), ("ref", args.ref_shots)):
-        os.makedirs(os.path.join(args.out, run), exist_ok=True)
+    if args.split:
+        # one dual-fighter run: P1 (test) walks the tour left of P2
+        # (vanilla reference) doing the identical tour — same frame, so
+        # zero run-to-run jitter. The pair drifts around during walks, so
+        # a fixed middle split leaks each fighter into the other's panel;
+        # instead detect the two silhouettes per frame and crop a fixed
+        # window around each.
+        from PIL import Image
+        import numpy as np
+        frames = sorted(frames_in(args.test_shots))
+        if not frames:
+            raise SystemExit("no frames")
+        os.makedirs(os.path.join(args.out, "test"), exist_ok=True)
+        os.makedirs(os.path.join(args.out, "ref"), exist_ok=True)
+        WIN = 520
+        last = None
         for f in frames:
-            dst = os.path.join(args.out, run, f"frame_{f}.png")
-            if not os.path.exists(dst):
-                shutil.copy(os.path.join(src, f"frame_{f}.png"), dst)
+            dt = os.path.join(args.out, "test", f"frame_{f}.png")
+            dr = os.path.join(args.out, "ref", f"frame_{f}.png")
+            if os.path.exists(dt) and os.path.exists(dr):
+                continue
+            im = Image.open(os.path.join(args.test_shots, f"frame_{f}.png"))
+            w, h = im.size
+            a = np.asarray(im.convert("RGB")).astype(int)
+            bg = (abs(a[:, :, 0] - 52) < 16) & (abs(a[:, :, 1] - 52) < 16) & (abs(a[:, :, 2] - 58) < 16)
+            colx = (~bg).sum(axis=0)
+            xs = np.nonzero(colx > 2)[0]
+            if len(xs) < 10:
+                centers = last or (w // 3, 2 * w // 3)
+            else:
+                # widest interior gap between occupied columns = the split
+                gaps = np.diff(xs)
+                gi = int(np.argmax(gaps))
+                if gaps[gi] < 20:
+                    centers = last or (w // 3, 2 * w // 3)
+                else:
+                    left = xs[: gi + 1]
+                    right = xs[gi + 1:]
+                    centers = (int(left.mean()), int(right.mean()))
+            last = centers
+            for cx, dst in zip(centers, (dt, dr)):
+                x0 = max(0, min(w - WIN, cx - WIN // 2))
+                im.crop((x0, 0, x0 + WIN, h)).save(dst)
+    else:
+        if not args.ref_shots:
+            raise SystemExit("ref_shots required without --split")
+        common = sorted(frames_in(args.test_shots) & frames_in(args.ref_shots))
+        if not common:
+            raise SystemExit("no common frames between the two runs")
+        # auto-align: the two runs boot a few ticks apart, so identical
+        # frame numbers can be different animation phases (fast moves then
+        # look "distorted"). Estimate the constant offset by matching the
+        # fighter's centroid path, then pair test[f] with ref[f + delta].
+        import numpy as np
+        from PIL import Image
+        step = common[1] - common[0] if len(common) > 1 else 2
+
+        def centroid(path):
+            a = np.asarray(Image.open(path).convert("RGB")).astype(int)
+            m = (abs(a[:, :, 0] - 52) > 18) | (abs(a[:, :, 1] - 52) > 18) | (abs(a[:, :, 2] - 58) > 18)
+            ys, xs = np.nonzero(m)
+            if len(xs) < 50:
+                return None
+            return (float(xs.mean()), float(ys.mean()))
+
+        probe = [f for f in common if f <= common[0] + 400]
+        ct = {f: centroid(os.path.join(args.test_shots, f"frame_{f}.png")) for f in probe}
+        cr = {f: centroid(os.path.join(args.ref_shots, f"frame_{f}.png")) for f in probe}
+        best_d, best_err = 0, None
+        for d in range(-10, 11, step if step > 1 else 1):
+            errs = []
+            for f in probe:
+                a, b = ct.get(f), cr.get(f + d)
+                if a and b:
+                    errs.append(abs(a[0] - b[0]) + abs(a[1] - b[1]))
+            if len(errs) > 20:
+                e = sum(errs) / len(errs)
+                if best_err is None or e < best_err:
+                    best_err, best_d = e, d
+        if best_err is None or best_err > 30:
+            # a trustworthy match keeps the fighter paths within a few
+            # pixels; anything worse means the probe failed — don't shift.
+            if best_d:
+                print(f"run alignment: probe inconclusive "
+                      f"(err {best_err if best_err is not None else -1:.1f}px), no shift applied")
+            best_d = 0
+        elif best_d:
+            print(f"run alignment: reference shifted {best_d:+d} ticks "
+                  f"(mean centroid error {best_err:.1f}px)")
+        # viewport normalization: the native Metal window sometimes renders
+        # into a sub-region of the frame (the long-standing resize bug),
+        # leaving black bands and a smaller fighter. The game viewport is
+        # the non-black region — crop to it and rescale so both runs
+        # present identically regardless of the window lottery.
+        def viewport_bbox(sample_paths):
+            boxes = []
+            for sp in sample_paths:
+                a = np.asarray(Image.open(sp).convert("RGB")).astype(int)
+                nb = a.sum(axis=2) > 30
+                ys, xs = np.nonzero(nb)
+                if len(xs) > 1000:
+                    boxes.append((xs.min(), ys.min(), xs.max() + 1, ys.max() + 1))
+            if not boxes:
+                return None
+            return (min(b[0] for b in boxes), min(b[1] for b in boxes),
+                    max(b[2] for b in boxes), max(b[3] for b in boxes))
+
+        frames = [f for f in common if (f + best_d) in frames_in(args.ref_shots)]
+        OUT_W, OUT_H = 1024, 768
+        for run, src, off in (("test", args.test_shots, 0), ("ref", args.ref_shots, best_d)):
+            os.makedirs(os.path.join(args.out, run), exist_ok=True)
+            probe_paths = [os.path.join(src, f"frame_{f + off}.png") for f in frames[:200:20]]
+            vb = viewport_bbox(probe_paths)
+            for f in frames:
+                dst = os.path.join(args.out, run, f"frame_{f}.png")
+                if os.path.exists(dst):
+                    continue
+                im = Image.open(os.path.join(src, f"frame_{f + off}.png"))
+                if vb:
+                    im = im.crop(vb)
+                im.resize((OUT_W, OUT_H), Image.LANCZOS).save(dst)
     html = (HTML.replace("__NAME__", args.name)
                 .replace("__FRAMES__", json.dumps(frames))
                 .replace("__LABELS__", json.dumps(labels)))

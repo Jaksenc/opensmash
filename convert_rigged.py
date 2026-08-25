@@ -373,11 +373,12 @@ TARGET_MAP = None
 TARGET_PARTS_JSON = None
 TARGET_BLANK_EXTRA = []
 TARGET_SNAP_ACCS = []
+TARGET_KEEP_VANILLA = []
 
 
 def main():
     argv = sys.argv[1:]
-    global TARGET_MAP, TARGET_PARTS_JSON, TARGET_BLANK_EXTRA, TARGET_SNAP_ACCS
+    global TARGET_MAP, TARGET_PARTS_JSON, TARGET_BLANK_EXTRA, TARGET_SNAP_ACCS, TARGET_KEEP_VANILLA
     if "--target" in argv:
         ti = argv.index("--target")
         _prof = json.load(open(argv[ti + 1]))
@@ -385,6 +386,7 @@ def main():
         TARGET_PARTS_JSON = _prof.get("parts")
         TARGET_BLANK_EXTRA = [int(j) for j in _prof.get("blank_extra", [])]
         TARGET_SNAP_ACCS = [int(j) for j in _prof.get("snap_accessories", [])]
+        TARGET_KEEP_VANILLA = [int(j) for j in _prof.get("keep_vanilla", [])]
         argv = argv[:ti] + argv[ti + 2:]
         print(f"target skeleton: {_prof.get('name', '?')} "
               f"({len(TARGET_MAP)} canonical parts mapped)")
@@ -2193,6 +2195,48 @@ def main():
                 n_capped += 1
     if n_capped:
         print(f"cap claim: {n_capped} crown verts -> 100% Head")
+    # arm claim (general): providers rig loose sleeves to the SPINE (and
+    # draped hair to the head), so the geometry occupying the arm region
+    # stays glued to the torso while only the gloves follow the hands —
+    # invisible on mild Mario poses, glaring on targets whose animations
+    # throw the arms wide (Samus's crouch: gloves fly, no arm follows).
+    # Any vert inside a T-pose arm-bone capsule, clear of the chest,
+    # whose weights lean torso/neck/head gets re-leaned onto that arm
+    # bone's part (blended, so claim boundaries still deform smoothly).
+    n_armed = 0
+    for _pref in (posx, negx):
+        for _seg0, _seg1 in ((_pref + "Arm", _pref + "ForeArm"),
+                             (_pref + "ForeArm", _pref + "Hand")):
+            if _seg0 not in name_idx or _seg1 not in name_idx or _seg0 not in bone_map:
+                continue
+            _a = jpos[name_idx[_seg0]]
+            _b = jpos[name_idx[_seg1]]
+            _part = bone_map[_seg0][0]
+            _ab = [_b[k] - _a[k] for k in range(3)]
+            _ab2 = sum(c * c for c in _ab) or 1e-9
+            _blen = _ab2 ** 0.5
+            _r2 = (0.72 * _blen) ** 2
+            _lat_min = 0.6 * abs(_a[0])
+            for i in range(len(world)):
+                if abs(pos[i][0]) < _lat_min:
+                    continue   # chest-side verts stay with the torso
+                _t = sum((pos[i][k] - _a[k]) * _ab[k] for k in range(3)) / _ab2
+                if _t < -0.1 or _t > 1.1:
+                    continue
+                _q = [_a[k] + max(0.0, min(1.0, _t)) * _ab[k] for k in range(3)]
+                if sum((pos[i][k] - _q[k]) ** 2 for k in range(3)) > _r2:
+                    continue
+                _dom = max(vweights[i].items(), key=lambda kv: kv[1])[0]
+                if _dom not in (6, 7, 11, 12, 13):
+                    continue
+                _mix = {p: 0.25 * w for p, w in vweights[i].items()}
+                _mix[_part] = _mix.get(_part, 0.0) + 0.75
+                _tt = sum(_mix.values()) or 1.0
+                vweights[i] = {p: w / _tt for p, w in
+                               sorted(_mix.items(), key=lambda kv: -kv[1])[:4]}
+                n_armed += 1
+    if n_armed:
+        print(f"arm claim: {n_armed} sleeve/shoulder verts re-leaned onto arm bones")
     # cap shrinkwrap: the generated cap flares out well past the skull
     # sphere at the sides/back; pitched with the head (utilt/usmash) the
     # flare sweeps out as a big red "sail". Pull back/side cap verts that
@@ -2501,6 +2545,53 @@ def main():
                     for i in t:
                         bw = ", ".join(f"{names[jix[i][k]]}:{wts[i][k]:.2f}" for k in range(4) if wts[i][k] > 0)
                         print(f"    bind=({pos[i][0]:.3f},{pos[i][1]:.3f},{pos[i][2]:.3f}) world=({world[i][0]:.0f},{world[i][1]:.0f},{world[i][2]:.0f}) [{bw}]")
+    # seam unify (general): UV-seam duplicate verts share a bind position
+    # but are separate indices, and the per-EDGE weld passes above touch one
+    # copy's edges without touching the other's — the copies drift apart in
+    # weights/world, and any difference tears the texture seam open in
+    # animated poses (slit-shaped holes in the coat/arms, worst on
+    # stretched targets). Force position-coincident verts to share the
+    # averaged weights and world position.
+    if not _rigid_done:
+        _pgroups = {}
+        for _i in range(len(pos)):
+            _pgroups.setdefault((round(pos[_i][0], 4), round(pos[_i][1], 4),
+                                 round(pos[_i][2], 4)), []).append(_i)
+        _unified = 0
+        for _idxs in _pgroups.values():
+            if len(_idxs) < 2:
+                continue
+            _mix = {}
+            for _i in _idxs:
+                for _p, _w in vweights[_i].items():
+                    _mix[_p] = _mix.get(_p, 0.0) + _w
+            _tot = sum(_mix.values()) or 1.0
+            _top = dict(sorted(((_p, _w / _tot) for _p, _w in _mix.items()),
+                               key=lambda kv: -kv[1])[:4])
+            _t2 = sum(_top.values()) or 1.0
+            _top = {_p: _w / _t2 for _p, _w in _top.items()}
+            _wp = tuple(sum(world[_i][_k] for _i in _idxs) / len(_idxs) for _k in range(3))
+            if any(vweights[_i] != _top or tuple(world[_i]) != _wp for _i in _idxs):
+                _unified += 1
+            for _i in _idxs:
+                vweights[_i] = dict(_top)
+                world[_i] = _wp
+        if _unified:
+            print(f"seam unify: {_unified} coincident-vertex groups share weights/position")
+    # keep_vanilla replacement-drop: when a mapped joint keeps its VANILLA
+    # geometry (Samus's cannon = her forearm+hand), the replacement's own
+    # geometry for those parts would clip through it — the vanilla piece
+    # REPLACES that limb segment, so drop replacement tris fully inside
+    # the kept parts.
+    if TARGET_KEEP_VANILLA and TARGET_MAP is not None:
+        _kept_canon = {c for c, t in TARGET_MAP.items() if t in TARGET_KEEP_VANILLA}
+        _vdrop = [max(vweights[i].items(), key=lambda kv: kv[1])[0] in _kept_canon
+                  for i in range(len(pos))]
+        _before = len(sk_tris)
+        sk_tris = [t for t in sk_tris if not all(_vdrop[i] for i in t)]
+        if _before != len(sk_tris):
+            print(f"keep_vanilla: dropped {_before - len(sk_tris)} replacement tris "
+                  f"inside vanilla-kept parts {sorted(_kept_canon)}")
     sk_verts = []
     for i in range(len(world)):
         n = rigid_n[i] if _rigid_done else vnormal(i)
@@ -2532,10 +2623,16 @@ def main():
                # (Yoshi's hips at 5). Unmapped joints are accessories
                # (sword/shield/tie/tail/ears) and keep vanilla DLs +
                # modelpart behavior 1:1.
+               # keep_vanilla: mapped joints whose VANILLA geometry should
+               # render anyway (Samus's arm cannon: canonical hand maps
+               # onto the cannon joint, but the cannon IS the fighter's
+               # identity — keep it and let the replacement's hand ride
+               # inside it).
                "blank_ids": sorted(({_emit(j) for j in sk_joint_ids}
                                     | (set(TARGET_MAP.values())
                                        if TARGET_MAP is not None else set())
-                                    | set(TARGET_BLANK_EXTRA)) - {0})}
+                                    | set(TARGET_BLANK_EXTRA))
+                                   - {0} - set(TARGET_KEEP_VANILLA))}
 
     # accessory snap: vanilla accessories (tail, sword, ...) attach at their
     # vanilla bind offset from the parent joint, which sits flush against
