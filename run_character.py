@@ -6,10 +6,11 @@
 
 Stages (each skipped if its output already exists — delete a file or use
 --force-stage to redo): expand -> tpose -> mesh (Tripo v3 + rig) ->
-convert -> portrait art -> stock art -> ui pack -> stage.
+convert -> portrait art -> stock art -> ui pack -> announcer voice -> stage.
 
 LLM callouts: Gemini for the character description, gpt-image-2 for the
-three images. Everything else is deterministic.
+three images, MiniMax (via fal) for the announcer clip. Everything else is
+deterministic.
 """
 import argparse
 import json
@@ -95,7 +96,7 @@ def main():
     ap.add_argument("--photo", default=None)
     ap.add_argument("--out", default=None)
     ap.add_argument("--force-stage", default=None,
-                    choices=["expand", "tpose", "mesh", "convert", "portrait", "stock", "ui"])
+                    choices=["expand", "tpose", "mesh", "convert", "portrait", "stock", "ui", "voice"])
     a = ap.parse_args()
 
     slug = re.sub(r"[^a-z0-9]", "", a.name.lower())[:16]
@@ -186,14 +187,21 @@ def main():
         sh(["python3", "gen_ui_assets.py", osbui, "--art", F("portrait_raw.png"),
             "--stock-art", F("stock_raw.png"), "--name", short], timeout=300)
 
-    # 8. stage -----------------------------------------------------------
+    # 8. voice -----------------------------------------------------------
+    wav = F("announcer.wav")
+    if stage_needed(wav, force, "voice"):
+        log("voice: generating announcer clip")
+        sh(["python3", "generate_announcer.py", cdef["display"], "--out", wav], timeout=300)
+
+    # 9. stage -----------------------------------------------------------
     if os.path.isdir(WEBDIST):
-        for src in (osb, osbui):
-            dst = os.path.join(WEBDIST, os.path.basename(src))
+        for src, base in ((osb, f"{slug}.osb"), (osbui, f"{slug}.osbui"), (wav, f"{slug}.wav")):
+            dst = os.path.join(WEBDIST, base)
             open(dst, "wb").write(open(src, "rb").read())
         log(f"staged into web-dist/bundles")
     url = (f"http://localhost:8600/index.html?inject=bundles/{slug}.osb"
-           f"&inject_ui=bundles/{slug}.osbui&SSB64_START_SCENE=16")
+           f"&inject_ui=bundles/{slug}.osbui&inject_voice=bundles/{slug}.wav"
+           f"&SSB64_START_SCENE=16")
     log(f"done: {url}")
 
 
