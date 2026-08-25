@@ -2281,6 +2281,48 @@ def main():
     # world edge far longer than its bind edge times the global scale;
     # big flat low-poly panels (long bind edges) are legitimate and are
     # kept. Drop only if some edge stretched > 3x.
+    # ---- seam weld (general): extreme target poses (DK's 90-degree hip
+    # flexion) pull apart mesh edges that cross ADJACENT parts (skirt hem
+    # between torso and thighs). Cutting those makes holes; instead weld:
+    # blend the two verts' part weights toward each other (they then move
+    # together in every pose) and close most of the bind-position gap.
+    # Non-adjacent crossings (hand-to-hip webbing) stay cut below.
+    _ADJ = set()
+    for _pa, _ch in ((6, 19), (6, 24), (6, 8), (6, 14), (6, 11), (11, 12),
+                     (8, 9), (9, 10), (14, 15), (15, 16),
+                     (19, 20), (20, 22), (24, 25), (25, 27), (6, 12)):
+        _ADJ.add(frozenset((_pa, _ch)))
+    _welded = 0
+    _welded_verts = set()
+    for _pass in range(2):
+        for t in tris:
+            for a2, b2 in ((t[0], t[1]), (t[1], t[2]), (t[0], t[2])):
+                pa_, pb_ = vpart[a2], vpart[b2]
+                if pa_ == pb_ or frozenset((pa_, pb_)) not in _ADJ:
+                    continue
+                db = sum((pos[a2][k] - pos[b2][k]) ** 2 for k in range(3)) ** 0.5
+                dw = sum((world[a2][k] - world[b2][k]) ** 2 for k in range(3)) ** 0.5
+                if dw <= 2.5 * max(db, 0.01) * s_perp or dw <= 0.06 * s_perp:
+                    continue
+                # blend part weights 70/30 toward each other
+                for i_, j_ in ((a2, b2), (b2, a2)):
+                    mix = {}
+                    for p_, w_ in vweights[i_].items():
+                        mix[p_] = mix.get(p_, 0.0) + 0.7 * w_
+                    for p_, w_ in vweights[j_].items():
+                        mix[p_] = mix.get(p_, 0.0) + 0.3 * w_
+                    tot = sum(mix.values()) or 1.0
+                    vweights[i_] = {p_: w_ / tot for p_, w_ in
+                                    sorted(mix.items(), key=lambda kv: -kv[1])[:4]}
+                # close 70% of the world gap symmetrically
+                mid = [(world[a2][k] + world[b2][k]) * 0.5 for k in range(3)]
+                world[a2] = tuple(world[a2][k] + 0.85 * (mid[k] - world[a2][k]) for k in range(3))
+                world[b2] = tuple(world[b2][k] + 0.85 * (mid[k] - world[b2][k]) for k in range(3))
+                _welded += 1
+                _welded_verts.add(a2); _welded_verts.add(b2)
+    if _welded:
+        print(f"seam weld: {_welded} cross-part edges closed instead of cut")
+
     # The cut threshold is RELATIVE to the median edge stretch: on extreme
     # target skeletons (DK's gorilla arms) the legitimate baseline stretch
     # is itself ~3x, and an absolute threshold deletes valid geometry.
@@ -2308,6 +2350,8 @@ def main():
         torn = False
         if _rigid_done:
             sk_tris.append(list(t)); continue
+        if any(i in _welded_verts for i in t):
+            sk_tris.append(list(t)); continue  # welded seams stay
         _cut = _cut_for(t)
         for a2, b2 in ((t[0], t[1]), (t[1], t[2]), (t[0], t[2])):
             db = sum((pos[a2][k] - pos[b2][k]) ** 2 for k in range(3)) ** 0.5
