@@ -30,6 +30,8 @@ def main():
     ap.add_argument("--frames", default="380:1900:12", help="start:stop:step")
     ap.add_argument("--frames-list", default=None, help="explicit comma list")
     ap.add_argument("--replay", default=os.path.join(ROOT, "eval-tour.rpl"))
+    ap.add_argument("--fkind", type=int, default=0, help="fighter kind for BOTH players (self-mirror tour)")
+    ap.add_argument("--pose", action="store_true", help="clean capture: draw only P1's fighter (no stage/HUD/P2)")
     ap.add_argument("--dump", action="store_true", help="also dump FRM joint frames")
     ap.add_argument("--keep-full", action="store_true", help="keep full-res PNGs")
     ap.add_argument("--width", type=int, default=1504, help="downscale width")
@@ -48,16 +50,18 @@ def main():
 
     env = dict(os.environ)
     env.update({
-        "SSB64_BOOT_BATTLE": "0,0,4,0",
+        "SSB64_BOOT_BATTLE": f"{args.fkind},{args.fkind},4,0",
         "SSB64_REPLAY_PLAY": os.path.abspath(args.replay),
         "SSB64_SCREENSHOT_FRAMES": frame_list,
         "SSB64_SCREENSHOT_DIR": shots,
         "SSB64_MAX_FRAMES": str(stop + 20),
         "SSB64_SCREENSHOT_RAW": "1",   # raw BGRA dumps; encoded below with ffmpeg
     })
+    if args.pose:
+        env["SSB64_POSE_CAPTURE"] = "1"
     if args.bundle:
         env["SSB64_INJECT_BUNDLE"] = os.path.abspath(args.bundle)
-        env["SSB64_INJECT_FKIND"] = "0"
+        env["SSB64_INJECT_FKIND"] = str(args.fkind)
         env["SSB64_INJECT_PLAYER"] = "0"
     if args.dump:
         env["SSB64_DUMP_FRAMES"] = "2200"
@@ -67,7 +71,7 @@ def main():
     cfg_path = os.path.join(BUILD, "BattleShip.cfg.json")
     try:
         cfg = json.load(open(cfg_path))
-        cfg.setdefault("Window", {}).update({"Width": 1280, "Height": 658, "PositionX": 0, "PositionY": 40,
+        cfg.setdefault("Window", {}).update({"Width": 1280, "Height": 960, "PositionX": 0, "PositionY": 40,
                                              "Fullscreen": {"Enabled": False}})
         json.dump(cfg, open(cfg_path, "w"), indent=1)
     except Exception as e:

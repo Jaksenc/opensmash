@@ -44,6 +44,14 @@ TOUR = [
     ("approach",     45, 0, 45, 0, True),  # walk toward center (mirrored)
     ("face",         3, 0, 25, 0),         # both tap RIGHT: same facing
     ("face-settle",  7, 0, 0, 0),
+    # walk both directions early: each facing exposes a different side of
+    # the mesh (and the turn animation itself).
+    ("walk-right",   60, 0, 45, 0),
+    ("idle-wr",      25, 0, 0, 0),
+    ("walk-left",    75, 0, -45, 0),
+    ("idle-wl",      25, 0, 0, 0),
+    ("reface",       3, 0, 25, 0),
+    ("reface-settle", 12, 0, 0, 0),
     ("idle1",        50, 0, 0, 0),
     ("jab",          3, A, 0, 0),
     ("jab-gap",      37, 0, 0, 0),
@@ -104,6 +112,9 @@ def main():
 
     tour, marks = build_tour()
     n = len(tour)
+    import json as _json
+    _json.dump({"marks": marks, "total": n},
+               open(args.out + ".json", "w"))
 
     md = struct.pack(
         "<10I", MAGIC, VERSION, SCENE_VSBATTLE, 2, args.stage,
