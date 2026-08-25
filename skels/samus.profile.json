@@ -26,5 +26,9 @@
  "parts": "vanilla-samus-parts.canonical.json",
  "blank_extra": [
   5
+ ],
+ "keep_vanilla": [
+  9,
+  10
  ]
 }
