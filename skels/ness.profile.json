@@ -23,5 +23,10 @@
   "26": 26,
   "27": 27
  },
- "parts": "vanilla-ness-parts.canonical.json"
+ "parts": "vanilla-ness-parts.canonical.json",
+ "blank_extra": [
+  23,
+  28,
+  29
+ ]
 }
