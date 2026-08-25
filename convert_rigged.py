@@ -754,9 +754,14 @@ def main():
         Mv = [B[i]-A[i] for i in range(3)]
         mlen = math.sqrt(sum(c*c for c in mv)) or 1e-9
         Mlen = math.sqrt(sum(c*c for c in Mv)) or 1e-9
-        ax_scales.append(Mlen/mlen)
+        # degenerate target bones (profile maps both endpoints onto one
+        # joint — merged chains on crush-class targets) are not evidence
+        # of scale; a median polluted by them collapses to ~0 and zeroes
+        # the whole character (Kirby rendered as a handful of triangles).
+        if Mlen > 1.0:
+            ax_scales.append(Mlen/mlen)
     ax_sorted = sorted(ax_scales)
-    s_perp = ax_sorted[len(ax_sorted)//2]
+    s_perp = ax_sorted[len(ax_sorted)//2] if ax_sorted else 1.0
     # height-normalized global scale: the median bone ratio under-sizes
     # characters whose limb proportions differ from the target (a long-
     # legged mesh retargets to short bones -> small ratios). Match the
@@ -777,7 +782,7 @@ def main():
         _tn = max(p[1] for p in pos)
         _ta = (jpos[name_idx[posx + "Foot"]][1] + jpos[name_idx[negx + "Foot"]][1]) / 2
         _sh = (_mtop - _ma) / max(1e-6, (_tn - _ta))
-        if 0.3 * s_perp < _sh < 3.0 * s_perp:
+        if s_perp <= 1e-3 or 0.3 * s_perp < _sh < 3.0 * s_perp:
             print(f"global scale: height-normalized {s_perp:.1f} -> {_sh:.1f}")
             s_perp = _sh
     except (KeyError, IndexError):
@@ -822,6 +827,9 @@ def main():
     m_upn = normalize(list(m_up))
     g_upn = normalize(list(g_up))
 
+    # parent part per part (the part whose distal joint is this part's
+    # anchor) — used as the direction fallback for degenerate target bones
+    _part_parent = {mario_bone[p]: p for p in seg if p not in INHERIT}
     for part, (prox, dist) in seg.items():
         a = jpos[name_idx[prox]]
         if part in INHERIT:
@@ -833,6 +841,29 @@ def main():
         Mv = [B[i]-A[i] for i in range(3)]
         mlen = math.sqrt(sum(c*c for c in mv)) or 1e-9
         Mlen = math.sqrt(sum(c*c for c in Mv)) or 1e-9
+        # degenerate TARGET bone: profiles may map a part's proximal and
+        # distal canonical joints onto the SAME target joint (Samus has no
+        # left hand joint; crush-class targets merge whole chains). The
+        # bone direction is then noise and the along-bone scale is zero —
+        # the part renders as a flattened sheet. Continue along the parent
+        # bone's direction at the global scale instead.
+        if Mlen < 0.12 * s_perp * mlen:
+            pp = _part_parent.get(part)
+            if pp is not None and pp in frames and mario_bone.get(pp) in frames:
+                PA, PB = frames[pp][0], frames[mario_bone[pp]][0]
+                Pv = [PB[i]-PA[i] for i in range(3)]
+                Plen = math.sqrt(sum(c*c for c in Pv))
+                if Plen > 1e-6:
+                    Mv = Pv
+                    Mlen = Plen
+            if Mlen < 1e-6:
+                Mv = [0.0, -1.0, 0.0]
+                Mlen = 1.0
+            Mlen_eff = s_perp * mlen      # isotropic: no real bone to span
+            print(f"degenerate target bone: part {part} follows its parent "
+                  f"bone direction at global scale")
+        else:
+            Mlen_eff = Mlen
         # twist reference: forward, unless the bone runs near-parallel to
         # forward (then use up). Same choice on both sides keeps the
         # references corresponding.
@@ -859,7 +890,16 @@ def main():
         # degenerate provider joints (e.g. a knee dropped at the ankle)
         # make Mlen/mlen explode and fling verts; clamp the bone-axis
         # scale to a sane band around the global scale.
-        conf[part] = (Q, Mlen / mlen, s_perp, u, a, A)
+        s_par = min(Mlen_eff / mlen, 3.0 * s_perp)
+        # stretch compensation: long-limbed targets (Samus ~2x, DK/Yoshi
+        # more) stretch parts along the bone while the perpendicular stays
+        # at the global scale — thin spaghetti limbs that tear at seams.
+        # The bone must still be spanned (the child part anchors at the
+        # real joint), so widen the part instead: perp gains sqrt of the
+        # stretch ratio, capped, keeping limbs readable at roughly the
+        # authored aspect.
+        sp2 = s_perp * min(1.55, math.sqrt(max(1.0, s_par / s_perp)))
+        conf[part] = (Q, s_par, sp2, u, a, A)
 
     if os.environ.get("OSB_DEBUG"):
         for part in sorted(conf):

@@ -36,8 +36,11 @@ def crop_band(im):
     return im.crop((int(W * BAND[0]), int(H * BAND[1]), int(W * BAND[2]), int(H * BAND[3])))
 
 
-def capture(out_dir, bundle, frames):
-    cmd = ["python3", "run_eval.py", out_dir, "--frames-list", ",".join(map(str, frames))]
+def capture(out_dir, bundle, frames, fkind=0, replay=None):
+    cmd = ["python3", "run_eval.py", out_dir, "--frames-list", ",".join(map(str, frames)),
+           "--fkind", str(fkind)]
+    if replay:
+        cmd += ["--replay", replay]
     if bundle:
         cmd += ["--bundle", bundle]
     r = subprocess.run(cmd, cwd=PIPE, capture_output=True, text=True, timeout=1800)
@@ -49,15 +52,26 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("bundle")
     ap.add_argument("out")
-    ap.add_argument("--vanilla-dir", default=os.path.join(HERE, "cells", "vanilla"))
+    ap.add_argument("--vanilla-dir", default=None)
+    ap.add_argument("--fkind", type=int, default=0, help="fighter kind (both players)")
     a = ap.parse_args()
+    if a.vanilla_dir is None:
+        a.vanilla_dir = os.path.join(HERE, "cells",
+                                     "vanilla" if a.fkind == 0 else f"vanilla-fk{a.fkind}")
+    # per-fighter tour replay (fighter kinds are baked into the replay
+    # metadata and must agree with BOOT_BATTLE)
+    replay = os.path.join(PIPE, "eval-tour.rpl" if a.fkind == 0 else f"eval-tour-fk{a.fkind}.rpl")
+    if not os.path.exists(replay):
+        subprocess.run(["python3", "make_replay.py", replay,
+                        "--p1", str(a.fkind), "--p2", str(a.fkind)], cwd=PIPE, check=True)
     os.makedirs(a.out, exist_ok=True)
     is_vanilla = a.bundle in ("vanilla", "none", "")
     frames = sorted(set(CLIP_FRAMES) | set(SHEET_FRAMES))
     shots = os.path.join(a.out, "shots")
     if not os.path.exists(os.path.join(shots, f"frame_{frames[-1]}.png")):
         shutil.rmtree(shots, ignore_errors=True)
-        capture(shots, None if is_vanilla else os.path.abspath(a.bundle), frames)
+        capture(shots, None if is_vanilla else os.path.abspath(a.bundle), frames,
+                fkind=a.fkind, replay=replay)
 
     # clip: crop band, encode
     clipdir = os.path.join(a.out, "clipframes")
@@ -78,9 +92,12 @@ def main():
                     "-crf", "23", "-movflags", "+faststart", mp4], check=True)
     shutil.rmtree(clipdir, ignore_errors=True)
 
-    # sheet: 29 frames, cell over vanilla
+    # sheet: 29 frames, cell over vanilla (reference auto-captured per fighter)
     if not is_vanilla:
         vshots = os.path.join(a.vanilla_dir, "shots")
+        if not os.path.exists(os.path.join(vshots, f"frame_{frames[-1]}.png")):
+            os.makedirs(a.vanilla_dir, exist_ok=True)
+            capture(vshots, None, frames, fkind=a.fkind, replay=replay)
         sheet_rows = []
         for f in SHEET_FRAMES:
             p = os.path.join(shots, f"frame_{f}.png")
@@ -92,8 +109,8 @@ def main():
             col = Image.new("RGB", (800, 850), (10, 10, 10))
             col.paste(top, (0, 14)); col.paste(bot, (0, 436))
             d = ImageDraw.Draw(col)
-            d.text((4, 1), f"{f} {LABELS.get(f, '')} TOP: pipeline (left fighter)", fill=(255, 255, 0))
-            d.text((4, 424), "BOTTOM: vanilla Mario (left fighter)", fill=(0, 255, 0))
+            d.text((4, 1), f"{f} {LABELS.get(f, '')} TOP: pipeline", fill=(255, 255, 0))
+            d.text((4, 424), f"BOTTOM: vanilla fkind {a.fkind}", fill=(0, 255, 0))
             col.save(os.path.join(a.out, f"pair_{f:04d}.png"))
             sheet_rows.append(col)
         # contact sheet of all pairs (6 per row) for quick viewing
@@ -105,6 +122,14 @@ def main():
             for i, c in enumerate(sheet_rows):
                 sheet.paste(c.resize((tw, th), Image.LANCZOS), ((i % cols) * tw, (i // cols) * th))
             sheet.save(os.path.join(a.out, "sheet.png"))
+    # web A/B flipbook: same-tick frames from the two runs, served by the
+    # dev server (web-dist/eval/ is preserved across repackages)
+    if not is_vanilla:
+        viewer = os.path.join(os.path.dirname(PIPE), "BattleShip", "web-dist", "eval",
+                              os.path.basename(os.path.normpath(a.out)))
+        subprocess.run(["python3", os.path.join(HERE, "make_viewer.py"), shots, vshots,
+                        viewer, "--name", os.path.basename(os.path.normpath(a.out))], check=True)
+        print(f"A/B viewer -> http://localhost:8600/eval/{os.path.basename(os.path.normpath(a.out))}/")
     print(f"clip -> {mp4}")
 
 
