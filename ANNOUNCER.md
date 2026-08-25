@@ -2,8 +2,20 @@
 
 The accepted implementation is `generate_announcer.py`. It uses the persistent
 MiniMax clone made from the corrected, game-rate SSB64 announcer reference.
-It does not use `announcer_voice.py`, the earlier OpenAI/WORLD experiment, and
-does not apply the discarded time-compression pass.
+(The earlier OpenAI/WORLD experiment and the time-compression pass were
+discarded.)
+
+`announcer_voice.py` is the standalone path: it imports
+`generate_announcer.generate_announcer()` (same library, no duplicated
+generation code), writes `play/ui/<slug>/announcer.wav`, and stages the clip
+into `../BattleShip/web-dist/bundles/<slug>.wav`:
+
+```sh
+python announcer_voice.py "Queen Elizabeth the Second" --slug queen
+```
+
+`run_character.py`'s voice stage runs the same wrapper with `--no-stage`
+(its own stage step does the copy).
 
 ## Setup
 

@@ -14,9 +14,9 @@ file next to this script:
     FAL_KEY
     MINIMAX_ANNOUNCER_VOICE_ID
 
-This is the accepted native-timing path. It intentionally does not use the
-old OpenAI/WORLD experiment in announcer_voice.py and does not time-compress
-the result.
+This is the accepted native-timing path (the discarded OpenAI/WORLD
+experiment is gone; announcer_voice.py is now a thin staging wrapper around
+this module). No time compression is applied.
 """
 
 from __future__ import annotations
