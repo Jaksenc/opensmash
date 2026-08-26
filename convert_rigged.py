@@ -374,11 +374,12 @@ TARGET_PARTS_JSON = None
 TARGET_BLANK_EXTRA = []
 TARGET_SNAP_ACCS = []
 TARGET_KEEP_VANILLA = []
+TARGET_SWAP_SIDES = False
 
 
 def main():
     argv = sys.argv[1:]
-    global TARGET_MAP, TARGET_PARTS_JSON, TARGET_BLANK_EXTRA, TARGET_SNAP_ACCS, TARGET_KEEP_VANILLA
+    global TARGET_MAP, TARGET_PARTS_JSON, TARGET_BLANK_EXTRA, TARGET_SNAP_ACCS, TARGET_KEEP_VANILLA, TARGET_SWAP_SIDES
     if "--target" in argv:
         ti = argv.index("--target")
         _prof = json.load(open(argv[ti + 1]))
@@ -387,6 +388,7 @@ def main():
         TARGET_BLANK_EXTRA = [int(j) for j in _prof.get("blank_extra", [])]
         TARGET_SNAP_ACCS = [int(j) for j in _prof.get("snap_accessories", [])]
         TARGET_KEEP_VANILLA = [int(j) for j in _prof.get("keep_vanilla", [])]
+        TARGET_SWAP_SIDES = bool(_prof.get("swap_sides", False))
         argv = argv[:ti] + argv[ti + 2:]
         print(f"target skeleton: {_prof.get('name', '?')} "
               f"({len(TARGET_MAP)} canonical parts mapped)")
@@ -734,6 +736,22 @@ def main():
     mario_bone = {6: 11, 8: 9, 9: 10, 14: 15, 15: 16,
                   19: 20, 20: 21, 24: 25, 25: 26}
 
+    # side swap (profile "swap_sides"): mirror which MESH side drives each
+    # canonical limb chain. The mesh's left/right assignment is invisible
+    # on symmetric fighters, but asymmetric targets expose it — Samus's
+    # cannon lives on her RIGHT arm, and a mirrored assignment puts the
+    # replacement's LEFT hand there. Swapping canonical ids (not
+    # posx/negx) keeps the facing triads untouched.
+    if TARGET_SWAP_SIDES:
+        _PSW = {8: 14, 14: 8, 9: 15, 15: 9, 10: 16, 16: 10,
+                19: 24, 24: 19, 20: 25, 25: 20, 22: 27, 27: 22}
+        _JSW = dict(_PSW)
+        _JSW.update({21: 26, 26: 21})
+        bone_map = {n: (_PSW.get(pp, pp), (None if jj is None else _JSW.get(jj, jj)))
+                    for n, (pp, jj) in bone_map.items()}
+        seg = {_PSW.get(k, k): v for k, v in seg.items()}
+        print("side swap: mesh left/right chains mirrored onto canonical parts")
+
     # ---- per-part conform transforms (ANISOTROPIC):
     #   v_world = Q * (u*(u.(v-a))*s_ax + ((v-a) - u*(u.(v-a)))*s_perp) + A
     # s_ax   = mario_bone_len / mesh_bone_len  (bone endpoints land EXACTLY
@@ -948,7 +966,7 @@ def main():
     # the shoe pointing along the shin, i.e. toe-backward in the ankle
     # frame (vanilla foot geometry runs toe-forward along local +x). Align
     # mesh Foot->ToeBase onto the mario foot frame's +x axis instead.
-    for part, foot_name in ((22, posx + "Foot"), (27, negx + "Foot")):
+    for part, foot_name in ((22, seg[22][0]), (27, seg[27][0])):
         toe_name = foot_name.replace("Foot", "ToeBase")
         if foot_name not in name_idx or toe_name not in name_idx:
             continue
@@ -1139,14 +1157,17 @@ def main():
     def mario_o(j):
         return frames[j][0]
 
+    _bsw = (lambda j: {8: 14, 14: 8, 9: 15, 15: 9, 10: 16, 16: 10, 7: 13, 13: 7,
+                        19: 24, 24: 19, 20: 25, 25: 20, 21: 26, 26: 21}.get(j, j)) \
+           if TARGET_SWAP_SIDES else (lambda j: j)
     bone_target = {
         "Hips": mario_o(6),
         "neck": mario_o(11), "Head": mario_o(12),
-        posx + "Shoulder": mario_o(7), negx + "Shoulder": mario_o(13),
-        posx + "Arm": mario_o(8), posx + "ForeArm": mario_o(9), posx + "Hand": mario_o(10),
-        negx + "Arm": mario_o(14), negx + "ForeArm": mario_o(15), negx + "Hand": mario_o(16),
-        posx + "UpLeg": mario_o(19), posx + "Leg": mario_o(20), posx + "Foot": mario_o(21),
-        negx + "UpLeg": mario_o(24), negx + "Leg": mario_o(25), negx + "Foot": mario_o(26),
+        posx + "Shoulder": mario_o(_bsw(7)), negx + "Shoulder": mario_o(_bsw(13)),
+        posx + "Arm": mario_o(_bsw(8)), posx + "ForeArm": mario_o(_bsw(9)), posx + "Hand": mario_o(_bsw(10)),
+        negx + "Arm": mario_o(_bsw(14)), negx + "ForeArm": mario_o(_bsw(15)), negx + "Hand": mario_o(_bsw(16)),
+        posx + "UpLeg": mario_o(_bsw(19)), posx + "Leg": mario_o(_bsw(20)), posx + "Foot": mario_o(_bsw(21)),
+        negx + "UpLeg": mario_o(_bsw(24)), negx + "Leg": mario_o(_bsw(25)), negx + "Foot": mario_o(_bsw(26)),
     }
 
     # torso anisotropic map (general, shear-free): the torso has FIVE
@@ -2579,19 +2600,40 @@ def main():
         if _unified:
             print(f"seam unify: {_unified} coincident-vertex groups share weights/position")
     # keep_vanilla replacement-drop: when a mapped joint keeps its VANILLA
-    # geometry (Samus's cannon = her forearm+hand), the replacement's own
-    # geometry for those parts would clip through it — the vanilla piece
-    # REPLACES that limb segment, so drop replacement tris fully inside
-    # the kept parts.
+    # geometry (Samus's cannon = her forearm+muzzle), the vanilla piece
+    # REPLACES that limb segment — so clear the replacement out of the
+    # kept bone's VOLUME (weight-based dropping missed sleeve fabric that
+    # hangs over the forearm while weighted to the upper arm, leaving the
+    # cannon hidden inside the sleeve with only the muzzle poking out).
     if TARGET_KEEP_VANILLA and TARGET_MAP is not None:
-        _kept_canon = {c for c, t in TARGET_MAP.items() if t in TARGET_KEEP_VANILLA}
-        _vdrop = [max(vweights[i].items(), key=lambda kv: kv[1])[0] in _kept_canon
-                  for i in range(len(pos))]
+        _kept_canon = sorted({c for c, t in TARGET_MAP.items() if t in TARGET_KEEP_VANILLA})
+        _capsules = []
+        for _c in _kept_canon:
+            _child = {8: 9, 9: 10, 14: 15, 15: 16, 19: 20, 20: 21,
+                      24: 25, 25: 26}.get(_c)
+            if _c in frames and _child in frames:
+                _capsules.append((frames[_c][0], frames[_child][0]))
+            elif _c in frames:
+                # terminal part (hand): short capsule extending past the joint
+                _o = frames[_c][0]
+                _capsules.append((_o, [_o[0], _o[1] - 24, _o[2]]))
+        _R = 34.0
+        def _in_capsule(_pt):
+            for _a, _b in _capsules:
+                _ab = [_b[k] - _a[k] for k in range(3)]
+                _len2 = sum(c * c for c in _ab) or 1e-9
+                _t = sum((_pt[k] - _a[k]) * _ab[k] for k in range(3)) / _len2
+                _t = max(-0.15, min(1.35, _t))
+                _q = [_a[k] + _t * _ab[k] for k in range(3)]
+                if sum((_pt[k] - _q[k]) ** 2 for k in range(3)) < _R * _R:
+                    return True
+            return False
+        _vdrop = [_in_capsule(world[i]) for i in range(len(world))]
         _before = len(sk_tris)
         sk_tris = [t for t in sk_tris if not all(_vdrop[i] for i in t)]
         if _before != len(sk_tris):
             print(f"keep_vanilla: dropped {_before - len(sk_tris)} replacement tris "
-                  f"inside vanilla-kept parts {sorted(_kept_canon)}")
+                  f"inside vanilla-kept limb volume (parts {_kept_canon})")
     sk_verts = []
     for i in range(len(world)):
         n = rigid_n[i] if _rigid_done else vnormal(i)

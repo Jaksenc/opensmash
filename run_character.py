@@ -55,6 +55,17 @@ STOCK_TEMPLATE = (
     "view, centered, filling the frame. Solid pure green background "
     "(#00FF00). No text, no shading gradients, no dithering."
 )
+EMBLEM_TEMPLATE = (
+    "A flat 2D video game series emblem symbol for the character {display}: "
+    "ONE single iconic object strongly associated with this character — "
+    "never the character themselves, no face, no figure — in the chunky "
+    "simple style of 1990s Nintendo 64 series emblems like the Super Mario "
+    "mushroom emblem in the reference image. One bold glyph with thick "
+    "simple shapes, flat solid colors only (max 5 colors), strong dark "
+    "outline, straight-on view, perfectly centered, filling most of the "
+    "frame. Solid pure green background (#00FF00). No text, no shading "
+    "gradients, no dithering."
+)
 
 
 def log(msg):
@@ -96,7 +107,7 @@ def main():
     ap.add_argument("--photo", default=None)
     ap.add_argument("--out", default=None)
     ap.add_argument("--force-stage", default=None,
-                    choices=["expand", "tpose", "mesh", "convert", "portrait", "stock", "ui", "voice"])
+                    choices=["expand", "tpose", "mesh", "convert", "portrait", "stock", "emblem", "ui", "voice"])
     a = ap.parse_args()
 
     slug = re.sub(r"[^a-z0-9]", "", a.name.lower())[:16]
@@ -179,13 +190,18 @@ def main():
         log("stock: generating icon art")
         sh(["python3", "gen.py", "image", "--ref", os.path.join(HERE, "ui_refs", "stockicon_ref.png"),
             "--ref", F("tpose.png"), STOCK_TEMPLATE, F("stock_raw.png")], timeout=600)
+    if stage_needed(F("emblem_raw.png"), force, "emblem"):
+        log("emblem: generating series-emblem art")
+        sh(["python3", "gen.py", "image", "--ref", os.path.join(HERE, "ui_refs", "stockicon_ref.png"),
+            EMBLEM_TEMPLATE.format(display=cdef["display"]), F("emblem_raw.png")], timeout=600)
 
     # 7. pack ------------------------------------------------------------
     osbui = F(f"{slug}.osbui")
     if stage_needed(osbui, force, "ui"):
         log("ui: packing .osbui")
         sh(["python3", "gen_ui_assets.py", osbui, "--art", F("portrait_raw.png"),
-            "--stock-art", F("stock_raw.png"), "--name", short], timeout=300)
+            "--stock-art", F("stock_raw.png"), "--emblem", F("emblem_raw.png"),
+            "--name", short], timeout=300)
 
     # 8. voice -----------------------------------------------------------
     wav = F("announcer.wav")
