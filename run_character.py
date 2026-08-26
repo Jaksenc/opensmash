@@ -13,6 +13,7 @@ three images, MiniMax (via fal) for the announcer clip. Everything else is
 deterministic.
 """
 import argparse
+import glob
 import json
 import os
 import re
@@ -107,7 +108,7 @@ def main():
     ap.add_argument("--photo", default=None)
     ap.add_argument("--out", default=None)
     ap.add_argument("--force-stage", default=None,
-                    choices=["expand", "tpose", "mesh", "convert", "portrait", "stock", "emblem", "ui", "voice"])
+                    choices=["expand", "tpose", "mesh", "convert", "variants", "portrait", "stock", "emblem", "ui", "voice"])
     a = ap.parse_args()
 
     slug = re.sub(r"[^a-z0-9]", "", a.name.lower())[:16]
@@ -174,6 +175,28 @@ def main():
             raise RuntimeError(f"torn-tri gate: {torn.group(1)} > 80 — bad mesh, re-roll tpose/mesh")
         sh(["python3", "convert_rigged.py", "--binary5", F("bundle.json"), osb], timeout=300)
 
+    # 4b. variants -------------------------------------------------------
+    # Conversion is pure deterministic geometry (no model calls), so cut
+    # the mesh onto EVERY target fighter skeleton with a profile. Gives
+    # multi-injection demos a free pick of slots per character.
+    variants = sorted(
+        os.path.basename(pj)[:-len(".profile.json")]
+        for pj in glob.glob(os.path.join(HERE, "skels", "*.profile.json")))
+    for tgt in variants:
+        vosb = os.path.join(HERE, "play", f"{slug}-{tgt}.osb")
+        if not stage_needed(vosb, force, "variants"):
+            continue
+        log(f"variants: retargeting onto {tgt}")
+        vjson = F(f"bundle-{tgt}.json")
+        try:
+            sh(["python3", "convert_rigged.py", "--mild-color", "--flatten",
+                "--target", os.path.join(HERE, "skels", f"{tgt}.profile.json"),
+                F("rigged.glb"), os.path.join(HERE, "skels", f"{tgt}.skel"), vjson],
+               timeout=900)
+            sh(["python3", "convert_rigged.py", "--binary5", vjson, vosb], timeout=300)
+        except Exception as e:
+            log(f"variants: {tgt} FAILED ({e}) — continuing")
+
     # 5+6. UI art --------------------------------------------------------
     if stage_needed(F("portrait_raw.png"), force, "portrait"):
         log("portrait: generating tile art")
@@ -212,10 +235,15 @@ def main():
 
     # 9. stage -----------------------------------------------------------
     if os.path.isdir(WEBDIST):
-        for src, base in ((osb, f"{slug}.osb"), (osbui, f"{slug}.osbui"), (wav, f"{slug}.wav")):
+        stage_files = [(osb, f"{slug}.osb"), (osbui, f"{slug}.osbui"), (wav, f"{slug}.wav")]
+        for tgt in variants:
+            vosb = os.path.join(HERE, "play", f"{slug}-{tgt}.osb")
+            if os.path.exists(vosb):
+                stage_files.append((vosb, f"{slug}-{tgt}.osb"))
+        for src, base in stage_files:
             dst = os.path.join(WEBDIST, base)
             open(dst, "wb").write(open(src, "rb").read())
-        log(f"staged into web-dist/bundles")
+        log(f"staged into web-dist/bundles ({len(stage_files)} files)")
     url = (f"http://localhost:8600/index.html?inject=bundles/{slug}.osb"
            f"&inject_ui=bundles/{slug}.osbui&inject_voice=bundles/{slug}.wav"
            f"&SSB64_START_SCENE=16")
