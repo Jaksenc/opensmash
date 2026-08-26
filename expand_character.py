@@ -13,7 +13,8 @@ N64_TEMPLATE) owns the STYLE rules. Content rules:
 
 Usage:
   expand_character.py "Queen Elizabeth II" [--photo refs/x.png] [--notes "..."]
-Prints JSON: {"display": ..., "desc": ..., "refs": [...]}
+                      [--emblem "context or an explicit object"]
+Prints JSON: {"display": ..., "short": ..., "desc": ..., "emblem": ..., "refs": [...]}
 """
 import argparse
 import base64
@@ -33,7 +34,7 @@ FORBIDDEN = ["handbag", "purse", "bag", "cane", "walking stick", "sword", "umbre
              "broom", "axe", "hammer", "bat", "racket", "ball", "clipboard", "tablet", "laptop"]
 
 SYSTEM = """You write one-line visual descriptions of characters for a low-poly fighting-game character pipeline.
-Output ONLY a JSON object {"display": <name>, "short": <short name>, "desc": <description>}.
+Output ONLY a JSON object {"display": <name>, "short": <short name>, "desc": <description>, "emblem": <emblem object>}.
 "short" is the in-game roster name: UPPERCASE A-Z only, at most 7 characters, no spaces or punctuation, instantly recognizable (prefer the name the character is best known by: MARIO, PIKACHU, QUEEN, WEIRDAL, LINCOLN, OBAMA).
 The description is a single sentence (60-110 words) starting with the character's name, covering: face (shape, skin tone, notable features), hair/facial hair, eyes, and ONE iconic outfit described as flat solid colors from head to toe including shoes.
 HARD RULES:
@@ -41,11 +42,14 @@ HARD RULES:
 - The character must hold NOTHING and nothing may hang from the arms or hands: no handbags, purses, bags, canes, walking sticks, swords, umbrellas, staffs, weapons, phones, cups, books, instruments. Hands are empty and bare or gloved.
 - No text, logos or fine patterns; no fabric texture; mouth closed; age and build stated.
 - If the name is ambiguous or fictional, describe the most widely recognized depiction.
+"emblem" names ONE concrete object for the character's series emblem — a short noun phrase ("a jewelled crown", "a red accordion"), the object that instantly signals this character: something they are famous for, wear, use, or are inseparable from. Never the character, their face or their body. It is drawn as a bold one-colour stencil, so prefer an object with a distinctive outline AND large internal structure (crown, accordion, pocket watch, open book, lighthouse) over a plain disc, ball, shield, generic badge or logo roundel. If the subject is not a public figure, infer the object from what the photo and notes show — clothing, gear, setting, a distinctive accessory or hobby.
 """
 
 
-def expand(name, photo=None, notes=None, model="gemini-flash-latest"):
-    parts = [{"text": SYSTEM + f"\nCharacter: {name}" + (f"\nNotes: {notes}" if notes else "")}]
+def expand(name, photo=None, notes=None, model="gemini-flash-latest", emblem=None):
+    parts = [{"text": SYSTEM + f"\nCharacter: {name}"
+              + (f"\nNotes: {notes}" if notes else "")
+              + (f"\nEmblem context (use this for \"emblem\"): {emblem}" if emblem else "")}]
     if photo:
         mime = "image/jpeg" if photo.lower().endswith((".jpg", ".jpeg")) else "image/png"
         parts.append({"inlineData": {"mimeType": mime, "data": base64.b64encode(open(photo, "rb").read()).decode()}})
@@ -58,6 +62,7 @@ def expand(name, photo=None, notes=None, model="gemini-flash-latest"):
     obj = json.loads(m.group(0)) if m else {"display": name, "desc": text.strip()}
     obj.setdefault("display", name)
     obj["refs"] = [photo] if photo else []
+    obj.setdefault("emblem", "")
     # mechanical backstop for held items
     low = obj["desc"].lower()
     hits = [w for w in FORBIDDEN if re.search(r"\b" + re.escape(w) + r"s?\b", low)]
@@ -72,11 +77,16 @@ def main():
     ap.add_argument("--photo", default=None)
     ap.add_argument("--notes", default=None)
     ap.add_argument("--model", default="gemini-flash-latest")
+    ap.add_argument("--emblem", default=None,
+                    help="context for the series emblem, or the object itself "
+                         "(default: inferred from the name/photo)")
     a = ap.parse_args()
-    obj = expand(a.name, a.photo, a.notes, a.model)
+    obj = expand(a.name, a.photo, a.notes, a.model, a.emblem)
     if "warning" in obj:
         # one retry with the violation called out
-        obj2 = expand(a.name, a.photo, (a.notes or "") + " REMOVE any held/hanging item; " + obj["warning"], a.model)
+        obj2 = expand(a.name, a.photo,
+                      (a.notes or "") + " REMOVE any held/hanging item; " + obj["warning"],
+                      a.model, a.emblem)
         if "warning" not in obj2:
             obj = obj2
     print(json.dumps(obj, indent=1))
