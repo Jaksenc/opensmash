@@ -984,17 +984,7 @@ def main():
             _mtop = max(p[1] for p in pos)
             _mhead_h = max(1e-6, _mtop - _mh)
             s_head = _vhead_h / _mhead_h
-            # Clamp BOTH directions. The ceiling keeps a tiny-headed mesh
-            # from ballooning. The floor used to be s_perp (upscale-only),
-            # which broke small-headed TARGET skeletons: samus's vanilla
-            # head envelope is 48 units vs mario's 197, so a stylized head
-            # kept at global scale overflowed the fighter's total height
-            # by ~25-30% (the oversized-custom-on-samus bug). Allow the
-            # head to shrink to half the global scale — enough to pull the
-            # silhouette back near the vanilla height while keeping the
-            # smash-style oversized head (never a pinhead squeezed into
-            # samus's helmet budget).
-            s_head = max(0.5 * s_perp, min(2.4 * s_perp, s_head))
+            s_head = max(s_perp, min(2.4 * s_perp, s_head))
             print(f"head scale: x{s_head:.1f} (global x{s_perp:.1f}) so head top "
                   f"matches vanilla ({_vhead_h:.0f} above head joint)")
     except (KeyError, IndexError, ValueError):
@@ -1300,22 +1290,6 @@ def main():
         return out
 
     world = lbs(bone_apply)
-    if os.environ.get("OSB_SIZEDBG"):
-        _wy = [w[1] for w in world]
-        print(f"SIZEDBG: world y {min(_wy):.0f}..{max(_wy):.0f}  s_head={s_head:.1f} s_perp={s_perp:.1f} _mhead_h={_mhead_h:.3f}")
-        _hj_y = None
-        try:
-            _hj_y = jpos[name_idx["Head"]][1]
-            _above = [i for i,pp in enumerate(pos) if pp[1] > _hj_y]
-            _parts = {}
-            for i in _above[:2000]:
-                for k in range(4):
-                    if wts[i][k] > 0:
-                        pt = bone_map.get(names[jix[i][k]], (6,11))[0]
-                        _parts[pt] = _parts.get(pt,0)+1
-            print(f"SIZEDBG: verts above head joint: {len(_above)}, weight-part histogram {_parts}")
-        except Exception as e:
-            print("SIZEDBG err", e)
     if os.environ.get("OSB_DEBUG"):
         # pivot agreement check: child joint through parent map vs own map
         for _side in ("Left", "Right"):
@@ -1339,14 +1313,8 @@ def main():
     # landing exactly on the mario joints. Composed per-BONE below, so
     # LBS still blends smoothly across part seams.
     import os as _os
-    # Use the TARGET fighter's own part bounds when a profile provides them
-    # (vanilla-<fighter>-parts.canonical.json). This block used to hard-code
-    # the mario boxes for every target: variants then inherited MARIO's
-    # giant head/glove boxes on top of the target skeleton — a samus-variant
-    # got samus's tall body plus a mario-sized head and read 25-30% taller
-    # than the vanilla fighter (the oversized-custom bug).
     _vanilla_path = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)),
-                                  TARGET_PARTS_JSON or "vanilla-mario-parts.json")
+                                  "vanilla-mario-parts.json")
     # --no-profile: skip the Mario-part-bounds fit (per-part thickness
     # scales disagree at part boundaries and tear non-chibi meshes);
     # keep only the bone retarget + uniform global scale.
@@ -2716,7 +2684,38 @@ def main():
     if TARGET_MAP is not None:
         for v in sk_verts:
             v[8] = [(_emit(j), w) for j, w in v[8]]
-    skinned = {"joint_ids": [_emit(j) for j in sk_joint_ids], "verts": sk_verts,
+    # ---- variant fit scale: the conform keeps the chibi silhouette
+    # (mario-fitted head/gloves), which on tall small-headed target
+    # skeletons (samus) tops out 20-30% above the vanilla fighter. The
+    # mesh can't be shrunk here (verts ride the game skeleton), so emit
+    # the ratio and let the game scale the fighter's root joint — the
+    # same mechanism the CSS card scales use. 1.0 (omitted) when the
+    # silhouette already fits.
+    fit_scale = 1.0
+    try:
+        _fs_vp = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                              TARGET_PARTS_JSON or "vanilla-mario-parts.json")
+        if os.path.exists(_fs_vp) and 12 in frames:
+            _fs_parts = json.load(open(_fs_vp))
+            if "12" in _fs_parts:
+                _fo, _fR = frames[12]
+                _v_top = max(_fo[1] + v[0]*_fR[0][1] + v[1]*_fR[1][1] + v[2]*_fR[2][1]
+                             for v in _fs_parts["12"])
+                _m_ys = [w[1] for w in world]
+                _base = min(_m_ys)
+                _m_top = max(_m_ys)
+                if _m_top - _base > 1e-3:
+                    fit_scale = (_v_top - _base) / (_m_top - _base)
+                    fit_scale = max(0.75, min(1.0, fit_scale))
+                    if fit_scale < 0.98:
+                        print(f"fit scale: x{fit_scale:.3f} (mesh top {_m_top:.0f} vs vanilla {_v_top:.0f})")
+                    else:
+                        fit_scale = 1.0
+    except (KeyError, IndexError, ValueError):
+        fit_scale = 1.0
+
+    skinned = {"fit_scale": round(fit_scale, 4),
+               "joint_ids": [_emit(j) for j in sk_joint_ids], "verts": sk_verts,
                "tris": sk_tris,
                # the joint frames the world verts were authored against —
                # the game binds against THESE, not whatever pose the
@@ -2948,6 +2947,11 @@ def write_binary5(bundle_json_path, out_path):
             for a in accs:
                 f.write(struct.pack("<IIf", a["joint"], a["vert"], a["embed"]))
             print(f"binary5: {len(accs)} accessory vertex pin(s) (ACC2 section)")
+        fs = float(sk.get("fit_scale", 1.0) or 1.0)
+        if fs < 0.995:
+            f.write(b"SCAL")
+            f.write(struct.pack("<f", fs))
+            print(f"binary5: fit scale x{fs:.3f} (SCAL section)")
     print(f"binary5 (CPU-skinned): {len(verts)} verts, {len(tris)} tris, "
           f"{len(joint_ids)} joints -> {out_path}")
 
