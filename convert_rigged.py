@@ -644,39 +644,63 @@ def main():
         _ank = [sum(jpos[i][k] for i in _feet_j)/len(_feet_j) for k in range(3)]
         _upl = math.sqrt(sum(c*c for c in _up)) or 1e-9
         _upn = [c/_upl for c in _up]
-        # the farthest HORIZONTAL point of the feet from the ankles is
-        # the toe on any shoe shape (centroids are defeated by big
-        # heels/blocky boots)
-        _toe_h = [0.0, 0.0, 0.0]; _best = 0.0; _nt = 0
+        # toe cue: project each foot's verts onto the forward AXIS
+        # (lat x up; only the SIGN is unknown) relative to that foot's own
+        # ankle, and compare 95th-percentile reach forward vs backward —
+        # toes reach 2-3x farther than heels on any footwear. A single
+        # farthest-vertex pick is defeated once in a while by sandal
+        # soles / pant cuffs weighted onto the foot (Joey Flynn's head
+        # rendered backwards); reach asymmetry with an ambiguity band is
+        # not.
+        _fwl = math.sqrt(sum(c*c for c in _fwd)) or 1e-9
+        _fwn = [c/_fwl for c in _fwd]
+        _projs = []
         for vi in range(len(pos)):
             jb = jix[vi][max(range(4), key=lambda k: wts[vi][k])]
             if jb in _feet_j:
-                _nt += 1
-                off = [pos[vi][k] - _ank[k] for k in range(3)]
+                _aj = jpos[jb]
+                off = [pos[vi][k] - _aj[k] for k in range(3)]
                 dv = sum(off[k]*_upn[k] for k in range(3))
-                offh = [off[k] - dv*_upn[k] for k in range(3)]
-                mag = math.sqrt(sum(c*c for c in offh))
-                if mag > _best:
-                    _best = mag; _toe_h = offh
+                _projs.append(sum((off[k] - dv*_upn[k])*_fwn[k] for k in range(3)))
+        _toe_h = None
+        _nt = len(_projs)
+        if _nt >= 16:
+            _projs.sort()
+            _fr = max(0.0, _projs[min(_nt - 1, int(_nt * 0.95))])
+            _br = max(0.0, -_projs[max(0, int(_nt * 0.05))])
+            _lo, _hi = min(_fr, _br), max(_fr, _br)
+            if _hi > 1e-9 and (_lo < 1e-9 or _hi / max(_lo, 1e-9) >= 1.25):
+                _toe_h = [(1.0 if _fr >= _br else -1.0) * c for c in _fwn]
+                print(f"facing: toe cue reach fwd={_fr:.3f} back={_br:.3f} "
+                      f"({'keep' if _fr >= _br else 'flip'} candidate)")
+            else:
+                print(f"facing: toe cue ambiguous (fwd={_fr:.3f} back={_br:.3f})")
         if _nt:
-            _ys_f = [p[1] for p in pos]
-            _Hf = max(_ys_f) - min(_ys_f)
-            if _best < 0.02 * _Hf and "Head" in name_idx:
-                # weak toe signal: use the head centroid offset (face +
-                # nose pull the head's mass forward of the neck axis)
+            _head_h = None
+            if "Head" in name_idx:
+                # head centroid offset: face + nose pull the head's mass
+                # forward of the neck axis (big back hair can defeat it)
                 _hj = jpos[name_idx["Head"]]
                 _hv = [p for p in pos if p[1] > _hj[1]]
                 if _hv:
                     _hc = [sum(p[k] for p in _hv)/len(_hv) for k in range(3)]
                     _off = [_hc[k] - _hj[k] for k in range(3)]
                     _dv2 = sum(_off[k]*_upn[k] for k in range(3))
-                    _toe_h = [_off[k] - _dv2*_upn[k] for k in range(3)]
-                    print("facing fix: weak toe signal, using head-offset fallback")
+                    _head_h = [_off[k] - _dv2*_upn[k] for k in range(3)]
             # PRIMARY cue: the face. Skin-coloured texels on the head
             # cluster on the front (hair/hats are not skin); their
             # horizontal offset from the head joint points forward. Works
-            # for any human character; toes remain the fallback.
+            # for any human character. Ground truth from the roster: the
+            # cue's DIRECTION was correct down to 1.6% H offset (bearded,
+            # glasses-wearing characters just have less visible skin), so
+            # only near-zero offsets are treated as noise — the old 4%
+            # gate is what let a bad toe read flip Joey Flynn's facing.
             _face_h = None
+            _ys_f = [p[1] for p in pos]
+            _Hf = max(_ys_f) - min(_ys_f)
+            if img is None or "Head" not in name_idx or "neck" not in name_idx:
+                print(f"facing: face cue unavailable (img={'yes' if img is not None else 'no'}, "
+                      f"Head={'yes' if 'Head' in name_idx else 'no'}, neck={'yes' if 'neck' in name_idx else 'no'})")
             if img is not None and "Head" in name_idx and "neck" in name_idx:
                 try:
                     import numpy as _npf2
@@ -698,18 +722,29 @@ def main():
                         _dv3 = sum(_acc[k]*_upn[k] for k in range(3))
                         _face_h = [_acc[k] - _dv3*_upn[k] for k in range(3)]
                         _fm = math.sqrt(sum(c*c for c in _face_h))
-                        if _fm < 0.04 * _Hf:   # weak offsets misfire (beards, hats)
+                        _fvote = 'flip' if sum(_face_h[k]*_fwd[k] for k in range(3)) < 0 else 'keep'
+                        if _fm < 0.01 * _Hf:   # near-zero offset: direction is noise
+                            print(f"facing: face cue weak ({_nsk} skin verts, |offset| {_fm/_Hf*100:.1f}% H, votes {_fvote}) — ignored")
                             _face_h = None
                         else:
-                            print(f"facing: face cue from {_nsk} skin verts (|offset| {_fm/_Hf*100:.1f}% H)")
+                            print(f"facing: face cue from {_nsk} skin verts (|offset| {_fm/_Hf*100:.1f}% H, votes {_fvote})")
+                    else:
+                        print(f"facing: face cue insufficient ({_nsk} skin verts above neck)")
                 except Exception as _e:
+                    print(f"facing: face cue errored ({_e!r})")
                     _face_h = None
             if _face_h is not None:
                 _flip = sum(_face_h[k]*_fwd[k] for k in range(3)) < 0
-            else:
+            elif _head_h is not None:
+                _flip = sum(_head_h[k]*_fwd[k] for k in range(3)) < 0
+                print(f"facing: no face cue — head-offset decides ({'flip' if _flip else 'keep'})")
+            elif _toe_h is not None:
                 _flip = sum(_toe_h[k]*_fwd[k] for k in range(3)) < 0
+                print(f"facing: no face/head cue — toe reach decides ({'flip' if _flip else 'keep'})")
+            else:
+                _flip = False
             if "--flip-facing" in sys.argv:
-                _flip = not _flip   # manual override when the toe cue misreads a shoe
+                _flip = not _flip   # manual override when every cue misreads
             if _flip:
                 posx, negx = negx, posx
                 print(f"facing fix: forward cue opposes fwd triad -> swapped sides "
