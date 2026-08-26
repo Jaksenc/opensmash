@@ -79,24 +79,22 @@ def _outline(im, color=(52, 32, 22, 255)):
 
 
 def compose_tile_text(text):
-    atlas = {ch: _trim_x(g) for ch, g in load_atlas("tileglyph").items()}
-    for pad in (2, 1):
-        im = _compose(atlas, text, pad, 10)
-        if im.width <= PORTRAIT_DRAW_W - 4:
-            break
-    im = _outline(im)
-    if im.width > PORTRAIT_DRAW_W - 1:
-        im = im.resize((PORTRAIT_DRAW_W - 1, im.height), Image.LANCZOS)
-    return im
+    """Hand-authored pixel font (pixel_font.py), vanilla caption style —
+    fixed cap height and stroke weight, fit by tracking, never resampled.
+    (The old path composited auto-sliced screenshot glyphs and Lanczos-
+    squashed overflow, which dropped stroke columns and varied the size.)"""
+    from pixel_font import render_caption
+    return render_caption(text, PORTRAIT_DRAW_W - 1)
 
 
-def compose_name(text):
-    atlas = {ch: _trim_x(g) for ch, g in load_atlas("glyph").items()}
-    for pad in (1, 0):
-        im = _compose(atlas, text, pad, 16)
-        if im.width <= NAME_DRAW_W - 4:
-            return im
-    return im.resize((NAME_DRAW_W - 4, 16), Image.LANCZOS)
+def compose_name(text, max_width=None):
+    """Bold panel name from the hand-authored pixel font (pixel_font.py) —
+    fixed cap height, never resampled (the old auto-sliced atlas produced
+    the WEJR-DAI style garbage on synthesized letters)."""
+    from pixel_font import render_panel_name
+    # the engine grows the target name sprite up to 64 texels (vanilla
+    # sizes them per name, FOX 32 .. DK 72), so the full canvas is usable
+    return render_panel_name(text, max_width or 58)
 
 
 def key_bg(im, thresh=60):
@@ -177,8 +175,8 @@ def main():
     nm = Image.new("RGBA", (64, NAME_H), (0, 0, 0, 0))
     ptxt = compose_name(name)
     pb = ptxt.getbbox()
-    # vanilla panel names are left-aligned with the face starting ~col 5
-    nm.alpha_composite(ptxt.crop(pb), (3, pb[1] if pb else 0))
+    # vanilla panel names are left-aligned, face starting ~col 5 / row 1
+    nm.alpha_composite(ptxt.crop(pb), (3, 1))
     name_enc = bytes(((nm.getpixel((x, y))[0] >> 4) << 4) | (nm.getpixel((x, y))[3] >> 4)
                      for y in range(NAME_H) for x in range(64))
 
@@ -254,13 +252,8 @@ def main():
 
     # ---- VS-splash name: raw intensity canvas (64x12), engine packs to
     # the target's I4 geometry ----
-    vtxt = compose_name(name)
-    vb = vtxt.getbbox()
-    vtxt = vtxt.crop(vb)
-    vs = min(VS_DRAW_W / vtxt.width, 11 / vtxt.height)
-    if vs < 1:
-        vtxt = vtxt.resize((max(1, round(vtxt.width * vs)), max(1, round(vtxt.height * vs))),
-                           Image.LANCZOS)
+    vtxt = compose_name(name, VS_DRAW_W)   # fit by tracking/condense, no resize
+    vtxt = vtxt.crop(vtxt.getbbox())
     vim = Image.new("RGBA", (64, VS_H), (0, 0, 0, 0))
     vim.alpha_composite(vtxt, (0, max(0, (VS_H - vtxt.height) // 2)))
     vs_enc = bytes((lambda p: (p[0] + p[1] + p[2]) // 3 * p[3] // 255)(vim.getpixel((x, y)))
