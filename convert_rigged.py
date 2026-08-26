@@ -984,7 +984,17 @@ def main():
             _mtop = max(p[1] for p in pos)
             _mhead_h = max(1e-6, _mtop - _mh)
             s_head = _vhead_h / _mhead_h
-            s_head = max(s_perp, min(2.4 * s_perp, s_head))
+            # Clamp BOTH directions. The ceiling keeps a tiny-headed mesh
+            # from ballooning. The floor used to be s_perp (upscale-only),
+            # which broke small-headed TARGET skeletons: samus's vanilla
+            # head envelope is 48 units vs mario's 197, so a stylized head
+            # kept at global scale overflowed the fighter's total height
+            # by ~25-30% (the oversized-custom-on-samus bug). Allow the
+            # head to shrink to half the global scale — enough to pull the
+            # silhouette back near the vanilla height while keeping the
+            # smash-style oversized head (never a pinhead squeezed into
+            # samus's helmet budget).
+            s_head = max(0.5 * s_perp, min(2.4 * s_perp, s_head))
             print(f"head scale: x{s_head:.1f} (global x{s_perp:.1f}) so head top "
                   f"matches vanilla ({_vhead_h:.0f} above head joint)")
     except (KeyError, IndexError, ValueError):
@@ -1290,6 +1300,22 @@ def main():
         return out
 
     world = lbs(bone_apply)
+    if os.environ.get("OSB_SIZEDBG"):
+        _wy = [w[1] for w in world]
+        print(f"SIZEDBG: world y {min(_wy):.0f}..{max(_wy):.0f}  s_head={s_head:.1f} s_perp={s_perp:.1f} _mhead_h={_mhead_h:.3f}")
+        _hj_y = None
+        try:
+            _hj_y = jpos[name_idx["Head"]][1]
+            _above = [i for i,pp in enumerate(pos) if pp[1] > _hj_y]
+            _parts = {}
+            for i in _above[:2000]:
+                for k in range(4):
+                    if wts[i][k] > 0:
+                        pt = bone_map.get(names[jix[i][k]], (6,11))[0]
+                        _parts[pt] = _parts.get(pt,0)+1
+            print(f"SIZEDBG: verts above head joint: {len(_above)}, weight-part histogram {_parts}")
+        except Exception as e:
+            print("SIZEDBG err", e)
     if os.environ.get("OSB_DEBUG"):
         # pivot agreement check: child joint through parent map vs own map
         for _side in ("Left", "Right"):
@@ -1313,8 +1339,14 @@ def main():
     # landing exactly on the mario joints. Composed per-BONE below, so
     # LBS still blends smoothly across part seams.
     import os as _os
+    # Use the TARGET fighter's own part bounds when a profile provides them
+    # (vanilla-<fighter>-parts.canonical.json). This block used to hard-code
+    # the mario boxes for every target: variants then inherited MARIO's
+    # giant head/glove boxes on top of the target skeleton — a samus-variant
+    # got samus's tall body plus a mario-sized head and read 25-30% taller
+    # than the vanilla fighter (the oversized-custom bug).
     _vanilla_path = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)),
-                                  "vanilla-mario-parts.json")
+                                  TARGET_PARTS_JSON or "vanilla-mario-parts.json")
     # --no-profile: skip the Mario-part-bounds fit (per-part thickness
     # scales disagree at part boundaries and tear non-chibi meshes);
     # keep only the bone retarget + uniform global scale.
