@@ -112,6 +112,9 @@ def main():
                 capture(shots, bundle, a.fkind, replay, frames)
 
     viewer = os.path.join(os.path.dirname(PIPE), "BattleShip", "web-dist", "eval", name)
+    # always rebuild from scratch: the copier skips existing files, and a
+    # stale viewer dir silently serves frames from a previous bundle
+    shutil.rmtree(viewer, ignore_errors=True)
     subprocess.run(["python3", os.path.join(HERE, "make_viewer.py"), test_shots, ref_shots,
                     viewer, "--name", name, "--labels", replay + ".json"], check=True)
     print(f"side-by-side viewer -> http://localhost:8600/eval/{name}/")
