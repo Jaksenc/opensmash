@@ -2,7 +2,8 @@
 """One command: name -> playable injected fighter with full UI assets.
 
   run_character.py "Weird Al Yankovic" [--short WEIRDAL] [--photo ref.png]
-                   [--out play/ui/<slug>] [--force-stage <stage>]
+                   [--emblem "context or object"] [--out play/ui/<slug>]
+                   [--force-stage <stage>]
 
 Stages (each skipped if its output already exists — delete a file or use
 --force-stage to redo): expand -> tpose -> mesh (Tripo v3 + rig) ->
@@ -58,14 +59,30 @@ STOCK_TEMPLATE = (
 )
 EMBLEM_TEMPLATE = (
     "A flat 2D video game series emblem symbol for the character {display}: "
-    "ONE single iconic object strongly associated with this character — "
-    "never the character themselves, no face, no figure — in the chunky "
-    "simple style of 1990s Nintendo 64 series emblems like the Super Mario "
-    "mushroom emblem in the reference image. One bold glyph with thick "
-    "simple shapes, flat solid colors only (max 5 colors), strong dark "
-    "outline, straight-on view, perfectly centered, filling most of the "
-    "frame. Solid pure green background (#00FF00). No text, no shading "
-    "gradients, no dithering."
+    "ONE single iconic object strongly associated with this character{obj} "
+    "— never the character themselves, no face, no figure — in the chunky "
+    "simple style of the 1990s Nintendo 64 series emblems in the first "
+    "reference image (the game's own ten emblems: mushroom, DK, screw "
+    "attack, Star Fox, star, triforce, Yoshi egg, F-Zero, Poke Ball, "
+    "globe). One bold glyph, straight-on view, perfectly centered, filling "
+    "most of the frame, strong dark outline. "
+    "CRITICAL: the emblem is also read as a ONE-COLOR STENCIL, so it must "
+    "be recognizable from its shape alone. Build the object out of a few "
+    "LARGE flat color regions with strong light/dark contrast between "
+    "neighbors, each separated by a thick dark line, so the interior "
+    "structure is as bold as the outline — the way the Poke Ball's band "
+    "and center or Yoshi's egg spots survive as pure shape. No thin "
+    "scratches, hairlines or engraved detail. "
+    "Flat solid colors only (max 5 colors), no shading gradients, no "
+    "dithering. Solid pure green background (#00FF00). No text, no letters."
+)
+# appended on a re-roll when the stencil came out as a featureless blob
+EMBLEM_RETRY = (
+    " The previous attempt was one solid uncut shape and read as a blob. "
+    "Give the object much bolder INTERNAL structure: two or three big "
+    "clearly separated regions of very different brightness (a dark region "
+    "against a light region), and thick dark dividing lines across the "
+    "body of the object."
 )
 
 
@@ -106,6 +123,11 @@ def main():
     ap.add_argument("name")
     ap.add_argument("--short", default=None, help="display name for in-game text (<=7 chars, A-Z)")
     ap.add_argument("--photo", default=None)
+    ap.add_argument("--emblem", default=None,
+                    help="context for the series emblem, or the object itself "
+                         "(\"a red accordion\", \"he restores lighthouses\"). "
+                         "Default: inferred from the name and photo. Also "
+                         "editable afterwards as \"emblem\" in character.json.")
     ap.add_argument("--out", default=None)
     ap.add_argument("--force-stage", default=None,
                     choices=["expand", "tpose", "mesh", "convert", "variants", "portrait", "stock", "emblem", "ui", "voice"])
@@ -123,6 +145,8 @@ def main():
         cmd = ["python3", "expand_character.py", a.name]
         if a.photo:
             cmd += ["--photo", a.photo]
+        if a.emblem:
+            cmd += ["--emblem", a.emblem]
         open(F("character.json"), "w").write(sh(cmd, timeout=180))
     cdef = json.loads(open(F("character.json")).read())
     short = (a.short or cdef.get("short") or re.sub(r"[^A-Za-z]", "", cdef["display"]).upper())
@@ -214,9 +238,25 @@ def main():
         sh(["python3", "gen.py", "image", "--ref", os.path.join(HERE, "ui_refs", "stockicon_ref.png"),
             "--ref", F("tpose.png"), STOCK_TEMPLATE, F("stock_raw.png")], timeout=600)
     if stage_needed(F("emblem_raw.png"), force, "emblem"):
-        log("emblem: generating series-emblem art")
-        sh(["python3", "gen.py", "image", "--ref", os.path.join(HERE, "ui_refs", "stockicon_ref.png"),
-            EMBLEM_TEMPLATE.format(display=cdef["display"]), F("emblem_raw.png")], timeout=600)
+        # --emblem beats whatever the expander inferred, so the object can be
+        # steered without re-running the expand stage.
+        obj = a.emblem or cdef.get("emblem") or ""
+        log(f"emblem: generating series-emblem art{' (' + obj + ')' if obj else ''}")
+        prompt = EMBLEM_TEMPLATE.format(display=cdef["display"],
+                                        obj=f", specifically {obj}," if obj else "")
+        # The engine draws the emblem as a flat one-color stencil, so gate on
+        # the stencil, not on the art: a gorgeous solid object is still a blob.
+        for _ in range(2):
+            sh(["python3", "gen.py", "image",
+                "--ref", os.path.join(HERE, "ui_refs", "emblem_ref.png"),
+                prompt, F("emblem_raw.png")], timeout=600)
+            st = json.loads(sh(["python3", "emblem_stencil.py", F("emblem_raw.png")],
+                               timeout=120))
+            log(f"emblem: stencil cut {st['cut_frac']:.0%} in {st['cuts']} holes")
+            if not st.get("blobby"):
+                break
+            log("emblem: featureless blob — re-rolling with bolder interior")
+            prompt += EMBLEM_RETRY
 
     # 7. pack ------------------------------------------------------------
     osbui = F(f"{slug}.osbui")
