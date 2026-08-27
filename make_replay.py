@@ -126,8 +126,12 @@ def main():
     tour, marks = build_tour()
     n = len(tour)
     import json as _json
-    _json.dump({"marks": marks, "total": n},
-               open(args.out + ".json", "w"))
+    import os as _os
+    # atomic writes (temp + rename): parallel eval workers regenerate the
+    # same replay while other game instances may be reading it mid-boot
+    _tmpj = args.out + f".json.tmp{_os.getpid()}"
+    _json.dump({"marks": marks, "total": n}, open(_tmpj, "w"))
+    _os.replace(_tmpj, args.out + ".json")
 
     md = struct.pack(
         "<10I", MAGIC, VERSION, SCENE_VSBATTLE, 2, args.stage,
@@ -177,10 +181,12 @@ def main():
                 csum = (csum * 16777619) & 0xFFFFFFFF
 
     hdr = struct.pack("<7I", MAGIC, VERSION, 80, 12, n, MAXCONTROLLERS, csum)
-    with open(args.out, "wb") as f:
+    _tmpr = args.out + f".tmp{_os.getpid()}"
+    with open(_tmpr, "wb") as f:
         f.write(hdr)
         f.write(md)
         f.write(frames)
+    _os.replace(_tmpr, args.out)
 
     print(f"replay: {n} ticks ({n/60:.1f}s), stage={args.stage} -> {args.out}")
     for t, label in marks:

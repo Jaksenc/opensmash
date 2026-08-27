@@ -516,3 +516,15 @@ Build: convert_rigged.py --mild-color --no-profile --flatten
   kept. Fighter presents in its stance while stepping to the camera.
   SSB64_TAUNT_ANIMATE=1 disables the hold. Head-scale now ramps in
   above the head joint (neck cone fix). play/*.osb rebuilt.
+
+## Clean mesh-inspection captures (pose mode) — documentation note (2026-08-27)
+- `SSB64_POSE_CAPTURE=1` makes the engine draw ONLY P1's fighter (+ its
+  accessories) on a grey-cleared frame — no stage, HUD, P2, or effects.
+  The mode for judging mesh quality in isolation.
+- Exposed as `run_eval.py --pose`, `eval/capture_clip.py --pose` (pose
+  vanilla refs cache in cells/vanilla[-fkK]-pose), and used by default in
+  `eval/pose_compare.py` and `eval/ab_smoothing.py`.
+- Parallel capture: run_eval honours EVAL_BUILD (per-worker game-dir clone;
+  symlink everything, copy BattleShip.cfg.json) + EVAL_WINX/EVAL_WINY to
+  tile windows so macOS doesn't occlusion-throttle hidden instances.
+  ~/Library/.../ssb64.log is shared across instances — best-effort only.

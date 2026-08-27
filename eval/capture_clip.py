@@ -45,13 +45,15 @@ def crop_band(im):
     return im.crop((int(W * BAND[0]), int(H * BAND[1]), int(W * BAND[2]), int(H * BAND[3])))
 
 
-def capture(out_dir, bundle, frames, fkind=0, replay=None):
+def capture(out_dir, bundle, frames, fkind=0, replay=None, pose=False):
     cmd = ["python3", "run_eval.py", out_dir, "--frames-list", ",".join(map(str, frames)),
            "--fkind", str(fkind)]
     if replay:
         cmd += ["--replay", replay]
     if bundle:
         cmd += ["--bundle", bundle]
+    if pose:
+        cmd += ["--pose"]
     r = subprocess.run(cmd, cwd=PIPE, capture_output=True, text=True, timeout=1800)
     if r.returncode != 0:
         raise RuntimeError(r.stdout[-300:] + r.stderr[-300:])
@@ -63,10 +65,16 @@ def main():
     ap.add_argument("out")
     ap.add_argument("--vanilla-dir", default=None)
     ap.add_argument("--fkind", type=int, default=0, help="fighter kind (both players)")
+    ap.add_argument("--pose", action="store_true",
+                    help="clean capture (SSB64_POSE_CAPTURE): draw ONLY P1's fighter "
+                         "(+ its accessories) on a grey-cleared frame — no stage, HUD, "
+                         "P2 or effects. Best for judging mesh quality.")
     a = ap.parse_args()
     if a.vanilla_dir is None:
-        a.vanilla_dir = os.path.join(HERE, "cells",
-                                     "vanilla" if a.fkind == 0 else f"vanilla-fk{a.fkind}")
+        base = "vanilla" if a.fkind == 0 else f"vanilla-fk{a.fkind}"
+        # pose refs live apart from full-scene refs: the shots are not
+        # interchangeable and the existence check can't tell them apart
+        a.vanilla_dir = os.path.join(HERE, "cells", base + ("-pose" if a.pose else ""))
     # per-fighter tour replay (fighter kinds are baked into the replay
     # metadata and must agree with BOOT_BATTLE)
     replay = os.path.join(PIPE, "eval-tour.rpl" if a.fkind == 0 else f"eval-tour-fk{a.fkind}.rpl")
@@ -80,7 +88,7 @@ def main():
     shots = os.path.join(a.out, "shots")
     if not os.path.exists(os.path.join(shots, f"frame_{frames[-1]}.png")):
         shutil.rmtree(shots, ignore_errors=True)
-        capture(shots, None if is_vanilla else os.path.abspath(a.bundle), frames,
+        capture(shots, None if is_vanilla else os.path.abspath(a.bundle), frames, pose=a.pose,
                 fkind=a.fkind, replay=replay)
 
     # clip: crop band, encode
@@ -107,7 +115,7 @@ def main():
         vshots = os.path.join(a.vanilla_dir, "shots")
         if not os.path.exists(os.path.join(vshots, f"frame_{frames[-1]}.png")):
             os.makedirs(a.vanilla_dir, exist_ok=True)
-            capture(vshots, None, frames, fkind=a.fkind, replay=replay)
+            capture(vshots, None, frames, fkind=a.fkind, replay=replay, pose=a.pose)
         sheet_rows = []
         for f in SHEET_FRAMES:
             p = os.path.join(shots, f"frame_{f}.png")
