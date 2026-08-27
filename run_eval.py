@@ -70,21 +70,35 @@ def main():
         env["SSB64_DUMP_FRAMES"] = "2200"
 
     # pin the window so every capture has identical framing (the game
-    # re-saves whatever size/position the OS gave it on each exit)
+    # re-saves whatever size/position the OS gave it on each exit).
+    # EVAL_WINX/EVAL_WINY let parallel workers (separate EVAL_BUILD clones)
+    # tile their windows so none is fully occluded (macOS throttles
+    # fully-hidden windows). Capture reads the Metal layer, so framing is
+    # position-independent.
     cfg_path = os.path.join(BUILD, "BattleShip.cfg.json")
     try:
         cfg = json.load(open(cfg_path))
-        cfg.setdefault("Window", {}).update({"Width": 1280, "Height": 960, "PositionX": 0, "PositionY": 40,
+        cfg.setdefault("Window", {}).update({"Width": 1280, "Height": 960,
+                                             "PositionX": int(os.environ.get("EVAL_WINX", 0)),
+                                             "PositionY": int(os.environ.get("EVAL_WINY", 40)),
                                              "Fullscreen": {"Enabled": False}})
         json.dump(cfg, open(cfg_path, "w"), indent=1)
     except Exception as e:
         print("warn: could not pin window config:", e)
-    if os.path.exists(LOG):
-        os.remove(LOG)
+    # the log path is global (SDL pref dir), so under parallel workers it is
+    # shared and racy — treat it as best-effort
+    try:
+        if os.path.exists(LOG):
+            os.remove(LOG)
+    except OSError:
+        pass
     subprocess.run(["./BattleShip"], cwd=BUILD, env=env,
                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                    check=True)
-    shutil.copy(LOG, os.path.join(out, "run.log"))
+    try:
+        shutil.copy(LOG, os.path.join(out, "run.log"))
+    except OSError:
+        open(os.path.join(out, "run.log"), "w").write("(log unavailable: parallel eval workers share one ssb64.log)\n")
 
     # raw -> png (full res into shots/, downscaled into out/) via ffmpeg,
     # in parallel; PNG encoding off the game's render thread.

@@ -91,10 +91,35 @@ class H(SimpleHTTPRequestHandler):
             fp = os.path.join(CELLS, self.path[len("/cells/"):].split("?")[0])
             if os.path.exists(fp):
                 ctype = "video/mp4" if fp.endswith(".mp4") else "image/png"
-                data = open(fp, "rb").read()
-                self.send_response(200); self.send_header("Content-Type", ctype)
-                self.send_header("Content-Length", str(len(data))); self.end_headers()
-                self.wfile.write(data); return
+                size = os.path.getsize(fp)
+                # honor Range requests: without 206 responses the browser
+                # reports an empty seekable range and <video> scrubbing
+                # silently snaps back to t=0
+                rng = self.headers.get("Range")
+                start, end = 0, size - 1
+                if rng and rng.startswith("bytes="):
+                    a, _, b = rng[len("bytes="):].partition("-")
+                    if a:
+                        start = int(a)
+                        end = int(b) if b else size - 1
+                    elif b:   # suffix range: last N bytes
+                        start = max(0, size - int(b))
+                    start = min(start, size - 1); end = min(end, size - 1)
+                with open(fp, "rb") as f:
+                    f.seek(start)
+                    data = f.read(end - start + 1)
+                self.send_response(206 if rng else 200)
+                self.send_header("Content-Type", ctype)
+                self.send_header("Accept-Ranges", "bytes")
+                if rng:
+                    self.send_header("Content-Range", f"bytes {start}-{end}/{size}")
+                self.send_header("Content-Length", str(len(data)))
+                self.end_headers()
+                try:
+                    self.wfile.write(data)
+                except BrokenPipeError:
+                    pass   # browser aborts range reads constantly while seeking
+                return
         return super().do_GET()
 
     def do_POST(self):

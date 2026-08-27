@@ -24,9 +24,15 @@
   .card .lbl kbd { background:#2a2f36; border-radius:4px; padding:1px 6px; color:var(--fg); }
   .tie { margin:14px auto 0; display:block; background:#2a2f36; color:var(--fg); border:0; padding:10px 18px; border-radius:8px; cursor:pointer; font-size:15px; }
   .tie:hover { background:#353b44; }
+  .scrub { display:flex; align-items:center; gap:10px; margin-top:12px; }
+  .scrub button { background:#2a2f36; color:var(--fg); border:0; border-radius:6px; padding:4px 10px; cursor:pointer; font-size:14px; }
+  .scrub button:hover { background:#353b44; }
+  .scrub input[type=range] { flex:1; accent-color:var(--acc); }
+  .scrub .tc { color:var(--mut); font-variant-numeric:tabular-nums; min-width:88px; text-align:right; }
+  .jumps { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; justify-content:center; }
+  .jumps button { background:#232830; color:var(--mut); border:0; border-radius:12px; padding:2px 10px; cursor:pointer; font-size:12px; }
+  .jumps button:hover { color:var(--fg); background:#2f3540; }
   .hint { color:var(--mut); text-align:center; margin-top:10px; font-size:13px; }
-  .sheets { display:none; grid-template-columns:1fr 1fr; gap:14px; margin-top:14px; }
-  .sheets img { width:100%; border-radius:6px; }
   .done { text-align:center; padding:60px 0; font-size:22px; }
   a { color:var(--acc); }
 </style>
@@ -43,9 +49,16 @@
     <div class="card" id="L" data-side="left"><video muted loop autoplay playsinline preload="auto"></video><div class="lbl"><span>Left</span><kbd>←</kbd></div></div>
     <div class="card" id="R" data-side="right"><video muted loop autoplay playsinline preload="auto"></video><div class="lbl"><span>Right</span><kbd>→</kbd></div></div>
   </div>
+  <div class="scrub">
+    <button id="pp" title="play/pause (k)">⏸</button>
+    <button id="stepb" title="step back one frame (,)">⋖</button>
+    <button id="stepf" title="step forward one frame (.)">⋗</button>
+    <input type="range" id="bar2" min="0" max="1000" value="0">
+    <span class="tc" id="tc">0.00s</span>
+  </div>
+  <div class="jumps" id="jumps"></div>
   <button class="tie" id="tie">Can't tell / tie <kbd>space</kbd></button>
-  <div class="hint">Both clips are the same replay, looping in sync. Judge likeness <i>and</i> how clean it looks in play (holes, stretching, jitter, proportions). <a href="#" id="tog">toggle frame sheets</a></div>
-  <div class="sheets" id="sheets"><img id="SL"><img id="SR"></div>
+  <div class="hint">Both clips are the same replay, looping in sync. Judge likeness <i>and</i> how clean it looks in play (holes, stretching, jitter, proportions). Scrub or step with <kbd>k</kbd> <kbd>,</kbd> <kbd>.</kbd> — <kbd>←</kbd>/<kbd>→</kbd> rate.</div>
 </main>
 <script>
 let pairs=[], rated=new Set(), idx=0, t0=0;
@@ -65,8 +78,7 @@ function show(){
   document.getElementById('q').innerHTML=`Character: <b>${p.display}</b> — same replay, same moves. Left vs right.`;
   vL.src=p.left_clip; vR.src=p.right_clip; vL.load(); vR.load();
   // same replay on both sides: autoplay both, looped, kept in sync
-  Promise.all([new Promise(r=>vL.oncanplay=r), new Promise(r=>vR.oncanplay=r)]).then(()=>{ vL.currentTime=0; vR.currentTime=0; vL.play().catch(()=>{}); vR.play().catch(()=>{}); });
-  document.getElementById('SL').src=p.left_sheet; document.getElementById('SR').src=p.right_sheet;
+  Promise.all([new Promise(r=>vL.oncanplay=r), new Promise(r=>vR.oncanplay=r)]).then(()=>{ vL.currentTime=0; vR.currentTime=0; vL.play().catch(()=>{}); vR.play().catch(()=>{}); document.getElementById('pp').textContent='⏸'; });
   L.classList.remove('picked'); R.classList.remove('picked'); t0=performance.now();
   // preload next pair
   const n=pairs[idx+1]; if(n){ [n.left_clip,n.right_clip].forEach(u=>{const v=document.createElement('video'); v.preload='auto'; v.src=u;}); }
@@ -81,8 +93,31 @@ async function rate(choice){
 // keep the two loops locked together
 setInterval(()=>{ if(!vL.paused && !vR.paused && Math.abs(vL.currentTime-vR.currentTime)>0.15) vR.currentTime=vL.currentTime; }, 500);
 document.getElementById('tie').onclick=()=>rate('tie');
-document.getElementById('tog').onclick=e=>{e.preventDefault(); const s=document.getElementById('sheets'); s.style.display=s.style.display==='grid'?'none':'grid';};
-document.addEventListener('keydown',e=>{ if(e.key==='ArrowLeft') rate('left'); else if(e.key==='ArrowRight') rate('right'); else if(e.key===' '){e.preventDefault(); rate('tie');} else if(e.key==='p'){ vL.play(); vR.play(); } });
+
+// ---- transport: synced scrubber / frame stepping over both clips.
+// Clips are CLIP_FRAMES = range(404, ..., 3) game frames encoded at 20fps
+// (eval/capture_clip.py); 1 clip frame = 1/20 s. Jump chips convert a tour
+// input tick t to clip time via ((t+4-404)/3)/20  (screenshot frame = t+4).
+const FPS=20, pp=document.getElementById('pp'), bar2=document.getElementById('bar2'), tc=document.getElementById('tc');
+function seekBoth(t){ t=Math.max(0, Math.min(t, (vL.duration||0)-0.001)); vL.currentTime=t; vR.currentTime=t; }
+function pauseBoth(){ vL.pause(); vR.pause(); pp.textContent='▶'; }
+function playBoth(){ vL.play().catch(()=>{}); vR.play().catch(()=>{}); pp.textContent='⏸'; }
+pp.onclick=()=>{ vL.paused?playBoth():pauseBoth(); };
+document.getElementById('stepb').onclick=()=>{ pauseBoth(); seekBoth(vL.currentTime-1/FPS); };
+document.getElementById('stepf').onclick=()=>{ pauseBoth(); seekBoth(vL.currentTime+1/FPS); };
+bar2.addEventListener('input',()=>{ pauseBoth(); if(vL.duration) seekBoth(bar2.value/1000*vL.duration); });
+vL.addEventListener('timeupdate',()=>{ if(vL.duration){ bar2.value=Math.round(1000*vL.currentTime/vL.duration); tc.textContent=vL.currentTime.toFixed(2)+'s · f'+Math.round(vL.currentTime*FPS); } });
+const TICK0=404, STEPF=3, OFF=4;   // must match capture_clip CLIP_FRAMES
+const SEGS=[["walk",425],["run←",510],["run→",560],["jab",805],["ftilt",895],["utilt",965],["crouch",1035],["fsmash",1105],["usmash",1185],["jump",1265],["nair",1389],["shield",1445],["taunt",1515]];
+const jumps=document.getElementById('jumps');
+SEGS.forEach(([name,tick])=>{ const b=document.createElement('button'); b.textContent=name;
+  b.onclick=()=>{ pauseBoth(); seekBoth(((tick+OFF-TICK0)/STEPF)/FPS); }; jumps.appendChild(b); });
+
+document.addEventListener('keydown',e=>{ if(e.key==='ArrowLeft') rate('left'); else if(e.key==='ArrowRight') rate('right');
+  else if(e.key===' '){e.preventDefault(); rate('tie');}
+  else if(e.key==='k'||e.key==='p'){ vL.paused?playBoth():pauseBoth(); }
+  else if(e.key===','){ pauseBoth(); seekBoth(vL.currentTime-1/FPS); }
+  else if(e.key==='.'){ pauseBoth(); seekBoth(vL.currentTime+1/FPS); } });
 load();
 </script>
 </body>
