@@ -2,7 +2,9 @@
 """Build the .osbui UI-asset bundle for an injected fighter.
 
 Assets produced (matching Mario's sprite layouts exactly):
-  - CSS portrait: 48x45 RGBA32 (drawn 45x43) — generated art + name text
+  - CSS portrait: 48x43 RGBA32 canvas (drawn 45x43) — generated art + name
+                  text, encoded as three strips overlapping by one row
+                  (see PORTRAIT_STRIPS)
   - CSS name:     48x16 IA8 (drawn 47x16) — composed from the game's own
                   letter sprites (ui_refs/glyph_*.png, extracted from the
                   12 roster name sprites; Q is synthesized)
@@ -34,8 +36,15 @@ sys.path.insert(0, HERE)
 import emblem_stencil  # noqa: E402
 from sprite_codec import encode, u32rev  # noqa: E402
 
-PORTRAIT_STRIPS = [(48, 21), (48, 21), (48, 3)]
-PORTRAIT_W, PORTRAIT_H = 48, 45
+# (width, height, source row) per strip. spDraw advances the screen y by
+# bmheight (20) per strip but each strip stores/draws bmHreal (21) rows, so
+# consecutive strips OVERLAP by one row on screen: strip N+1's first row
+# repeats strip N's last drawn row (vanilla data duplicates those rows
+# byte-for-byte). Content canvas is therefore 43 rows, not 21+21+3=45 —
+# disjoint strips displace everything below row 20 and draw a seam across
+# the middle of the tile.
+PORTRAIT_STRIPS = [(48, 21, 0), (48, 21, 20), (48, 3, 40)]
+PORTRAIT_W, PORTRAIT_H = 48, 43
 PORTRAIT_DRAW_W, PORTRAIT_DRAW_H = 45, 43
 NAME_W, NAME_H, NAME_DRAW_W = 48, 16, 47
 STOCK_W, STOCK_H = 16, 10
@@ -164,11 +173,10 @@ def main():
         for x in range(PORTRAIT_W):
             p = port.getpixel((x, y))
             logical += bytes((p[0], p[1], p[2], 255))
+    row = PORTRAIT_W * 4
     portrait_enc = b""
-    off = 0
-    for w, h in PORTRAIT_STRIPS:
-        portrait_enc += encode(bytes(logical[off:off + w * h * 4]), w, h, 32)
-        off += w * h * 4
+    for w, h, y0 in PORTRAIT_STRIPS:
+        portrait_enc += encode(bytes(logical[y0 * row:(y0 + h) * row]), w, h, 32)
 
     # ---- name: raw IA8 canvas (64x16) — the engine re-encodes into the
     # target fighter's own sprite geometry (40/48/64 wide varies) ----
@@ -274,10 +282,10 @@ def main():
         if m is None:
             print(f"WARNING: {a.emblem} keyed to nothing — emblem canvas skipped")
         else:
-            st = emblem_stencil.score(m, sil)
+            escore = emblem_stencil.score(m, sil)
             emb_enc = emblem_stencil.canvas(m, 48).tobytes()
-            emb_stats = (f" (cut {st['cut_frac']:.0%} in {st['cuts']} holes"
-                         + (", BLOBBY" if st["blobby"] else "") + ")")
+            emb_stats = (f" (cut {escore['cut_frac']:.0%} in {escore['cuts']} holes"
+                         + (", BLOBBY" if escore["blobby"] else "") + ")")
 
     with open(a.out, "wb") as f:
         f.write(b"OSBV" + portrait_enc + name_enc + stock_enc + pal_enc + vs_enc + emb_enc)
@@ -286,10 +294,10 @@ def main():
           f"emblem {len(emb_enc)}B{emb_stats}")
 
     if a.preview:
-        pv = Image.new("RGBA", (48 * 4 + 16, 45 * 4 + 16 * 4 + 10 * 8 + 36), (30, 30, 30, 255))
-        pv.paste(port.resize((48 * 4, 45 * 4), Image.NEAREST), (8, 8))
-        pv.paste(nm.resize((48 * 4, 16 * 4), Image.NEAREST), (8, 45 * 4 + 16))
-        pv.paste(st.resize((16 * 8, 10 * 8), Image.NEAREST), (8, 45 * 4 + 16 * 4 + 26))
+        pv = Image.new("RGBA", (48 * 4 + 16, 43 * 4 + 16 * 4 + 10 * 8 + 36), (30, 30, 30, 255))
+        pv.paste(port.resize((48 * 4, 43 * 4), Image.NEAREST), (8, 8))
+        pv.paste(nm.resize((48 * 4, 16 * 4), Image.NEAREST), (8, 43 * 4 + 16))
+        pv.paste(st.resize((16 * 8, 10 * 8), Image.NEAREST), (8, 43 * 4 + 16 * 4 + 26))
         pv.save(a.preview)
 
 
