@@ -398,7 +398,7 @@ def main():
         argv = argv[:pi] + argv[pi + 2:]
     else:
         project_source_path = None
-    args = [a for a in argv if a not in ("--autoskin", "--reskin", "--mild-color", "--redchest", "--bluelegs", "--brownhair", "--capfix", "--vanillaflat", "--flatten", "--debleed", "--no-profile", "--no-smooth-disp", "--smooth-disp", "--no-smooth-weights", "--flip-facing", "--sharpen", "--rigid")]
+    args = [a for a in argv if a not in ("--autoskin", "--reskin", "--mild-color", "--redchest", "--bluelegs", "--brownhair", "--capfix", "--vanillaflat", "--flatten", "--debleed", "--no-profile", "--no-smooth-disp", "--smooth-disp", "--no-smooth-weights", "--no-postsmooth", "--flip-facing", "--sharpen", "--rigid")]
     # (--target consumed above with its argument)
     autoskin = "--autoskin" in sys.argv
     glb_path, frames_path, out_path = args[0], args[1], args[2]
@@ -2293,6 +2293,53 @@ def main():
                 n_armed += 1
     if n_armed:
         print(f"arm claim: {n_armed} sleeve/shoulder verts re-leaned onto arm bones")
+    # ---- post-claim weight re-smoothing (general): the cap/arm claims
+    # above assign flat weights (crown -> {12:1.0}, sleeves -> 0.75 arm),
+    # punching hard cliffs into the diffused part-weight field. A vert
+    # anchored 100% Head sitting one edge away from an arm-anchored vert
+    # shears that triangle into a zero-volume fin whenever the animation
+    # rotates the joints apart — the run cycle's arm swing + torso lean
+    # made fins jut from the shoulder/collar on EVERY character. Re-diffuse
+    # over the welded graph so every claim boundary blends over a band
+    # (interiors are untouched: a vert whose neighbours agree keeps its
+    # weights). Offline replay of dumped run/fall/landing joint frames:
+    # p99.9 triangle stretch 6.9x -> 3.1x, tris past 3x 79 -> 5.
+    _cur = {r: dict(vweights[r]) for r in _adj} if "--no-postsmooth" not in sys.argv else {}
+    for _it in range(4 if _cur else 0):
+        _nxt = {}
+        for r, nbrs in _adj.items():
+            acc2 = {p: 0.5 * w for p, w in _cur[r].items()}
+            share = 0.5 / len(nbrs)
+            for nb in nbrs:
+                for p, w in _cur[nb].items():
+                    acc2[p] = acc2.get(p, 0.0) + share * w
+            top = sorted(acc2.items(), key=lambda kv: -kv[1])[:4]
+            tot = sum(w for _, w in top) or 1.0
+            _nxt[r] = {p: w / tot for p, w in top if w / tot > 0.02}
+        _cur = _nxt
+    for _i in range(len(world)):
+        r = _rep[_i]
+        if r in _cur and _cur[r]:
+            vweights[_i] = dict(_cur[r])
+            vpart[_i] = max(vweights[_i], key=vweights[_i].get)
+    # re-apply the midline purge: diffusion across touching mirror limbs
+    # (welded shoes/thighs) would otherwise re-introduce cross-leg slivers.
+    n_purged2 = 0
+    for _i in (range(len(world)) if _cur else ()):
+        vw = vweights[_i]
+        if not any(p in vw and _MIR.get(p) in vw for p in vw):
+            continue
+        lsum = sum(w for p, w in vw.items() if p in _LEFTS)
+        rsum = sum(w for p, w in vw.items() if _MIR.get(p) in _LEFTS)
+        drop = (_LEFTS if lsum < rsum else {_MIR[p] for p in _LEFTS})
+        vw2 = {p: w for p, w in vw.items() if p not in drop}
+        tot = sum(vw2.values()) or 1.0
+        vweights[_i] = {p: w / tot for p, w in vw2.items()}
+        vpart[_i] = max(vweights[_i], key=vweights[_i].get)
+        n_purged2 += 1
+    if _cur:
+        print(f"post-claim weight smoothing: claim boundaries re-diffused"
+              + (f", {n_purged2} cross-side verts re-purged" if n_purged2 else ""))
     # cap shrinkwrap: the generated cap flares out well past the skull
     # sphere at the sides/back; pitched with the head (utilt/usmash) the
     # flare sweeps out as a big red "sail". Pull back/side cap verts that
