@@ -90,6 +90,14 @@ def main():
         shutil.rmtree(shots, ignore_errors=True)
         capture(shots, None if is_vanilla else os.path.abspath(a.bundle), frames, pose=a.pose,
                 fkind=a.fkind, replay=replay)
+    # a run can exit cleanly yet stop producing screenshots mid-way (the
+    # Metal backend's nil-drawable skip under heavy parallel load) — fail
+    # loudly instead of encoding a truncated clip that looks like success
+    missing = [f for f in frames if not os.path.exists(os.path.join(shots, f"frame_{f}.png"))]
+    if missing:
+        shutil.rmtree(shots, ignore_errors=True)   # force a clean recapture on retry
+        raise RuntimeError(f"capture incomplete: {len(missing)}/{len(frames)} frames "
+                           f"missing (first {missing[0]}) — game stopped presenting?")
 
     # clip: crop band, encode
     clipdir = os.path.join(a.out, "clipframes")

@@ -97,13 +97,12 @@ def make_build_clone(i):
 
 
 def capture_cell(char, target, variant, worker=0, attempts=3):
-    """The game rarely SIGSEGVs in CAMetalLayer nextDrawable — a pre-existing
-    drawable-pool fragility that simultaneous instance LAUNCHES amplify
-    (see ~/Library/Logs/DiagnosticReports/BattleShip-*.ips). Workers stagger
-    their launches (caller) and every crash is retried: a lost attempt costs
-    one game run, and the next attempt recaptures the cell from scratch."""
-    import random
-    import time
+    """Crashed/failed runs are retried once: a lost attempt costs one game
+    run, and the next attempt recaptures the cell from scratch. (The launch
+    stagger this used to need is gone — the CAMetalLayer nextDrawable
+    SIGSEGV was a drawable-texture over-release in libultraship, fixed
+    2026-08-27; see BattleShip/docs/bugs/metal_drawable_texture_overrelease
+    _2026-08-27.md.)"""
     tag = f"{char}_{target}-{variant}"
     osb = os.path.join(BUILD, f"{tag}.osb")
     cell = os.path.join(CELLS, f"{char}_{target}-{variant}")
@@ -116,7 +115,6 @@ def capture_cell(char, target, variant, worker=0, attempts=3):
                EVAL_BUILD=make_build_clone(worker),
                EVAL_WINX=str(60 + 420 * worker))
     for att in range(attempts):
-        time.sleep(random.uniform(0.5, 2.5))   # decorrelate launches
         r = subprocess.run(["python3", os.path.join(HERE, "capture_clip.py"), osb, cell,
                             "--fkind", str(fk), "--pose",
                             "--vanilla-dir", os.path.join(CELLS, f"vanilla-fk{fk}")],
@@ -158,15 +156,12 @@ def main():
     log(f"=== built {len(built)}/{len(jobs)}")
     # vanilla reference shots first (one per fkind, parallel) so the cell
     # captures never race to create them
-    import time
-    log("=== vanilla references (4 fkinds, staggered parallel)")
+    log("=== vanilla references (4 fkinds, parallel)")
     def _vanilla(i_fk):
         i, fk = i_fk
-        time.sleep(i * 8)   # stagger launches: simultaneous boots trip the
-                            # CAMetalLayer drawable crash (see capture_cell)
         vdir = os.path.join(CELLS, f"vanilla-fk{fk}")
         env = dict(os.environ, EVAL_BUILD=make_build_clone(i), EVAL_WINX=str(60 + 420 * i))
-        for att in range(3):
+        for att in range(2):
             r = subprocess.run(["python3", os.path.join(HERE, "capture_clip.py"), "vanilla", vdir,
                                 "--fkind", str(fk), "--pose",
                                 "--vanilla-dir", vdir], cwd=PIPE, env=env,
@@ -175,24 +170,20 @@ def main():
                 log(f"[vanilla-fk{fk}] ok" + (f" (attempt {att + 1})" if att else ""))
                 return
             log(f"[vanilla-fk{fk}] attempt {att + 1} failed: {(r.stdout + r.stderr)[-150:].strip()}")
-        log(f"[vanilla-fk{fk}] FAILED after 3 attempts")
+        log(f"[vanilla-fk{fk}] FAILED after 2 attempts")
     with ThreadPoolExecutor(max_workers=4) as ex:
         list(ex.map(_vanilla, enumerate(sorted(set(TARGETS.values())))))
-    log("=== capture: 5 parallel game instances (pose mode, staggered)")
+    log("=== capture: 5 parallel game instances (pose mode)")
     import queue as _q
     slots = _q.Queue()
     for i in range(5):
         slots.put(i)
-    started = set()
     def _cap(j):
         c, t, v = j
         if f"{c}_{t}-{v}" not in built:
             return
         w = slots.get()
         try:
-            if w not in started:
-                started.add(w)
-                time.sleep(w * 8)   # stagger each worker's first boot
             capture_cell(c, t, v, worker=w)
         finally:
             slots.put(w)
