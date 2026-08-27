@@ -19,14 +19,23 @@ from PIL import Image, ImageDraw
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 PIPE = os.path.dirname(HERE)
-CLIP_FRAMES = list(range(440, 1300, 3))
-SHEET_FRAMES = [410, 455, 470, 515, 557, 605, 675, 745, 760, 785, 815, 895, 910, 975, 990,
-                1045, 1085, 1099, 1130, 1155, 1180, 1225, 1250, 1300, 1350, 1420, 1470, 1505, 1540]
-LABELS = {410: "walk", 455: "idle", 470: "idle", 515: "jab", 557: "jab2", 605: "ftilt", 675: "utilt",
-          745: "crouch", 760: "crouch", 785: "fsmash", 815: "fsmash", 895: "usmash", 910: "usmash",
-          975: "jump", 990: "air", 1045: "land", 1085: "jump2", 1099: "nair", 1130: "air", 1155: "shield",
-          1180: "shield", 1225: "taunt", 1250: "taunt", 1300: "idle", 1350: "walk-back", 1420: "idle",
-          1470: "idle", 1505: "fireball", 1540: "fb-idle"}
+# Frames are keyed to the CURRENT make_replay.py tour (1863 ticks, incl.
+# run-left/run-right): screenshot frame = replay input tick + 4, measured
+# by correlating "screenshot frame N" log lines with the FRM dump stream
+# (2026-08-27; an earlier "+40" note was wrong). Regenerate these from
+# the .rpl.json marks whenever the TOUR changes.
+CLIP_FRAMES = list(range(404, 1624, 3))
+LABELS = {459: "walk",
+          531: "run-left", 537: "run-left",
+          594: "run", 605: "run", 616: "run",
+          679: "walk-left", 729: "idle", 812: "jab", 852: "jab2",
+          906: "ftilt", 976: "utilt", 1049: "crouch", 1064: "crouch",
+          1116: "fsmash", 1126: "fsmash", 1196: "usmash", 1206: "usmash",
+          1275: "jump", 1294: "air", 1344: "land", 1385: "jump2",
+          1396: "nair", 1409: "air", 1459: "shield", 1479: "shield",
+          1526: "taunt", 1539: "taunt", 1584: "idle",
+          1664: "walk-back", 1724: "idle", 1806: "fireball", 1824: "fb-idle"}
+SHEET_FRAMES = sorted(LABELS)
 # fighter band as fractions of the frame (window size varies run to run)
 BAND = (0.22, 0.05, 0.78, 0.75)
 
@@ -61,9 +70,10 @@ def main():
     # per-fighter tour replay (fighter kinds are baked into the replay
     # metadata and must agree with BOOT_BATTLE)
     replay = os.path.join(PIPE, "eval-tour.rpl" if a.fkind == 0 else f"eval-tour-fk{a.fkind}.rpl")
-    if not os.path.exists(replay):
-        subprocess.run(["python3", "make_replay.py", replay,
-                        "--p1", str(a.fkind), "--p2", str(a.fkind)], cwd=PIPE, check=True)
+    # ALWAYS regenerate: SHEET/CLIP frames above are keyed to the current
+    # make_replay.py tour; a stale .rpl on disk would silently desync them.
+    subprocess.run(["python3", "make_replay.py", replay,
+                    "--p1", str(a.fkind), "--p2", str(a.fkind)], cwd=PIPE, check=True)
     os.makedirs(a.out, exist_ok=True)
     is_vanilla = a.bundle in ("vanilla", "none", "")
     frames = sorted(set(CLIP_FRAMES) | set(SHEET_FRAMES))

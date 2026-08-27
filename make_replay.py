@@ -48,6 +48,19 @@ TOUR = [
     # the mesh (and the turn animation itself).
     ("walk-right",   60, 0, 45, 0),
     ("idle-wr",      25, 0, 0, 0),
+    # dash->run both directions: the run cycle's big arm swing + torso
+    # lean is where skinning artifacts (shoulder/collar fins) live —
+    # walking alone never triggers them. Full deflection = dash (~44u/t,
+    # FALLS off edges), held = run (~42u/t, auto-brakes at ledges); the
+    # direction flip also exercises turn-run. Measured on Hyrule: P1's
+    # flat deck spans x -2700..+100 and P1 sits at -1222 after
+    # walk-right, so a SHORT run-left (30t -> ~-2460, 240u clear of the
+    # left drop) then a LONG run-right (55t, ~2 clean run cycles ending
+    # ~-180) fits exactly; longer either way falls or brakes early.
+    ("run-left",     30, 0, -127, 0),
+    ("idle-rl",      25, 0, 0, 0),
+    ("run-right",    55, 0, 127, 0),
+    ("idle-rr",      25, 0, 0, 0),
     ("walk-left",    75, 0, -45, 0),
     ("idle-wl",      25, 0, 0, 0),
     ("reface",       3, 0, 25, 0),
