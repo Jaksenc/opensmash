@@ -29,9 +29,6 @@
   .scrub button:hover { background:#353b44; }
   .scrub input[type=range] { flex:1; accent-color:var(--acc); }
   .scrub .tc { color:var(--mut); font-variant-numeric:tabular-nums; min-width:88px; text-align:right; }
-  .jumps { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; justify-content:center; }
-  .jumps button { background:#232830; color:var(--mut); border:0; border-radius:12px; padding:2px 10px; cursor:pointer; font-size:12px; }
-  .jumps button:hover { color:var(--fg); background:#2f3540; }
   .hint { color:var(--mut); text-align:center; margin-top:10px; font-size:13px; }
   .done { text-align:center; padding:60px 0; font-size:22px; }
   a { color:var(--acc); }
@@ -56,7 +53,6 @@
     <input type="range" id="bar2" min="0" max="1000" value="0">
     <span class="tc" id="tc">0.00s</span>
   </div>
-  <div class="jumps" id="jumps"></div>
   <button class="tie" id="tie">Can't tell / tie <kbd>space</kbd></button>
   <div class="hint">Both clips are the same replay, looping in sync. Judge likeness <i>and</i> how clean it looks in play (holes, stretching, jitter, proportions). Scrub or step with <kbd>k</kbd> <kbd>,</kbd> <kbd>.</kbd> — <kbd>←</kbd>/<kbd>→</kbd> rate.</div>
 </main>
@@ -95,23 +91,22 @@ setInterval(()=>{ if(!vL.paused && !vR.paused && Math.abs(vL.currentTime-vR.curr
 document.getElementById('tie').onclick=()=>rate('tie');
 
 // ---- transport: synced scrubber / frame stepping over both clips.
-// Clips are CLIP_FRAMES = range(404, ..., 3) game frames encoded at 20fps
-// (eval/capture_clip.py); 1 clip frame = 1/20 s. Jump chips convert a tour
-// input tick t to clip time via ((t+4-404)/3)/20  (screenshot frame = t+4).
+// Clips are 20fps (eval/capture_clip.py), so 1 clip frame = 1/20 s.
+// Autoplay-first: releasing the scrubber resumes the loop; pausing is
+// the advanced flow (k to hold, , / . to step).
 const FPS=20, pp=document.getElementById('pp'), bar2=document.getElementById('bar2'), tc=document.getElementById('tc');
+let userPaused=false;   // only a deliberate pause sticks — the browser
+                        // pauses muted background video on its own
 function seekBoth(t){ t=Math.max(0, Math.min(t, (vL.duration||0)-0.001)); vL.currentTime=t; vR.currentTime=t; }
-function pauseBoth(){ vL.pause(); vR.pause(); pp.textContent='▶'; }
-function playBoth(){ vL.play().catch(()=>{}); vR.play().catch(()=>{}); pp.textContent='⏸'; }
+function pauseBoth(){ userPaused=true; vL.pause(); vR.pause(); pp.textContent='▶'; }
+function playBoth(){ userPaused=false; vL.play().catch(()=>{}); vR.play().catch(()=>{}); pp.textContent='⏸'; }
+setInterval(()=>{ if(!userPaused && vL.paused && vL.readyState>=3) playBoth(); }, 800);
 pp.onclick=()=>{ vL.paused?playBoth():pauseBoth(); };
 document.getElementById('stepb').onclick=()=>{ pauseBoth(); seekBoth(vL.currentTime-1/FPS); };
 document.getElementById('stepf').onclick=()=>{ pauseBoth(); seekBoth(vL.currentTime+1/FPS); };
 bar2.addEventListener('input',()=>{ pauseBoth(); if(vL.duration) seekBoth(bar2.value/1000*vL.duration); });
+bar2.addEventListener('change',()=>{ playBoth(); });   // drag released -> resume the loop
 vL.addEventListener('timeupdate',()=>{ if(vL.duration){ bar2.value=Math.round(1000*vL.currentTime/vL.duration); tc.textContent=vL.currentTime.toFixed(2)+'s · f'+Math.round(vL.currentTime*FPS); } });
-const TICK0=404, STEPF=3, OFF=4;   // must match capture_clip CLIP_FRAMES
-const SEGS=[["walk",425],["run←",510],["run→",560],["jab",805],["ftilt",895],["utilt",965],["crouch",1035],["fsmash",1105],["usmash",1185],["jump",1265],["nair",1389],["shield",1445],["taunt",1515]];
-const jumps=document.getElementById('jumps');
-SEGS.forEach(([name,tick])=>{ const b=document.createElement('button'); b.textContent=name;
-  b.onclick=()=>{ pauseBoth(); seekBoth(((tick+OFF-TICK0)/STEPF)/FPS); }; jumps.appendChild(b); });
 
 document.addEventListener('keydown',e=>{ if(e.key==='ArrowLeft') rate('left'); else if(e.key==='ArrowRight') rate('right');
   else if(e.key===' '){e.preventDefault(); rate('tie');}
