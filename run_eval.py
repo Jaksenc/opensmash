@@ -19,7 +19,10 @@ import sys
 from PIL import Image
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
-BUILD = "/Users/tdimson/projects/opensmash/BattleShip/build-us"
+# Override with EVAL_BUILD to A/B two builds against one replay (e.g. a
+# pre-change binary vs the current one) without editing this file.
+BUILD = os.environ.get(
+    "EVAL_BUILD", "/Users/tdimson/projects/opensmash/BattleShip/build-us")
 LOG = os.path.expanduser("~/Library/Application Support/BattleShip/ssb64.log")
 
 
