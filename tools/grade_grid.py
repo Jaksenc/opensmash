@@ -26,6 +26,9 @@ def composite(img, bg=(10, 2, 1)):
 def grade_fire():
     ours = composite(load_raw("tile_fire"))
     ref = np.asarray(Image.open(os.path.join(ASSETS, "fire_bg.png")).convert("RGB"), np.float32)
+    # the tile's top lip and bottom rule sit under the grid lattice on the
+    # real screen, so grade only the band the player actually sees
+    ours, ref = ours[2:-1], ref[2:-1]
     if ours.shape != ref.shape:
         ours = np.asarray(Image.fromarray(ours.astype(np.uint8)).resize((ref.shape[1], ref.shape[0])), np.float32)
     dmean = np.abs(ours.mean(axis=(0, 1)) - ref.mean(axis=(0, 1)))

@@ -70,6 +70,12 @@ def extract(data, off, name, outdir):
                     a = deswizzle_addr((row * bw_img + col) * 2, row, 16)
                     v = struct.unpack_from(">H", data, buf + a)[0]
                     rgba = (v >> 8,) * 3 + (v & 0xFF,)
+                elif bmfmt == 3 and bmsiz == 0:    # IA4 (3 bits intensity + 1 alpha)
+                    a = deswizzle_addr(row * (bw_img // 2) + col // 2, row, 4)
+                    byte = data[buf + a]
+                    v4 = (byte >> 4) if col % 2 == 0 else (byte & 0xF)
+                    inten = ((v4 >> 1) & 0x7) * 36
+                    rgba = (inten, inten, inten, 255 if (v4 & 1) else 0)
                 elif bmfmt == 4 and bmsiz == 4:    # I2 (4 pixels/byte, odd-row XOR2)
                     a = row * (bw_img // 4) + col // 4
                     if row % 2 == 1: a ^= 2
