@@ -783,7 +783,11 @@ def main():
                       f"({'keep' if _fr >= _br else 'flip'} candidate)")
             else:
                 print(f"facing: toe cue ambiguous (fwd={_fr:.3f} back={_br:.3f})")
-        if _nt:
+        # face/head cues need no foot verts — gating them on _nt let a
+        # character whose shoes are weighted to the calves (obama: zero
+        # foot-dominant verts) skip EVERY cue and ship facing decided by
+        # the arm-x noise pick (walked backwards in game).
+        if True:
             _head_h = None
             if "Head" in name_idx:
                 # head centroid offset: face + nose pull the head's mass
