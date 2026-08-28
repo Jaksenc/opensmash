@@ -21,6 +21,8 @@ def main():
     ap.add_argument("glb")
     ap.add_argument("out")
     ap.add_argument("--yaw", type=float, default=0.0)
+    ap.add_argument("--pitch", type=float, default=0.0,
+                    help="camera pitch in degrees (90 = top-down)")
     ap.add_argument("--size", type=int, default=900)
     ap.add_argument("--unlit", action="store_true")
     args = ap.parse_args()
@@ -31,47 +33,61 @@ def main():
     uv = read_accessor(gltf, bin_, prim["attributes"]["TEXCOORD_0"])
     idx = [t[0] for t in read_accessor(gltf, bin_, prim["indices"])]
     tris = [(idx[i], idx[i+1], idx[i+2]) for i in range(0, len(idx), 3)]
-    bv = gltf["bufferViews"][gltf["images"][0]["bufferView"]]
+    # resolve the material's baseColor image (images[0] can be a normal map)
+    img_i = 0
+    mat_i = prim.get("material")
+    if mat_i is not None:
+        bct = gltf["materials"][mat_i].get(
+            "pbrMetallicRoughness", {}).get("baseColorTexture")
+        if bct is not None:
+            img_i = gltf["textures"][bct["index"]]["source"]
+    bv = gltf["bufferViews"][gltf["images"][img_i]["bufferView"]]
     tex = Image.open(io.BytesIO(
         bin_[bv.get("byteOffset", 0):bv.get("byteOffset", 0)+bv["byteLength"]])).convert("RGB")
     TW, TH = tex.size
 
     W = H = args.size
-    ys = [v[1] for v in pos]
-    ymin, ymax = min(ys), max(ys)
-    sc = (H-80)/(ymax-ymin)
     yaw = math.radians(args.yaw)
     cs, sn = math.cos(yaw), math.sin(yaw)
+    pit = math.radians(args.pitch)
+    cp, sp = math.cos(pit), math.sin(pit)
 
-    def proj(v):
+    def rot(v):
         x = v[0]*cs + v[2]*sn
         z = -v[0]*sn + v[2]*cs
-        return (W/2 + x*sc, H-40-(v[1]-ymin)*sc, z)
+        y = v[1]*cp - z*sp
+        z = v[1]*sp + z*cp
+        return (x, y, z)
+
+    rpos = [rot(v) for v in pos]
+    xs = [v[0] for v in rpos]
+    ys = [v[1] for v in rpos]
+    xc, yc = (min(xs)+max(xs))/2, (min(ys)+max(ys))/2
+    ext = max(max(xs)-min(xs), max(ys)-min(ys)) or 1e-9
+    sc = (H-80)/ext
+
+    def proj(v):
+        return (W/2 + (v[0]-xc)*sc, H/2 - (v[1]-yc)*sc, v[2])
 
     # light: fixed key from camera-up-left
     L = (-0.35, 0.5, 0.79)
 
     order = []
     for t in tris:
-        s = [proj(pos[i]) for i in t]
+        s = [proj(rpos[i]) for i in t]
         order.append((sum(p[2] for p in s)/3, t, s))
     order.sort(key=lambda x: x[0])
 
     img = Image.new("RGB", (W, H), (29, 29, 40))
     for _, t, s in order:
-        # world normal for lighting
-        a, b, c = (pos[t[0]], pos[t[1]], pos[t[2]])
+        # camera-space normal for lighting (rpos is already rotated)
+        a, b, c = (rpos[t[0]], rpos[t[1]], rpos[t[2]])
         u = [b[k]-a[k] for k in range(3)]
         w = [c[k]-a[k] for k in range(3)]
         n = [u[1]*w[2]-u[2]*w[1], u[2]*w[0]-u[0]*w[2], u[0]*w[1]-u[1]*w[0]]
-        # rotate normal by yaw to camera space (only x/z mix)
-        nx = n[0]*cs + n[2]*sn
-        nz = -n[0]*sn + n[2]*cs
-        nlen = math.sqrt(nx*nx+n[1]*n[1]+nz*nz) or 1e-9
-        if nz/nlen < -0.999:
-            pass
+        nlen = math.sqrt(n[0]*n[0]+n[1]*n[1]+n[2]*n[2]) or 1e-9
         shade = 1.0 if args.unlit else min(1.0, 0.45 + 0.55*max(
-            0.0, (nx*L[0]+n[1]*L[1]+nz*L[2])/nlen))
+            0.0, (n[0]*L[0]+n[1]*L[1]+n[2]*L[2])/nlen))
 
         # affine map: texture tri -> screen tri
         x0, y0 = s[0][0], s[0][1]
