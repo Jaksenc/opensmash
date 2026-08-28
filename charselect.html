@@ -8,56 +8,46 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { height: 100%; }
   body {
-    background:
-      radial-gradient(ellipse at 50% 10%, #2a130c 0%, #180a06 55%, #0c0503 100%);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
+    background: #0b0603;
+    display: flex; align-items: center; justify-content: center;
     padding: 2vmin;
-    font-family: "Arial Black", "Helvetica Neue", Arial, sans-serif;
     overflow: auto;
   }
 
-  /* ── grid ──────────────────────────────────────────────────────────── */
   #grid {
     display: grid;
-    /* cols set from JS (?cols=) or auto-fit responsive */
     grid-template-columns: repeat(var(--cols, 10), minmax(0, 1fr));
-    gap: 0.35vmin;
-    width: min(96vw, 170vh);
-    background: #1b0e08;
-    padding: 0.5vmin;
-    border-radius: 4px;
-    box-shadow: 0 0 40px rgba(0,0,0,0.8) inset, 0 4px 24px rgba(0,0,0,0.6);
+    gap: 0;                              /* frames butt together, as in-game */
+    width: min(96vw, 168vh);
+    background: #170d07;
+    padding: 0.4vmin;
   }
 
   .slot {
     position: relative;
-    aspect-ratio: 45 / 43;               /* the game's portrait tile ratio */
-    border: none;
-    padding: 0;
-    background: #000;
-    cursor: pointer;
     display: block;
     width: 100%;
-    /* wood frame: dark brown with a subtle bevel, like the game's grid */
-    outline: 2px solid #35201411;
-    box-shadow:
-      inset 0 0 0 2px #3a241733,
-      0 0 0 1px #120a06;
-    border-radius: 2px;
-    overflow: hidden;
+    aspect-ratio: 51 / 49;               /* framed tile ratio */
+    padding: 0; border: 0; background: none;
+    cursor: pointer;
+    line-height: 0;
   }
-  .slot svg { display: block; width: 100%; height: 100%; }
+  /* the pixel art: nearest-neighbour upscale, no smoothing anywhere */
+  .slot canvas {
+    width: 100%; height: 100%; display: block;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+  }
+  .slot .sr { position: absolute; width: 1px; height: 1px; overflow: hidden;
+              clip: rect(0 0 0 0); white-space: nowrap; }
 
-  /* hover / selected ring, like the in-game cursor highlight */
-  .slot:hover, .slot[data-selected] {
-    z-index: 2;
-    box-shadow:
-      0 0 0 2px #f8f0d8,
-      0 0 12px 2px rgba(255, 220, 140, 0.55),
-      inset 0 0 0 1px #120a06;
+  /* selection / hover highlight, drawn as an overlay so it stays crisp */
+  .slot::after {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    box-shadow: inset 0 0 0 2px transparent;
+  }
+  .slot:hover::after, .slot[data-selected]::after {
+    box-shadow: inset 0 0 0 2px #ffe9a8, 0 0 10px 1px rgba(255,205,120,.5);
   }
   .slot:active { transform: translateY(1px); }
 </style>
@@ -67,164 +57,296 @@
 
 <script>
 // ---------------------------------------------------------------------------
-// N-cell character-select grid, built entirely from DOM + SVG — no bitmaps.
-// ?n=100   number of slots
-// ?cols=10 columns (defaults to a near-square layout)
-// ?grade=1 grader mode: renders one bare fire tile at a fixed rect
-// Each slot is a real <button data-slot="i"> — fully targetable.
+// OpenSmash character-select grid — everything drawn from scratch.
+// No game assets are loaded: the font, the fire, and the frame are all
+// generated procedurally into a 51x49 pixel buffer per cell, then upscaled
+// with nearest-neighbour so it keeps the chunky N64 look at any size.
+//   ?n=100    slot count      ?cols=10  columns
+//   ?grade=1  emit reference tiles for tools/grade_grid.py
 // ---------------------------------------------------------------------------
-const params = new URLSearchParams(location.search);
-const N = Math.max(1, parseInt(params.get('n') || '100', 10));
-const COLS = parseInt(params.get('cols') || '0', 10) ||
-  Math.ceil(Math.sqrt(N * (43 * 1.0) / 45));
-const GRADE = params.get('grade') === '1';
+const P = new URLSearchParams(location.search);
+const N = Math.max(1, parseInt(P.get('n') || '100', 10));
+const COLS = parseInt(P.get('cols') || '0', 10) || Math.min(10, Math.ceil(Math.sqrt(N)));
+const GRADE = P.get('grade') === '1';
 
-// Demo names for the first few slots; the rest get the "?" placeholder.
-const NAMES = ['MARIO', 'DK', 'LINK', 'SAMUS', 'YOSHI', 'KIRBY', 'FOX',
-               'PIKACHU', 'LUIGI', 'FALCON', 'NESS', 'PUFF'];
+const FIRE_SEED = 9;             // one shared flame tile, as in-game
+const FRAME = 3;                 // frame thickness in tile pixels
+const IW = 45, IH = 43;          // interior = the game's portrait tile size
+const TW = IW + FRAME * 2, TH = IH + FRAME * 2;
 
-// ── fire tile: original SVG artwork tuned to the game's palette ─────────────
-// Deep near-black top, ember maroon glow, flame tongues rising from the
-// bottom, displaced organically per-slot with feTurbulence (seeded).
-function fireTileSVG(seed, { name = null, qmark = false } = {}) {
-  const flameJitter = (seed * 7919) % 13;
-  return `
-<svg viewBox="0 0 45 43" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="bg${seed}" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0"    stop-color="#120302"/>
-      <stop offset="0.35" stop-color="#240604"/>
-      <stop offset="0.7"  stop-color="#3a0c05"/>
-      <stop offset="1"    stop-color="#521408"/>
-    </linearGradient>
-    <linearGradient id="fl${seed}" x1="0" y1="1" x2="0" y2="0">
-      <stop offset="0"    stop-color="#a82c0c"/>
-      <stop offset="0.45" stop-color="#831c08"/>
-      <stop offset="0.8"  stop-color="#520e04"/>
-      <stop offset="1"    stop-color="#26050188"/>
-    </linearGradient>
-    <linearGradient id="core${seed}" x1="0" y1="1" x2="0" y2="0">
-      <stop offset="0"   stop-color="#d85c14"/>
-      <stop offset="0.55" stop-color="#a83408"/>
-      <stop offset="1"   stop-color="#6c160566"/>
-    </linearGradient>
-    <linearGradient id="hot${seed}" x1="0" y1="1" x2="0" y2="0">
-      <stop offset="0"   stop-color="#f4c244"/>
-      <stop offset="0.45" stop-color="#e07c18"/>
-      <stop offset="1"   stop-color="#b2400c66"/>
-    </linearGradient>
-    <filter id="grain${seed}">
-      <feTurbulence type="fractalNoise" baseFrequency="0.55" numOctaves="2"
-                    seed="${seed + 41}"/>
-      <feColorMatrix type="matrix"
-        values="0 0 0 0 0.55  0 0 0 0 0.22  0 0 0 0 0.08  0.6 0 0 0 0"/>
-      <feComposite operator="in" in2="SourceGraphic"/>
-    </filter>
-    <filter id="warp${seed}" x="-20%" y="-20%" width="140%" height="140%">
-      <feTurbulence type="fractalNoise" baseFrequency="0.10 0.16"
-                    numOctaves="2" seed="${seed}" result="n"/>
-      <feDisplacementMap in="SourceGraphic" in2="n" scale="${5 + flameJitter % 4}"/>
-      <feGaussianBlur stdDeviation="0.25"/>
-    </filter>
-  </defs>
+// ── our own pixel font: 7x9 caps, 2px stems, cut to match the game's ───────
+// heavy condensed look. Authored here as bitmaps — nothing is traced.
+const GLYPHS = {
+A:"..###../.#####./##...##/##...##/##...##/#######/##...##/##...##/##...##",
+B:"######./##...##/##...##/######./##...##/##...##/##...##/##...##/######.",
+C:".#####./##...##/##...../##...../##...../##...../##...../##...##/.#####.",
+D:"#####../##..##./##...##/##...##/##...##/##...##/##...##/##..##./#####..",
+E:"#######/##...../##...../######./##...../##...../##...../##...../#######",
+F:"#######/##...../##...../######./##...../##...../##...../##...../##.....",
+G:".#####./##...##/##...../##...../##..###/##...##/##...##/##...##/.#####.",
+H:"##...##/##...##/##...##/##...##/#######/##...##/##...##/##...##/##...##",
+I:"#######/...##../...##../...##../...##../...##../...##../...##../#######",
+J:"....###/.....##/.....##/.....##/.....##/.....##/##...##/##...##/.#####.",
+K:"##...##/##..##./##.##../####.../###..../####.../##.##../##..##./##...##",
+L:"##...../##...../##...../##...../##...../##...../##...../##...../#######",
+M:"##...##/###.###/#######/##.#.##/##...##/##...##/##...##/##...##/##...##",
+N:"##...##/###..##/####.##/#######/##.####/##..###/##...##/##...##/##...##",
+O:".#####./##...##/##...##/##...##/##...##/##...##/##...##/##...##/.#####.",
+P:"######./##...##/##...##/##...##/######./##...../##...../##...../##.....",
+Q:".#####./##...##/##...##/##...##/##...##/##...##/##.#.##/##..###/.######",
+R:"######./##...##/##...##/##...##/######./##.##../##..##./##...##/##...##",
+S:".#####./##...##/##...../##...../.#####./.....##/.....##/##...##/.#####.",
+T:"#######/...##../...##../...##../...##../...##../...##../...##../...##..",
+U:"##...##/##...##/##...##/##...##/##...##/##...##/##...##/##...##/.#####.",
+V:"##...##/##...##/##...##/##...##/##...##/.#####./..###../..###../...#...",
+W:"##...##/##...##/##...##/##...##/##.#.##/#######/#######/###.###/##...##",
+X:"##...##/##...##/.##.##./..###../...#.../..###../.##.##./##...##/##...##",
+Y:"##...##/##...##/.##.##./..###../...##../...##../...##../...##../...##..",
+Z:"#######/.....##/....##./...##../..##.../.##..../##...../##...../#######",
+"0":".#####./##...##/##..###/##.#.##/###..##/##...##/##...##/##...##/.#####.",
+"1":"...##../..###../.####../...##../...##../...##../...##../...##../.######",
+"2":".#####./##...##/.....##/....##./...##../..##.../.##..../##...../#######",
+"3":"######./.....##/.....##/.....##/.####../.....##/.....##/.....##/######.",
+"4":"....##./...###./..####./.##.##./##..##./#######/....##./....##./....##.",
+"5":"#######/##...../##...../######./.....##/.....##/.....##/##...##/.#####.",
+"6":".#####./##...##/##...../##...../######./##...##/##...##/##...##/.#####.",
+"7":"#######/.....##/....##./....##./...##../...##../..##.../..##.../..##...",
+"8":".#####./##...##/##...##/##...##/.#####./##...##/##...##/##...##/.#####.",
+"9":".#####./##...##/##...##/##...##/.######/.....##/.....##/##...##/.#####.",
+"?":".#####./##...##/.....##/....##./...##../...##../......./...##../...##..",
+};
+const GW = 7, GH = 9;
+const rows = ch => (GLYPHS[ch] || "").split('/');
+const charW = ch => ch === ' ' ? 3 : GW;
 
-  <rect width="45" height="43" fill="#1c0502"/>
-  <rect width="45" height="43" fill="url(#bg${seed})"/>
-
-  <!-- flame bank: a few fat asymmetric columns, dark void upper-left,
-       dark pocket bottom-right, hot mass low center-left -->
-  <g filter="url(#warp${seed})">
-    <path d="M -2,46 L -2,26 Q 2,22 4,25 Q 7,8 12,20 Q 15,4 19,18
-             Q 23,10 26,20 Q 30,7 35,19 Q 39,14 42,22 Q 45,18 48,24
-             L 48,46 Z" fill="url(#fl${seed})"/>
-    <path d="M -2,46 L -2,32 Q 3,28 6,31 Q 9,14 14,26 Q 17,10 21,24
-             Q 25,17 28,26 Q 32,13 37,25 Q 41,21 48,30 L 48,46 Z"
-          fill="url(#core${seed})" opacity="0.95"/>
-    <path d="M -2,46 L -2,38 Q 3,34 6,37 Q 10,22 15,32 Q 18,18 22,30
-             Q 26,24 30,33 Q 33,26 37,34 Q 41,32 44,38 L 46,42 L 46,46 Z"
-          fill="url(#hot${seed})" opacity="0.92"/>
-    <!-- dark pocket bottom-right, like the source tile -->
-    <path d="M 36,46 Q 38,38 42,40 Q 45,42 48,41 L 48,46 Z"
-          fill="#2a0703" opacity="0.85"/>
-  </g>
-  <!-- subtle grain: widens the tonal distribution like the RGBA16 source -->
-  <rect width="45" height="43" filter="url(#grain${seed})" opacity="0.09"/>
-  <!-- baked top-edge highlight, as in the game tile -->
-  <rect x="0" y="0" width="45" height="1" fill="#b06a3c" opacity="0.85"/>
-
-  ${qmark ? `
-  <text x="22.5" y="27.5" text-anchor="middle"
-        font-family="Arial Black, Arial, sans-serif" font-size="17"
-        font-weight="900" fill="#f2ede2"
-        stroke="#17090533" stroke-width="1.6" paint-order="stroke"
-        >?</text>` : ''}
-
-  ${name ? `
-  <text x="2.4" y="8.6" font-family="Arial Black, Arial, sans-serif"
-        font-size="7.4" font-weight="900" letter-spacing="0.35"
-        fill="#c9b493" stroke="#1c0f08" stroke-width="1.05"
-        paint-order="stroke" transform="scale(1, 0.98)"
-        textLength="${Math.min(40, name.length * 5.4)}"
-        lengthAdjust="spacingAndGlyphs">${name}</text>` : ''}
-</svg>`;
+function textWidth(s, sp) {
+  let w = 0;
+  for (let i = 0; i < s.length; i++) w += charW(s[i]) + (i ? sp : 0);
+  return w;
 }
+
+// ── tiny pixel canvas we composite into ───────────────────────────────────
+function Buf(w, h) {
+  const d = new Uint8ClampedArray(w * h * 4);
+  return {
+    w, h, d,
+    set(x, y, r, g, b, a) {
+      if (x < 0 || y < 0 || x >= w || y >= h) return;
+      const i = (y * w + x) * 4;
+      if (a === undefined) a = 255;
+      if (a >= 255) { d[i] = r; d[i+1] = g; d[i+2] = b; d[i+3] = 255; return; }
+      const k = a / 255, ik = 1 - k;
+      d[i] = d[i]*ik + r*k; d[i+1] = d[i+1]*ik + g*k; d[i+2] = d[i+2]*ik + b*k;
+      d[i+3] = Math.max(d[i+3], a);
+    },
+  };
+}
+const hex = h => [parseInt(h.slice(1,3),16), parseInt(h.slice(3,5),16), parseInt(h.slice(5,7),16)];
+
+// draw a glyph string with a 1px dark outline (dilate then fill), scale = px size
+function drawText(buf, s, x0, y0, fill, outline, sp, scale, cond) {
+  scale = scale || 1; cond = cond || 0;
+  const skip = GW - 2;   // column dropped when condensing
+  const F = hex(fill), O = hex(outline);
+  const px = (x, y, c) => {
+    for (let sy = 0; sy < scale; sy++)
+      for (let sx = 0; sx < scale; sx++)
+        buf.set(x*scale + sx + x0, y*scale + sy + y0, c[0], c[1], c[2], 255);
+  };
+  // pass 1: outline (8-neighbourhood of every lit pixel)
+  let cx = 0;
+  for (const ch of s) {
+    const g = rows(ch);
+    for (let y = 0; y < g.length; y++)
+      for (let x = 0; x < GW; x++)
+        if (g[y][x] === '#' && !(cond && x === skip))
+          for (let dy = -1; dy <= 1; dy++)
+            for (let dx = -1; dx <= 1; dx++)
+              px(cx + x + dx - (cond && x > skip ? 1 : 0), y + dy, O);
+    cx += charW(ch) - cond + sp;
+  }
+  // pass 2: fill
+  cx = 0;
+  for (const ch of s) {
+    const g = rows(ch);
+    for (let y = 0; y < g.length; y++)
+      for (let x = 0; x < GW; x++)
+        if (g[y][x] === '#' && !(cond && x === skip)) px(cx + x - (cond && x > skip ? 1 : 0), y, F);
+    cx += charW(ch) - cond + sp;
+  }
+}
+
+// ── deterministic noise ───────────────────────────────────────────────────
+function rnd(n) {
+  let t = (n + 0x6D2B79F5) | 0;
+  t = Math.imul(t ^ (t >>> 15), 1 | t);
+  t ^= t + Math.imul(t ^ (t >>> 7), 61 | t);
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+}
+function noise1(x, seed) {
+  const i = Math.floor(x), f = x - i;
+  const a = rnd(i * 374761 + seed * 66826), b = rnd((i + 1) * 374761 + seed * 66826);
+  const u = f * f * (3 - 2 * f);
+  return a + (b - a) * u;
+}
+function noise2(x, y, seed) {
+  return (noise1(x + noise1(y * 1.7, seed + 31) * 3.1, seed) * 0.65
+        + noise1(y * 0.9 + 11.3, seed + 17) * 0.35);
+}
+
+// fire colour curve: luminance -> RGB, fitted to the game's crimson->ember
+// ramp (deep red midtones with almost no green, gold only at the hottest tips)
+const CURVE = [[0,6,6,6],[9,20,9,10],[18,40,11,16],[27,62,13,19],[36,91,10,21],
+  [45,115,6,23],[53,131,19,22],[62,144,36,22],[71,160,52,18],[80,173,67,14],
+  [89,187,86,5],[98,199,104,1],[107,206,125,1],[116,213,142,6],[125,213,151,19],
+  [134,216,157,33]];
+function rampColor(L) {
+  if (L <= CURVE[0][0]) return [CURVE[0][1], CURVE[0][2], CURVE[0][3]];
+  for (let i = 1; i < CURVE.length; i++) {
+    if (L <= CURVE[i][0]) {
+      const a = CURVE[i-1], b = CURVE[i];
+      const t = (L - a[0]) / (b[0] - a[0]);
+      return [a[1]+(b[1]-a[1])*t, a[2]+(b[2]-a[2])*t, a[3]+(b[3]-a[3])*t];
+    }
+  }
+  const z = CURVE[CURVE.length-1];
+  return [z[1], z[2], z[3]];
+}
+
+// tile luminance field, fitted to the game tile's measured structure:
+//  - a bright lip across the top two rows
+//  - dark upper body brightening toward the base (25 -> 90, gamma 1.26)
+//  - a broad hot mass centred right of middle, falling off to dark edges
+const HPROF = (() => {
+  const a = [];
+  for (let x = 0; x < IW; x++) {
+    const t = Math.max(-1, Math.min(1, (x - 23) / 22));
+    a.push(0.48 + 1.02 * Math.pow(0.5 + 0.5 * Math.cos(Math.PI * t), 1.3));
+  }
+  const m = a.reduce((p, c) => p + c, 0) / a.length;
+  return a.map(v => v / m);
+})();
+function vprof(y) {
+  if (y <= 1) return 91;
+  if (y >= IH - 1) return 0;
+  return 25 + 65 * Math.pow((y - 2) / 39, 1.26);
+}
+
+// ── one cell ──────────────────────────────────────────────────────────────
+function renderTile(seed, name, showQ) {
+  const b = Buf(TW, TH);
+
+  // interior: statistical envelope (vertical ramp x horizontal hot mass)
+  // shaped by discrete flame tongues, so the tile gets the game's hard-edged
+  // licks and dark gaps rather than a soft glow
+  for (let x = 0; x < IW; x++) {
+    const streak = 0.86 + 0.28 * noise1(x * 2.6, seed + 11);
+    // how high this column's tongue reaches (0 = top of tile)
+    const top = IH * (0.16 + 0.46 * noise1(x * 0.33, seed)
+                           + 0.14 * noise1(x * 0.85, seed + 3));
+    for (let y = 0; y < IH; y++) {
+      let L = vprof(y) * HPROF[x] * streak;
+      // inside a tongue -> hot; above it -> smoky. 2px soft shoulder.
+      const edge = Math.max(-1, Math.min(1, (y - top) / 3.5));
+      // blend the tongue field with the smooth envelope: keeps the
+      // game's licks visible without breaking its tonal statistics
+      const tongue = 0.70 + 0.56 * (0.5 + 0.5 * edge);
+      L *= 1 + 0.72 * (tongue - 1);
+      L *= 1 + 0.22 * (noise2(x * 0.7, y * 0.38, seed + 7) - 0.5);  // mottling
+      L += 4.0 * (noise2(x * 1.7, y * 1.4, seed + 5) - 0.5);   // fine grain
+      if (y <= 1) L = 91;                                       // top lip
+      const c = rampColor(Math.max(0, L));
+      b.set(x + FRAME, y + FRAME, c[0], c[1], c[2], 255);
+    }
+  }
+
+  // "?" placeholder for empty slots, drawn 2x from the same font
+  if (showQ) {
+    const w = GW * 2, h = GH * 2;
+    drawText(b, '?', FRAME + ((IW - w) >> 1), FRAME + ((IH - h) >> 1) + 3,
+             '#efe6d2', '#1a0d06', 1, 2);
+  }
+
+  // name across the top; in-game the label spans the whole cell and long
+  // names tighten up, so fit against the full tile width and condense
+  if (name) {
+    let sp = 1, cond = 0;
+    if (textWidth(name, sp) > IW - 2) sp = 0;
+    if (textWidth(name, sp) > IW - 2) cond = 1;               // 6px glyphs
+    const w = textWidth(name, sp) - cond * name.length;
+    drawText(b, name, FRAME + Math.max(0, (IW - w) >> 1), FRAME + 1,
+             '#afa286', '#170c05', sp, 1, cond);
+  }
+
+  // beveled wood frame: dark outer rule, warm tan highlight top/left,
+  // deep shadow bottom/right — the grid chrome from the real screen
+  const OUT = hex('#120a05'), HI = hex('#7d5c39'), HI2 = hex('#5c3f24'),
+        SH = hex('#472c16'), SH2 = hex('#2e1b0d');
+  for (let x = 0; x < TW; x++) for (let y = 0; y < TH; y++) {
+    const dl = Math.min(x, y), dr = Math.min(TW - 1 - x, TH - 1 - y);
+    const d = Math.min(dl, dr);
+    if (d >= FRAME) continue;                       // interior
+    let c;
+    if (d === 0) c = OUT;
+    else if (dl <= dr) c = (d === 1) ? HI : HI2;    // lit edges
+    else c = (d === 1) ? SH : SH2;                  // shadowed edges
+    b.set(x, y, c[0], c[1], c[2], 255);
+  }
+  return b;
+}
+
+function bufToCanvas(b) {
+  const cv = document.createElement('canvas');
+  cv.width = b.w; cv.height = b.h;
+  const ctx = cv.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  ctx.putImageData(new ImageData(b.d, b.w, b.h), 0, 0);
+  return cv;
+}
+
+const NAMES = ['MARIO','DK','LINK','SAMUS','YOSHI','KIRBY','FOX','PIKACHU',
+               'LUIGI','FALCON','NESS','PUFF'];
 
 const grid = document.getElementById('grid');
 grid.style.setProperty('--cols', COLS);
 
-if (GRADE) {
-  // grader mode: one bare fire tile at a known CSS rect for screenshotting
-  document.body.style.cssText = 'background:#222;display:block;padding:0';
-  grid.style.cssText = 'display:block;width:auto;background:none;box-shadow:none;padding:0';
-  const el = document.createElement('div');
-  el.id = 'grade-tile';
-  el.style.cssText = 'position:fixed;left:8px;top:8px;width:360px;height:344px';
-  el.innerHTML = fireTileSVG(3, {});
-  document.body.appendChild(el);
-  const el2 = document.createElement('div');
-  el2.style.cssText = 'position:fixed;left:400px;top:8px;width:360px;height:344px';
-  el2.innerHTML = fireTileSVG(3, { name: 'MARIO' });
-  document.body.appendChild(el2);
-
-  // Rasterize the SVG tiles and POST raw RGBA to the scratch save server —
-  // exact pixels for the grader, no screenshot cropping.
-  window.exportTiles = async () => {
-    async function rasterize(svgText, w, h, tag) {
-      const blob = new Blob([svgText], { type: 'image/svg+xml' });
-      const url = URL.createObjectURL(blob);
-      const img = new Image();
-      await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = url; });
-      const cv = document.createElement('canvas');
-      cv.width = w; cv.height = h;
-      const ctx = cv.getContext('2d', { willReadFrequently: true });
-      ctx.drawImage(img, 0, 0, w, h);
-      URL.revokeObjectURL(url);
-      const data = ctx.getImageData(0, 0, w, h).data;
-      await fetch(`http://127.0.0.1:8602/${tag}_${w}x${h}.raw`,
-                  { method: 'POST', body: new Uint8Array(data.buffer) });
-    }
-    await rasterize(fireTileSVG(3, {}), 45, 43, 'tile_fire');
-    await rasterize(fireTileSVG(3, { name: 'MARIO' }), 45, 43, 'tile_label');
-    await rasterize(fireTileSVG(3, {}), 180, 172, 'tile_fire_big');
-    return 'exported';
-  };
-} else {
-  for (let i = 0; i < N; i++) {
-    const b = document.createElement('button');
-    b.className = 'slot';
-    b.dataset.slot = i;
-    b.setAttribute('role', 'gridcell');
-    const name = i < NAMES.length ? NAMES[i] : null;
-    b.setAttribute('aria-label', name || `slot ${i + 1}`);
-    b.innerHTML = fireTileSVG(i + 1, { name, qmark: !name });
-    b.addEventListener('click', () => {
-      for (const o of grid.querySelectorAll('[data-selected]'))
-        delete o.dataset.selected;
-      b.dataset.selected = '1';
-    });
-    grid.appendChild(b);
-  }
+for (let i = 0; i < N; i++) {
+  const name = i < NAMES.length ? NAMES[i] : null;
+  const b = document.createElement('button');
+  b.className = 'slot';
+  b.dataset.slot = i;
+  if (name) b.dataset.name = name;
+  b.setAttribute('role', 'gridcell');
+  b.setAttribute('aria-label', name || 'empty slot ' + (i + 1));
+  b.appendChild(bufToCanvas(renderTile(FIRE_SEED, name, !name)));
+  const sr = document.createElement('span');
+  sr.className = 'sr';
+  sr.textContent = name || '';
+  b.appendChild(sr);
+  b.addEventListener('click', () => {
+    for (const o of grid.querySelectorAll('[data-selected]')) delete o.dataset.selected;
+    b.dataset.selected = '1';
+  });
+  grid.appendChild(b);
 }
+
+// ── grader hook: post the raw interior pixels for tools/grade_grid.py ──────
+window.exportTiles = async () => {
+  const send = async (buf, tag) => {
+    const out = new Uint8Array(IW * IH * 4);
+    for (let y = 0; y < IH; y++)
+      for (let x = 0; x < IW; x++) {
+        const s = ((y + FRAME) * buf.w + x + FRAME) * 4, d = (y * IW + x) * 4;
+        for (let k = 0; k < 4; k++) out[d + k] = buf.d[s + k];
+      }
+    await fetch('http://127.0.0.1:8602/' + tag + '_' + IW + 'x' + IH + '.raw',
+                { method: 'POST', body: out });
+  };
+  await send(renderTile(3, null, false), 'tile_fire');
+  await send(renderTile(3, 'MARIO', false), 'tile_label');
+  return 'exported';
+};
+if (GRADE) window.exportTiles();
 </script>
 </body>
 </html>
