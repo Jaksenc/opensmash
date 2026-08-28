@@ -56,8 +56,8 @@
   <div id="grid" role="grid" aria-label="character select"></div>
 
 <script type="module">
-import { IW, IH, TW, TH, EDGE, FIRE_SEED, renderTile, bufToCanvas }
-  from './cell.js';
+const { IW, IH, TW, TH, EDGE, FIRE_SEED, renderTile, bufToCanvas } =
+  await import('./cell.js' + location.search);   // search doubles as cache-buster
 
 const P = new URLSearchParams(location.search);
 const N = Math.max(1, parseInt(P.get('n') || '100', 10));

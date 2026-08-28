@@ -2,110 +2,124 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Cell compare — game vs ours</title>
+<title>Character select — source vs code</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
-  body { background:#141014; color:#d8cfc2; font:13px/1.5 ui-monospace,Menlo,monospace;
-         padding:18px; }
-  h1 { font-size:14px; font-weight:600; letter-spacing:.08em; text-transform:uppercase;
-       color:#8f8577; margin-bottom:14px; }
-  .row { display:flex; gap:22px; align-items:flex-start; flex-wrap:wrap; margin-bottom:22px; }
-  .pane { }
-  .pane h2 { font-size:11px; letter-spacing:.1em; text-transform:uppercase;
+  body { background:#141014; color:#d8cfc2; font:13px/1.6 ui-monospace,Menlo,monospace; padding:20px; }
+  h1 { font-size:13px; letter-spacing:.1em; text-transform:uppercase; color:#8f8577;
+       font-weight:600; margin:0 0 6px; }
+  h3 { font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:#c2b49c;
+       font-weight:600; margin:26px 0 10px; border-top:1px solid #2a2420; padding-top:14px; }
+  .row { display:flex; gap:22px; align-items:flex-start; flex-wrap:wrap; }
+  .pane h2 { font-size:11px; letter-spacing:.08em; text-transform:uppercase;
              color:#7d7365; margin-bottom:6px; font-weight:600; }
-  .shot { image-rendering:pixelated; image-rendering:crisp-edges;
-          display:block; border:1px solid #2a2420; }
-  .diffbar { margin-top:10px; font-size:12px; color:#a89c8c; }
-  .swatches { display:flex; gap:2px; margin-top:6px; }
-  .sw { width:26px; height:26px; border:1px solid #000; }
+  canvas { image-rendering:pixelated; image-rendering:crisp-edges; display:block;
+           border:1px solid #2a2420; }
+  .stats { margin-top:12px; color:#a89c8c; white-space:pre; font-size:12px; }
+  .ok { color:#7fc98a; } .bad { color:#e08a7a; }
 </style>
 </head>
 <body>
-  <h1>Character-select cell — game reference vs our procedural build</h1>
-  <div class="row" id="row"></div>
-  <div class="row" id="row2"></div>
-  <div class="diffbar" id="stats"></div>
+  <h1>Character select — game source vs our code</h1>
+  <div id="out"></div>
 
 <script type="module">
-import { IW, IH, TW, TH, FIRE_SEED, renderTile, bufToCanvas } from './cell.js';
+const { IW, IH, TW, TH, FIRE_SEED, renderTile, bufToCanvas, GLYPHS, glyphRows, glyphW } =
+  await import('./cell.js' + location.search);
 
-const SCALE = 6;
-function pane(title, canvas) {
-  const d = document.createElement('div'); d.className = 'pane';
-  const h = document.createElement('h2'); h.textContent = title;
-  canvas.className = 'shot';
-  canvas.style.width = (canvas.width * SCALE) + 'px';
-  canvas.style.height = (canvas.height * SCALE) + 'px';
-  d.append(h, canvas); return d;
+const out = document.getElementById('out');
+const el = (t, cls, txt) => { const e = document.createElement(t); if (cls) e.className = cls;
+                              if (txt) e.textContent = txt; return e; };
+const blank = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
+function pane(title, cv, scale) {
+  const d = el('div', 'pane'); d.append(el('h2', null, title));
+  cv.style.width = (cv.width * scale) + 'px'; cv.style.height = (cv.height * scale) + 'px';
+  d.append(cv); return d;
 }
-// our tile, interior only (drop the shared lattice so both are 45x43)
-function ourTile(name, q) {
-  const b = renderTile(FIRE_SEED, name, q);
-  const cv = document.createElement('canvas');
-  cv.width = IW; cv.height = IH;
-  const src = bufToCanvas(b);
-  cv.getContext('2d').drawImage(src, 0, 0, IW, IH, 0, 0, IW, IH);
-  return cv;
+function loadRef(src) {
+  return new Promise(res => { const im = new Image();
+    im.onload = () => { const c = blank(im.width, im.height); const x = c.getContext('2d');
+      x.imageSmoothingEnabled = false; x.drawImage(im, 0, 0); res(c); }; im.src = src; });
 }
-// the game reference is loaded ONLY here, in this grading harness —
-// charselect.html itself never touches an asset file.
-function refTile(src) {
-  return new Promise(res => {
-    const img = new Image();
-    img.onload = () => {
-      const cv = document.createElement('canvas');
-      cv.width = IW; cv.height = IH;
-      const c = cv.getContext('2d');
-      c.imageSmoothingEnabled = false;
-      c.drawImage(img, 0, 0);
-      res(cv);
-    };
-    img.src = src;
-  });
-}
+const px = c => c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
 
-const gameFire = await refTile('assets/charselect/fire_bg.png');
-const row = document.getElementById('row');
-row.append(pane('game — fire_bg', gameFire));
-row.append(pane('ours — fire', ourTile(null, false)));
-row.append(pane('ours — with name', ourTile('MARIO', false)));
-row.append(pane('ours — empty slot', ourTile(null, true)));
-
-// 2x2 block so the shared lattice / cell borders are visible
-function ourBlock(names) {
-  const cv = document.createElement('canvas');
-  cv.width = TW * 2; cv.height = TH * 2;
-  const c = cv.getContext('2d'); c.imageSmoothingEnabled = false;
-  names.forEach((nm, i) => {
-    c.drawImage(bufToCanvas(renderTile(FIRE_SEED, nm, !nm)),
-                (i % 2) * TW, ((i / 2) | 0) * TH);
-  });
-  return cv;
-}
-row.append(pane('ours — 2x2, shared borders', ourBlock(['MARIO','DK',null,null])));
-
-// name label reference beside our font
-const gameName = await refTile('assets/charselect/grid_mario.png');
-const row2 = document.getElementById('row2');
-row2.append(pane('game — name sprite (tinted in-game)', gameName));
-row2.append(pane('ours — name only', (() => {
-  const b = renderTile(FIRE_SEED, 'MARIO', false);
-  const cv = document.createElement('canvas'); cv.width = IW; cv.height = 14;
-  cv.getContext('2d').drawImage(bufToCanvas(b), 0, 0, IW, 14, 0, 0, IW, 14);
-  return cv;
-})()));
-
-// quick numeric diff on the visible band (rows 2..41; the top/bottom tile
-// edges are covered by the lattice in the real screen)
-function px(cv) { return cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data; }
-const A = px(gameFire), B = px(ourTile(null, false));
-let n = 0, dr = 0, dg = 0, db = 0;
-for (let y = 2; y < IH - 1; y++) for (let x = 0; x < IW; x++) {
+// ── 1. cell interior ──────────────────────────────────────────────────────
+out.append(el('h3', null, '1 — cell interior (fiery background)'));
+const srcCell = await loadRef('assets/charselect/fire_bg.png');
+const ourCell = (() => { const c = blank(IW, IH); const x = c.getContext('2d');
+  x.imageSmoothingEnabled = false;
+  x.drawImage(bufToCanvas(renderTile(FIRE_SEED, null, false)), 0, 0, IW, IH, 0, 0, IW, IH);
+  return c; })();
+const r1 = el('div', 'row');
+r1.append(pane('source', srcCell, 8), pane('ours (procedural)', ourCell, 8));
+const A = px(srcCell), B = px(ourCell);
+const diff = blank(IW, IH), dd = diff.getContext('2d').createImageData(IW, IH);
+let n = 0, sum = 0, worst = 0;
+for (let y = 0; y < IH; y++) for (let x = 0; x < IW; x++) {
   const i = (y * IW + x) * 4;
-  dr += Math.abs(A[i] - B[i]); dg += Math.abs(A[i+1] - B[i+1]); db += Math.abs(A[i+2] - B[i+2]); n++;
+  const m = Math.max(Math.abs(A[i]-B[i]), Math.abs(A[i+1]-B[i+1]), Math.abs(A[i+2]-B[i+2]));
+  if (y >= 2 && y < IH - 1) { n++; sum += m; worst = Math.max(worst, m); }
+  dd.data[i] = m > 60 ? 255 : 0; dd.data[i+1] = m <= 25 ? 210 : (m <= 60 ? 170 : 0);
+  dd.data[i+2] = 0; dd.data[i+3] = 255;
 }
-document.getElementById('stats').textContent =
-  `mean per-pixel |Δ| over the visible band: R ${(dr/n).toFixed(1)}  G ${(dg/n).toFixed(1)}  B ${(db/n).toFixed(1)}`;
+diff.getContext('2d').putImageData(dd, 0, 0);
+r1.append(pane('Δ (green ok, red >60)', diff, 8));
+out.append(r1);
+out.append(el('div', 'stats', `mean per-pixel Δ ${(sum/n).toFixed(1)} / 255   worst ${worst}`));
+
+// ── 2. font ───────────────────────────────────────────────────────────────
+out.append(el('h3', null, '2 — alphabet: source glyphs vs our authored font'));
+const LET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+const srcG = {};
+for (const ch of LET) srcG[ch] = await loadRef(`assets/charselect/font_${ch.toLowerCase()}.png`);
+const cellW = 6, sheetW = cellW * LET.length, sheetH = 5;
+const srcSheet = blank(sheetW, sheetH), ourSheet = blank(sheetW, sheetH), dSheet = blank(sheetW, sheetH);
+const sc = srcSheet.getContext('2d'), oc = ourSheet.getContext('2d'), dc = dSheet.getContext('2d');
+const sIm = sc.createImageData(sheetW, sheetH), oIm = oc.createImageData(sheetW, sheetH),
+      dIm = dc.createImageData(sheetW, sheetH);
+let mism = 0, tot = 0, badLetters = [];
+LET.forEach((ch, gi) => {
+  const s = srcG[ch], sd = px(s), rowsOur = glyphRows(ch), w = glyphW(ch);
+  let bad = 0;
+  for (let y = 0; y < 5; y++) for (let x = 0; x < Math.max(s.width, w); x++) {
+    const onS = x < s.width && y < s.height && sd[(y * s.width + x) * 4 + 3] > 128;
+    const onO = rowsOur[y] && rowsOur[y][x] === '#';
+    const i = (y * sheetW + gi * cellW + x) * 4;
+    if (x < cellW) {
+      sIm.data[i] = sIm.data[i+1] = sIm.data[i+2] = onS ? 235 : 24; sIm.data[i+3] = 255;
+      oIm.data[i] = oIm.data[i+1] = oIm.data[i+2] = onO ? 235 : 24; oIm.data[i+3] = 255;
+      const same = onS === onO;
+      dIm.data[i] = same ? 0 : 235; dIm.data[i+1] = same ? (onS ? 150 : 40) : 0;
+      dIm.data[i+2] = 0; dIm.data[i+3] = 255;
+    }
+    tot++; if (onS !== onO) { bad++; mism++; }
+  }
+  if (bad) badLetters.push(`${ch}:${bad}`);
+});
+sc.putImageData(sIm, 0, 0); oc.putImageData(oIm, 0, 0); dc.putImageData(dIm, 0, 0);
+const r2 = el('div', 'row');
+r2.append(pane('source alphabet', srcSheet, 9), pane('ours', ourSheet, 9), pane('Δ', dSheet, 9));
+out.append(r2);
+const st2 = el('div', 'stats');
+st2.innerHTML = mism === 0
+  ? `<span class="ok">all 26 glyphs pixel-identical (${tot} px compared)</span>`
+  : `<span class="bad">${mism} mismatched px of ${tot}</span>  ${badLetters.join('  ')}`;
+out.append(st2);
+
+// ── 3. unit with borders + background ─────────────────────────────────────
+out.append(el('h3', null, '3 — full grid unit: borders, background, name'));
+function block(names, cols) {
+  const cv = blank(TW * cols, TH * Math.ceil(names.length / cols));
+  const c = cv.getContext('2d'); c.imageSmoothingEnabled = false;
+  names.forEach((nm, i) => c.drawImage(bufToCanvas(renderTile(FIRE_SEED, nm, !nm)),
+    (i % cols) * TW, ((i / cols) | 0) * TH));
+  return cv;
+}
+const r3 = el('div', 'row');
+r3.append(pane('one unit, named', block(['MARIO'], 1), 7));
+r3.append(pane('one unit, empty', block([null], 1), 7));
+r3.append(pane('2x2 — shared rules', block(['MARIO','DK',null,null], 2), 5));
+out.append(r3);
 </script>
 </body>
 </html>
