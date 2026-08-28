@@ -365,6 +365,15 @@ MESH_BONE = {
 # parts whose rotation/scale is INHERITED from a parent part (distal parts
 # with no real mario bone): part -> parent part
 INHERIT = {12: 6, 10: 9, 16: 15, 22: 20, 27: 25}
+# skeleton adjacency of canonical parts: the post-claim re-smoothing may
+# only blend a vert toward parts adjacent to ones it already carries
+# (head<->chest at the neck, chest<->shoulder at the collar). Without
+# this the 4-hop diffusion walks arm weight through the collar into the
+# face on short-necked meshes, and every arm swing drags the face.
+PART_ADJ = {6: {8, 12, 14, 19, 24}, 8: {6, 9}, 9: {8, 10}, 10: {9},
+            12: {6}, 14: {6, 15}, 15: {14, 16}, 16: {15},
+            19: {6, 20}, 20: {19, 22}, 22: {20},
+            24: {6, 25}, 25: {24, 27}, 27: {25}}
 # anchor joints for inherited parts: (mesh node name resolved per side,
 # mario joint)  e.g. hand part anchors mesh Hand node onto mario joint 10.
 
@@ -2305,6 +2314,12 @@ def main():
     # weights). Offline replay of dumped run/fall/landing joint frames:
     # p99.9 triangle stretch 6.9x -> 3.1x, tris past 3x 79 -> 5.
     _cur = {r: dict(vweights[r]) for r in _adj} if "--no-postsmooth" not in sys.argv else {}
+    # anatomical guard: a vert may only GAIN weight on parts skeleton-
+    # adjacent to ones it starts with (PART_ADJ). Unguarded, the 4-hop
+    # diffusion walks arm weight through the collar into the face on
+    # short-necked meshes and every arm move drags the face laterally.
+    _ok = {r: set(w) | set().union(*(PART_ADJ.get(p, set()) for p in w))
+           for r, w in _cur.items()}
     for _it in range(4 if _cur else 0):
         _nxt = {}
         for r, nbrs in _adj.items():
@@ -2312,7 +2327,8 @@ def main():
             share = 0.5 / len(nbrs)
             for nb in nbrs:
                 for p, w in _cur[nb].items():
-                    acc2[p] = acc2.get(p, 0.0) + share * w
+                    if p in _ok[r]:
+                        acc2[p] = acc2.get(p, 0.0) + share * w
             top = sorted(acc2.items(), key=lambda kv: -kv[1])[:4]
             tot = sum(w for _, w in top) or 1.0
             _nxt[r] = {p: w / tot for p, w in top if w / tot > 0.02}
