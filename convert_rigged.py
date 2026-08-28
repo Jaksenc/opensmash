@@ -411,7 +411,7 @@ def main():
         argv = argv[:pi] + argv[pi + 2:]
     else:
         project_source_path = None
-    args = [a for a in argv if a not in ("--autoskin", "--reskin", "--mild-color", "--redchest", "--bluelegs", "--brownhair", "--capfix", "--vanillaflat", "--flatten", "--debleed", "--no-profile", "--no-smooth-disp", "--smooth-disp", "--no-smooth-weights", "--no-postsmooth", "--adjguard", "--flip-facing", "--sharpen", "--rigid", "--no-symlimbs", "--no-symweights")]
+    args = [a for a in argv if a not in ("--autoskin", "--reskin", "--mild-color", "--redchest", "--bluelegs", "--brownhair", "--capfix", "--vanillaflat", "--flatten", "--debleed", "--no-profile", "--no-smooth-disp", "--smooth-disp", "--no-smooth-weights", "--no-postsmooth", "--adjguard", "--flip-facing", "--sharpen", "--rigid", "--no-symlimbs", "--no-symweights", "--guidedflat", "--binflat")]
     # (--target consumed above with its argument)
     autoskin = "--autoskin" in sys.argv
     glb_path, frames_path, out_path = args[0], args[1], args[2]
@@ -2292,7 +2292,29 @@ def main():
     # vertex light. Cluster texels into coarse hue/sat/value bins and
     # pull each pixel's V to its bin median (keep hue/sat), removing
     # mottling without any character-specific palette.
-    if "--flatten" in sys.argv and img is not None:
+    # ---- guided flatten (default for --flatten; --binflat for the old
+    # bin-median pull): a self-guided filter on V flattens
+    # small-amplitude mottle (baked AO / cloth shading) everywhere while
+    # structurally preserving real edges — no bins, no V thresholds, so
+    # it cannot draw a contour that isn't in the input. Beat the binned
+    # variant 8-2 (14 ties) in the eval/guidedflat blind A/B.
+    if "--binflat" not in sys.argv and "--flatten" in sys.argv and img is not None:
+        import numpy as _npg
+        from scipy.ndimage import uniform_filter as _uf
+        hsvG = _npg.asarray(img.convert("HSV"), _npg.uint8).copy()
+        I = hsvG[..., 2].astype(_npg.float64) / 255.0
+        r = max(8, img.size[0] // 64)          # ~32 texels at 2048
+        eps = (14.0 / 255.0) ** 2              # mottle < ~14 V flattens; edges keep
+        mI = _uf(I, 2 * r + 1, mode="nearest")
+        mII = _uf(I * I, 2 * r + 1, mode="nearest")
+        var = _npg.maximum(mII - mI * mI, 0.0)
+        A = var / (var + eps)
+        B = mI * (1.0 - A)
+        q = _uf(A, 2 * r + 1, mode="nearest") * I + _uf(B, 2 * r + 1, mode="nearest")
+        hsvG[..., 2] = _npg.clip(q * 255.0, 0, 255).astype(_npg.uint8)
+        img = Image.fromarray(hsvG, "HSV").convert("RGB")
+        print(f"guided-flat: V guided-filtered (r={r})")
+    elif "--flatten" in sys.argv and img is not None:
         import numpy as _npf
         from PIL import ImageFilter as _IF
         hsvF = _npf.asarray(img.convert("HSV"), _npf.int16)
