@@ -65,3 +65,33 @@ cheer to fit longer clips (`port_voice_results_extra_wait_tics`).
 
 Known gaps: the clip ignores the in-game voice-volume slider, and only the
 name line is generated (team-battle / 1P-mode announcer lines stay vanilla).
+
+## Provider settings: non-English names (2026-08-27)
+
+`language_boost` is left unset and `english_normalization` is off. Both were
+previously forced to English, which destabilized the voice clone on
+non-English names — first heard on "Boyang Niu", where the clone drifted
+audibly off the announcer character. Dropping the boost keeps it in
+character; English names are unaffected (a control run of an existing roster
+name under both settings was indistinguishable). Both are still overridable
+per call (`english_normalization=`, `language_boost=`, or the matching CLI
+flags) for A/B work.
+
+Better but not adopted: respelling the name phonetically ("Bo-Yang Nyoo")
+sounded clearly best of everything tried. It needs a per-character
+pronunciation that does not exist yet — the natural home is a `phonetic`
+field from `expand_character.py`, generated in the same Gemini call as
+`short`/`emblem`. Deferred because a wrong respelling yields a confidently
+mispronounced name with nothing to catch it.
+
+Ruled out: `language_boost="Chinese"` (worse than either), and an English
+carrier phrase ("Get ready. <name>!") trimmed back to the name — the trim
+degraded the result and it reverses this file's no-prompt-expansion rule.
+
+**Judge these by ear.** Two acoustic proxies were tried and both failed:
+clip RMS (a control re-run of an existing roster name came out just as
+"hot", so the stored roster levels are simply stale) and long-term-average-
+spectrum distance to a roster centroid (leave-one-out shows the roster's own
+internal spread, 2.26–4.08, is wider than the gap between a clip that sounds
+right and one that does not — it scored a known-bad take identically to a
+known-good one). Do not gate voice regeneration on either.

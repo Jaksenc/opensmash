@@ -25,7 +25,7 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-from gen import http, ENV  # noqa: E402
+from gen import http, ENV, token_cost  # noqa: E402
 
 FORBIDDEN = ["handbag", "purse", "bag", "cane", "walking stick", "sword", "umbrella", "staff",
              "scepter", "sceptre", "rifle", "gun", "pistol", "phone", "cup", "mug", "briefcase",
@@ -58,11 +58,13 @@ def expand(name, photo=None, notes=None, model="gemini-flash-latest", emblem=Non
                "POST", {"x-goog-api-key": ENV["GEMINI_API_KEY"]},
                {"contents": [{"parts": parts}], "generationConfig": {"temperature": 0.4}})
     text = out["candidates"][0]["content"]["parts"][0]["text"]
+    cost = token_cost(model, out.get("usageMetadata"))
     m = re.search(r"\{.*\}", text, re.S)
     obj = json.loads(m.group(0)) if m else {"display": name, "desc": text.strip()}
     obj.setdefault("display", name)
     obj["refs"] = [photo] if photo else []
     obj.setdefault("emblem", "")
+    obj["cost_usd"] = cost
     # mechanical backstop for held items
     low = obj["desc"].lower()
     hits = [w for w in FORBIDDEN if re.search(r"\b" + re.escape(w) + r"s?\b", low)]
@@ -87,8 +89,10 @@ def main():
         obj2 = expand(a.name, a.photo,
                       (a.notes or "") + " REMOVE any held/hanging item; " + obj["warning"],
                       a.model, a.emblem)
+        spent = (obj.get("cost_usd") or 0) + (obj2.get("cost_usd") or 0)
         if "warning" not in obj2:
             obj = obj2
+        obj["cost_usd"] = spent
     print(json.dumps(obj, indent=1))
 
 

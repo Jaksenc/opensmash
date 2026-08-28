@@ -17,6 +17,12 @@ file next to this script:
 This is the accepted native-timing path (the discarded OpenAI/WORLD
 experiment is gone; announcer_voice.py is now a thin staging wrapper around
 this module). No time compression is applied.
+
+Provider settings: language_boost is left unset and english_normalization
+off. Forcing them to English destabilized the voice clone on non-English
+names (heard first on "Boyang Niu"); with the boost dropped the clone stays
+in character. English names are unaffected. Both are still overridable per
+call for A/B work.
 """
 
 from __future__ import annotations
@@ -82,6 +88,8 @@ def generate_announcer(
     *,
     speed: float = 1.0,
     append_exclamation: bool = True,
+    english_normalization: bool = False,
+    language_boost: str | None = None,
 ) -> Path:
     """Generate a mono 32 kHz PCM WAV for one character name.
 
@@ -108,21 +116,21 @@ def generate_announcer(
     fal_client = _fal_client()
     text = name if not append_exclamation or name.endswith("!") else f"{name}!"
 
-    result = fal_client.subscribe(
-        MODEL,
-        arguments={
-            "text": text,
-            "voice_setting": {
-                "voice_id": voice_id,
-                "speed": speed,
-                "vol": 1.0,
-                "pitch": 0,
-                "english_normalization": True,
-            },
-            "language_boost": "English",
-            "output_format": "url",
+    arguments = {
+        "text": text,
+        "voice_setting": {
+            "voice_id": voice_id,
+            "speed": speed,
+            "vol": 1.0,
+            "pitch": 0,
+            "english_normalization": english_normalization,
         },
-    )
+        "output_format": "url",
+    }
+    if language_boost:
+        arguments["language_boost"] = language_boost
+
+    result = fal_client.subscribe(MODEL, arguments=arguments)
     audio_url = result["audio"]["url"]
 
     temporary_path: Path | None = None
@@ -173,6 +181,16 @@ def main() -> int:
         action="store_true",
         help="do not append an exclamation mark to the supplied name",
     )
+    parser.add_argument(
+        "--english-normalization",
+        action="store_true",
+        help="re-enable MiniMax english_normalization (default: off)",
+    )
+    parser.add_argument(
+        "--language-boost",
+        default=None,
+        help="MiniMax language_boost, e.g. English (default: unset)",
+    )
     args = parser.parse_args()
 
     output = generate_announcer(
@@ -180,6 +198,8 @@ def main() -> int:
         args.out,
         speed=args.speed,
         append_exclamation=not args.no_exclamation,
+        english_normalization=args.english_normalization,
+        language_boost=args.language_boost,
     )
     print(output)
     return 0
