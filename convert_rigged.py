@@ -407,7 +407,7 @@ def main():
         argv = argv[:pi] + argv[pi + 2:]
     else:
         project_source_path = None
-    args = [a for a in argv if a not in ("--autoskin", "--reskin", "--mild-color", "--redchest", "--bluelegs", "--brownhair", "--capfix", "--vanillaflat", "--flatten", "--debleed", "--no-profile", "--no-smooth-disp", "--smooth-disp", "--no-smooth-weights", "--no-postsmooth", "--flip-facing", "--sharpen", "--rigid")]
+    args = [a for a in argv if a not in ("--autoskin", "--reskin", "--mild-color", "--redchest", "--bluelegs", "--brownhair", "--capfix", "--vanillaflat", "--flatten", "--debleed", "--no-profile", "--no-smooth-disp", "--smooth-disp", "--no-smooth-weights", "--no-postsmooth", "--adjguard", "--flip-facing", "--sharpen", "--rigid")]
     # (--target consumed above with its argument)
     autoskin = "--autoskin" in sys.argv
     glb_path, frames_path, out_path = args[0], args[1], args[2]
@@ -2318,8 +2318,14 @@ def main():
     # adjacent to ones it starts with (PART_ADJ). Unguarded, the 4-hop
     # diffusion walks arm weight through the collar into the face on
     # short-necked meshes and every arm move drags the face laterally.
-    _ok = {r: set(w) | set().union(*(PART_ADJ.get(p, set()) for p in w))
-           for r, w in _cur.items()}
+    # blind eval 2026-08-28 (eval/guard, 24 pairs): unguarded won 15-0-9 —
+    # the diffusion's anatomically-wrong blends still LOOK better in play
+    # than the fins they prevent. Guard kept opt-in for A/Bs until the
+    # mis-rigged-vert root cause is fixed; it does bring back the Moritz
+    # face drag (arm weight walks through the collar into the face).
+    _guard = "--adjguard" in sys.argv
+    _ok = ({r: set(w) | set().union(*(PART_ADJ.get(p, set()) for p in w))
+            for r, w in _cur.items()} if _guard else {})
     for _it in range(4 if _cur else 0):
         _nxt = {}
         for r, nbrs in _adj.items():
@@ -2327,7 +2333,7 @@ def main():
             share = 0.5 / len(nbrs)
             for nb in nbrs:
                 for p, w in _cur[nb].items():
-                    if p in _ok[r]:
+                    if not _guard or p in _ok[r]:
                         acc2[p] = acc2.get(p, 0.0) + share * w
             top = sorted(acc2.items(), key=lambda kv: -kv[1])[:4]
             tot = sum(w for _, w in top) or 1.0
