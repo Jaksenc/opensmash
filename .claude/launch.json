@@ -1,0 +1,21 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "battleship-wasm",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "/Users/joey/Claude Code/smash-weights/BattleShip/scripts/web_dev_server.py",
+        "8600",
+        "/Users/joey/Claude Code/smash-weights/BattleShip/web-dist"
+      ],
+      "port": 8600
+    },
+    {
+      "name": "glove-site",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "8601", "-d", "/Users/joey/Claude Code/smash-weights"],
+      "port": 8601
+    }
+  ]
+}
