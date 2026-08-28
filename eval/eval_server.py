@@ -44,6 +44,13 @@ class H(SimpleHTTPRequestHandler):
     def log_message(self, *a):
         pass
 
+    def end_headers(self):
+        # the UI evolves between eval runs on the same port; a heuristically
+        # cached index.html silently serves last month's rating page
+        if self.path.endswith(".html") or self.path == "/":
+            self.send_header("Cache-Control", "no-store")
+        super().end_headers()
+
     def _json(self, obj, code=200):
         b = json.dumps(obj).encode()
         self.send_response(code)
