@@ -1,0 +1,170 @@
+[
+ {
+  "id": "joey_samus:v3:gf",
+  "char": "joey_samus",
+  "display": "Joey Flynn \u00b7 samus",
+  "left": "gf",
+  "right": "v3"
+ },
+ {
+  "id": "joey_luigi:v3:gf",
+  "char": "joey_luigi",
+  "display": "Joey Flynn \u00b7 luigi",
+  "left": "v3",
+  "right": "gf"
+ },
+ {
+  "id": "rohan_samus:v3:gf",
+  "char": "rohan_samus",
+  "display": "Rohan Sahai \u00b7 samus",
+  "left": "v3",
+  "right": "gf"
+ },
+ {
+  "id": "moritz_mario:v3:gf",
+  "char": "moritz_mario",
+  "display": "Moritz Baier-Lentz \u00b7 mario",
+  "left": "gf",
+  "right": "v3"
+ },
+ {
+  "id": "moritz_samus:v3:gf",
+  "char": "moritz_samus",
+  "display": "Moritz Baier-Lentz \u00b7 samus",
+  "left": "gf",
+  "right": "v3"
+ },
+ {
+  "id": "obama_samus:v3:gf",
+  "char": "obama_samus",
+  "display": "Barack Obama \u00b7 samus",
+  "left": "v3",
+  "right": "gf"
+ },
+ {
+  "id": "queen_mario:v3:gf",
+  "char": "queen_mario",
+  "display": "Queen Elizabeth II \u00b7 mario",
+  "left": "gf",
+  "right": "v3"
+ },
+ {
+  "id": "boyang_luigi:v3:gf",
+  "char": "boyang_luigi",
+  "display": "Boyang Niu \u00b7 luigi",
+  "left": "gf",
+  "right": "v3"
+ },
+ {
+  "id": "moritz_luigi:v3:gf",
+  "char": "moritz_luigi",
+  "display": "Moritz Baier-Lentz \u00b7 luigi",
+  "left": "gf",
+  "right": "v3"
+ },
+ {
+  "id": "queen_samus:v3:gf",
+  "char": "queen_samus",
+  "display": "Queen Elizabeth II \u00b7 samus",
+  "left": "v3",
+  "right": "gf"
+ },
+ {
+  "id": "boyang_samus:v3:gf",
+  "char": "boyang_samus",
+  "display": "Boyang Niu \u00b7 samus",
+  "left": "v3",
+  "right": "gf"
+ },
+ {
+  "id": "boyang_link:v3:gf",
+  "char": "boyang_link",
+  "display": "Boyang Niu \u00b7 link",
+  "left": "v3",
+  "right": "gf"
+ },
+ {
+  "id": "moritz_link:v3:gf",
+  "char": "moritz_link",
+  "display": "Moritz Baier-Lentz \u00b7 link",
+  "left": "gf",
+  "right": "v3"
+ },
+ {
+  "id": "rohan_mario:v3:gf",
+  "char": "rohan_mario",
+  "display": "Rohan Sahai \u00b7 mario",
+  "left": "v3",
+  "right": "gf"
+ },
+ {
+  "id": "obama_mario:v3:gf",
+  "char": "obama_mario",
+  "display": "Barack Obama \u00b7 mario",
+  "left": "gf",
+  "right": "v3"
+ },
+ {
+  "id": "obama_luigi:v3:gf",
+  "char": "obama_luigi",
+  "display": "Barack Obama \u00b7 luigi",
+  "left": "v3",
+  "right": "gf"
+ },
+ {
+  "id": "queen_link:v3:gf",
+  "char": "queen_link",
+  "display": "Queen Elizabeth II \u00b7 link",
+  "left": "v3",
+  "right": "gf"
+ },
+ {
+  "id": "rohan_luigi:v3:gf",
+  "char": "rohan_luigi",
+  "display": "Rohan Sahai \u00b7 luigi",
+  "left": "gf",
+  "right": "v3"
+ },
+ {
+  "id": "obama_link:v3:gf",
+  "char": "obama_link",
+  "display": "Barack Obama \u00b7 link",
+  "left": "gf",
+  "right": "v3"
+ },
+ {
+  "id": "joey_link:v3:gf",
+  "char": "joey_link",
+  "display": "Joey Flynn \u00b7 link",
+  "left": "gf",
+  "right": "v3"
+ },
+ {
+  "id": "boyang_mario:v3:gf",
+  "char": "boyang_mario",
+  "display": "Boyang Niu \u00b7 mario",
+  "left": "v3",
+  "right": "gf"
+ },
+ {
+  "id": "rohan_link:v3:gf",
+  "char": "rohan_link",
+  "display": "Rohan Sahai \u00b7 link",
+  "left": "gf",
+  "right": "v3"
+ },
+ {
+  "id": "queen_luigi:v3:gf",
+  "char": "queen_luigi",
+  "display": "Queen Elizabeth II \u00b7 luigi",
+  "left": "gf",
+  "right": "v3"
+ },
+ {
+  "id": "joey_mario:v3:gf",
+  "char": "joey_mario",
+  "display": "Joey Flynn \u00b7 mario",
+  "left": "v3",
+  "right": "gf"
+ }
+]
