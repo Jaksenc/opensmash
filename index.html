@@ -90,7 +90,7 @@ postScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), postMat));
 
 // World-space height visible at the z=0 plane (glove plane).
 const VIEW_H = 2 * Math.tan(THREE.MathUtils.degToRad(35 / 2)) * 16;
-const GLOVE_PX = 36;   // hand texel height, matching the sprite's 36 rows
+const GLOVE_PX = 32;   // tuned so the rendered silhouette spans the sprite's 36 rows
 let handUnitH = 0;     // hand height in world units; set once the mesh is built
 
 function applyGloveScale(rtTexelH) {
