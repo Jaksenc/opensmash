@@ -2304,8 +2304,21 @@ def main():
                             _npf.int16)
         hB, sB, vB = hsvB[..., 0], hsvB[..., 1], hsvB[..., 2]
         bins = (_npf.minimum(hB, 254)//16)*100 + (_npf.minimum(sB, 254)//64)*10 + _npf.minimum(vB, 254)//86
+        # dark texels are exempt: near black, hue/sat are noise, so the
+        # bin splits scatter neighbouring texels across bins with
+        # different medians and PAINT patch edges onto smooth hair/pants
+        # (boyang's hair blotches). Dark regions never mottle visibly —
+        # leave them exactly as authored.
+        bins[vB < 70] = -1
+        # feathered exemption: a hard V<70 cutoff draws its own contour
+        # through shadow gradients (dark blob under the armpit corner).
+        # Ramp the pull in from 0 at V=70 to full at V=110 so shadow
+        # mid-tones are barely touched and only lit cloth de-mottles.
+        ramp = _npf.clip((vB.astype(_npf.float32) - 70.0) / 40.0, 0.0, 1.0)
         outv = vF.astype(_npf.float32)
         for b in _npf.unique(bins):
+            if b < 0:
+                continue
             m = bins == b
             if m.sum() < 40:
                 continue
@@ -2315,7 +2328,7 @@ def main():
             # texels that landed in the wrong bin stay put instead of
             # being yanked to a distant median.
             d = vF[m].astype(_npf.float32) - med
-            w = 0.75 * _npf.exp(-(d / 30.0)**2)
+            w = 0.75 * _npf.exp(-(d / 30.0)**2) * ramp[m]
             outv[m] = vF[m] + w * (med - vF[m])
         hsvF[..., 2] = _npf.clip(outv, 0, 255).astype(_npf.int16)
         img = Image.fromarray(hsvF.astype(_npf.uint8), "HSV").convert("RGB")
@@ -3183,6 +3196,35 @@ def main():
         print(f"  joint {p['joint']:>2}: {len(p['verts']):5d} v {len(p['tris']):5d} t")
 
 
+def pack_rgba16_dithered(atlas):
+    """RGBA16 (5551, BE byte pairs) with ordered 4x4 Bayer dithering.
+
+    Straight truncation to 5 bits posterizes the providers' soft baked
+    shading into hard-edged contour patches (worst on dark cloth spanning
+    only 2-3 levels — boyang's sleeve blotches), and in-game lighting
+    slides those contours around as the mesh deforms. A +/-half-step
+    ordered dither trades the contours for texel-level stipple that the
+    RDP's bilinear filtering averages back into a smooth gradient."""
+    import numpy as _npd
+    a = _npd.asarray(atlas, _npd.float32)          # H x W x 4
+    BAYER = (_npd.array([[0, 8, 2, 10], [12, 4, 14, 6],
+                         [3, 11, 1, 9], [15, 7, 13, 5]],
+                        _npd.float32) / 16.0 - 0.46875) * 8.0
+    H, W = a.shape[:2]
+    doff = _npd.tile(BAYER, (H // 4 + 1, W // 4 + 1))[:H, :W]
+    doff = doff * float(os.environ.get("OSB_DITHER", "1"))
+    # luminance gate: on near-black texels the +/-half-step stipple has
+    # huge relative contrast (dark hair reads as crosshatch up close) and
+    # dark regions are flat anyway, so fade the dither to zero below
+    # V~48 and full strength above ~96.
+    luma = a[..., :3].max(2)
+    gate = _npd.clip((luma - 48.0) / 48.0, 0.0, 1.0)
+    rgb = _npd.clip(a[..., :3] + (doff * gate)[..., None], 0, 255).astype(_npd.uint16) >> 3
+    alpha = (a[..., 3] >= 128).astype(_npd.uint16)
+    p16 = (rgb[..., 0] << 11) | (rgb[..., 1] << 6) | (rgb[..., 2] << 1) | alpha
+    return p16.astype(">u2").tobytes()
+
+
 def write_binary3(bundle_json_path, out_path):
     """OSB4: textured + lit bundle.
 
@@ -3208,14 +3250,7 @@ def write_binary3(bundle_json_path, out_path):
     with open(out_path, "wb") as f:
         f.write(b"OSB4")
         f.write(struct.pack("<III", len(d["parts"]), TW, TH))
-        for y in range(TH):
-            row = bytearray()
-            for x in range(TW):
-                r, g, b, a = px[x, y]
-                p16 = ((r >> 3) << 11) | ((g >> 3) << 6) | ((b >> 3) << 1) | (1 if a >= 128 else 0)
-                row.append(p16 >> 8)
-                row.append(p16 & 0xFF)
-            f.write(row)
+        f.write(pack_rgba16_dithered(atlas))
 
         total_b = 0
         for p in d["parts"]:
@@ -3290,13 +3325,7 @@ def write_binary5(bundle_json_path, out_path):
         f.write(struct.pack("<IIIII", len(joint_ids), len(verts), len(tris), TW, TH))
         for j in joint_ids:
             f.write(struct.pack("<I", j))
-        for y in range(TH):
-            row = bytearray()
-            for x in range(TW):
-                r, g, b, a = px[x, y]
-                p16 = ((r >> 3) << 11) | ((g >> 3) << 6) | ((b >> 3) << 1) | (1 if a >= 128 else 0)
-                row.append(p16 >> 8); row.append(p16 & 0xFF)
-            f.write(row)
+        f.write(pack_rgba16_dithered(atlas))
         jindex = {j: k for k, j in enumerate(joint_ids)}
         for v in verts:
             x, y, z, u, vv, nx, ny, nz, wlist = v
