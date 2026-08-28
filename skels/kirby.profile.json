@@ -23,5 +23,10 @@
   "26": 29,
   "27": 29
  },
- "parts": "vanilla-kirby-parts.canonical.json"
+ "parts": "vanilla-kirby-parts.canonical.json",
+ "conform": "uniform",
+ "tune": {
+  "head_boost": 2.1,
+  "leg_squash": 0.45
+ }
 }

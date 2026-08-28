@@ -23,5 +23,6 @@
   "26": 27,
   "27": 28
  },
- "parts": "vanilla-purin-parts.canonical.json"
+ "parts": "vanilla-purin-parts.canonical.json",
+ "conform": "uniform"
 }
