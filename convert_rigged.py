@@ -407,7 +407,7 @@ def main():
         argv = argv[:pi] + argv[pi + 2:]
     else:
         project_source_path = None
-    args = [a for a in argv if a not in ("--autoskin", "--reskin", "--mild-color", "--redchest", "--bluelegs", "--brownhair", "--capfix", "--vanillaflat", "--flatten", "--flatten2", "--flatten3", "--debleed", "--no-profile", "--no-smooth-disp", "--smooth-disp", "--no-smooth-weights", "--no-postsmooth", "--adjguard", "--flip-facing", "--sharpen", "--rigid")]
+    args = [a for a in argv if a not in ("--autoskin", "--reskin", "--mild-color", "--redchest", "--bluelegs", "--brownhair", "--capfix", "--vanillaflat", "--flatten", "--debleed", "--no-profile", "--no-smooth-disp", "--smooth-disp", "--no-smooth-weights", "--no-postsmooth", "--adjguard", "--flip-facing", "--sharpen", "--rigid")]
     # (--target consumed above with its argument)
     autoskin = "--autoskin" in sys.argv
     glb_path, frames_path, out_path = args[0], args[1], args[2]
@@ -2081,101 +2081,6 @@ def main():
         hsvF[..., 2] = _npf.clip(outv, 0, 255).astype(_npf.int16)
         img = Image.fromarray(hsvF.astype(_npf.uint8), "HSV").convert("RGB")
         print("flatten: albedo V pulled to bin medians")
-
-    # ---- chroma-aware flatten (--flatten2 / --flatten3, general): the
-    # fixed hue/sat/value grid above fragments LOW-CHROMA regions — on
-    # near-black hair, hue and sat are numeric noise, so the baked facet
-    # patches land in different bins and their edges get HARDENED instead
-    # of merged; on white cloth the AO blotches straddle the coarse V-bin
-    # boundary and survive. Here: achromatic texels (noisy hue/sat) get a
-    # 1-D V mode-merge — nearby brightness modes collapse into one, so a
-    # hair mass or a white outfit becomes one tone; chromatic texels bin
-    # by hue+sat ONLY (no V in the key), one shading tone per colored
-    # region. A local-contrast guard keeps painted detail (faces, eyes,
-    # emblems). --flatten3 = same at full strength (hard flat).
-    if ("--flatten2" in sys.argv or "--flatten3" in sys.argv) and img is not None:
-        import numpy as _np2
-        hard = "--flatten3" in sys.argv
-        hsv2 = _np2.asarray(img.convert("HSV"), _np2.float32)
-        h2, s2, v2 = hsv2[..., 0], hsv2[..., 1], hsv2[..., 2]
-        # detail guard: local contrast of luminance via box-blur difference
-        # (same construction as the project-source blend guard).
-        rgb2 = _np2.asarray(img.convert("RGB"), _np2.float32)
-        lum = rgb2.mean(axis=2)
-        k = 6
-        pad = _np2.pad(lum, k, mode="edge")
-        csum = pad.cumsum(0).cumsum(1)
-        n = (2 * k + 1) ** 2
-        H2, W2 = lum.shape
-        box = (csum[2*k:, 2*k:] - csum[:-2*k, 2*k:] - csum[2*k:, :-2*k]
-               + csum[:-2*k, :-2*k])[:H2, :W2] / n
-        contrast = _np2.abs(lum - box)
-        pad2 = _np2.pad(contrast, k, mode="edge")
-        csum2 = pad2.cumsum(0).cumsum(1)
-        contrast = (csum2[2*k:, 2*k:] - csum2[:-2*k, 2*k:] - csum2[2*k:, :-2*k]
-                    + csum2[:-2*k, :-2*k])[:H2, :W2] / n
-        flatw = _np2.clip(1.0 - contrast / 18.0, 0.0, 1.0)
-        pull = flatw if not hard else _np2.ones_like(flatw)
-        achrom = (s2 < 48) | (v2 < 45)
-        outv = v2.copy()
-        outs = s2.copy()
-        # achromatic: V mode-merge. Histogram -> gaussian smooth -> peaks;
-        # agglomerate peaks closer than 70 (mass-weighted) so baked patch
-        # tones fuse; snap each texel's V toward its nearest mode.
-        av = v2[achrom]
-        if av.size > 500:
-            hist = _np2.bincount(av.astype(_np2.int32), minlength=256).astype(_np2.float32)
-            x = _np2.arange(-24, 25, dtype=_np2.float32)
-            g = _np2.exp(-x * x / (2 * 8.0 ** 2))
-            sm = _np2.convolve(hist, g / g.sum(), mode="same")
-            pk = [i for i in range(1, 255)
-                  if sm[i] >= sm[i - 1] and sm[i] >= sm[i + 1]
-                  and sm[i] > 0.005 * sm.sum() / 256 * 40]
-            modes = [[float(i), float(sm[max(0, i - 12):i + 13].sum())] for i in pk] or [[float(_np2.median(av)), 1.0]]
-            merged = True
-            while merged and len(modes) > 1:
-                merged = False
-                modes.sort()
-                for i in range(len(modes) - 1):
-                    if modes[i + 1][0] - modes[i][0] < 70:
-                        m1, m2 = modes[i], modes[i + 1]
-                        w = m1[1] + m2[1]
-                        modes[i] = [(m1[0] * m1[1] + m2[0] * m2[1]) / w, w]
-                        del modes[i + 1]
-                        merged = True
-                        break
-            centers = _np2.array([m[0] for m in modes], _np2.float32)
-            idx = _np2.argmin(_np2.abs(av[:, None] - centers[None, :]), axis=1)
-            near = centers[idx]
-            # full-strength snap, but ONLY within a capture radius of a
-            # mode: outliers (teeth, specular highlights) that never formed
-            # a mode of their own are left alone rather than dragged. The
-            # contrast guard can't do this job — it protects the patch
-            # EDGES we're here to erase.
-            inr = _np2.abs(av - near) <= 60
-            a = _np2.where(inr, 0.85 if not hard else 1.0, 0.0)
-            outv[achrom] = av * (1 - a) + near * a
-            # hue/sat are noise here: damp sat so hair loses color speckle
-            outs[achrom] = s2[achrom] * (1 - 0.65 * a)
-            print(f"flatten2: {len(centers)} achromatic mode(s) at "
-                  + ",".join(f"{c:.0f}" for c in centers))
-        # chromatic: one shading tone per hue/sat region (V not in the key)
-        chrom = ~achrom
-        bins2 = (_np2.minimum(h2[chrom], 254) // 16) * 10 + _np2.minimum(s2[chrom], 254) // 96
-        cv = v2[chrom].copy()
-        cp = pull[chrom]
-        for b in _np2.unique(bins2):
-            m = bins2 == b
-            if m.sum() < 200:
-                continue
-            med = float(_np2.median(cv[m]))
-            a = (0.8 * cp[m]) if not hard else cp[m]
-            cv[m] = cv[m] * (1 - a) + med * a
-        outv[chrom] = cv
-        hsv2[..., 1] = _np2.clip(outs, 0, 255)
-        hsv2[..., 2] = _np2.clip(outv, 0, 255)
-        img = Image.fromarray(hsv2.astype(_np2.uint8), "HSV").convert("RGB")
-        print("flatten2: chroma-aware flatten applied" + (" (hard)" if hard else ""))
 
     if "--vanillaflat" in sys.argv and img is not None:
         import numpy as _npv
