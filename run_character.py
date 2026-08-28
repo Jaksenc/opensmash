@@ -25,6 +25,29 @@ import time
 HERE = os.path.dirname(os.path.abspath(__file__))
 WEBDIST = os.path.join(HERE, "..", "BattleShip", "web-dist", "bundles")
 
+TRIPO_USD_PER_CREDIT = 0.01     # https://developers.tripo3d.ai/en/pricing
+FAL_TTS_USD_PER_1K_CHARS = 0.10  # fal-ai/minimax/speech-02-hd
+
+# stage -> USD spent in THIS run. Skipped (already-built) stages cost
+# nothing now but keep whatever cost.json recorded when they last ran.
+COST = {}
+OUT_DIR = None   # set once main() has resolved paths, so the finally-block
+SLUG = None      # reporter can run even when a stage raises
+
+
+def bill(stage, usd):
+    if usd is not None:
+        COST[stage] = COST.get(stage, 0.0) + usd
+    return usd
+
+
+def gen_cost(out):
+    """gen.py prints one JSON line carrying the billed token usage."""
+    try:
+        return json.loads(out[out.index("{"):]).get("cost_usd")
+    except (ValueError, json.JSONDecodeError):
+        return None
+
 N64_TEMPLATE = (
     "A screenshot of a very low-poly 1996 Nintendo 64 fighting-game character "
     "model in T-pose: full body, front view, arms straight out horizontally, "
@@ -38,7 +61,8 @@ N64_TEMPLATE = (
     "attached low-poly Mario model sheet exactly (it is a STYLE reference "
     "only — the character must be {display})."
 )
-PHOTO_NOTE = " Keep the exact likeness of the person in the attached photo(s)."
+PHOTO_NOTE = (" Keep the exact likeness of the person in the attached photo(s), "
+              "same expression but with closed lips.")
 PORTRAIT_TEMPLATE = (
     "Character select screen portrait tile for a 1999 Nintendo 64 fighting "
     "game, in exactly the same art style as the three reference portrait "
@@ -112,6 +136,46 @@ def tripo_json(out):
         raise
 
 
+def report_cost():
+    """Merge this run into <out>/cost.json and print the breakdown.
+
+    A re-run REPLACES that stage's cost: cost.json answers "what did the
+    current set of artifacts cost", not "how much have I ever spent on this
+    slug". Stages skipped by the resume logic keep the cost they were last
+    built at. Called from a finally block so a character that dies at the
+    torn-tri gate still records what its failed attempt cost -- at scale the
+    rejects are most of the surprise."""
+    if not OUT_DIR:
+        return
+    path = os.path.join(OUT_DIR, "cost.json")
+    prev = {}
+    if os.path.exists(path):
+        try:
+            prev = json.loads(open(path).read())
+        except json.JSONDecodeError:
+            pass
+    stages = dict(prev.get("stages") or {})
+    for k, v in COST.items():
+        stages[k] = round(v, 6)
+    doc = {"slug": SLUG, "stages": stages,
+           "total_usd": round(sum(stages.values()), 4),
+           "last_run": {"at": time.strftime("%Y-%m-%dT%H:%M:%S"),
+                        "stages": {k: round(v, 6) for k, v in COST.items()},
+                        "total_usd": round(sum(COST.values()), 4)}}
+    json.dump(doc, open(path, "w"), indent=1)
+    if COST:
+        log("cost: " + "  ".join(
+            f"{k} ${v:.4f}" for k, v in sorted(COST.items(), key=lambda kv: -kv[1])))
+    log(f"cost: ${doc['last_run']['total_usd']:.4f} this run, "
+        f"${doc['total_usd']:.4f} for {SLUG} to date -> {path}")
+
+
+def tripo_balance():
+    """Tripo task payloads carry no cost field, so the charge is only
+    observable as a balance delta around the task."""
+    return tripo_json(sh(["python3", "tripo.py", "balance"], timeout=60))["balance"]
+
+
 def stage_needed(path, force, name):
     if force == name:
         return True
@@ -136,6 +200,8 @@ def main():
     slug = re.sub(r"[^a-z0-9]", "", a.name.lower())[:16]
     out = a.out or os.path.join(HERE, "play", "ui", slug)
     os.makedirs(out, exist_ok=True)
+    global OUT_DIR, SLUG
+    OUT_DIR, SLUG = out, slug
     F = lambda n: os.path.join(out, n)
     force = a.force_stage
 
@@ -148,9 +214,17 @@ def main():
         if a.emblem:
             cmd += ["--emblem", a.emblem]
         open(F("character.json"), "w").write(sh(cmd, timeout=180))
+        bill("expand", json.loads(open(F("character.json")).read()).get("cost_usd"))
     cdef = json.loads(open(F("character.json")).read())
     short = (a.short or cdef.get("short") or re.sub(r"[^A-Za-z]", "", cdef["display"]).upper())
     short = re.sub(r"[^A-Z]", "", short.upper())[:7]
+    # Persist the resolved short name. The .osbui pack takes it as an argument,
+    # but the dev server's /roster.json reads it back out of character.json --
+    # so a --short override has to land in the file or the tile caption and the
+    # roster entry disagree.
+    if cdef.get("short") != short:
+        cdef["short"] = short
+        json.dump(cdef, open(F("character.json"), "w"), indent=1)
     log(f"character: {cdef['display']} (short: {short})")
 
     # 2. tpose -----------------------------------------------------------
@@ -162,11 +236,12 @@ def main():
         if a.photo:
             cmd += ["--ref", a.photo]
             prompt += PHOTO_NOTE
-        sh(cmd + [prompt, F("tpose.png")], timeout=600)
+        bill("tpose", gen_cost(sh(cmd + [prompt, F("tpose.png")], timeout=600)))
 
     # 3. mesh + rig ------------------------------------------------------
     if stage_needed(F("rigged.glb"), force, "mesh"):
         log("mesh: uploading to Tripo")
+        credits_before = tripo_balance()
         tok = tripo_json(sh(["python3", "tripo.py", "upload", F("tpose.png")], timeout=300))["image_token"]
         task = tripo_json(sh(["python3", "tripo.py", "img3d", tok], timeout=120))["task_id"]
         log(f"mesh: img3d task {task}")
@@ -187,6 +262,9 @@ def main():
         if st["status"] != "success":
             raise RuntimeError(f"rig {st['status']}")
         sh(["python3", "tripo.py", "download", rig, F("rigged.glb")], timeout=600)
+        credits = credits_before - tripo_balance()
+        log(f"mesh: {credits} Tripo credits (img3d + rig)")
+        bill("mesh", credits * TRIPO_USD_PER_CREDIT)
 
     # 4. convert ---------------------------------------------------------
     osb = os.path.join(HERE, "play", f"{slug}.osb")
@@ -231,12 +309,14 @@ def main():
                 f"from PIL import Image; im=Image.open('ui_refs/{r}.png').convert('RGB');"
                 f"im.resize((im.width*8,im.height*8),Image.LANCZOS).save('{up}')"])
             refs += ["--ref", up]
-        sh(["python3", "gen.py", "image"] + refs + ["--ref", F("tpose.png"),
-            PORTRAIT_TEMPLATE, F("portrait_raw.png")], timeout=600)
+        bill("portrait", gen_cost(sh(["python3", "gen.py", "image"] + refs
+             + ["--ref", F("tpose.png"), PORTRAIT_TEMPLATE, F("portrait_raw.png")],
+             timeout=600)))
     if stage_needed(F("stock_raw.png"), force, "stock"):
         log("stock: generating icon art")
-        sh(["python3", "gen.py", "image", "--ref", os.path.join(HERE, "ui_refs", "stockicon_ref.png"),
-            "--ref", F("tpose.png"), STOCK_TEMPLATE, F("stock_raw.png")], timeout=600)
+        bill("stock", gen_cost(sh(
+            ["python3", "gen.py", "image", "--ref", os.path.join(HERE, "ui_refs", "stockicon_ref.png"),
+             "--ref", F("tpose.png"), STOCK_TEMPLATE, F("stock_raw.png")], timeout=600)))
     if stage_needed(F("emblem_raw.png"), force, "emblem"):
         # --emblem beats whatever the expander inferred, so the object can be
         # steered without re-running the expand stage.
@@ -247,9 +327,10 @@ def main():
         # The engine draws the emblem as a flat one-color stencil, so gate on
         # the stencil, not on the art: a gorgeous solid object is still a blob.
         for _ in range(2):
-            sh(["python3", "gen.py", "image",
-                "--ref", os.path.join(HERE, "ui_refs", "emblem_ref.png"),
-                prompt, F("emblem_raw.png")], timeout=600)
+            bill("emblem", gen_cost(sh(
+                ["python3", "gen.py", "image",
+                 "--ref", os.path.join(HERE, "ui_refs", "emblem_ref.png"),
+                 prompt, F("emblem_raw.png")], timeout=600)))
             st = json.loads(sh(["python3", "emblem_stencil.py", F("emblem_raw.png")],
                                timeout=120))
             log(f"emblem: stencil cut {st['cut_frac']:.0%} in {st['cuts']} holes")
@@ -272,6 +353,10 @@ def main():
         log("voice: generating announcer clip")
         sh(["python3", "announcer_voice.py", cdef["display"], "--slug", slug,
             "--out", wav, "--no-stage"], timeout=300)
+        # generate_announcer speaks the display name plus a terminal "!"
+        spoken = cdef["display"].strip()
+        spoken += "" if spoken.endswith("!") else "!"
+        bill("voice", len(spoken) / 1000.0 * FAL_TTS_USD_PER_1K_CHARS)
 
     # 9. stage -----------------------------------------------------------
     if os.path.isdir(WEBDIST):
@@ -291,4 +376,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    finally:
+        report_cost()

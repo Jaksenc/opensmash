@@ -56,6 +56,12 @@ def cmd_rig(a):
     print(json.dumps(http(f"{BASE}/task", body)))
 
 
+def cmd_balance(a):
+    """Credit balance. Bracketing a task with this is the only way to see
+    what Tripo actually charged — task payloads carry no cost field."""
+    print(json.dumps(http(f"{BASE}/user/balance")["data"]))
+
+
 def cmd_status(a):
     d = http(f"{BASE}/task/{a.task_id}")["data"]
     print(json.dumps({k: d.get(k) for k in
@@ -84,6 +90,7 @@ def main():
     r = sub.add_parser("rig"); r.add_argument("task_id"); r.set_defaults(fn=cmd_rig)
     s = sub.add_parser("status"); s.add_argument("task_id"); s.set_defaults(fn=cmd_status)
     d = sub.add_parser("download"); d.add_argument("task_id"); d.add_argument("out"); d.set_defaults(fn=cmd_download)
+    b = sub.add_parser("balance"); b.set_defaults(fn=cmd_balance)
     a = p.parse_args()
     a.fn(a)
 

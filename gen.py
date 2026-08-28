@@ -42,6 +42,50 @@ def http(url, method="GET", headers=None, body=None, timeout=180):
         return json.loads(r.read().decode())
 
 
+# --- cost accounting --------------------------------------------------
+# $ per 1M tokens as (text_in, image_in, output). Image models bill the
+# generated image as OUTPUT tokens, so there is no fixed per-image price:
+# gpt-image-2's default quality="auto" picks a tier per prompt (196 output
+# tokens for a flat emblem, 439 for a T-pose sheet). Gemini bills thinking
+# tokens as output. Rates checked 2026-08-26 against the published tables.
+PRICES = {
+    "gpt-image-2":            (5.00,  8.00,  30.00),
+    "gpt-image-1.5":          (5.00,  8.00,  32.00),
+    "gpt-image-1":            (5.00, 10.00,  40.00),
+    "gpt-image-1-mini":       (2.00,  2.50,   8.00),
+    "gemini-3.7-flash":       (0.75,  0.75,   3.75),
+    "gemini-2.5-flash-image": (0.30,  0.30,  30.00),
+    "gemini-3.1-flash-image": (0.50,  0.50,  60.00),
+    "gemini-3-pro-image":     (2.00,  2.00, 120.00),
+}
+MODEL_ALIASES = {"gemini-flash-latest": "gemini-3.7-flash"}
+
+
+def normalize_usage(usage):
+    """(text_in, image_in, output) from an OpenAI or a Gemini usage blob."""
+    if not usage:
+        return 0, 0, 0
+    if "input_tokens" in usage:                                    # OpenAI
+        d = usage.get("input_tokens_details") or {}
+        return (d.get("text_tokens", usage.get("input_tokens", 0)),
+                d.get("image_tokens", 0), usage.get("output_tokens", 0))
+    img = sum(p.get("tokenCount", 0)                               # Gemini
+              for p in (usage.get("promptTokensDetails") or [])
+              if p.get("modality") == "IMAGE")
+    return (max(0, usage.get("promptTokenCount", 0) - img), img,
+            usage.get("candidatesTokenCount", 0)
+            + usage.get("thoughtsTokenCount", 0))
+
+
+def token_cost(model, usage):
+    """USD for one call, or None when we have no published rate to apply."""
+    rate = PRICES.get(MODEL_ALIASES.get(model, model))
+    if not rate or not usage:
+        return None   # unknown model or no usage reported -> a gap, not $0
+    t, i, o = normalize_usage(usage)
+    return (t * rate[0] + i * rate[1] + o * rate[2]) / 1e6
+
+
 MESHY = "https://api.meshy.ai/openapi"
 MESHY_HDR = {"Authorization": f"Bearer {ENV['MESHY_API_KEY']}"}
 
@@ -165,6 +209,7 @@ def cmd_image(args):
                        {"Authorization": f"Bearer {ENV['OPENAI_API_KEY']}"},
                        {"model": args.model, "prompt": args.prompt, "size": "1024x1024"},
                        timeout=300)
+        usage = out.get("usage")
         item = out["data"][0]
         if "b64_json" in item:
             png = base64.b64decode(item["b64_json"])
@@ -182,12 +227,14 @@ def cmd_image(args):
             {"contents": [{"parts": parts}],
              "generationConfig": {"responseModalities": ["IMAGE"]}},
             timeout=300)
+        usage = out.get("usageMetadata")
         parts = out["candidates"][0]["content"]["parts"]
         blob = next(p for p in parts if "inlineData" in p)["inlineData"]["data"]
         png = base64.b64decode(blob)
     with open(args.out, "wb") as f:
         f.write(png)
-    print(json.dumps({"saved": args.out, "bytes": len(png)}))
+    print(json.dumps({"saved": args.out, "bytes": len(png), "model": args.model,
+                      "usage": usage, "cost_usd": token_cost(args.model, usage)}))
 
 
 def main():
