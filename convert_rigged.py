@@ -384,11 +384,13 @@ TARGET_BLANK_EXTRA = []
 TARGET_SNAP_ACCS = []
 TARGET_KEEP_VANILLA = []
 TARGET_SWAP_SIDES = False
+TARGET_CONFORM = None
+TARGET_TUNE = {}
 
 
 def main():
     argv = sys.argv[1:]
-    global TARGET_MAP, TARGET_PARTS_JSON, TARGET_BLANK_EXTRA, TARGET_SNAP_ACCS, TARGET_KEEP_VANILLA, TARGET_SWAP_SIDES
+    global TARGET_MAP, TARGET_PARTS_JSON, TARGET_BLANK_EXTRA, TARGET_SNAP_ACCS, TARGET_KEEP_VANILLA, TARGET_SWAP_SIDES, TARGET_CONFORM, TARGET_TUNE
     if "--target" in argv:
         ti = argv.index("--target")
         _prof = json.load(open(argv[ti + 1]))
@@ -398,6 +400,8 @@ def main():
         TARGET_SNAP_ACCS = [int(j) for j in _prof.get("snap_accessories", [])]
         TARGET_KEEP_VANILLA = [int(j) for j in _prof.get("keep_vanilla", [])]
         TARGET_SWAP_SIDES = bool(_prof.get("swap_sides", False))
+        TARGET_CONFORM = _prof.get("conform")
+        TARGET_TUNE = _prof.get("tune", {})
         argv = argv[:ti] + argv[ti + 2:]
         print(f"target skeleton: {_prof.get('name', '?')} "
               f"({len(TARGET_MAP)} canonical parts mapped)")
@@ -851,6 +855,12 @@ def main():
             s_perp = _sh
     except (KeyError, IndexError):
         pass
+    # profile tune "perp_boost": bulk multiplier for massive targets (DK).
+    # Bone lengths pin the pose, so without it a human-thickness mesh
+    # reads as a gangly skeleton inside the big fighter's stance.
+    if "perp_boost" in TARGET_TUNE:
+        s_perp *= float(TARGET_TUNE["perp_boost"])
+        print(f"perp boost: x{TARGET_TUNE['perp_boost']} -> global scale {s_perp:.1f}")
 
     # ---- global facing alignment R_face. rot_between() alone is the
     # MINIMAL rotation between bone directions — twist about the bone
@@ -962,7 +972,8 @@ def main():
         # real joint), so widen the part instead: perp gains sqrt of the
         # stretch ratio, capped, keeping limbs readable at roughly the
         # authored aspect.
-        sp2 = s_perp * min(1.55, math.sqrt(max(1.0, s_par / s_perp)))
+        sp2 = s_perp * min(float(TARGET_TUNE.get("widen_cap", 1.55)),
+                           math.sqrt(max(1.0, s_par / s_perp)))
         conf[part] = (Q, s_par, sp2, u, a, A)
 
     if os.environ.get("OSB_DEBUG"):
@@ -1277,6 +1288,96 @@ def main():
         d = mat_apply(Q, d)
         return [d[k] + A[k] for k in range(3)]
 
+    # ---- uniform conform (profile "conform": "uniform"): crush-class
+    # targets (Kirby/Pikachu/Purin) map the humanoid chain onto 1-2
+    # segment stubs, and the per-bone conform crushes the mesh into a
+    # blob. Keep the character INTACT instead: ONE rigid similarity
+    # transform for every vertex (facing rotation + uniform scale to the
+    # target's standing height, feet on the target's ground plane) while
+    # the part weights still bind to the mapped target joints, so the
+    # mini figure rides and articulates with the fighter's animations.
+    if TARGET_CONFORM == "uniform":
+        # world up, NOT the target spine: hunched targets (Yoshi's
+        # forward-pitched spine, Pikachu's crouch) would tilt the whole
+        # figure diagonally, and the point of uniform mode is an intact
+        # upright character. (Merged chains also leave the spine
+        # degenerate on Kirby/Purin anyway.)
+        _g_up_u = [0.0, 1.0, 0.0]
+        _g_lat_u = list(g_lat)
+        if math.sqrt(sum(c * c for c in _g_lat_u)) < 1e-3:
+            _g_lat_u = [0.0, 0.0, 1.0]
+        Tg_u = triad(_g_up_u, _g_lat_u)
+        R_u = [[sum(Tg_u[t][r] * Tm[t][c] for t in range(3)) for c in range(3)]
+               for r in range(3)]
+        _pj_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                TARGET_PARTS_JSON or "vanilla-mario-parts.json")
+        _pj = json.load(open(_pj_path))
+        _tys = [frames[int(pid)][0][1] + v[0] * frames[int(pid)][1][0][1]
+                + v[1] * frames[int(pid)][1][1][1] + v[2] * frames[int(pid)][1][2][1]
+                for pid, verts in _pj.items() if int(pid) in frames for v in verts]
+        if _tys:
+            _t_top, _t_bot = max(_tys), min(_tys)
+        else:
+            # no canonical-part geometry dumped (Yoshi: body lives on
+            # unmapped chain joints) — span the target's FULL joint set
+            # from the skel dump, with a head margin above the top joint.
+            import re as _re
+            _jys = [float(m.group(1)) for L in open(frames_path)
+                    for m in [_re.match(
+                        r"SKELDUMP: joint=\d+ parent=\S+ "
+                        r"world=\([-\d.]+,([-\d.]+),[-\d.]+\)", L)] if m]
+            _t_bot, _t_top = min(_jys), max(_jys)
+            _t_top += 0.18 * (_t_top - _t_bot)
+        # optional chibi warp (tune "head_boost"/"leg_squash"): ball-shaped
+        # targets read best as giant-head + stubby-leg figures, not a
+        # proportional mini human. Boost scales the head uniformly about
+        # the neck (smoothstep band so the collar doesn't crease); squash
+        # compresses below-hip verts vertically toward the hips. Runs in
+        # MESH space before the similarity, so the height normalization
+        # below fits the warped figure into the target height.
+        _hb = float(TARGET_TUNE.get("head_boost", 1.0))
+        _lsq = float(TARGET_TUNE.get("leg_squash", 1.0))
+        if _hb != 1.0 or _lsq != 1.0:
+            _ny_c = jpos[name_idx["neck"]][1]
+            _hy_c = jpos[name_idx["Hips"]][1]
+            _npt_c = jpos[name_idx["neck"]]
+            _H0_c = (max(p[1] for p in pos) - min(p[1] for p in pos)) or 1e-9
+            _bw_c = 0.10 * _H0_c
+
+            def _chibi(v):
+                x, y, z = v
+                if _lsq != 1.0 and y < _hy_c:
+                    y = _hy_c + (y - _hy_c) * _lsq
+                if _hb != 1.0:
+                    t = max(0.0, min(1.0, (v[1] - (_ny_c - _bw_c)) / (2 * _bw_c)))
+                    t = t * t * (3 - 2 * t)
+                    sc = 1.0 + (_hb - 1.0) * t
+                    x = _npt_c[0] + (x - _npt_c[0]) * sc
+                    y = _npt_c[1] + (y - _npt_c[1]) * sc
+                    z = _npt_c[2] + (z - _npt_c[2]) * sc
+                return [x, y, z]
+            print(f"chibi warp: head x{_hb}, legs x{_lsq}")
+        else:
+            def _chibi(v):
+                return list(v)
+        _wpos = [_chibi(p) for p in pos]
+        _mys = [p[1] for p in _wpos]
+        s_u = ((_t_top - _t_bot) / max(1e-6, max(_mys) - min(_mys))
+               * float(TARGET_TUNE.get("uniform_height", 1.0)))
+        _aL = _chibi(jpos[name_idx[posx + "Foot"]])
+        _aR = _chibi(jpos[name_idx[negx + "Foot"]])
+        _anc = [(_aL[k] + _aR[k]) / 2 for k in range(3)]
+        _rootP = frames[0][0] if 0 in frames else frames[6][0]
+        _P = [_rootP[0], _t_bot + s_u * (_anc[1] - min(_mys)), _rootP[2]]
+
+        def bone_apply(bname, v, _R=R_u, _s=s_u, _a=_anc, _p=_P, _w=_chibi):
+            vw = _w(v)
+            d = mat_apply(_R, [(vw[k] - _a[k]) * _s for k in range(3)])
+            return [d[k] + _p[k] for k in range(3)]
+        print(f"uniform conform: scale x{s_u:.2f} to target height "
+              f"{_t_top - _t_bot:.0f} ({_t_bot:.0f}..{_t_top:.0f}), "
+              f"feet on ground at root x/z")
+
     # ---- authored world position = linear-blend skinning over the
     # per-bone maps with the real skin weights. At spawn the mesh is an
     # exact smooth skinned pose: gapless, no baked stretch, and every
@@ -1327,7 +1428,15 @@ def main():
     # --no-profile: skip the Mario-part-bounds fit (per-part thickness
     # scales disagree at part boundaries and tear non-chibi meshes);
     # keep only the bone retarget + uniform global scale.
-    vanilla_parts = ({} if "--no-profile" in sys.argv else
+    # profile tune "target_part_fit": fit part spans to the TARGET
+    # fighter's own dumped bounds instead of Mario's — on crush-class
+    # targets a Mario-sized boot wraps a Pikachu-sized leg otherwise.
+    _tpf = bool(TARGET_TUNE.get("target_part_fit")) and TARGET_PARTS_JSON
+    if _tpf:
+        _vanilla_path = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)),
+                                      TARGET_PARTS_JSON)
+    vanilla_parts = ({} if ("--no-profile" in sys.argv or TARGET_CONFORM == "uniform"
+                            or TARGET_TUNE.get("no_part_fit")) else
                      (json.load(open(_vanilla_path)) if _os.path.exists(_vanilla_path) else {}))
 
     # dominant part per vertex (needed for the fit; recomputed identically
@@ -1384,6 +1493,15 @@ def main():
             pspan = pmax - pmin
             vspan = vmax - vmin
             if pspan < 1e-3 or vspan < 1e-3:
+                continue
+            if _tpf:
+                # target-bounds fit: the per-part floors below are Mario
+                # aesthetics ("boots are chunky") — on a crush target they
+                # forbid exactly the shrink we need. Allow deep shrink.
+                s = max(0.35, min(SCALE_MAX, vspan / pspan))
+                scale[axis] = s
+                if part in FREE_PARTS:
+                    off[axis] = (vmin + vmax) / 2.0 - (pmin + pmax) / 2.0 * s
                 continue
             s = max(SCALE_MIN, min(SCALE_MAX, vspan / pspan))
             if part in (22, 27):
@@ -2326,7 +2444,11 @@ def main():
     _guard = "--adjguard" in sys.argv
     _ok = ({r: set(w) | set().union(*(PART_ADJ.get(p, set()) for p in w))
             for r, w in _cur.items()} if _guard else {})
-    for _it in range(4 if _cur else 0):
+    # profile tune "postsmooth_iters": crush-class targets (pikachu) have
+    # far bigger inter-part transform disagreement, so claim cliffs shear
+    # harder in motion — deeper diffusion widens the blend bands.
+    _ps_iters = int(TARGET_TUNE.get("postsmooth_iters", 4))
+    for _it in range(_ps_iters if _cur else 0):
         _nxt = {}
         for r, nbrs in _adj.items():
             acc2 = {p: 0.5 * w for p, w in _cur[r].items()}
@@ -2362,6 +2484,74 @@ def main():
     if _cur:
         print(f"post-claim weight smoothing: claim boundaries re-diffused"
               + (f", {n_purged2} cross-side verts re-purged" if n_purged2 else ""))
+    # profile tune "rigid_legs": collapse each leg chain (calf/foot -> thigh
+    # part) so the whole leg rides ONE joint. Crush-class targets (pikachu)
+    # give thigh/calf/foot wildly disagreeing transforms; blending across
+    # them turns the run gallop's legs to rubber. A rigid stubby leg
+    # pivoting at the hip matches the vanilla fighter's own proportions.
+    if TARGET_TUNE.get("rigid_legs"):
+        _LEGC = {20: 19, 22: 19, 25: 24, 27: 24}
+        n_rl = 0
+        for _i in range(len(world)):
+            vw = vweights[_i]
+            if not any(p in _LEGC for p in vw):
+                continue
+            vw2 = {}
+            for p, w in vw.items():
+                q = _LEGC.get(p, p)
+                vw2[q] = vw2.get(q, 0.0) + w
+            vweights[_i] = vw2
+            vpart[_i] = max(vw2, key=vw2.get)
+            n_rl += 1
+        print(f"rigid legs: {n_rl} verts' calf/foot weights collapsed onto thighs")
+        # side-coherence relaxation: per-vert geometric side assignment is
+        # noisy on fused inner thighs, so speckled L/R thigh weights shear
+        # the leg into lumps once the gallop separates the legs. Relax each
+        # leg vert's side toward its welded neighbours' majority, with the
+        # geometric side (lateral offset from the hip axis) as a prior —
+        # the genuine split survives at the midline, the speckle dies.
+        try:
+            _pLu = jpos[name_idx[posx + "UpLeg"]]
+            _pRu = jpos[name_idx[negx + "UpLeg"]]
+            _latu = [_pLu[k] - _pRu[k] for k in range(3)]
+            _latL2 = math.sqrt(sum(c * c for c in _latu)) or 1e-9
+            _midu = [(_pLu[k] + _pRu[k]) / 2 for k in range(3)]
+            _legset = [i for i in range(len(world))
+                       if vweights[i].get(19, 0.0) + vweights[i].get(24, 0.0) > 0.0]
+            _side = {}
+            _prior = {}
+            for i in _legset:
+                _side[i] = 1.0 if vweights[i].get(19, 0.0) >= vweights[i].get(24, 0.0) else -1.0
+                _prior[i] = max(-1.0, min(1.0, sum(
+                    (pos[i][k] - _midu[k]) * _latu[k] for k in range(3)) / (0.25 * _latL2 * _latL2)))
+            for _it in range(8):
+                _ns = {}
+                for i in _legset:
+                    r = _rep[i]
+                    nb = [j for j in _adj.get(r, ())]
+                    m = sum(_side.get(j, 0.0) for j in nb) / (len(nb) or 1)
+                    v = 0.6 * m + 0.4 * _prior[i]
+                    _ns[i] = 1.0 if v >= 0 else -1.0
+                _side = _ns
+            n_flip = 0
+            for i in _legset:
+                want19 = _side[i] > 0
+                w19 = vweights[i].get(19, 0.0)
+                w24 = vweights[i].get(24, 0.0)
+                if (w19 >= w24) == want19:
+                    continue
+                vw = dict(vweights[i])
+                vw[19 if want19 else 24] = w19 + w24
+                vw.pop(24 if want19 else 19, None)
+                if not want19 and 19 in vw:
+                    vw.pop(19, None)
+                vweights[i] = vw
+                vpart[i] = max(vw, key=vw.get)
+                n_flip += 1
+            if n_flip:
+                print(f"rigid legs: side relaxation flipped {n_flip} speckled thigh verts")
+        except (KeyError, IndexError):
+            pass
     # cap shrinkwrap: the generated cap flares out well past the skull
     # sphere at the sides/back; pitched with the head (utilt/usmash) the
     # flare sweeps out as a big red "sail". Pull back/side cap verts that
@@ -2514,7 +2704,11 @@ def main():
             dw = sum((world[a2][k] - world[b2][k]) ** 2 for k in range(3)) ** 0.5
             if dw > 2.5 * max(db, 0.01) * s_perp and dw > 0.06 * s_perp:
                 _cross_torn += 1
-    if _cross_torn > max(120, int(0.05 * len(tris))):
+    # profile tune "force_seam_weld": crush-class targets trip the global-
+    # crush guard by definition, but with rigid_legs the tears really are
+    # local (part boundaries only) — welding closes the zero-volume fins
+    # that neither cutting (holes) nor keeping (flat flaps) can fix.
+    if _cross_torn > max(120, int(0.05 * len(tris))) and not TARGET_TUNE.get("force_seam_weld"):
         print(f"seam weld: skipped ({_cross_torn} torn cross-part edges is "
               f"global crush, not local seams)")
     else:
@@ -2593,7 +2787,8 @@ def main():
                 dw = sum((world[a2][k] - world[b2][k]) ** 2 for k in range(3)) ** 0.5
                 if dw > _cut * max(db, 0.01) * s_perp and dw > 0.06 * s_perp:
                     _torn_edge_count += 1
-    _torn_weld_ok = _torn_edge_count <= max(60, int(0.05 * len(tris)))
+    _torn_weld_ok = (_torn_edge_count <= max(60, int(0.05 * len(tris)))
+                     or bool(TARGET_TUNE.get("force_seam_weld")))
     if not _torn_weld_ok and _torn_edge_count:
         print(f"torn-edge weld: skipped ({_torn_edge_count} torn edges is "
               f"global crush, not local tears)")
@@ -2643,12 +2838,22 @@ def main():
                 torn = True
                 break
         if torn:
+            # profile tune "no_torn_cut": crush-class conforms (pikachu)
+            # stretch tris BY DESIGN — the cut reads them as tears and
+            # punches holes all over the mesh. Keep them instead.
+            if TARGET_TUNE.get("no_torn_cut"):
+                sk_tris.append(list(t))
+                n_degen += 1
+                continue
             n_degen += 1
             if os.environ.get("OSB_DEBUG"):
                 _dbg_torn.append(t)
             continue
         sk_tris.append(list(t))
-    if n_degen:
+    if n_degen and TARGET_TUNE.get("no_torn_cut"):
+        print(f"torn-tri cut suppressed (no_torn_cut): {n_degen} stretched "
+              f"triangles KEPT")
+    elif n_degen:
         print(f"torn-tri cut: {n_degen} triangles beyond 3x their part's "
               f"median stretch dropped")
         if _dbg_torn:

@@ -26,5 +26,13 @@
  "parts": "vanilla-pikachu-parts.canonical.json",
  "blank_extra": [
   5
- ]
+ ],
+ "snap_accessories": [
+  29
+ ],
+ "tune": {
+  "no_torn_cut": true,
+  "rigid_legs": true,
+  "force_seam_weld": true
+ }
 }
