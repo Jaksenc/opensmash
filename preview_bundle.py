@@ -37,7 +37,7 @@ def load_skeleton(path):
     return joints
 
 
-def tpose_frames(skinned):
+def tpose_frames(skinned, atlas=None):
     """Synthesize T-pose joint frames from the bundle's bind skeleton:
     chest/head uprighted (Procrustes to world axes, conform scale kept),
     arm chains aimed lateral, leg chains straight down, limb twist chosen
@@ -119,10 +119,44 @@ def tpose_frames(skinned):
     f6 = mesh_forward(6)
     fwd = np.array([1.0 if f6 is None or f6[0] >= 0 else -1.0, 0.0, 0.0])
 
-    # chest and head bind twists are unrelated (animations set joints
-    # absolutely), so orient each independently by its own mesh forward
+    def skin_face_dir():
+        # face direction from SKIN-colored head texels (the converter's
+        # own facing cue): mean-normal estimates drift with hair bulk and
+        # cheek asymmetry, but visible skin clusters on the front of the
+        # head for any human character.
+        if atlas is None:
+            return None
+        hsv = atlas.convert("HSV")
+        TW, TH = atlas.size
+        px = hsv.load()
+        pts, ctr, cn = [], np.zeros(3), 0
+        for v in skinned["verts"]:
+            w = sum(wt for j, wt in v[8] if j == 12)
+            if w <= 0.5:
+                continue
+            p = np.array(v[0:3])
+            ctr += p; cn += 1
+            h, s, val = px[min(TW-1, max(0, int(v[3]*TW))),
+                           min(TH-1, max(0, int(v[4]*TH)))]
+            if 3 <= h <= 30 and 35 <= s <= 190 and val >= 110:
+                pts.append(p)
+        if cn == 0 or len(pts) < 40:
+            return None
+        d = np.mean(pts, axis=0) - ctr/cn
+        d[1] = 0.0
+        n = np.linalg.norm(d)
+        return d/n if n > 1e-6 else None
+
+    # orient the chest by its own mesh forward; the head inherits the
+    # chest's rotation plus only a yaw fix — the converter places head
+    # geometry with the CHEST's rotation, so uprighting the head to its
+    # own (unrelated) joint frame read as a crooked head, which the
+    # in-game animations never show.
     Q6 = face_frame(6, fwd)
-    Q12 = face_frame(12, fwd)
+    f12 = skin_face_dir()
+    if f12 is None:
+        f12 = mesh_forward(12)
+    Q12 = Q6 @ yaw_to((f12 if f12 is not None else fwd) @ Q6, fwd)
 
     def follow(p):                 # chest rotation applied about its origin
         return (p - o6) @ Q6 + o6
@@ -131,6 +165,21 @@ def tpose_frames(skinned):
     o12, R12 = F[12]
     out[12] = (follow(o12), R12 @ Q12)
 
+    # root offsets and bone lengths, averaged across the left/right pair:
+    # the crumpled bind pose is asymmetric, but the engine's mirrored anim
+    # poses aren't — exactly mirrored frames also mean any left/right
+    # difference in the render is baked into the verts/weights, not the pose
+    def chainlens(c):
+        return [np.linalg.norm(F[c[1]][0]-F[c[0]][0]),
+                np.linalg.norm(F[c[2]][0]-F[c[1]][0])]
+    sym = {}
+    for a, b in (((8, 9, 10), (14, 15, 16)), ((19, 20, 22), (24, 25, 27))):
+        offs = [F[c[0]][0] - o6 for c in (a, b)]
+        dy = sum(o[1] for o in offs)/2
+        dlat = sum(math.hypot(o[0], o[2]) for o in offs)/2
+        lens = [(x+y)/2 for x, y in zip(chainlens(a), chainlens(b))]
+        sym[a] = sym[b] = (dy, dlat, lens)
+
     for chain, side in (((8, 9, 10), -1.0), ((14, 15, 16), 1.0),
                         ((19, 20, 22), -1.0), ((24, 25, 27), 1.0)):
         j0, j1, j2 = chain
@@ -138,23 +187,18 @@ def tpose_frames(skinned):
         # T-pose target: arms lateral, legs straight down + slight splay
         t = np.array((0.0, 0.0, side) if arm else (0.0, -1.0, 0.15*side))
         t /= np.linalg.norm(t)
-        # re-anchor the limb root: the crumpled bind pose hunches shoulders
-        # and hips forward, so following the chest rotation leaves the roots
-        # ahead of the body. Keep the bind height and distance-from-chest
-        # but place the root squarely on its own lateral side.
-        off = F[j0][0] - o6
-        dlat = math.sqrt(off[0]*off[0] + off[2]*off[2])
-        o0 = o6 + np.array([0.0, off[1], side*dlat])
+        dy, dlat, lens = sym[chain]
+        o0 = o6 + np.array([0.0, dy, side*dlat])
         d01 = F[j1][0] - F[j0][0]
         Q0 = aim(d01, t)
         R0 = F[j0][1] @ Q0
         R0 = R0 @ twist(R0, t, fwd)
-        o1 = o0 + np.linalg.norm(d01)*t
+        o1 = o0 + lens[0]*t
         d12 = F[j2][0] - F[j1][0]
         Q1 = aim(d12, t)
         R1 = F[j1][1] @ Q1
         R1 = R1 @ twist(R1, t, fwd)
-        o2 = o1 + np.linalg.norm(d12)*t
+        o2 = o1 + lens[1]*t
         R2 = F[j2][1] @ Q1
         R2 = R2 @ twist(R2, t, fwd)
         out[j0], out[j1], out[j2] = (o0, R0), (o1, R1), (o2, R2)
@@ -179,6 +223,22 @@ def main():
                     help="synthesize T-pose frames from the bundle's bind "
                          "skeleton instead of reading a skeldump (implies "
                          "--skinned; the skel argument may be omitted)")
+    ap.add_argument("--dump-frames", default=None, metavar="OUT.skel",
+                    help="also write the pose frames as SKELDUMP2 lines "
+                         "(plus a joint=0 root at the pose's feet) for the "
+                         "engine's SSB64_POSE_OVERRIDE eval hook")
+    ap.add_argument("--dump-yaw", type=float, default=0.0,
+                    help="spin the dumped pose about world-up (degrees) — "
+                         "the in-game camera is fixed, so turn the pose "
+                         "instead (180 = face the camera)")
+    ap.add_argument("--dump-pitch", type=float, default=0.0,
+                    help="tip the dumped pose about the world x axis "
+                         "(after --dump-yaw); 90 lays it back so the "
+                         "fixed camera sees it top-down")
+    ap.add_argument("--dump-at", default=None, metavar="X,Z",
+                    help="translate the dumped pose so the chest stands "
+                         "over this world X,Z — center it on the game "
+                         "camera's axis to avoid oblique perspective")
     args = ap.parse_args()
     if args.tpose:
         args.skinned = True
@@ -186,12 +246,12 @@ def main():
         ap.error("skel is required unless --tpose is given")
 
     bundle = json.load(open(args.bundle))
-    if args.tpose:
-        joints = tpose_frames(bundle["skinned"])
-    else:
-        joints = load_skeleton(args.skel)
     tex = Image.open(os.path.join(os.path.dirname(args.bundle) or ".",
                                   bundle["atlas"])).convert("RGB")
+    if args.tpose:
+        joints = tpose_frames(bundle["skinned"], atlas=tex)
+    else:
+        joints = load_skeleton(args.skel)
     TW, TH = tex.size
     only = set(int(x) for x in args.parts.split(",")) if args.parts else None
 
@@ -225,6 +285,35 @@ def main():
             world.append(tuple(acc / (tot or 1.0)))
             tuv.append((v[3]*TW, v[4]*TH))
         tris = [tuple(t) for t in s["tris"]]
+        if args.dump_frames:
+            o6 = np.array(joints[6][0])
+            ya = math.radians(args.dump_yaw)
+            cy, sy = math.cos(ya), math.sin(ya)
+            Y = np.array([[cy, 0.0, sy], [0.0, 1.0, 0.0], [-sy, 0.0, cy]])
+            pa = math.radians(args.dump_pitch)
+            cp2, sp2 = math.cos(pa), math.sin(pa)
+            P = np.array([[1.0, 0.0, 0.0], [0.0, cp2, sp2], [0.0, -sp2, cp2]])
+            M = Y @ P
+            cmid = np.array([o6[0], (min(p[1] for p in world) +
+                                     max(p[1] for p in world)) / 2, o6[2]])
+            shift = np.zeros(3)
+            if args.dump_at:
+                tx, tz = (float(x) for x in args.dump_at.split(","))
+                shift = np.array([tx - o6[0], 0.0, tz - o6[2]])
+            # NO joint=0 line: leaving the root un-overridden makes the
+            # engine's local/draw transforms cancel, so the pose renders
+            # at these absolute coordinates in exactly this orientation —
+            # immune to the live animation's root lean/facing.
+            with open(args.dump_frames, "w") as fdf:
+                for j, (o, R) in sorted(joints.items()):
+                    ov = (np.array(o) - cmid) @ M + cmid + shift
+                    Rv = np.array(R) @ M
+                    fdf.write("SKELDUMP2: joint=%d o=(%.4f,%.4f,%.4f) "
+                              "x=(%.4f,%.4f,%.4f) y=(%.4f,%.4f,%.4f) "
+                              "z=(%.4f,%.4f,%.4f)\n"
+                              % (j, *ov, *Rv[0], *Rv[1], *Rv[2]))
+            print(f"pose frames -> {args.dump_frames} "
+                  f"(yaw {args.dump_yaw:g}, pitch {args.dump_pitch:g})")
     else:
         for part in bundle["parts"]:
             if only is not None and part["joint"] not in only:
@@ -275,7 +364,7 @@ def main():
         order.append((sum(p[2] for p in s)/3, t, s))
     order.sort(key=lambda x: x[0])
 
-    img = Image.new("RGB", (W, H), (29, 29, 40))
+    img = Image.new("RGB", (W, H), (255, 255, 255))
     for _, t, s in order:
         a, b, c = (rpos[t[0]], rpos[t[1]], rpos[t[2]])
         u = [b[k]-a[k] for k in range(3)]

@@ -411,7 +411,7 @@ def main():
         argv = argv[:pi] + argv[pi + 2:]
     else:
         project_source_path = None
-    args = [a for a in argv if a not in ("--autoskin", "--reskin", "--mild-color", "--redchest", "--bluelegs", "--brownhair", "--capfix", "--vanillaflat", "--flatten", "--debleed", "--no-profile", "--no-smooth-disp", "--smooth-disp", "--no-smooth-weights", "--no-postsmooth", "--adjguard", "--flip-facing", "--sharpen", "--rigid")]
+    args = [a for a in argv if a not in ("--autoskin", "--reskin", "--mild-color", "--redchest", "--bluelegs", "--brownhair", "--capfix", "--vanillaflat", "--flatten", "--debleed", "--no-profile", "--no-smooth-disp", "--smooth-disp", "--no-smooth-weights", "--no-postsmooth", "--adjguard", "--flip-facing", "--sharpen", "--rigid", "--no-symlimbs", "--no-symweights")]
     # (--target consumed above with its argument)
     autoskin = "--autoskin" in sys.argv
     glb_path, frames_path, out_path = args[0], args[1], args[2]
@@ -633,12 +633,103 @@ def main():
         import auto_skin
         jix, wts = auto_skin.reskin(pos, tris, names, jpos, jix, wts)
         print("reskin: disciplined weights on the Meshy skeleton")
+
+    # ---- symmetrize provider weights. Auto-rig weights are ~7% asymmetric
+    # between mirror-partner verts on a symmetric mesh (measured on Tripo
+    # rigs), which poses the two sides differently in every animation.
+    # Mirror-average each vert's weights with its geometric mirror
+    # partner's (Left<->Right joints swapped). Guarded per vert: only when
+    # a partner exists within 3% of mesh height, so genuinely asymmetric
+    # features (a side ponytail, one glove) keep their own weights.
+    if "--no-symweights" not in sys.argv and \
+            "LeftArm" in names and "RightArm" in names:
+        import numpy as _nsw
+        from scipy.spatial import cKDTree as _KD
+        _P = _nsw.array(pos)
+        _la, _ra = jpos[names.index("LeftArm")], jpos[names.index("RightArm")]
+        _ax = max(range(3), key=lambda k: abs(_la[k] - _ra[k]))
+        _mid = (_la[_ax] + _ra[_ax]) / 2.0
+        _mirP = _P.copy()
+        _mirP[:, _ax] = 2 * _mid - _mirP[:, _ax]
+        _d, _pi = _KD(_P).query(_mirP)
+        _hgt = float(_P[:, 1].max() - _P[:, 1].min()) or 1.0
+        _swp = {}
+        for _i2, _nm in enumerate(names):
+            _o = ("Right" + _nm[4:]) if _nm.startswith("Left") else \
+                 (("Left" + _nm[5:]) if _nm.startswith("Right") else _nm)
+            _swp[_i2] = names.index(_o) if _o in names else _i2
+        _nj, _nw = [], []
+        _nblend = 0
+        for _v in range(len(pos)):
+            if _d[_v] > 0.03 * _hgt:
+                _nj.append(jix[_v]); _nw.append(wts[_v])
+                continue
+            _m = _pi[_v]
+            _acc = {}
+            for _k in range(4):
+                _acc[jix[_v][_k]] = _acc.get(jix[_v][_k], 0.0) + 0.5*wts[_v][_k]
+            for _k in range(4):
+                _sj = _swp[jix[_m][_k]]
+                _acc[_sj] = _acc.get(_sj, 0.0) + 0.5*wts[_m][_k]
+            _it = sorted(_acc.items(), key=lambda kv: -kv[1])[:4]
+            _tt = sum(w for _, w in _it) or 1.0
+            _nj.append([b for b, _ in _it] + [_it[0][0]]*(4-len(_it)))
+            _nw.append([w/_tt for _, w in _it] + [0.0]*(4-len(_it)))
+            _nblend += 1
+        jix, wts = _nj, _nw
+        print(f"symweights: mirror-averaged provider weights on "
+              f"{_nblend}/{len(pos)} verts")
+
     frames = load_frames(frames_path)
     if TARGET_MAP is not None:
         # the skel dump is keyed by the TARGET fighter's joint ids; the
         # converter reasons in canonical (Mario) part ids throughout, so
         # remap here and translate back when the bundle is written.
         frames = {c: frames[t] for c, t in TARGET_MAP.items() if t in frames}
+
+    # ---- symmetrize the limb bind pose. The vanilla rest pose is NOT
+    # mirror-symmetric (one arm tucked across the chest, one out; legs
+    # likewise), and everything downstream — triad twist-ref choice,
+    # bone scales, conform, weights, claims — runs in this pose, so the
+    # two sides of a symmetric mesh got measurably different treatment
+    # baked into the bundle (boyang: ~14 units mean mirror error on the
+    # arms vs ~0 in the source GLB). The bind pose is author-chosen (the
+    # engine skins via the embedded BIND section, frame x inv(bind)), so
+    # replace each -side limb chain's frames with the exact mirror of the
+    # +side chain across the character's sagittal plane. Vanilla left and
+    # right part geometry mirrors under a local z flip (verified on all
+    # six pairs), so the mirrored frame is sigma . R . S_world.
+    if "--no-symlimbs" not in sys.argv and all(
+            j in frames for j in (6, 11, 8, 9, 10, 14, 15, 16,
+                                  19, 20, 21, 22, 24, 25, 26, 27)):
+        _c6 = list(frames[6][0])
+        _upv = normalize([frames[11][0][k] - frames[6][0][k] for k in range(3)])
+        _latv = [frames[8][0][k] - frames[14][0][k] for k in range(3)]
+        _latv = [_latv[k] - _upv[k]*sum(_latv[j]*_upv[j] for j in range(3))
+                 for k in range(3)]
+        _n = normalize(_latv)
+        def _reflect_pt(p):
+            d = sum((p[k]-_c6[k])*_n[k] for k in range(3))
+            return [p[k] - 2*d*_n[k] for k in range(3)]
+        _Sw = [[(1.0 if r == c else 0.0) - 2*_n[r]*_n[c] for c in range(3)]
+               for r in range(3)]
+        _sig = [1.0, 1.0, -1.0]        # vanilla local left/right mirror
+        for _p, _q in ((8, 14), (9, 15), (10, 16),
+                       (19, 24), (20, 25), (21, 26), (22, 27)):
+            _op, _Rp = frames[_p]
+            _Rq = [[_sig[r]*sum(_Rp[r][k]*_Sw[k][c] for k in range(3))
+                    for c in range(3)] for r in range(3)]
+            frames[_q] = (_reflect_pt(_op), _Rq)
+        # midline joints should sit ON the sagittal plane — the head joint
+        # is a few units off it in the crumpled rest pose, which anchors
+        # the whole head part off-center
+        for _mj in (11, 12):
+            if _mj in frames:
+                _om, _Rm = frames[_mj]
+                _dm = sum((_om[k]-_c6[k])*_n[k] for k in range(3))
+                frames[_mj] = ([_om[k] - _dm*_n[k] for k in range(3)], _Rm)
+        print("symlimbs: -side limb bind frames mirrored from +side "
+              "(symmetric conform pose)")
     name_idx = {n: i for i, n in enumerate(names)}
 
     posx = "Left" if jpos[name_idx["LeftArm"]][0] > jpos[name_idx["RightArm"]][0] else "Right"
@@ -975,6 +1066,19 @@ def main():
         sp2 = s_perp * min(float(TARGET_TUNE.get("widen_cap", 1.55)),
                            math.sqrt(max(1.0, s_par / s_perp)))
         conf[part] = (Q, s_par, sp2, u, a, A)
+
+    # symmetrize left/right retarget scales: s_par divides by the MESH
+    # side's bone length, and auto-rig joints aren't perfectly mirrored,
+    # so the two sides picked up slightly different along-bone and perp
+    # scales (lopsided limbs in motion). Average each pair.
+    if "--no-symlimbs" not in sys.argv:
+        for _pa, _pb in ((8, 14), (9, 15), (19, 24), (20, 25)):
+            if _pa in conf and _pb in conf:
+                _ca, _cb = conf[_pa], conf[_pb]
+                _sp = (_ca[1] + _cb[1]) / 2.0
+                _spp = (_ca[2] + _cb[2]) / 2.0
+                conf[_pa] = (_ca[0], _sp, _spp, _ca[3], _ca[4], _ca[5])
+                conf[_pb] = (_cb[0], _sp, _spp, _cb[3], _cb[4], _cb[5])
 
     if os.environ.get("OSB_DEBUG"):
         for part in sorted(conf):
