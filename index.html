@@ -167,6 +167,10 @@ const GRIP = {
 };
 window.__grip = GRIP;
 
+// Default-pose scale, tuned the same way against assets/hand_point.png.
+const POINT = { scale: 1.00 };
+window.__point = POINT;
+
 // Pose the skeleton across three poses that share one rig:
 //   tap  0..1  the click gesture — whole-hand tilt into the page, fingers
 //              barely move (this is what pointerdown drives)
@@ -269,7 +273,7 @@ hand.scale.setScalar(0.62);
 
 // Point: character-select cursor. Down/press: same pose tilted forward a
 // touch (fingertip pressing into the page); squash is applied in tick.
-const qPoint = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, -0.5, 0.4));
+const qPoint = new THREE.Quaternion().setFromEuler(new THREE.Euler(0.08, -0.58, 0.48));
 const qTap = new THREE.Quaternion().setFromEuler(new THREE.Euler(-0.95, -0.4, 0.35));
 const qGrip = new THREE.Quaternion().setFromEuler(new THREE.Euler(0.15, -0.1, 0.1));
 const qGrab = qTap;   // click still drives the tap, per the interaction spec
@@ -450,7 +454,8 @@ window.captureGlove = (mode = 0) => {
   for (const f of rigs) { f.jig.a = 0; f.jig.v = 0; }
   poseFingers(mode === 2 ? 1 : 0, mode === 1 ? 1 : 0);
   hand.quaternion.copy(mode === 1 ? qGrip : mode === 2 ? qTap : qPoint);
-  hand.scale.setScalar(0.62 * (mode === 2 ? 0.92 : mode === 1 ? GRIP.scale : 1));
+  hand.scale.setScalar(0.62 * (mode === 1 ? GRIP.scale
+                            : mode === 2 ? POINT.scale * 0.92 : POINT.scale));
   wrist.rotation.set(0, 0, 0);
   wrist.position.set(0, 0, 0);
   glove.position.set(0, 0, 0);
@@ -539,7 +544,8 @@ function tick() {
   const gEase = gripAmount * gripAmount * (3 - 2 * gripAmount);
   hand.quaternion.slerpQuaternions(qPoint, qTap, ease);
   if (gEase > 0.001) hand.quaternion.slerp(qGrip, gEase);
-  hand.scale.setScalar(0.62 * (1 - 0.08 * ease) * (1 - (1 - GRIP.scale) * gEase));
+  hand.scale.setScalar(0.62 * THREE.MathUtils.lerp(POINT.scale, GRIP.scale, gEase)
+                            * (1 - 0.08 * ease));
 
   // --- finger jiggle springs kicked by acceleration ---
   const accelMag = THREE.MathUtils.clamp((Math.abs(accelSmooth.x) + Math.abs(accelSmooth.y)) * 0.0012, 0, 0.5);
