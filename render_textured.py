@@ -78,7 +78,7 @@ def main():
         order.append((sum(p[2] for p in s)/3, t, s))
     order.sort(key=lambda x: x[0])
 
-    img = Image.new("RGB", (W, H), (29, 29, 40))
+    img = Image.new("RGB", (W, H), (255, 255, 255))
     for _, t, s in order:
         # camera-space normal for lighting (rpos is already rotated)
         a, b, c = (rpos[t[0]], rpos[t[1]], rpos[t[2]])
