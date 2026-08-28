@@ -606,7 +606,11 @@ def main():
                 if wts[r][k] > 0:
                     d[jix[r][k]] = d.get(jix[r][k], 0.0) + wts[r][k]
             _cur2[r] = d
-        for _it in range(3):
+        # 16 iters (was 3): the 3-iter band was too narrow to bridge the
+        # torso/leg retarget disagreement at the waist — the ragged
+        # dominance boundary printed straight through the texture as a
+        # zigzag hem tear on every conversion.
+        for _it in range(int(os.environ.get("OSB_WSMOOTH_ITERS", "16"))):
             _nxt2 = {}
             for r, nbrs in _adj2.items():
                 acc = {b: 0.5 * w for b, w in _cur2[r].items()}
@@ -625,7 +629,7 @@ def main():
                 ji = [b for b, _ in items] + [items[0][0]] * (4 - len(items))
                 ww = [w for _, w in items] + [0.0] * (4 - len(items))
                 jix[_i] = ji; wts[_i] = ww
-        print("weight smoothing: provider bone weights diffused 3 iters")
+        print(f"weight smoothing: provider bone weights diffused {int(os.environ.get('OSB_WSMOOTH_ITERS', '16'))} iters")
 
     if "--reskin" in sys.argv and not autoskin:
         # keep the Meshy skeleton (joint placement is good) but replace
@@ -2290,19 +2294,32 @@ def main():
     # mottling without any character-specific palette.
     if "--flatten" in sys.argv and img is not None:
         import numpy as _npf
+        from PIL import ImageFilter as _IF
         hsvF = _npf.asarray(img.convert("HSV"), _npf.int16)
-        hF, sF, vF = hsvF[..., 0], hsvF[..., 1], hsvF[..., 2]
-        bins = (_npf.minimum(hF, 254)//16)*100 + (_npf.minimum(sF, 254)//64)*10 + _npf.minimum(vF, 254)//86
+        vF = hsvF[..., 2]
+        # bin on a BLURRED copy: JPEG block noise straddling a hard bin
+        # edge flips whole 8x8 blocks into the neighbouring (often black)
+        # bin — the chunky dark patches on shaded cloth and hair.
+        hsvB = _npf.asarray(img.filter(_IF.GaussianBlur(4)).convert("HSV"),
+                            _npf.int16)
+        hB, sB, vB = hsvB[..., 0], hsvB[..., 1], hsvB[..., 2]
+        bins = (_npf.minimum(hB, 254)//16)*100 + (_npf.minimum(sB, 254)//64)*10 + _npf.minimum(vB, 254)//86
         outv = vF.astype(_npf.float32)
         for b in _npf.unique(bins):
             m = bins == b
             if m.sum() < 40:
                 continue
             med = float(_npf.median(vF[m]))
-            outv[m] = 0.25*outv[m] + 0.75*med
+            # pull weight decays with distance from the bin median: true
+            # mottling (small V wobble) flattens hard, while boundary
+            # texels that landed in the wrong bin stay put instead of
+            # being yanked to a distant median.
+            d = vF[m].astype(_npf.float32) - med
+            w = 0.75 * _npf.exp(-(d / 30.0)**2)
+            outv[m] = vF[m] + w * (med - vF[m])
         hsvF[..., 2] = _npf.clip(outv, 0, 255).astype(_npf.int16)
         img = Image.fromarray(hsvF.astype(_npf.uint8), "HSV").convert("RGB")
-        print("flatten: albedo V pulled to bin medians")
+        print("flatten: albedo V pulled to bin medians (soft-binned)")
 
     if "--vanillaflat" in sys.argv and img is not None:
         import numpy as _npv
