@@ -3660,17 +3660,52 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
             def sub(a, b):
                 return [a[0]-b[0], a[1]-b[1], a[2]-b[2]]
 
-            # per-bone scale, keyed at the child end of each segment; a
-            # collapsed target chain (samus hand==forearm joint) keeps 1.0
-            s = {}
+            def norm(a):
+                n = seglen(a)
+                return [a[0]/n, a[1]/n, a[2]/n]
+
+            def rot_between(a, b):
+                # minimal rotation matrix taking unit vector a to unit b
+                k = [a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]]
+                c = a[0]*b[0]+a[1]*b[1]+a[2]*b[2]
+                s2 = k[0]*k[0]+k[1]*k[1]+k[2]*k[2]
+                if s2 < 1e-12:
+                    return [[1,0,0],[0,1,0],[0,0,1]] if c > 0 else [[-1,0,0],[0,-1,0],[0,0,1]]
+                K = [[0,-k[2],k[1]],[k[2],0,-k[0]],[-k[1],k[0],0]]
+                f = (1.0-c)/s2
+                G = [[0.0]*3 for _ in range(3)]
+                for r_ in range(3):
+                    for c_ in range(3):
+                        kk2 = sum(K[r_][m]*K[m][c_] for m in range(3))
+                        G[r_][c_] = (1.0 if r_ == c_ else 0.0) + K[r_][c_] + f*kk2
+                return G
+
+            def rotv(G, v):
+                return [G[i][0]*v[0]+G[i][1]*v[1]+G[i][2]*v[2] for i in range(3)]
+
+            # per-bone scale AND direction: blend each segment's length and
+            # its bind direction toward the target's. At lam=1 the baked
+            # skeleton IS the target bind — the target's rotation deltas
+            # then reproduce its posed joint positions exactly at our size
+            # (the charge stance held the cannon at face height because
+            # samus's deltas landed on the chibi's differently-hung bind
+            # arm). Collapsed target chains keep length and direction.
+            s, bdir, A = {}, {}, {}
             for j in joint_ids:
                 pj = CPAR.get(j, -1)
                 if pj == -1:
                     dm, dt = sub(bfp[j], rootb), sub(T[cmap[j]], t0g)
                 else:
                     dm, dt = sub(bfp[j], bfp[pj]), sub(T[cmap[j]], T[cmap[pj]])
-                r = 1.0 if seglen(dt) < 1.0 else seglen(dt) / seglen(dm)
-                s[j] = 1.0 + lam * (r - 1.0)
+                um = norm(dm)
+                if seglen(dt) < 1.0:
+                    s[j], u = 1.0, um
+                else:
+                    s[j] = 1.0 + lam * (seglen(dt)/seglen(dm) - 1.0)
+                    ut = norm(dt)
+                    u = norm([(1.0-lam)*um[i] + lam*ut[i] for i in range(3)])
+                bdir[j] = u
+                A[j] = rot_between(um, u)
             no = {}
 
             def place(j):
@@ -3679,7 +3714,8 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
                 pj = CPAR.get(j, -1)
                 base = rootb if pj == -1 else place(pj)
                 ref = rootb if pj == -1 else bfp[pj]
-                no[j] = [base[i] + s[j] * (bfp[j][i] - ref[i]) for i in range(3)]
+                L = s[j] * seglen(sub(bfp[j], ref))
+                no[j] = [base[i] + L * bdir[j][i] for i in range(3)]
                 return no[j]
             for j in joint_ids:
                 place(j)
@@ -3690,34 +3726,51 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
                 pj = CPAR.get(j, -1)
                 if pj != -1:
                     kids.setdefault(pj, []).append(j)
-            stretch, axis = {}, {}
+            # per-joint geometry transform: rotate the joint's verts by the
+            # bone it spans (unique child's bone; leaves follow the bone
+            # arriving at them), then stretch along that bone's NEW axis
+            stretch, axis, G = {}, {}, {}
             for j in joint_ids:
                 ks = kids.get(j, [])
                 if len(ks) == 1:
-                    stretch[j], a = s[ks[0]], sub(bfp[ks[0]], bfp[j])
+                    stretch[j], axis[j], G[j] = s[ks[0]], bdir[ks[0]], A[ks[0]]
                 elif CPAR.get(j, -1) == -1:
-                    stretch[j], a = s[j], sub(bfp[j], rootb)  # torso vertical
+                    stretch[j], axis[j], G[j] = s[j], bdir[j], A[j]  # torso
                 else:
-                    stretch[j], a = 1.0, [0.0, 1.0, 0.0]
-                n = seglen(a)
-                axis[j] = [a[0]/n, a[1]/n, a[2]/n]
+                    # leaf (head/hands/feet): keep size, follow the
+                    # arriving bone's re-aim
+                    stretch[j], axis[j], G[j] = 1.0, bdir[j], A[j]
             for v in sk["verts"]:
                 acc = [0.0, 0.0, 0.0]
+                nacc = [0.0, 0.0, 0.0]
                 tw = 0.0
                 for (ji, w) in v[8]:
                     if w <= 0.0:
                         continue
-                    L = sub(v[:3], bfp[ji])
+                    Lr = rotv(G[ji], sub(v[:3], bfp[ji]))
                     a, st = axis[ji], stretch[ji]
-                    d = L[0]*a[0] + L[1]*a[1] + L[2]*a[2]
+                    d = Lr[0]*a[0] + Lr[1]*a[1] + Lr[2]*a[2]
+                    nr = rotv(G[ji], v[5:8])
                     for i in range(3):
-                        acc[i] += w * (no[ji][i] + L[i] + (st - 1.0) * d * a[i])
+                        acc[i] += w * (no[ji][i] + Lr[i] + (st - 1.0) * d * a[i])
+                        nacc[i] += w * nr[i]
                     tw += w
                 if tw > 0.0:
+                    nl = seglen(nacc)
                     for i in range(3):
                         v[i] = acc[i] / tw
+                        v[5+i] = nacc[i] / nl
             for j in joint_ids:
                 bf[str(j)]["o"] = no[j]
+                # rotate the bind frame with the joint's geometry so the
+                # runtime skinning (rd * cbind, bind_local from BIND) keeps
+                # the mesh glued to the re-aimed bones under posed deltas.
+                # R stores basis vectors as rows (jm = R^T): jm' = G*jm
+                # => R' = R * G^T
+                R = bf[str(j)]["R"]
+                Gj = G[j]
+                bf[str(j)]["R"] = [[sum(R[r_][m]*Gj[c_][m] for m in range(3))
+                                    for c_ in range(3)] for r_ in range(3)]
             print(f"canonical morph lam={lam}: " +
                   " ".join(f"{j}:{s[j]:.2f}" for j in joint_ids))
         # root anchor: ground point under the chest (TopN sits at ground).
