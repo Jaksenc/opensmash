@@ -3649,6 +3649,22 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
                 if mm:
                     T[int(mm.group(1))] = [float(mm.group(2 + i)) for i in (1, 2, 3)]
             bfp = {j: list(bf[str(j)]["o"]) for j in joint_ids}
+            # yaw-align the target skeleton to the canonical bind about
+            # the vertical axis (shoulder-to-shoulder line, XZ projection)
+            # — the two binds don't share a global yaw, and blending
+            # directions across that gap turned the whole torso toward
+            # the camera. Only per-limb aim differences should survive.
+            if 8 in joint_ids and 14 in joint_ids:
+                am = [bfp[14][0]-bfp[8][0], bfp[14][2]-bfp[8][2]]
+                at = [T[cmap[14]][0]-T[cmap[8]][0], T[cmap[14]][2]-T[cmap[8]][2]]
+                import math as _m
+                yaw = _m.atan2(at[1], at[0]) - _m.atan2(am[1], am[0])
+                cy, sy = _m.cos(-yaw), _m.sin(-yaw)
+                t0g_ = T[0]
+                for k_ in T:
+                    dx, dz = T[k_][0]-t0g_[0], T[k_][2]-t0g_[2]
+                    T[k_] = [t0g_[0] + cy*dx - sy*dz, T[k_][1],
+                             t0g_[2] + sy*dx + cy*dz]
             o6b = bfp[6]
             ymin0 = min(v[1] for v in sk["verts"])
             rootb = [o6b[0], ymin0, o6b[2]]
