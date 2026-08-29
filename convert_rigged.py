@@ -3582,7 +3582,7 @@ def write_binary3(bundle_json_path, out_path):
 
 
 
-def write_binary5(bundle_json_path, out_path):
+def write_binary5(bundle_json_path, out_path, canonical_profile=None):
     """OSB5: single CPU-skinned mesh (true smooth skinning in game).
 
     Layout (little-endian):
@@ -3607,13 +3607,49 @@ def write_binary5(bundle_json_path, out_path):
     px = atlas.load()
     sk = d["skinned"]
     joint_ids = sk["joint_ids"]
+
+    # ---- canonical retarget: ship the MARIO bundle onto another fighter.
+    # The mesh, weights, and BIND section stay canonical (mario); only the
+    # joint_ids are remapped to the target skeleton, and a CAN1 section
+    # tells the engine to rebuild VIRTUAL joint frames each tick: mario's
+    # bone offsets driven by the target joints' rotation deltas from their
+    # own bind. Geometry quality is inherited from the validated mario
+    # build instead of re-earned per target.
+    canon = None
+    if canonical_profile is not None:
+        prof = json.load(open(canonical_profile))
+        cmap = {int(k): int(v) for k, v in prof["map"].items()}
+        missing = [j for j in joint_ids if j not in cmap]
+        if missing:
+            raise SystemExit(f"canonical: profile lacks map for joints {missing}")
+        # canonical parent per mario joint; -1 anchors to fighter joint 0
+        CPAR = {6: -1, 12: 6, 8: 6, 9: 8, 10: 9, 14: 6, 15: 14, 16: 15,
+                19: -1, 20: 19, 22: 20, 24: -1, 25: 24, 27: 25}
+        slot = {j: k for k, j in enumerate(joint_ids)}
+        parents = []
+        for j in joint_ids:
+            pj = CPAR.get(j, -1)
+            parents.append(-1 if pj == -1 else slot[pj])
+        bf = sk["bind_frames"]
+        # root anchor: ground point under the chest (TopN sits at ground).
+        # bind_frames are world-space from the capture run, where the
+        # chest sat exactly at the spawn TopN x/z — so this IS the
+        # canonical TopN column, grounded at the mesh's lowest vertex.
+        o6 = bf[str(6)]["o"] if "6" in bf else [0.0, 0.0, 0.0]
+        ymin = min(v[1] for v in sk["verts"])
+        can_root = [o6[0], ymin, o6[2]]
+        blank = sorted((set(cmap.values()) | set(prof.get("blank_extra", ())))
+                       - {0} - set(prof.get("keep_vanilla", ())))
+        canon = {"tids": [cmap[j] for j in joint_ids], "parents": parents,
+                 "root": can_root, "blank": blank,
+                 "name": prof.get("name", "?")}
     verts = sk["verts"]      # [x,y,z,u,v,nx,ny,nz, [(ji,w),...]]
     tris = sk["tris"]
 
     with open(out_path, "wb") as f:
         f.write(b"OSB5")
         f.write(struct.pack("<IIIII", len(joint_ids), len(verts), len(tris), TW, TH))
-        for j in joint_ids:
+        for j in (canon["tids"] if canon else joint_ids):
             f.write(struct.pack("<I", j))
         f.write(pack_rgba16_dithered(atlas))
         jindex = {j: k for k, j in enumerate(joint_ids)}
@@ -3646,7 +3682,7 @@ def write_binary5(bundle_json_path, out_path):
                 for r in range(3):
                     f.write(struct.pack("<fff", R[0][r], R[1][r], R[2][r]))
             print("binary5: embedded bind skeleton (BIND section)")
-        blank_ids = sk.get("blank_ids", joint_ids)
+        blank_ids = canon["blank"] if canon else sk.get("blank_ids", joint_ids)
         f.write(b"BLNK")
         f.write(struct.pack("<I", len(blank_ids)))
         for j in blank_ids:
@@ -3661,7 +3697,16 @@ def write_binary5(bundle_json_path, out_path):
             for a in accs:
                 f.write(struct.pack("<IIf", a["joint"], a["vert"], a["embed"]))
             print(f"binary5: {len(accs)} accessory vertex pin(s) (ACC2 section)")
+        if canon:
+            f.write(b"CAN1")
+            f.write(struct.pack("<fff", *canon["root"]))
+            for pslot in canon["parents"]:
+                f.write(struct.pack("<i", pslot))
+            print(f"binary5: CANONICAL retarget -> {canon['name']} "
+                  f"(target joints {canon['tids']}, CAN1 section)")
         fs = float(sk.get("fit_scale", 1.0) or 1.0)
+        if canon:
+            fs = 1.0
         if fs < 0.995:
             f.write(b"SCAL")
             f.write(struct.pack("<f", fs))
@@ -3677,5 +3722,8 @@ if __name__ == "__main__":
         write_binary3(sys.argv[2], sys.argv[3])
     elif len(sys.argv) >= 4 and sys.argv[1] == "--binary5":
         write_binary5(sys.argv[2], sys.argv[3])
+    elif len(sys.argv) >= 5 and sys.argv[1] == "--binary5-canonical":
+        # --binary5-canonical mario-bundle.json out.osb skels/<t>.profile.json
+        write_binary5(sys.argv[2], sys.argv[3], canonical_profile=sys.argv[4])
     else:
         main()
