@@ -13,6 +13,7 @@ import json
 import math
 import os
 import re
+import sys
 
 from PIL import Image, ImageDraw
 
@@ -37,15 +38,24 @@ def load_skeleton(path):
     return joints
 
 
-def tpose_frames(skinned, atlas=None):
+def tpose_frames(skinned, atlas=None, jmap=None):
     """Synthesize T-pose joint frames from the bundle's bind skeleton:
     chest/head uprighted (Procrustes to world axes, conform scale kept),
     arm chains aimed lateral, leg chains straight down, limb twist chosen
     so each frame's forward axis matches the chest facing. Offline eval
-    only — nothing here touches game data."""
+    only — nothing here touches game data.
+
+    The chain layout below is written in Mario's joint numbering. For a
+    bundle retargeted onto another skeleton, pass that profile's
+    canonical->target `jmap`: frames and vertex weights are looked up
+    through it and the result comes back keyed by target joint."""
     import numpy as np
-    F = {int(j): (np.array(f["o"], float), np.array(f["R"], float))
+    T = {int(j): (np.array(f["o"], float), np.array(f["R"], float))
          for j, f in skinned["bind_frames"].items()}
+    c2t = ({int(k): int(v) for k, v in jmap.items()} if jmap
+           else {j: j for j in T})
+    F = {cj: T[tj] for cj, tj in c2t.items() if tj in T}
+    F.update({j: f for j, f in T.items() if j not in c2t.values()})
 
     def aim(d, t):
         # minimal row-vector rotation Q with d@Q = t (Rodrigues)
@@ -88,14 +98,31 @@ def tpose_frames(skinned, atlas=None):
 
     def mesh_forward(joint):
         # a joint's forward, estimated from its verts' bind-space normals
+        tj = c2t.get(joint, joint)
         f = np.zeros(3)
         for v in skinned["verts"]:
-            w = sum(wt for j, wt in v[8] if j == joint)
+            w = sum(wt for j, wt in v[8] if j == tj)
             if w > 0.5:
                 f += w * np.array(v[5:8], float)
         f[1] = 0.0
         n = np.linalg.norm(f)
         return f/n if n > 1e-6 else None
+
+    def vert_dir(cj):
+        # direction from a joint's origin to the centroid of the verts it
+        # owns (bind world space) — for a collapsed chain that spans two
+        # canonical bones, this is the bone direction the joints lost
+        tj = c2t.get(cj, cj)
+        acc, wsum = np.zeros(3), 0.0
+        for v in skinned["verts"]:
+            w = sum(wt for j, wt in v[8] if j == tj)
+            if w > 0.5:
+                acc += w * np.array(v[0:3], float)
+                wsum += w
+        if wsum == 0.0:
+            return None
+        d = acc/wsum - F[cj][0]
+        return d if np.linalg.norm(d) > 1e-6 else None
 
     up = np.array([0.0, 1.0, 0.0])
 
@@ -129,9 +156,10 @@ def tpose_frames(skinned, atlas=None):
         hsv = atlas.convert("HSV")
         TW, TH = atlas.size
         px = hsv.load()
+        head = c2t.get(12, 12)
         pts, ctr, cn = [], np.zeros(3), 0
         for v in skinned["verts"]:
-            w = sum(wt for j, wt in v[8] if j == 12)
+            w = sum(wt for j, wt in v[8] if j == head)
             if w <= 0.5:
                 continue
             p = np.array(v[0:3])
@@ -177,7 +205,10 @@ def tpose_frames(skinned, atlas=None):
         offs = [F[c[0]][0] - o6 for c in (a, b)]
         dy = sum(o[1] for o in offs)/2
         dlat = sum(math.hypot(o[0], o[2]) for o in offs)/2
-        lens = [(x+y)/2 for x, y in zip(chainlens(a), chainlens(b))]
+        # a collapsed chain contributes a zero-length segment; averaging
+        # it in would halve the mirror bone on BOTH sides
+        lens = [(x+y)/2 if min(x, y) > 1e-6 else max(x, y)
+                for x, y in zip(chainlens(a), chainlens(b))]
         sym[a] = sym[b] = (dy, dlat, lens)
 
     for chain, side in (((8, 9, 10), -1.0), ((14, 15, 16), 1.0),
@@ -195,6 +226,13 @@ def tpose_frames(skinned, atlas=None):
         R0 = R0 @ twist(R0, t, fwd)
         o1 = o0 + lens[0]*t
         d12 = F[j2][0] - F[j1][0]
+        if np.linalg.norm(d12) <= 1e-6:
+            # collapsed chain (two canonical joints on one target joint,
+            # e.g. Samus's cannon arm): no joint-to-joint direction, so
+            # aim the shared joint by the geometry it actually carries
+            d12 = vert_dir(j1)
+            if d12 is None:
+                d12 = d01
         Q1 = aim(d12, t)
         R1 = F[j1][1] @ Q1
         R1 = R1 @ twist(R1, t, fwd)
@@ -202,7 +240,12 @@ def tpose_frames(skinned, atlas=None):
         R2 = F[j2][1] @ Q1
         R2 = R2 @ twist(R2, t, fwd)
         out[j0], out[j1], out[j2] = (o0, R0), (o1, R1), (o2, R2)
-    return {j: (o, R.tolist()) for j, (o, R) in out.items()}
+    # back to target numbering; `out` is built proximal-first, so a
+    # collapsed pair keeps the proximal frame (where its geometry starts)
+    posed = {}
+    for j, (o, R) in out.items():
+        posed.setdefault(c2t.get(j, j), (o, R.tolist()))
+    return posed
 
 
 def main():
@@ -219,6 +262,15 @@ def main():
     ap.add_argument("--skinned", action="store_true",
                     help="render the OSB5 skinned mesh (what the engine "
                          "draws) instead of the rigid per-part assembly")
+    ap.add_argument("--heat", action="store_true",
+                    help="ownership-hardness heatmap instead of texture "
+                         "(implies --skinned): blue = vert solidly owned "
+                         "by one joint, yellow -> red = 50/50 blend that "
+                         "will smear when the two joints move apart")
+    ap.add_argument("--target", default=None, metavar="NAME",
+                    help="skeleton this bundle was retargeted onto "
+                         "(skels/NAME.profile.json) — needed by --tpose "
+                         "for anything but mario")
     ap.add_argument("--tpose", action="store_true",
                     help="synthesize T-pose frames from the bundle's bind "
                          "skeleton instead of reading a skeldump (implies "
@@ -240,6 +292,8 @@ def main():
                          "over this world X,Z — center it on the game "
                          "camera's axis to avoid oblique perspective")
     args = ap.parse_args()
+    if args.heat:
+        args.skinned = True
     if args.tpose:
         args.skinned = True
     elif args.skel is None:
@@ -249,14 +303,21 @@ def main():
     tex = Image.open(os.path.join(os.path.dirname(args.bundle) or ".",
                                   bundle["atlas"])).convert("RGB")
     if args.tpose:
-        joints = tpose_frames(bundle["skinned"], atlas=tex)
+        jmap = None
+        if args.target and args.target != "mario":
+            prof = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                "skels", f"{args.target}.profile.json")
+            if not os.path.exists(prof):
+                sys.exit(f"unknown target {args.target!r}: no {prof}")
+            jmap = json.load(open(prof))["map"]
+        joints = tpose_frames(bundle["skinned"], atlas=tex, jmap=jmap)
     else:
         joints = load_skeleton(args.skel)
     TW, TH = tex.size
     only = set(int(x) for x in args.parts.split(",")) if args.parts else None
 
     # world-space verts: (xyz, uv) per triangle
-    world, tuv, tris = [], [], []
+    world, tuv, tris, heat = [], [], [], []
     if args.skinned:
         import numpy as np
         s = bundle["skinned"]
@@ -284,6 +345,7 @@ def main():
                 tot += w
             world.append(tuple(acc / (tot or 1.0)))
             tuv.append((v[3]*TW, v[4]*TH))
+            heat.append(max(w for _, w in v[8]) / (tot or 1.0) if v[8] else 1.0)
         tris = [tuple(t) for t in s["tris"]]
         if args.dump_frames:
             o6 = np.array(joints[6][0])
@@ -377,6 +439,22 @@ def main():
         x0, y0 = s[0][0], s[0][1]
         x1, y1 = s[1][0], s[1][1]
         x2, y2 = s[2][0], s[2][1]
+        if args.heat:
+            h = sum(heat[i] for i in t) / 3.0
+            # 1.0 solid -> blue; 0.75 -> yellow; <=0.5 -> red
+            f = max(0.0, min(1.0, (1.0 - h) * 2.0))
+            if f < 0.5:
+                g = f / 0.5
+                col = (int(70 + g*(235-70)), int(110 + g*(200-110)),
+                       int(220 - g*(220-60)))
+            else:
+                g = (f - 0.5) / 0.5
+                col = (int(235 + g*(210-235)), int(200 - g*(200-45)),
+                       int(60 - g*(60-40)))
+            col = tuple(int(c * shade) for c in col)
+            ImageDraw.Draw(img).polygon(
+                [(x0, y0), (x1, y1), (x2, y2)], fill=col)
+            continue
         u0, v0 = tuv[t[0]]
         u1, v1 = tuv[t[1]]
         u2, v2 = tuv[t[2]]
