@@ -3582,7 +3582,7 @@ def write_binary3(bundle_json_path, out_path):
 
 
 
-def write_binary5(bundle_json_path, out_path, canonical_profile=None):
+def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lambda=None):
     """OSB5: single CPU-skinned mesh (true smooth skinning in game).
 
     Layout (little-endian):
@@ -3631,6 +3631,95 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None):
             pj = CPAR.get(j, -1)
             parents.append(-1 if pj == -1 else slot[pj])
         bf = sk["bind_frames"]
+        # ---- optional proportion morph: stretch the canonical (mario)
+        # mesh onto the TARGET skeleton's bone lengths (lam=0 pure chibi,
+        # lam=1 full target proportions). The skeleton is scaled FIRST —
+        # joint positions dictate overall size, so the skin can't come out
+        # undersized — then each vert re-emits from the new joints with
+        # its bone-local coords stretched along the bone axis only
+        # (length follows the skeleton, girth stays the mesh's own).
+        lam = float(morph_lambda or 0.0)
+        if lam > 0.0:
+            skel_path = os.path.join(os.path.dirname(canonical_profile),
+                                     prof["name"] + ".skel")
+            T = {}
+            for line in open(skel_path):
+                mm = re.search(r"joint=(\d+) parent=(-?\d+) "
+                               r"world=\(([-\d.]+),([-\d.]+),([-\d.]+)\)", line)
+                if mm:
+                    T[int(mm.group(1))] = [float(mm.group(2 + i)) for i in (1, 2, 3)]
+            bfp = {j: list(bf[str(j)]["o"]) for j in joint_ids}
+            o6b = bfp[6]
+            ymin0 = min(v[1] for v in sk["verts"])
+            rootb = [o6b[0], ymin0, o6b[2]]
+            t0g = T[0]
+
+            def seglen(a):
+                return math.sqrt(a[0]*a[0] + a[1]*a[1] + a[2]*a[2]) or 1e-6
+
+            def sub(a, b):
+                return [a[0]-b[0], a[1]-b[1], a[2]-b[2]]
+
+            # per-bone scale, keyed at the child end of each segment; a
+            # collapsed target chain (samus hand==forearm joint) keeps 1.0
+            s = {}
+            for j in joint_ids:
+                pj = CPAR.get(j, -1)
+                if pj == -1:
+                    dm, dt = sub(bfp[j], rootb), sub(T[cmap[j]], t0g)
+                else:
+                    dm, dt = sub(bfp[j], bfp[pj]), sub(T[cmap[j]], T[cmap[pj]])
+                r = 1.0 if seglen(dt) < 1.0 else seglen(dt) / seglen(dm)
+                s[j] = 1.0 + lam * (r - 1.0)
+            no = {}
+
+            def place(j):
+                if j in no:
+                    return no[j]
+                pj = CPAR.get(j, -1)
+                base = rootb if pj == -1 else place(pj)
+                ref = rootb if pj == -1 else bfp[pj]
+                no[j] = [base[i] + s[j] * (bfp[j][i] - ref[i]) for i in range(3)]
+                return no[j]
+            for j in joint_ids:
+                place(j)
+            # vert stretch per owning joint: its geometry spans the bone
+            # toward its unique child; leaves (head/hands/feet) keep size
+            kids = {}
+            for j in joint_ids:
+                pj = CPAR.get(j, -1)
+                if pj != -1:
+                    kids.setdefault(pj, []).append(j)
+            stretch, axis = {}, {}
+            for j in joint_ids:
+                ks = kids.get(j, [])
+                if len(ks) == 1:
+                    stretch[j], a = s[ks[0]], sub(bfp[ks[0]], bfp[j])
+                elif CPAR.get(j, -1) == -1:
+                    stretch[j], a = s[j], sub(bfp[j], rootb)  # torso vertical
+                else:
+                    stretch[j], a = 1.0, [0.0, 1.0, 0.0]
+                n = seglen(a)
+                axis[j] = [a[0]/n, a[1]/n, a[2]/n]
+            for v in sk["verts"]:
+                acc = [0.0, 0.0, 0.0]
+                tw = 0.0
+                for (ji, w) in v[8]:
+                    if w <= 0.0:
+                        continue
+                    L = sub(v[:3], bfp[ji])
+                    a, st = axis[ji], stretch[ji]
+                    d = L[0]*a[0] + L[1]*a[1] + L[2]*a[2]
+                    for i in range(3):
+                        acc[i] += w * (no[ji][i] + L[i] + (st - 1.0) * d * a[i])
+                    tw += w
+                if tw > 0.0:
+                    for i in range(3):
+                        v[i] = acc[i] / tw
+            for j in joint_ids:
+                bf[str(j)]["o"] = no[j]
+            print(f"canonical morph lam={lam}: " +
+                  " ".join(f"{j}:{s[j]:.2f}" for j in joint_ids))
         # root anchor: ground point under the chest (TopN sits at ground).
         # bind_frames are world-space from the capture run, where the
         # chest sat exactly at the spawn TopN x/z — so this IS the
@@ -3723,7 +3812,8 @@ if __name__ == "__main__":
     elif len(sys.argv) >= 4 and sys.argv[1] == "--binary5":
         write_binary5(sys.argv[2], sys.argv[3])
     elif len(sys.argv) >= 5 and sys.argv[1] == "--binary5-canonical":
-        # --binary5-canonical mario-bundle.json out.osb skels/<t>.profile.json
-        write_binary5(sys.argv[2], sys.argv[3], canonical_profile=sys.argv[4])
+        # --binary5-canonical mario-bundle.json out.osb skels/<t>.profile.json [morph_lambda]
+        write_binary5(sys.argv[2], sys.argv[3], canonical_profile=sys.argv[4],
+                      morph_lambda=float(sys.argv[5]) if len(sys.argv) > 5 else None)
     else:
         main()
