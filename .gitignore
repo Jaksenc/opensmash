@@ -1,3 +1,7 @@
 BattleShip/
 opensmash/
 .DS_Store
+.env
+assets/generated/
+__pycache__/
+*.pyc

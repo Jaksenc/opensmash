@@ -6,16 +6,319 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body { height: 100%; cursor: none; }
+  html, body { min-height: 100%; cursor: none; }
   body {
-    background: #000;
+    background:
+      radial-gradient(circle at 50% -20%, #35130e 0, #130807 38%, #050303 74%),
+      #050303;
+    overflow-x: hidden;
+    color: #e9dfcf;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  }
+  .comparison-shell {
+    position: relative;
+    z-index: 1;
+    width: min(96vw, 1420px);
+    min-height: 100vh;
+    margin: 0 auto;
+    padding: clamp(20px, 4vw, 56px) 0;
+    display: grid;
+    align-content: center;
+    gap: clamp(16px, 2vw, 28px);
+  }
+  .comparison-heading {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 0 2px;
+  }
+  .comparison-heading h1 {
+    font-size: clamp(17px, 2vw, 27px);
+    line-height: 1;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    text-shadow: 0 2px 0 #1b0a07;
+  }
+  .comparison-heading p {
+    max-width: 54ch;
+    color: #9f8c7d;
+    font-size: clamp(10px, 1.05vw, 13px);
+    line-height: 1.5;
+    text-align: right;
+  }
+  .comparison-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(12px, 1.8vw, 26px);
+  }
+  .comparison-panel {
+    min-width: 0;
+    padding: clamp(9px, 1.2vw, 15px);
+    border: 1px solid #3b2922;
+    background: linear-gradient(180deg, rgba(34, 20, 17, .96), rgba(11, 7, 7, .98));
+    box-shadow: 0 18px 50px rgba(0, 0, 0, .38), inset 0 1px rgba(255, 217, 178, .05);
+  }
+  .panel-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    min-height: 25px;
+    color: #c7b5a3;
+    font-size: clamp(9px, .9vw, 12px);
+    letter-spacing: .11em;
+    text-transform: uppercase;
+  }
+  .panel-label span:last-child {
+    color: #796a60;
+    font-size: .85em;
+    letter-spacing: .06em;
+  }
+  .grid-frame {
+    width: 100%;
+    aspect-ratio: 1294 / 1246;
     overflow: hidden;
+    background: #080504;
+    box-shadow: 0 0 0 1px #160d0a, 0 8px 24px rgba(0, 0, 0, .34);
+  }
+  .grid-frame img,
+  .grid-frame > canvas,
+  .replica-grid {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: fill;
+    image-rendering: auto;
+  }
+  .replica-grid {
+    position: relative;
+    isolation: isolate;
+    --capture-phase-x: 0px;
+  }
+  .replica-cell {
+    position: absolute;
+    left: calc(var(--cell-x) * 100% / 96);
+    top: calc(var(--cell-y) * 100% / 92);
+    width: calc(45 * 100% / 96);
+    height: calc(43 * 100% / 92);
+    appearance: none;
+    padding: 0;
+    border: 0;
+    background: #080504;
+    color: inherit;
+    cursor: none;
+    overflow: hidden;
+  }
+  .replica-cell canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    image-rendering: auto;
+  }
+  .replica-cell::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0;
+    box-shadow:
+      inset 0 0 0 clamp(2px, .55vw, 5px) #fff0b5,
+      inset 0 0 clamp(8px, 1.6vw, 18px) rgba(255, 183, 73, .7);
+    transition: opacity 90ms linear;
+    z-index: 3;
+  }
+  .replica-cell:focus-visible::after,
+  .replica-cell.is-highlighted::after,
+  .replica-cell[aria-pressed="true"]::after { opacity: 1; }
+  .replica-cell:focus-visible { outline: none; }
+  .replica-rule-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    image-rendering: auto;
+    transform: translateX(var(--capture-phase-x));
+  }
+  .comparison-footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    color: #826f62;
+    font-size: clamp(9px, .9vw, 12px);
+    line-height: 1.5;
+  }
+  .comparison-footer strong { color: #bfad9a; font-weight: 600; }
+  .font-bench {
+    display: grid;
+    gap: 14px;
+    padding: clamp(12px, 1.5vw, 18px);
+    border: 1px solid #3b2922;
+    background: linear-gradient(180deg, rgba(34, 20, 17, .96), rgba(11, 7, 7, .98));
+    box-shadow: 0 18px 50px rgba(0, 0, 0, .38), inset 0 1px rgba(255, 217, 178, .05);
+  }
+  .font-bench-heading,
+  .font-bench-footer {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 18px;
+  }
+  .font-bench-heading h2 {
+    color: #c7b5a3;
+    font-size: clamp(11px, 1.1vw, 14px);
+    font-weight: 600;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+  }
+  .font-bench-heading p,
+  .font-bench-footer {
+    color: #826f62;
+    font-size: clamp(8px, .8vw, 11px);
+    line-height: 1.45;
+  }
+  .font-bench-score {
+    color: #e8d6a8;
+    font-weight: 700;
+    letter-spacing: .05em;
+  }
+  .font-glyph-grid {
+    display: grid;
+    grid-template-columns: repeat(13, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .glyph-pair {
+    min-width: 0;
+    padding: 6px;
+    border: 1px solid #352720;
+    background: #090605;
+  }
+  .glyph-pair figcaption {
+    display: flex;
+    justify-content: space-between;
+    gap: 4px;
+    margin-bottom: 5px;
+    color: #8f7b6d;
+    font-size: 8px;
+    line-height: 1;
+  }
+  .glyph-pair figcaption strong {
+    color: #c9b7a3;
+    font-size: 9px;
+  }
+  .glyph-pair.is-exact figcaption output { color: #b8c89e; }
+  .glyph-row {
+    display: grid;
+    grid-template-columns: 27px minmax(0, 1fr);
+    align-items: center;
+    gap: 4px;
+  }
+  .glyph-row + .glyph-row { margin-top: 3px; }
+  .glyph-row-label {
+    color: #67584f;
+    font-size: 6px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+  .glyph-stage {
+    display: grid;
+    place-items: center;
+    height: 34px;
+    overflow: hidden;
+    background:
+      linear-gradient(45deg, #100b09 25%, transparent 25%) 0 0 / 8px 8px,
+      linear-gradient(45deg, transparent 75%, #100b09 75%) 0 0 / 8px 8px,
+      #070504;
+  }
+  .glyph-stage canvas {
+    display: block;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+  }
+  .glyph-stage canvas { width: 51px; height: 30px; }
+  @media (max-width: 760px) {
+    .comparison-shell { width: min(94vw, 620px); align-content: start; }
+    .comparison-heading { align-items: start; flex-direction: column; }
+    .comparison-heading p { text-align: left; }
+    .comparison-grid { grid-template-columns: 1fr; }
+    .comparison-footer { flex-direction: column; gap: 4px; }
+    .font-bench-heading,
+    .font-bench-footer { align-items: start; flex-direction: column; gap: 4px; }
+    .font-glyph-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  }
+  @media (min-width: 761px) and (max-width: 1120px) {
+    .font-glyph-grid { grid-template-columns: repeat(9, minmax(0, 1fr)); }
+  }
+  [hidden] { display: none !important; }
+  html, body {
+    width: 100%;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+  .arena-shell {
+    position: relative;
+    z-index: 1;
+    width: 100vw;
+    min-height: 100vh;
+  }
+  .arena-surface {
+    width: 100vw;
+    height: calc(100vw * 1127 / 378);
+    background: #080504;
+    box-shadow: 0 0 0 1px #160d0a, 0 20px 80px rgba(0, 0, 0, .58);
+  }
+  .arena-shell .replica-grid {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #080504;
+  }
+  .arena-shell .replica-cell {
+    left: calc(var(--cell-x) * 100% / 378);
+    top: calc(var(--cell-y) * 100% / 1127);
+    width: calc(45 * 100% / 378);
+    height: calc(43 * 100% / 1127);
   }
   #glove-canvas {
     position: fixed; inset: 0;
     width: 100%; height: 100%;
     pointer-events: none;
     z-index: 1000;
+  }
+  #cartridge-control {
+    position: fixed;
+    left: 50%;
+    bottom: clamp(42px, 7vh, 84px);
+    width: clamp(104px, 12vw, 164px);
+    aspect-ratio: 1;
+    transform: translateX(-50%);
+    appearance: none;
+    padding: 0;
+    border: 0;
+    border-radius: 16px;
+    background: transparent;
+    cursor: none;
+    touch-action: none;
+    z-index: 999;
+  }
+  #cartridge-control:focus-visible {
+    outline: 2px solid rgba(255, 240, 181, .9);
+    outline-offset: 3px;
+  }
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
   }
 </style>
 <script type="importmap">
@@ -26,8 +329,27 @@
 </script>
 </head>
 <body>
+  <main class="arena-shell" aria-label="Two hundred cell character grid">
+    <div class="arena-surface">
+      <div id="replica-grid" class="replica-grid" role="grid" aria-label="Two hundred code-rendered character cells"></div>
+    </div>
+    <span id="replica-metrics" hidden>Building 200-cell grid…</span>
+    <section class="font-bench" hidden aria-labelledby="font-bench-title">
+      <h2 id="font-bench-title">Tile-caption font · A–Z</h2>
+      <div id="font-glyph-grid" class="font-glyph-grid"></div>
+      <footer class="font-bench-footer">
+        <span id="font-bench-detail">Loading…</span>
+        <output id="font-bench-score">Grading…</output>
+      </footer>
+    </section>
+  </main>
+
+  <button id="cartridge-control" type="button" aria-label="Spin the OpenSmash cartridge">
+    <span class="visually-hidden">Spin the OpenSmash cartridge</span>
+  </button>
   <canvas id="glove-canvas"></canvas>
 
+<script type="module" src="./grid-replica.js?v=20260829g"></script>
 <script type="module">
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -92,6 +414,10 @@ postScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), postMat));
 const VIEW_H = 2 * Math.tan(THREE.MathUtils.degToRad(35 / 2)) * 16;
 const GLOVE_PX = 32;   // tuned so the rendered silhouette spans the sprite's 36 rows
 let handUnitH = 0;     // hand height in world units; set once the mesh is built
+const CARTRIDGE_PX = 58;
+const CARTRIDGE_IDLE_SPIN_SPEED = 0.22;
+const CARTRIDGE_FRONT_YAW = Math.PI * 1.5 - 0.28;
+let cartridgeUnitH = 0;
 
 function applyGloveScale(rtTexelH) {
   if (!handUnitH) return;
@@ -99,6 +425,13 @@ function applyGloveScale(rtTexelH) {
   if (location.hash.includes('big')) s *= 4;
   glove.scale.setScalar(s);
   keyLight.intensity = 24 * s * s;   // inverse-square compensation
+}
+
+function applyCartridgeScale(rtTexelH) {
+  if (!cartridgeUnitH) return;
+  const responsivePx = window.innerWidth < 640 ? CARTRIDGE_PX * 0.76 : CARTRIDGE_PX;
+  const s = responsivePx * (VIEW_H / rtTexelH) / cartridgeUnitH;
+  cartridgeVisual.scale.setScalar(s);
 }
 
 function resize() {
@@ -112,6 +445,7 @@ function resize() {
   rt.setSize(w, h);
   postMat.uniforms.res.value.set(w, h);
   applyGloveScale(h);
+  applyCartridgeScale(h);
 }
 window.addEventListener('resize', resize);
 resize();
@@ -283,6 +617,142 @@ keyLight.position.set(-1.6, -0.4, 2.6);
 glove.add(keyLight);
 scene.add(glove);
 
+// ---------------------------------------------------------------------------
+// Original retro cartridge: loaded as a real GLB and kept in this same scene,
+// so it receives the glove's low-res, posterized, dithered-outline pass.
+// ---------------------------------------------------------------------------
+const cartridgeControl = document.getElementById('cartridge-control');
+const cartridgeRig = new THREE.Group();
+const cartridgeVisual = new THREE.Group();
+const cartridgeLight = new THREE.DirectionalLight(0xfff0d4, 2.65);
+cartridgeLight.position.set(-0.45, 3.2, 1.35);
+cartridgeLight.target.position.set(0, 0, 0);
+const cartridgeFillLight = new THREE.DirectionalLight(0xa5b9e6, 0.48);
+cartridgeFillLight.position.set(1.35, -0.15, 1.6);
+cartridgeFillLight.target = cartridgeLight.target;
+cartridgeRig.add(
+  cartridgeVisual, cartridgeLight, cartridgeFillLight, cartridgeLight.target
+);
+scene.add(cartridgeRig);
+
+const cartridgeMaterial = new THREE.MeshStandardMaterial({
+  color: 0xb8b5ba,
+  emissive: 0x121116,
+  emissiveIntensity: 0.16,
+  roughness: 0.84,
+  metalness: 0,
+});
+
+let cartridgeModel = null;
+let cartridgeHovered = false;
+let cartridgePressed = false;
+let cartridgeHoverAmount = 0;
+let cartridgePressAmount = 0;
+let cartridgeDragging = false;
+let cartridgeDragPointerId = null;
+let cartridgeDragDistance = 0;
+let cartridgeSuppressClick = false;
+let cartridgeLastPointerTime = 0;
+let cartridgePhysicsReady = false;
+let cartridgeYaw = CARTRIDGE_FRONT_YAW;
+let cartridgeYawVelocity = CARTRIDGE_IDLE_SPIN_SPEED;
+let cartridgeClickSpin = 0;
+let cartridgeClickSpinVelocity = 0;
+let cartridgeClickSpinTarget = 0;
+const cartridgePhysicsPosition = new THREE.Vector3();
+const cartridgeVelocity = new THREE.Vector3();
+const cartridgeDragTarget = new THREE.Vector3();
+const cartridgeDragOffset = new THREE.Vector3();
+const cartridgePointerWorld = new THREE.Vector3();
+const cartridgePreviousPointerWorld = new THREE.Vector3();
+const cartridgePointerVelocity = new THREE.Vector3();
+const cartridgeTilt = { x: 0, z: 0, vx: 0, vz: 0 };
+
+cartridgeControl.addEventListener('pointerenter', () => { cartridgeHovered = true; });
+cartridgeControl.addEventListener('pointerleave', () => {
+  cartridgeHovered = false;
+  if (!cartridgeDragging) cartridgePressed = false;
+});
+
+function updateCartridgeDrag(e, trackVelocity = true) {
+  screenToCartridgeWorld(e.clientX, e.clientY, cartridgePointerWorld);
+  const now = e.timeStamp || performance.now();
+  if (trackVelocity && cartridgeLastPointerTime) {
+    const sampleDt = Math.max((now - cartridgeLastPointerTime) / 1000, 1 / 240);
+    const blend = Math.min(1, sampleDt * 18);
+    cartridgePointerVelocity.lerp(
+      cartridgePointerWorld.clone().sub(cartridgePreviousPointerWorld).divideScalar(sampleDt),
+      blend
+    );
+  }
+  cartridgePreviousPointerWorld.copy(cartridgePointerWorld);
+  cartridgeLastPointerTime = now;
+  cartridgeDragTarget.copy(cartridgePointerWorld).add(cartridgeDragOffset);
+}
+
+function finishCartridgeDrag(e, cancelled = false) {
+  if (!cartridgeDragging || e.pointerId !== cartridgeDragPointerId) return;
+  if (!cancelled) updateCartridgeDrag(e);
+  cartridgeDragging = false;
+  cartridgePressed = false;
+  cartridgeSuppressClick = cartridgeDragDistance > 6;
+  if (!cancelled) cartridgeVelocity.addScaledVector(cartridgePointerVelocity, 0.24);
+  if (cartridgeControl.hasPointerCapture(e.pointerId)) {
+    cartridgeControl.releasePointerCapture(e.pointerId);
+  }
+  cartridgeDragPointerId = null;
+}
+
+cartridgeControl.addEventListener('pointerdown', e => {
+  cartridgePressed = true;
+  cartridgeDragging = true;
+  cartridgeDragPointerId = e.pointerId;
+  cartridgeDragDistance = 0;
+  cartridgeSuppressClick = false;
+  cartridgeLastPointerTime = 0;
+  cartridgePointerVelocity.set(0, 0, 0);
+  screenToCartridgeWorld(e.clientX, e.clientY, cartridgePointerWorld);
+  cartridgeDragOffset.copy(cartridgePhysicsPosition).sub(cartridgePointerWorld);
+  cartridgeDragTarget.copy(cartridgePhysicsPosition);
+  cartridgePreviousPointerWorld.copy(cartridgePointerWorld);
+  cartridgeControl.setPointerCapture(e.pointerId);
+  // Dragging keeps the normal pointing cursor. The global pointerdown state
+  // below supplies the original backward tap tilt without closing the hand.
+  e.preventDefault();
+});
+cartridgeControl.addEventListener('pointermove', e => {
+  if (!cartridgeDragging || e.pointerId !== cartridgeDragPointerId) return;
+  cartridgeDragDistance += Math.hypot(e.movementX || 0, e.movementY || 0);
+  updateCartridgeDrag(e);
+});
+cartridgeControl.addEventListener('pointerup', e => finishCartridgeDrag(e));
+cartridgeControl.addEventListener('pointercancel', e => finishCartridgeDrag(e, true));
+window.addEventListener('pointerup', () => { cartridgePressed = false; });
+cartridgeControl.addEventListener('click', e => {
+  if (cartridgeSuppressClick) {
+    cartridgeSuppressClick = false;
+    e.preventDefault();
+    return;
+  }
+  cartridgeClickSpinTarget += Math.PI * 2;
+});
+
+new GLTFLoader().load('assets/n64-cartridge-tripo.glb', (gltf) => {
+  cartridgeModel = gltf.scene;
+  const bounds = new THREE.Box3().setFromObject(cartridgeModel);
+  const center = bounds.getCenter(new THREE.Vector3());
+  const size = bounds.getSize(new THREE.Vector3());
+  cartridgeModel.position.sub(center);
+  cartridgeModel.traverse(o => {
+    if (!o.isMesh) return;
+    o.frustumCulled = false;
+    o.material = cartridgeMaterial;
+  });
+  cartridgeVisual.add(cartridgeModel);
+  cartridgeUnitH = size.y;
+  resize();
+}, undefined, error => console.error('Could not load cartridge GLB', error));
+
 let mesh = null;   // set when the GLB loads
 
 // ---------------------------------------------------------------------------
@@ -431,6 +901,22 @@ const ndc = new THREE.Vector2();
 const rayPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
 const raycaster = new THREE.Raycaster();
 const worldPt = new THREE.Vector3();
+const cartridgeTarget = new THREE.Vector3();
+
+function screenToCartridgeWorld(clientX, clientY, target) {
+  return target.set(
+    ((clientX / window.innerWidth) * 2 - 1) * VIEW_H * camera.aspect * 0.5,
+    (1 - (clientY / window.innerHeight) * 2) * VIEW_H * 0.5,
+    -0.65
+  );
+}
+
+function updateCartridgeTarget() {
+  const rect = cartridgeControl.getBoundingClientRect();
+  const cx = rect.left + rect.width * 0.5;
+  const cy = rect.top + rect.height * 0.5;
+  screenToCartridgeWorld(cx, cy, cartridgeTarget);
+}
 
 function updateTargetFromEvent(e) {
   ndc.set((e.clientX / window.innerWidth) * 2 - 1, -(e.clientY / window.innerHeight) * 2 + 1);
@@ -512,12 +998,91 @@ function tick() {
   const dt = Math.min(clock.getDelta(), 1 / 30);
   const t = clock.elapsedTime;
 
+  // --- cartridge drag body: pointer-follow spring, return spring, air drag ---
+  updateCartridgeTarget();
+  const cartridgeSpringTarget = cartridgeDragging ? cartridgeDragTarget : cartridgeTarget;
+  if (!cartridgePhysicsReady) {
+    cartridgePhysicsPosition.copy(cartridgeSpringTarget);
+    cartridgeRig.position.copy(cartridgePhysicsPosition);
+    cartridgePhysicsReady = true;
+  }
+  const cartridgeSpeed = cartridgeVelocity.length();
+  const cartridgeK = cartridgeDragging ? 105 : 54;
+  const cartridgeLinearDrag = cartridgeDragging ? 15 : 6.5;
+  const cartridgeAirDrag = cartridgeLinearDrag + cartridgeSpeed * 0.30;
+  cartridgeVelocity.x += (
+    (cartridgeSpringTarget.x - cartridgePhysicsPosition.x) * cartridgeK
+    - cartridgeVelocity.x * cartridgeAirDrag
+  ) * dt;
+  cartridgeVelocity.y += (
+    (cartridgeSpringTarget.y - cartridgePhysicsPosition.y) * cartridgeK
+    - cartridgeVelocity.y * cartridgeAirDrag
+  ) * dt;
+  cartridgeVelocity.z += (
+    (cartridgeSpringTarget.z - cartridgePhysicsPosition.z) * cartridgeK
+    - cartridgeVelocity.z * cartridgeAirDrag
+  ) * dt;
+  cartridgePhysicsPosition.addScaledVector(cartridgeVelocity, dt);
+  cartridgeRig.position.copy(cartridgePhysicsPosition);
+
+  const cartridgeHovering = cartridgeHovered || cartridgeDragging;
+  cartridgeHoverAmount += ((cartridgeHovering ? 1 : 0) - cartridgeHoverAmount) * Math.min(1, dt * 9);
+  cartridgePressAmount += ((cartridgePressed ? 1 : 0) - cartridgePressAmount) * Math.min(1, dt * 14);
+
+  // Hovering or grabbing rotates the nearest way to the authored front face.
+  if (cartridgeHovering) {
+    const yawError = Math.atan2(
+      Math.sin(CARTRIDGE_FRONT_YAW - cartridgeYaw),
+      Math.cos(CARTRIDGE_FRONT_YAW - cartridgeYaw)
+    );
+    cartridgeYawVelocity += (yawError * 46 - cartridgeYawVelocity * 9.2) * dt;
+  } else {
+    cartridgeYawVelocity += (
+      CARTRIDGE_IDLE_SPIN_SPEED - cartridgeYawVelocity
+    ) * Math.min(1, dt * 2.8);
+  }
+  cartridgeYaw += cartridgeYawVelocity * dt;
+  if (Math.abs(cartridgeYaw) > Math.PI * 200) {
+    cartridgeYaw = CARTRIDGE_FRONT_YAW + Math.atan2(
+      Math.sin(cartridgeYaw - CARTRIDGE_FRONT_YAW),
+      Math.cos(cartridgeYaw - CARTRIDGE_FRONT_YAW)
+    );
+  }
+
+  // A click still performs one complete turn, independently of idle/hover.
+  cartridgeClickSpinVelocity += (
+    (cartridgeClickSpinTarget - cartridgeClickSpin) * 58
+    - cartridgeClickSpinVelocity * 10.5
+  ) * dt;
+  cartridgeClickSpin += cartridgeClickSpinVelocity * dt;
+
+  // Velocity leans the shell into the movement, with its own soft springs.
+  const tiltTargetX = THREE.MathUtils.clamp(cartridgeVelocity.y * 0.085, -0.2, 0.2);
+  const tiltTargetZ = THREE.MathUtils.clamp(-cartridgeVelocity.x * 0.11, -0.34, 0.34);
+  cartridgeTilt.vx += ((tiltTargetX - cartridgeTilt.x) * 62 - cartridgeTilt.vx * 8.2) * dt;
+  cartridgeTilt.vz += ((tiltTargetZ - cartridgeTilt.z) * 62 - cartridgeTilt.vz * 8.2) * dt;
+  cartridgeTilt.x += cartridgeTilt.vx * dt;
+  cartridgeTilt.z += cartridgeTilt.vz * dt;
+
+  cartridgeVisual.position.set(
+    0,
+    Math.sin(t * 1.7) * 0.055 + cartridgeHoverAmount * 0.09 - cartridgePressAmount * 0.045,
+    cartridgeHoverAmount * 0.12 - cartridgePressAmount * 0.08
+  );
+  cartridgeVisual.rotation.set(
+    -0.20 + cartridgeTilt.x - cartridgePressAmount * 0.12
+      + Math.sin(t * 1.1) * 0.025,
+    cartridgeYaw + cartridgeClickSpin,
+    0.08 + cartridgeTilt.z + Math.sin(t * 1.35) * 0.025
+  );
+
   // --- position spring ---
   const K = 320, D = 24;
   vel.x += ((mouse.x - pos.x) * K - vel.x * D) * dt;
   vel.y += ((mouse.y - pos.y) * K - vel.y * D) * dt;
   pos.x += vel.x * dt; pos.y += vel.y * dt;
   glove.position.copy(pos);
+  glove.position.z = 0.55;  // cursor always passes above the cartridge in depth
 
   accelSmooth.x += ((vel.x - prevVel.x) / Math.max(dt, 1e-4) - accelSmooth.x) * Math.min(1, dt * 12);
   accelSmooth.y += ((vel.y - prevVel.y) / Math.max(dt, 1e-4) - accelSmooth.y) * Math.min(1, dt * 12);

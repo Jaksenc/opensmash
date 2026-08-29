@@ -38,62 +38,75 @@ def extract(data, off, name, outdir):
     bitmap_off = ptr(off + 0x34)
     palette_off = ptr(off + 0x20) if bmfmt == 2 else None
     img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    draw_x = 0
+    draw_y = 0
     for i in range(nbitmaps):
         bo = bitmap_off + i * 16
         bw, bw_img, s, t = struct.unpack_from(">4h", data, bo)
         actual_h, lut_off = struct.unpack_from(">2h", data, bo + 12)
         buf = ptr(bo + 8)
         strip_h = actual_h if actual_h > 0 else bmHreal
+        # libultra's sprite renderer lays Bitmap entries left-to-right, then
+        # wraps them onto the next bmheight row. `s` and `t` are texture
+        # offsets inside each bitmap, not destination coordinates. Portraits
+        # are three full-width strips (21, 21, and 3 stored rows) placed at
+        # y=0, 20, and 40; the extra row is their shared sampling fringe.
+        if draw_x + bw > w:
+            draw_x = 0
+            draw_y += bmheight
         for row in range(strip_h):
             for col in range(bw):
+                source_row = t + row
+                source_col = s + col
                 if bmfmt == 2 and bmsiz == 0:      # CI4
-                    a = deswizzle_addr(row * (bw_img // 2) + col // 2, row, 4)
+                    a = deswizzle_addr(source_row * (bw_img // 2) + source_col // 2, source_row, 4)
                     byte = data[buf + a]
-                    idx = (byte >> 4) if col % 2 == 0 else (byte & 0xF)
+                    idx = (byte >> 4) if source_col % 2 == 0 else (byte & 0xF)
                     rgba = rgba5551(struct.unpack_from(">H", data, palette_off + (lut_off + idx) * 2)[0])
                 elif bmfmt == 2 and bmsiz == 1:    # CI8
-                    a = deswizzle_addr(row * bw_img + col, row, 8)
+                    a = deswizzle_addr(source_row * bw_img + source_col, source_row, 8)
                     idx = data[buf + a]
                     rgba = rgba5551(struct.unpack_from(">H", data, palette_off + (lut_off + idx) * 2)[0])
                 elif bmfmt == 0 and bmsiz == 2:    # RGBA16
-                    a = deswizzle_addr((row * bw_img + col) * 2, row, 16)
+                    a = deswizzle_addr((source_row * bw_img + source_col) * 2, source_row, 16)
                     rgba = rgba5551(struct.unpack_from(">H", data, buf + a)[0])
                 elif bmfmt == 0 and bmsiz == 3:    # RGBA32
-                    a = (row * bw_img + col) * 4
-                    if row % 2 == 1: a ^= 8
+                    a = (source_row * bw_img + source_col) * 4
+                    if source_row % 2 == 1: a ^= 8
                     rgba = tuple(data[buf + a:buf + a + 4])
                 elif bmfmt == 3 and bmsiz == 1:    # IA8
-                    a = deswizzle_addr(row * bw_img + col, row, 8)
+                    a = deswizzle_addr(source_row * bw_img + source_col, source_row, 8)
                     v = data[buf + a]
                     rgba = ((v >> 4) * 17,) * 3 + ((v & 0xF) * 17,)
                 elif bmfmt == 3 and bmsiz == 2:    # IA16
-                    a = deswizzle_addr((row * bw_img + col) * 2, row, 16)
+                    a = deswizzle_addr((source_row * bw_img + source_col) * 2, source_row, 16)
                     v = struct.unpack_from(">H", data, buf + a)[0]
                     rgba = (v >> 8,) * 3 + (v & 0xFF,)
                 elif bmfmt == 3 and bmsiz == 0:    # IA4 (3 bits intensity + 1 alpha)
-                    a = deswizzle_addr(row * (bw_img // 2) + col // 2, row, 4)
+                    a = deswizzle_addr(source_row * (bw_img // 2) + source_col // 2, source_row, 4)
                     byte = data[buf + a]
-                    v4 = (byte >> 4) if col % 2 == 0 else (byte & 0xF)
+                    v4 = (byte >> 4) if source_col % 2 == 0 else (byte & 0xF)
                     inten = ((v4 >> 1) & 0x7) * 36
                     rgba = (inten, inten, inten, 255 if (v4 & 1) else 0)
                 elif bmfmt == 4 and bmsiz == 4:    # I2 (4 pixels/byte, odd-row XOR2)
-                    a = row * (bw_img // 4) + col // 4
-                    if row % 2 == 1: a ^= 2
+                    a = source_row * (bw_img // 4) + source_col // 4
+                    if source_row % 2 == 1: a ^= 2
                     byte = data[buf + a]
-                    shift = (3 - (col % 4)) * 2
+                    shift = (3 - (source_col % 4)) * 2
                     v = ((byte >> shift) & 0x3) * 85
                     rgba = (v, v, v, v)
                 elif bmfmt == 4 and bmsiz == 0:    # I4
-                    a = deswizzle_addr(row * (bw_img // 2) + col // 2, row, 4)
+                    a = deswizzle_addr(source_row * (bw_img // 2) + source_col // 2, source_row, 4)
                     byte = data[buf + a]
-                    v = ((byte >> 4) if col % 2 == 0 else (byte & 0xF)) * 17
+                    v = ((byte >> 4) if source_col % 2 == 0 else (byte & 0xF)) * 17
                     rgba = (v, v, v, v)
                 else:
                     print(f"  !! {name}: unhandled fmt {bmfmt}/{bmsiz}")
                     return
-                px, py = s + col, t + row
+                px, py = draw_x + col, draw_y + row
                 if 0 <= px < w and 0 <= py < h:
                     img.putpixel((px, py), rgba)
+        draw_x += bw
     out = os.path.join(outdir, f"{name}.png")
     img.save(out)
     print(f"  {name}: {w}x{h} fmt={bmfmt}/{bmsiz} -> {out}")
