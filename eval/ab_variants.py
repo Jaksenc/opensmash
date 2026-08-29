@@ -36,6 +36,9 @@ CHARS = {
     "moritz": ("Moritz Baier-Lentz", os.path.join(PIPE, "play", "ui", "moritzbaierlentz", "rigged.glb")),
     "rohan":  ("Rohan Sahai",        os.path.join(PIPE, "play", "ui", "rohansahai", "rigged.glb")),
 }
+# captain excluded from pair evals until make_replay gets speed-tuned run
+# segments: Falcon outruns the fixed pose-capture camera from tour tick
+# ~605, leaving both variants' clips empty (2026-08-29)
 TARGETS = {"mario": 0, "samus": 3, "luigi": 4, "link": 5}
 
 ROOT = BUILD = CELLS = None   # set in main() from --name
@@ -106,7 +109,10 @@ def capture_cell(char, target, variant, worker=0, attempts=3):
     fk = TARGETS[target]
     env = dict(os.environ,
                EVAL_BUILD=make_build_clone(worker),
-               EVAL_WINX=str(60 + 420 * worker))
+               # tile two rows of 5 — a single row runs off-screen past 5
+               # workers and macOS throttles occluded/off-screen windows
+               EVAL_WINX=str(60 + 420 * (worker % 5)),
+               EVAL_WINY=str(60 + 360 * (worker // 5)))
     for att in range(attempts):
         r = subprocess.run(["python3", os.path.join(HERE, "capture_clip.py"), osb, cell,
                             "--fkind", str(fk), "--pose",
@@ -146,7 +152,7 @@ def main():
     ap.add_argument("--a", required=True, help="variant A as label=flags (flags may be empty)")
     ap.add_argument("--b", required=True, help="variant B as label=flags")
     ap.add_argument("--seed", type=int, default=20260827)
-    ap.add_argument("--workers", type=int, default=5,
+    ap.add_argument("--workers", type=int, default=10,
                     help="parallel game instances for the capture stage")
     a = ap.parse_args()
     for spec in (a.a, a.b):
@@ -172,7 +178,9 @@ def main():
         if os.path.exists(os.path.join(vdir, "clip.mp4")):
             log(f"[vanilla-fk{fk}] exists")
             return
-        env = dict(os.environ, EVAL_BUILD=make_build_clone(i), EVAL_WINX=str(60 + 420 * i))
+        env = dict(os.environ, EVAL_BUILD=make_build_clone(i),
+                   EVAL_WINX=str(60 + 420 * (i % 5)),
+                   EVAL_WINY=str(60 + 360 * (i // 5)))
         for att in range(2):
             r = subprocess.run(["python3", os.path.join(HERE, "capture_clip.py"), "vanilla", vdir,
                                 "--fkind", str(fk), "--pose",

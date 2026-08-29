@@ -59,6 +59,7 @@ def main():
         "SSB64_SCREENSHOT_DIR": shots,
         "SSB64_MAX_FRAMES": str(stop + 20),
         "SSB64_SCREENSHOT_RAW": "1",   # raw BGRA dumps; encoded below with ffmpeg
+        "SSB64_MUTE": "1",             # eval boots run silent (10 parallel games)
     })
     if args.pose:
         env["SSB64_POSE_CAPTURE"] = "1"

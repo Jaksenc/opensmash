@@ -15,7 +15,15 @@ A defect present on the bottom row but not the top entered during
 conversion; present on both, it came from meshification or the source.
 
 Usage: texture_check.py play/ui/<slug> [out.png] [--size PX]
-Needs tpose.png, rigged.glb, and bundle.json in the character dir.
+                        [--target mario|samus|luigi|link|...]
+Needs tpose.png, rigged.glb, and the target bundle in the character
+dir (bundle.json for mario, bundle-<target>.json for a retarget).
+
+Retarget caveat: every posed row is the SYNTHESIZED T-pose, which
+straightens the target skeleton out of its bind pose. The further that
+bind pose sits from a T (Samus's arms fold across the chest), the more
+the rows exaggerate thinly-owned bones — check a tear against the
+in-game clip captures before calling it a conversion defect.
 """
 import argparse
 import glob
@@ -34,20 +42,50 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 VIEWS = [("front", -90, 0), ("rear", 90, 0), ("top", -90, 90)]
 
 
-def mario_ghost(yaw, pitch, size):
-    """Proportions ghost of vanilla Mario in the same synthesized T-pose.
-    The vanilla part dump is too sparse to mesh directly (hulls read as
-    disconnected blobs), so each part renders as a smooth ellipsoid: axis
-    along the bone, radius measured from the dump. Flat Mario-ish colors
-    so the row reads at a glance; it is a proportions reference, not a
-    faithful vanilla render."""
+def target_paths(chardir, slug, target):
+    """(bundle, osb, fkind) for a retarget. Mario is the default staging
+    (bundle.json / <slug>.osb); every other skeleton is staged beside it
+    as bundle-<target>.json / <slug>-<target>.osb."""
+    if target == "mario":
+        return (os.path.join(chardir, "bundle.json"),
+                os.path.join(HERE, "play", f"{slug}.osb"), 0)
+    prof = os.path.join(HERE, "skels", f"{target}.profile.json")
+    if not os.path.exists(prof):
+        sys.exit(f"unknown target {target!r}: no {prof}")
+    return (os.path.join(chardir, f"bundle-{target}.json"),
+            os.path.join(HERE, "play", f"{slug}-{target}.osb"),
+            int(json.load(open(prof))["fkind"]))
+
+
+def vanilla_ghost(yaw, pitch, size, target="mario"):
+    """Proportions ghost of the vanilla conform TARGET in the same
+    synthesized T-pose. The vanilla part dump is too sparse to mesh
+    directly (hulls read as disconnected blobs), so each part renders as
+    a smooth ellipsoid: axis along the bone, radius measured from the
+    dump. Flat colors so the row reads at a glance; it is a proportions
+    reference, not a faithful vanilla render."""
     import numpy as np
     from preview_bundle import load_skeleton
 
+    # the canonical part dumps are keyed in Mario's joint numbering, so
+    # the blob layout below is target-independent; only the origins move
+    # (pulled from the target skeleton through the profile's joint map).
+    if target == "mario":
+        parts_path = os.path.join(HERE, "vanilla-mario-parts.json")
+        skel_path = os.path.join(HERE, "mario.skel")
+        jmap = None
+    else:
+        parts_path = os.path.join(HERE, f"vanilla-{target}-parts.canonical.json")
+        skel_path = os.path.join(HERE, "skels", f"{target}.skel")
+        jmap = {int(k): int(v) for k, v in json.load(open(os.path.join(
+            HERE, "skels", f"{target}.profile.json")))["map"].items()}
     parts = {int(k): np.array(v, float) for k, v in
-             json.load(open(os.path.join(HERE, "vanilla-mario-parts.json"))).items()}
-    skel = load_skeleton(os.path.join(HERE, "mario.skel"))
+             json.load(open(parts_path)).items()}
+    skel = load_skeleton(skel_path)
     O = {j: np.array(o, float) for j, (o, _) in skel.items()}
+    if jmap:
+        O = {cj: np.array(skel[tj][0], float)
+             for cj, tj in jmap.items() if tj in skel}
 
     def frame_from_x(t, up_hint):
         # orthonormal row basis (row-vector convention) with local +x -> t
@@ -79,6 +117,11 @@ def mario_ghost(yaw, pitch, size):
     BLUE = (60, 92, 200)
     WHITE = (245, 245, 245)
     BROWN = (120, 68, 40)
+    if target != "mario":
+        # proportions only — neutral tones so nobody reads the ghost as a
+        # color reference for a fighter that isn't Mario
+        RED, BLUE = (152, 152, 160), (108, 108, 120)
+        WHITE, BROWN = (216, 216, 222), (88, 88, 96)
 
     # (center, row-frame, semi-axes xyz in that frame, color)
     blobs = []
@@ -192,16 +235,18 @@ def crop_fighter(im, pad=30):
                     min(xs.max()+pad, im.width), min(ys.max()+pad, im.height)))
 
 
-def vanilla_idle_capture():
-    """Newest cached vanilla Mario pose-capture idle frame, cropped."""
-    cells = sorted(glob.glob(os.path.join(HERE, "eval/cells/pose-vanilla-fk0-*/frame_800.png")),
+def vanilla_idle_capture(fkind=0):
+    """Newest cached vanilla pose-capture idle frame for this fighter
+    kind, cropped."""
+    cells = sorted(glob.glob(os.path.join(
+        HERE, f"eval/cells/pose-vanilla-fk{fkind}-*/frame_800.png")),
                    key=os.path.getmtime)
     if not cells:
         return None
     return crop_fighter(Image.open(cells[-1]).convert("RGB"))
 
 
-def engine_tpose(bundle_json, osb, tmp):
+def engine_tpose(bundle_json, osb, tmp, fkind=0, target="mario"):
     """True in-engine renders of the converted character frozen in the
     SAME synthesized T-pose (SSB64_POSE_OVERRIDE hook): real engine
     lighting, RGBA16 quantization, filtering. The camera is pinned on the
@@ -238,7 +283,8 @@ def engine_tpose(bundle_json, osb, tmp):
                                 "--tpose", "--unlit", "--size", "120",
                                 "--dump-frames", skel, "--dump-yaw", str(spin),
                                 "--dump-pitch", str(tip),
-                                "--dump-at", f"{CX},{CZ}"],
+                                "--dump-at", f"{CX},{CZ}",
+                                "--target", target],
                                check=True, cwd=HERE, capture_output=True)
                 fc.write(f"POSEAT frame={frame - 20}\n")
                 fc.write(open(skel).read())
@@ -248,10 +294,16 @@ def engine_tpose(bundle_json, osb, tmp):
         env = dict(os.environ)
         env["SSB64_POSE_OVERRIDE"] = combined
         env["SSB64_CAM_PLAN"] = ";".join(plan)
-        subprocess.run([sys.executable, os.path.join(HERE, "run_eval.py"),
-                        shots, "--bundle", osb, "--fkind", "0",
-                        "--frames-list", ",".join(str(v[3]) for v in views),
-                        "--pose", "--width", "1280"],
+        cmd = [sys.executable, os.path.join(HERE, "run_eval.py"),
+               shots, "--bundle", osb, "--fkind", str(fkind),
+               "--frames-list", ",".join(str(v[3]) for v in views),
+               "--pose", "--width", "1280"]
+        # fighter kinds are baked into the replay (capture_clip.py
+        # convention) — a mario tour on another fkind never boots
+        rpl = os.path.join(HERE, f"eval-tour-fk{fkind}.rpl")
+        if fkind and os.path.exists(rpl):
+            cmd += ["--replay", rpl]
+        subprocess.run(cmd,
                        check=True, cwd=HERE, env=env, capture_output=True)
         for view, _, _, frame, _, _ in views:
             out[view] = crop_fighter(
@@ -274,6 +326,9 @@ def main():
     ap.add_argument("chardir", help="character dir (play/ui/<slug>)")
     ap.add_argument("out", nargs="?", default=None)
     ap.add_argument("--size", type=int, default=700, help="panel height px")
+    ap.add_argument("--target", default="mario",
+                    help="conform target skeleton to check "
+                         "(mario/samus/luigi/link/... — any skels/*.profile.json)")
     ap.add_argument("--no-engine", action="store_true",
                     help="skip the true in-engine same-pose renders "
                          "(they boot the game twice, ~1 min)")
@@ -281,10 +336,12 @@ def main():
 
     d = args.chardir.rstrip("/")
     slug = os.path.basename(d)
-    out_path = args.out or os.path.join(d, "texture_check.png")
+    target = args.target
+    suffix = "" if target == "mario" else f"-{target}"
+    out_path = args.out or os.path.join(d, f"texture_check{suffix}.png")
     tpose = os.path.join(d, "tpose.png")
     glb = os.path.join(d, "rigged.glb")
-    bundle = os.path.join(d, "bundle.json")
+    bundle, osb, fkind = target_paths(d, slug, target)
     for p in (tpose, glb, bundle):
         if not os.path.exists(p):
             sys.exit(f"missing {p}")
@@ -297,8 +354,12 @@ def main():
         cells[("glb", name)] = p
         p = os.path.join(tmp, f"game-{name}.png")
         run("preview_bundle.py", bundle, p, yaw, pitch, unlit=True,
-            extra=("--tpose",))
+            extra=("--tpose", "--target", target))
         cells[("game", name)] = p
+        p = os.path.join(tmp, f"heat-{name}.png")
+        run("preview_bundle.py", bundle, p, yaw, pitch, unlit=False,
+            extra=("--tpose", "--target", target, "--heat"))
+        cells[("heat", name)] = p
     shaded = os.path.join(tmp, "glb-shaded.png")
     run("render_textured.py", glb, shaded, -90, 0, unlit=False)
 
@@ -307,6 +368,15 @@ def main():
         im = Image.open(path).convert("RGB")
         return im.resize((int(im.width * H / im.height), H), Image.LANCZOS)
 
+    # ownership-hardness heat at the true bind pose (reference column):
+    # what the engine binds against, no synthesized-pose exaggeration
+    heat_bind = os.path.join(tmp, "heat-bind.png")
+    skel = os.path.join(HERE, "mario.skel") if target == "mario" else \
+        os.path.join(HERE, "skels", f"{target}.skel")
+    subprocess.run([sys.executable, os.path.join(HERE, "preview_bundle.py"),
+                    bundle, skel, heat_bind, "--heat", "--yaw", "-90"],
+                   check=True, cwd=HERE, capture_output=True)
+
     grid = [
         [(fit(tpose), "source image (gpt-image-2)")]
         + [(fit(cells[("glb", n)]), f"meshified GLB, unlit - {n}")
@@ -314,15 +384,17 @@ def main():
         [(fit(shaded), "meshified GLB, flat-shaded")]
         + [(fit(cells[("game", n)]), f"in-game texture (OSB5), unlit - {n}")
            for n, _, _ in VIEWS],
+        [(fit(heat_bind), "ownership heat @ bind (blue=solid, red=50/50)")]
+        + [(fit(cells[("heat", n)]), f"ownership heat, T-pose - {n}")
+           for n, _, _ in VIEWS],
     ]
     def fit_im(im):
         return im.resize((int(im.width * H / im.height), H), Image.LANCZOS)
 
     # row 3: the ENGINE drawing the shipped .osb frozen in the same pose —
     # closes the presentation gap (real lighting, RGBA16, filtering)
-    osb = os.path.join(HERE, "play", f"{slug}.osb")
     if not args.no_engine and os.path.exists(osb):
-        eng = engine_tpose(bundle, osb, tmp)
+        eng = engine_tpose(bundle, osb, tmp, fkind, target)
         if eng:
             blank = Image.new("RGB", (H // 2, H), (255, 255, 255))
             row = [(blank, "")]
@@ -336,12 +408,13 @@ def main():
     elif not args.no_engine:
         print(f"no {osb} — skipping engine renders")
 
-    # vanilla Mario row — the conform target's true proportions
-    idle = vanilla_idle_capture()
-    ref = (fit_im(idle), "vanilla Mario, in-engine idle") if idle else \
-          (Image.new("RGB", (H, H), (255, 255, 255)), "no vanilla capture cached")
-    grid.append([ref] + [(fit_im(mario_ghost(yaw, pitch, 900)),
-                          f"vanilla Mario proportions - {n}")
+    # vanilla row — the conform target's true proportions
+    idle = vanilla_idle_capture(fkind)
+    ref = (fit_im(idle), f"vanilla {target}, in-engine idle") if idle else \
+          (Image.new("RGB", (H, H), (255, 255, 255)),
+           f"no vanilla fk{fkind} capture cached")
+    grid.append([ref] + [(fit_im(vanilla_ghost(yaw, pitch, 900, target)),
+                          f"vanilla {target} proportions - {n}")
                          for n, yaw, pitch in VIEWS])
 
     PAD, LBL = 30, 42
@@ -364,7 +437,8 @@ def main():
     rx = PAD + col_w[0] + PAD
     dr.line([(rx + PAD // 2, PAD), (rx + PAD // 2, out.height - PAD)],
             fill=(70, 70, 85), width=3)
-    dr.text((PAD, out.height - PAD + 6), slug, fill=(120, 120, 130))
+    dr.text((PAD, out.height - PAD + 6), f"{slug} -> {target}",
+            fill=(120, 120, 130))
     out.save(out_path)
     print(f"texture check -> {out_path}")
 
