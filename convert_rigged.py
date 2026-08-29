@@ -402,6 +402,13 @@ def main():
         TARGET_SWAP_SIDES = bool(_prof.get("swap_sides", False))
         TARGET_CONFORM = _prof.get("conform")
         TARGET_TUNE = _prof.get("tune", {})
+        if "--base-recipe" in sys.argv:
+            # A/B baseline: pre-2026-08-28 recipe — no profile tunes
+            # (rigid_arms/arm_anchor/head_recenter/widen_*), no provider
+            # claim, flat part claim
+            TARGET_TUNE = {k: v for k, v in TARGET_TUNE.items()
+                           if k in ("postsmooth_iters", "rigid_legs", "perp_boost")}
+            print("base recipe: session tunes and claims disabled")
         argv = argv[:ti] + argv[ti + 2:]
         print(f"target skeleton: {_prof.get('name', '?')} "
               f"({len(TARGET_MAP)} canonical parts mapped)")
@@ -411,7 +418,7 @@ def main():
         argv = argv[:pi] + argv[pi + 2:]
     else:
         project_source_path = None
-    args = [a for a in argv if a not in ("--autoskin", "--reskin", "--mild-color", "--redchest", "--bluelegs", "--brownhair", "--capfix", "--vanillaflat", "--flatten", "--debleed", "--no-profile", "--no-smooth-disp", "--smooth-disp", "--no-smooth-weights", "--no-postsmooth", "--adjguard", "--flip-facing", "--sharpen", "--rigid", "--no-symlimbs", "--no-symweights", "--guidedflat", "--binflat")]
+    args = [a for a in argv if a not in ("--autoskin", "--reskin", "--mild-color", "--redchest", "--bluelegs", "--brownhair", "--capfix", "--vanillaflat", "--flatten", "--debleed", "--no-profile", "--no-smooth-disp", "--smooth-disp", "--no-smooth-weights", "--no-postsmooth", "--adjguard", "--flip-facing", "--sharpen", "--rigid", "--no-symlimbs", "--no-symweights", "--guidedflat", "--binflat", "--claim-freeze", "--graded-armclaim", "--flat-armclaim", "--base-recipe")]
     # (--target consumed above with its argument)
     autoskin = "--autoskin" in sys.argv
     glb_path, frames_path, out_path = args[0], args[1], args[2]
@@ -683,6 +690,79 @@ def main():
         jix, wts = _nj, _nw
         print(f"symweights: mirror-averaged provider weights on "
               f"{_nblend}/{len(pos)} verts")
+
+    # ---- PROVIDER arm claim (pre-bake): the authored bind shape comes
+    # from lbs() over the PROVIDER bone weights, so the part-level arm
+    # claim (further down) can only fix runtime deformation — a sleeve
+    # rigged to Shoulder/Spine still BAKES hugging the chest conform,
+    # never gaining the arm's stretch-widening, and reads as a skinny
+    # bolt-on tube when the target's arm bones are long (samus 2.7x).
+    # Re-lean the provider weights of capsule sleeve verts onto the arm
+    # bones HERE, before the bake, with the same graded falloff; the
+    # part weights derived from these inherit the claim automatically.
+    if not ({"--flat-armclaim", "--base-recipe"} & set(sys.argv)) \
+            and TARGET_TUNE.get("rigid_arms"):
+        # rigid-arm targets ONLY: the pre-bake re-lean exists so the rigid
+        # assembly owns its sleeve in the BAKE. On articulated targets it
+        # re-bakes garment geometry and carves visible tears (2026-08-29
+        # blind sweep: mario base won 6/6 — waist gashes on rohan/queen).
+        _nI = {n: i for i, n in enumerate(names)}
+        _torso_b = {i for n, i in _nI.items()
+                    if n in ("Hips", "Spine", "Spine01", "Spine02", "neck")
+                    or "Shoulder" in n}
+        n_pclaim = 0
+        for _side in ("Left", "Right"):
+            for _s0, _s1 in ((_side + "Arm", _side + "ForeArm"),
+                             (_side + "ForeArm", _side + "Hand")):
+                if _s0 not in _nI or _s1 not in _nI:
+                    continue
+                _ai = _nI[_s0]
+                _a = jpos[_ai]
+                _b = jpos[_nI[_s1]]
+                _ab = [_b[k] - _a[k] for k in range(3)]
+                _ab2 = sum(c * c for c in _ab) or 1e-9
+                _blen = _ab2 ** 0.5
+                _u = [c / _blen for c in _ab]
+                _ctr = jpos[_nI["Spine02"]] if "Spine02" in _nI else _a
+                _shlat = sum((_a[k] - _ctr[k]) * _u[k] for k in range(3))
+                _r2 = (2.4 * _blen) ** 2
+                for i in range(len(pos)):
+                    _lat = sum((pos[i][k] - _ctr[k]) * _u[k] for k in range(3))
+                    if _lat < 0.6 * _shlat:
+                        continue
+                    _t = sum((pos[i][k] - _a[k]) * _ab[k] for k in range(3)) / _ab2
+                    if _t < -0.1 or _t > 1.1:
+                        continue
+                    _dom = jix[i][max(range(4), key=lambda k: wts[i][k])]
+                    _hd = names[_dom] in ("Head", "head_end", "headfront")
+                    if _dom not in _torso_b and not _hd and \
+                       not names[_dom].startswith(_side):
+                        continue   # other side's geometry passing through
+                    _q = [_a[k] + max(0.0, min(1.0, _t)) * _ab[k]
+                          for k in range(3)]
+                    _d2 = sum((pos[i][k] - _q[k]) ** 2 for k in range(3))
+                    if _d2 > ((0.72 * _blen) ** 2 if _hd else _r2):
+                        continue
+                    # rigid_arms: the arm is ONE rigid assembly — a graded
+                    # falloff just leaves the sleeve's shoulder end riding
+                    # the chest, squeezing the tube into a flap when the
+                    # shoulder swings. Claim near-totally instead.
+                    _g = 0.95 if TARGET_TUNE.get("rigid_arms") else \
+                        0.45 + 0.5 * max(0.0, min(1.0, _t))
+                    _mix = {}
+                    for _k in range(4):
+                        if wts[i][_k] > 0:
+                            _mix[jix[i][_k]] = _mix.get(jix[i][_k], 0.0) \
+                                + (1.0 - _g) * wts[i][_k]
+                    _mix[_ai] = _mix.get(_ai, 0.0) + _g
+                    _top = sorted(_mix.items(), key=lambda kv: -kv[1])[:4]
+                    _tt = sum(w for _, w in _top) or 1.0
+                    jix[i] = [j for j, _ in _top] + [0] * (4 - len(_top))
+                    wts[i] = [w / _tt for _, w in _top] + [0.0] * (4 - len(_top))
+                    n_pclaim += 1
+        if n_pclaim:
+            print(f"provider arm claim (pre-bake): {n_pclaim} sleeve verts "
+                  f"re-leaned onto arm bones")
 
     frames = load_frames(frames_path)
     if TARGET_MAP is not None:
@@ -1071,8 +1151,13 @@ def main():
         # real joint), so widen the part instead: perp gains sqrt of the
         # stretch ratio, capped, keeping limbs readable at roughly the
         # authored aspect.
+        # profile tune "widen_pow" (default 0.5 = sqrt): long-boned targets
+        # need a stronger exponent — samus's cannon-side arm stretches
+        # 2.7x but sqrt yields only 1.65x widening, leaving the sleeve at
+        # 60% of its authored aspect ("unbelievably skinny arms").
         sp2 = s_perp * min(float(TARGET_TUNE.get("widen_cap", 1.55)),
-                           math.sqrt(max(1.0, s_par / s_perp)))
+                           max(1.0, s_par / s_perp)
+                           ** float(TARGET_TUNE.get("widen_pow", 0.5)))
         conf[part] = (Q, s_par, sp2, u, a, A)
 
     # symmetrize left/right retarget scales: s_par divides by the MESH
@@ -1127,6 +1212,15 @@ def main():
         a = jpos[name_idx[seg[part][0]]]
         A = frames[part][0]
         sp_ = s_head if part == 12 else s_perp
+        if part == 12 and "head_recenter" in TARGET_TUNE and 6 in frames:
+            # stooped skeletons (link, mildly luigi) park the HEAD JOINT
+            # forward of the chest; mounting the oversized chibi head
+            # there reads as a hunchback. Pull the anchor horizontally
+            # back over the chest joint by this fraction (vertical kept).
+            _f = float(TARGET_TUNE["head_recenter"])
+            _C = frames[6][0]
+            A = [A[0] + _f * (_C[0] - A[0]), A[1], A[2] + _f * (_C[2] - A[2])]
+            print(f"head recenter: x{_f:.2f} toward the chest column")
         conf[part] = (Qp, sp_, sp_, [0.0, 1.0, 0.0], a, A)
 
     # feet get their OWN rotation: inheriting the calf's rotation leaves
@@ -1157,6 +1251,56 @@ def main():
               for c in range(3)] for r in range(3)]
         A = frames[part][0]
         conf[part] = (Q, s_perp, s_perp, dir_mn, a, A)
+
+    # profile tune "rigid_arms": long-boned targets (samus arm bones run
+    # 2.7x the chibi mesh's) can't wear a stretched sleeve — graded
+    # weights kink the long thin tube into a squiggle the moment the
+    # elbow bends, and no widen exponent fixes articulation. Collapse
+    # each arm to ONE rigid assembly at the authored proportions: every
+    # arm part shares the SHOULDER part's conform (isotropic global
+    # scale, anchored at the shoulder joint), and the weight collapse
+    # further down rides the whole arm on that one joint. Stubby chibi
+    # arms that swing cleanly — the same trade rigid_legs makes for
+    # crush-class legs. The vanilla cannon (keep_vanilla) still renders
+    # at the real hand joint, so reach stays readable.
+    if TARGET_TUNE.get("rigid_arms"):
+        # tune "arm_anchor": {"14": "distal"} anchors that chain at its
+        # HAND end instead of the shoulder — for samus's cannon arm the
+        # fist must LIVE inside the kept vanilla cannon (joint 16), and
+        # the cannon moves with the elbow, which a shoulder-anchored stub
+        # can't follow (the floating-box-at-the-hip run frames). The
+        # whole assembly rides the distal joint; the shoulder end blends
+        # into the torso band instead.
+        _anch = TARGET_TUNE.get("arm_anchor", {})
+        for root, kids in ((8, (9, 10)), (14, (15, 16))):
+            if root not in conf:
+                continue
+            Q, _sa, _sp2, u, a, A = conf[root]
+            conf[root] = (Q, s_perp, s_perp, u, a, A)
+            if _anch.get(str(root)) == "distal":
+                # TWO rigid segments, vanilla-N64 style: the upper stub
+                # stays on the shoulder; forearm+hand form a second rigid
+                # piece anchored fist-in-cannon at the distal joint. A
+                # whole-arm assembly on the cannon turned the sleeve into
+                # a torn banner whenever the run pose held the cannon
+                # vertical; segmenting swaps that for the classic small
+                # elbow gap, which the overlap copies mask.
+                hand_part = kids[-1]
+                _hname = next((n for n, (pp, _) in bone_map.items()
+                               if pp == hand_part and "Hand" in n), None)
+                if _hname is not None and hand_part in frames:
+                    lower = (Q, s_perp, s_perp, u,
+                             jpos[name_idx[_hname]], frames[hand_part][0])
+                    for k in kids:
+                        conf[k] = lower
+                else:
+                    for k in kids:
+                        conf[k] = conf[root]
+            else:
+                for k in kids:
+                    conf[k] = conf[root]
+        print("rigid arms: arm chains rigid at authored proportions"
+              + (f" (distal-anchored: {sorted(_anch)})" if _anch else ""))
 
     # ---- vertex assignment: accumulate skin weight per mario part.
     # vpart = dominant part; vweights = {part: weight} per vertex, used to
@@ -1572,6 +1716,12 @@ def main():
 
     part_T = {}   # part -> (scale3, offset3) in the part joint's rest frame
     for part in set(vpart_fit):
+        if TARGET_TUNE.get("rigid_arms") and part in (8, 9, 10, 14, 15, 16):
+            # rigid arm assemblies keep their authored shape/position —
+            # per-part bounds fitting would re-center the hands into the
+            # vanilla glove boxes and rip the assembly into fragments
+            # (captain's extended bind put those boxes far from the stub)
+            continue
         van = vanilla_parts.get(str(part))
         pts = [world[i] for i in range(len(world)) if vpart_fit[i] == part]
         if not van or len(pts) < 8 or part not in frames:
@@ -1671,6 +1821,24 @@ def main():
         part = bone_map.get(bname, (6, 11))[0]
         return part_conform(part, bone_apply(bname, v))
 
+    if "head_recenter" in TARGET_TUNE and 12 in part_T and 12 in frames and 6 in frames:
+        # the bounds fit centers our head into the VANILLA head part's box,
+        # which on stooped skeletons (link) sits forward of the chest —
+        # the hunchback mount. Compute where that box center lands in the
+        # world and pull the head back over the chest column.
+        _f = float(TARGET_TUNE["head_recenter"])
+        _o12, _R12 = frames[12]
+        _C = frames[6][0]
+        _van12 = vanilla_parts.get("12")
+        _vc = [(min(v[a] for v in _van12) + max(v[a] for v in _van12)) / 2.0
+               for a in range(3)]
+        _cw = [row_apply(_vc, _R12)[k] + _o12[k] for k in range(3)]
+        _dw = [_f * (_C[0] - _cw[0]), 0.0, _f * (_C[2] - _cw[2])]
+        _dl = row_apply(_dw, inv3(_R12))
+        _sc12, _off12 = part_T[12]
+        part_T[12] = (_sc12, [_off12[k] + _dl[k] for k in range(3)])
+        print(f"head recenter: x{_f:.2f} toward the chest column "
+              f"(world d=({_dw[0]:.0f},{_dw[2]:.0f}))")
     if part_T:
         world = lbs(bone_apply_conformed)
         print("part-profile conform:",
@@ -2525,6 +2693,7 @@ def main():
     hj = jpos[names.index("Head")] if "Head" in names else None
     neck_y_sk = jpos[names.index("neck")][1] if "neck" in names else (min(ys_sk) + 0.6*H_sk)
     n_capped = 0
+    _claimed = set()      # verts the cap/arm claims re-leaned (see freeze)
     ARMISH = ("ForeArm", "Hand")
     for i in range(len(world)):
         if hj is None: break
@@ -2535,6 +2704,7 @@ def main():
         if d2 < (0.42*H_sk)**2 and pos[i][1] > neck_y_sk + 0.01*H_sk:
             if abs(vweights[i].get(12, 0.0) - 1.0) > 1e-6:
                 vweights[i] = {12: 1.0}
+                _claimed.add(i)
                 n_capped += 1
     if n_capped:
         print(f"cap claim: {n_capped} crown verts -> 100% Head")
@@ -2558,26 +2728,74 @@ def main():
             _ab = [_b[k] - _a[k] for k in range(3)]
             _ab2 = sum(c * c for c in _ab) or 1e-9
             _blen = _ab2 ** 0.5
-            _r2 = (0.72 * _blen) ** 2
-            _lat_min = 0.6 * abs(_a[0])
+            # lateral = the arm bone's own direction (this runs in T-pose,
+            # so the bone IS the lateral axis) — measuring against world x
+            # broke on rigs whose arms lie along z (tripo): the chest gate
+            # went to ~0 and boyang's sleeve claim collapsed to 4 verts
+            _u = [c / _blen for c in _ab]
+            _ctr = jpos[name_idx["Spine02"]] if "Spine02" in name_idx else _a
+            _sh_lat = sum((_a[k] - _ctr[k]) * _u[k] for k in range(3))
+            # per-dominance radius: chest/neck-owned verts inside the axial
+            # span are sleeve by construction (the torso silhouette cannot
+            # reach past the shoulder in a T-pose), and chibi sleeves bulge
+            # to ~2.2x a stubby arm bone — but hair overhanging the
+            # shoulders occupies the same band, so head-owned verts keep
+            # the tight capsule
+            _r2_torso = (2.4 * _blen) ** 2
+            _r2_head = (0.72 * _blen) ** 2
+            _dbg = __import__('os').environ.get('SSB64_CLAIM_DEBUG')
+            _rej = {'lat': 0, 't': 0, 'r': 0, 'dom': 0, 'ok': 0}
             for i in range(len(world)):
-                if abs(pos[i][0]) < _lat_min:
+                _lat = sum((pos[i][k] - _ctr[k]) * _u[k] for k in range(3))
+                if _lat < 0.6 * _sh_lat:
+                    _rej['lat'] += 1
                     continue   # chest-side verts stay with the torso
                 _t = sum((pos[i][k] - _a[k]) * _ab[k] for k in range(3)) / _ab2
                 if _t < -0.1 or _t > 1.1:
-                    continue
-                _q = [_a[k] + max(0.0, min(1.0, _t)) * _ab[k] for k in range(3)]
-                if sum((pos[i][k] - _q[k]) ** 2 for k in range(3)) > _r2:
+                    _rej['t'] += 1
                     continue
                 _dom = max(vweights[i].items(), key=lambda kv: kv[1])[0]
-                if _dom not in (6, 7, 11, 12, 13):
+                # graded is the default since the 2026-08-28 blind eval
+                # (1-0-23 vs flat; flat hardening had lost 0-11-13)
+                _graded = not ({"--flat-armclaim", "--base-recipe"} & set(sys.argv))
+                _armdom = _dom in (8, 9, 10, 14, 15, 16)
+                if _dom not in (6, 7, 11, 12, 13) and not (_graded and _armdom):
+                    _rej['dom'] += 1
                     continue
-                _mix = {p: 0.25 * w for p, w in vweights[i].items()}
-                _mix[_part] = _mix.get(_part, 0.0) + 0.75
+                _q = [_a[k] + max(0.0, min(1.0, _t)) * _ab[k] for k in range(3)]
+                _r2 = _r2_head if _dom in (12, 13) else _r2_torso
+                if sum((pos[i][k] - _q[k]) ** 2 for k in range(3)) > _r2:
+                    _rej['r'] += 1
+                    continue
+                _rej['ok'] += 1
+                _claimed.add(i)
+                if TARGET_TUNE.get("rigid_arms"):
+                    _g = 0.95
+                    _mix = {p: (1.0 - _g) * w for p, w in vweights[i].items()
+                            if p != _part}
+                    _mix[_part] = _g + (1.0 - _g) * vweights[i].get(_part, 0.0)
+                elif _graded:
+                    # ownership ramps along the bone (classic skinning
+                    # falloff): the shoulder end keeps blending with the
+                    # chest so the deltoid deforms smoothly, the distal
+                    # end is owned outright so the tube TRAVELS with the
+                    # arm instead of collapsing to a smear edge. Flat
+                    # hardening lost the 2026-08-28 blind eval (0-11-13:
+                    # skinny rigid tube on samus, seams on luigi/link).
+                    _g = 0.45 + 0.5 * max(0.0, min(1.0, _t))
+                    _mix = {p: (1.0 - _g) * w for p, w in vweights[i].items()
+                            if p != _part}
+                    _mix[_part] = _g + (1.0 - _g) * vweights[i].get(_part, 0.0)
+                else:
+                    _mix = {p: 0.25 * w for p, w in vweights[i].items()}
+                    _mix[_part] = _mix.get(_part, 0.0) + 0.75
                 _tt = sum(_mix.values()) or 1.0
                 vweights[i] = {p: w / _tt for p, w in
                                sorted(_mix.items(), key=lambda kv: -kv[1])[:4]}
                 n_armed += 1
+            if _dbg:
+                print(f"  claim-debug {_seg0}->{_seg1}: blen={_blen:.3f} "
+                      f"sh_lat={_sh_lat:.3f} rej={_rej}")
     if n_armed:
         print(f"arm claim: {n_armed} sleeve/shoulder verts re-leaned onto arm bones")
     # ---- post-claim weight re-smoothing (general): the cap/arm claims
@@ -2608,9 +2826,24 @@ def main():
     # far bigger inter-part transform disagreement, so claim cliffs shear
     # harder in motion — deeper diffusion widens the blend bands.
     _ps_iters = int(TARGET_TUNE.get("postsmooth_iters", 4))
+    # --claim-freeze: claimed verts act as fixed boundary conditions in
+    # the diffusion — they still feed their neighbors, but their own
+    # weights never update. Without this the 4 iterations dilute the arm
+    # claim's 0.75 leans back to ~0.5 (326/342 arm verts soft, measured
+    # 2026-08-28) and the sleeve smears off the bone on wide-swing
+    # targets (samus).
+    # (rigid_arms deliberately does NOT freeze: a 0.95 cliff with no
+    # diffusion shears the boundary tris open — holes across the torso.
+    # With the whole tube claimed high, diffusion leaves the interior
+    # alone and only softens the boundary into a narrow band.)
+    _frozen = ({_rep[i] for i in _claimed}
+               if "--claim-freeze" in sys.argv else set())
     for _it in range(_ps_iters if _cur else 0):
         _nxt = {}
         for r, nbrs in _adj.items():
+            if r in _frozen:
+                _nxt[r] = _cur[r]
+                continue
             acc2 = {p: 0.5 * w for p, w in _cur[r].items()}
             share = 0.5 / len(nbrs)
             for nb in nbrs:
@@ -2649,6 +2882,28 @@ def main():
     # give thigh/calf/foot wildly disagreeing transforms; blending across
     # them turns the run gallop's legs to rubber. A rigid stubby leg
     # pivoting at the hip matches the vanilla fighter's own proportions.
+    if TARGET_TUNE.get("rigid_arms"):
+        _ARMC = {9: 8, 10: 8, 15: 14, 16: 14}
+        for _r, _kids in (("8", (8, 9, 10)), ("14", (14, 15, 16))):
+            if TARGET_TUNE.get("arm_anchor", {}).get(_r) == "distal":
+                # split: upper stub keeps its own joint, forearm+hand
+                # ride the distal (cannon) joint as the second segment
+                _ARMC.pop(_kids[1], None)
+                _ARMC.pop(_kids[0], None)
+                _ARMC[_kids[1]] = _kids[2]
+        n_ra = 0
+        for _i in range(len(world)):
+            vw = vweights[_i]
+            if not any(p in _ARMC for p in vw):
+                continue
+            vw2 = {}
+            for p, w in vw.items():
+                q = _ARMC.get(p, p)
+                vw2[q] = vw2.get(q, 0.0) + w
+            vweights[_i] = vw2
+            vpart[_i] = max(vw2, key=vw2.get)
+            n_ra += 1
+        print(f"rigid arms: {n_ra} verts' forearm/hand weights collapsed onto shoulders")
     if TARGET_TUNE.get("rigid_legs"):
         _LEGC = {20: 19, 22: 19, 25: 24, 27: 24}
         n_rl = 0
@@ -3116,8 +3371,16 @@ def main():
                          wl])
     _emit = (lambda j: TARGET_MAP[j]) if TARGET_MAP is not None else (lambda j: j)
     if TARGET_MAP is not None:
+        # merge influences that land on the same target joint (collapsed
+        # chains: samus maps canonical forearm+hand both onto the cannon
+        # joint 16) — duplicate entries would waste influence slots and a
+        # {15:0.5, 16:0.5} vert is really a SOLID 1.0 on the target
         for v in sk_verts:
-            v[8] = [(_emit(j), w) for j, w in v[8]]
+            _mw = {}
+            for j, w in v[8]:
+                tj = _emit(j)
+                _mw[tj] = _mw.get(tj, 0.0) + w
+            v[8] = sorted(_mw.items(), key=lambda kv: -kv[1])
     # ---- variant fit scale: the conform keeps the chibi silhouette
     # (mario-fitted head/gloves), which on tall small-headed target
     # skeletons (samus) tops out 20-30% above the vanilla fighter. The
@@ -3149,7 +3412,8 @@ def main():
         fit_scale = 1.0
 
     skinned = {"fit_scale": round(fit_scale, 4),
-               "joint_ids": [_emit(j) for j in sk_joint_ids], "verts": sk_verts,
+               "joint_ids": sorted({_emit(j) for j in sk_joint_ids}),
+               "verts": sk_verts,
                "tris": sk_tris,
                # the joint frames the world verts were authored against —
                # the game binds against THESE, not whatever pose the

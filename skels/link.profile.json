@@ -27,5 +27,8 @@
  "blank_extra": [
   5,
   24
- ]
+ ],
+ "tune": {
+  "head_recenter": 0.85
+ }
 }
