@@ -3854,6 +3854,17 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
                 G[12] = Gh
                 print("head uprighted (heading = chest%+.0f)"
                       % float(prof.get("head_yaw_trim", 0.0)))
+            # facing axis for anisotropic girth: horizontal perpendicular
+            # of the shoulder line, sign toward the face (nose side)
+            shv = sub(no[14], no[8]) if (14 in no and 8 in no) else [0.0, 0.0, 1.0]
+            Dax = norm([shv[2], 0.0, -shv[0]])
+            if 12 in no:
+                fx_, fz_, fn_ = 0.0, 0.0, 0
+                for v_ in sk["verts"]:
+                    if sum(w for (ji, w) in v_[8] if ji == 12) > 0.5:
+                        fx_ += v_[0]-no[12][0]; fz_ += v_[2]-no[12][2]; fn_ += 1
+                if fn_ and (fx_*Dax[0] + fz_*Dax[2]) < 0:
+                    Dax = [-Dax[0], 0.0, -Dax[2]]
             for v in sk["verts"]:
                 acc = [0.0, 0.0, 0.0]
                 nacc = [0.0, 0.0, 0.0]
@@ -3866,11 +3877,19 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
                     d = Lr[0]*a[0] + Lr[1]*a[1] + Lr[2]*a[2]
                     nr = rotv(G[ji], v[5:8])
                     # girth: profile-scaled cross-section perpendicular to
-                    # the bone (head keeps identity — it anchors the look)
-                    g = 1.0 if ji == 12 else float(prof.get("girth", 1.0))
+                    # the bone (head keeps identity — it anchors the look).
+                    # girth_depth scales the facing-axis component alone so
+                    # wide characters (DK) don't get a pot belly.
+                    torso_ = ji in (6, 11)
+                    g = 1.0 if ji == 12 else (float(prof.get("girth", 1.0)) if torso_
+                         else float(prof.get("girth_limbs", prof.get("girth", 1.0))))
+                    gd = 1.0 if ji == 12 else (float(prof.get("girth_depth", prof.get("girth", 1.0))) if torso_
+                         else g)
+                    pv = [Lr[i] - d * a[i] for i in range(3)]
+                    dd = pv[0]*Dax[0] + pv[2]*Dax[2]
                     for i in range(3):
-                        perp = Lr[i] - d * a[i]
-                        acc[i] += w * (no[ji][i] + g * perp + st * d * a[i])
+                        perp = g * pv[i] + (gd - g) * dd * Dax[i]
+                        acc[i] += w * (no[ji][i] + perp + st * d * a[i])
                         nacc[i] += w * nr[i]
                     tw += w
                 if tw > 0.0:
@@ -3892,17 +3911,37 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
                 ys_ = [v_[1] for v_ in sk["verts"]]
                 ylo, yhi = min(ys_), max(ys_)
                 hipy = (no[19][1] + no[24][1]) / 2.0 if (19 in no and 24 in no) else ylo + 0.36*(yhi-ylo)
-                heading = bdir.get(6, [1.0, 0.0, 0.0])
+                # facing = horizontal perpendicular of the shoulder axis,
+                # sign toward the face (head verts' horizontal centroid
+                # offset from the head joint points at the nose). The old
+                # bdir[6] "heading" was the vertical torso bone — its xz
+                # projection was junk and pins landed on random sides.
+                sh = sub(no[14], no[8]) if (14 in no and 8 in no) else [0.0, 0.0, 1.0]
+                heading = norm([sh[2], 0.0, -sh[0]])
+                if 12 in no:
+                    hx_, hz_, nw_ = 0.0, 0.0, 0
+                    for v_ in sk["verts"]:
+                        w12_ = sum(w for (ji, w) in v_[8] if ji == 12)
+                        if w12_ > 0.5:
+                            hx_ += v_[0]-no[12][0]; hz_ += v_[2]-no[12][2]; nw_ += 1
+                    if nw_ and (hx_*heading[0] + hz_*heading[2]) < 0:
+                        heading = [-heading[0], 0.0, -heading[2]]
                 for ent in snap_spec:
                     aj_, at_ = (int(ent), "nearest") if not isinstance(ent, dict)                         else (int(ent["joint"]), ent.get("at", "nearest"))
                     if aj_ not in T:
                         print(f"canonical snap_accessories: joint {aj_} not in skel, skipped")
                         continue
                     if at_ == "chest-front":
-                        # chest-height band, foremost along the heading
+                        # chest-height band, foremost along the heading —
+                        # TORSO-owned verts only (the arms hang in front
+                        # of the chest at bind; unfiltered "foremost"
+                        # picked a fist)
                         cy = no[6][1] if 6 in no else (ylo+yhi)/2
+                        def torso_owned(v_):
+                            best = max(v_[8], key=lambda jw: jw[1])
+                            return best[0] in (6, 11)
                         band = [(i_, v_) for i_, v_ in enumerate(sk["verts"])
-                                if abs(v_[1]-cy) < 0.10*(yhi-ylo)]
+                                if abs(v_[1]-cy) < 0.10*(yhi-ylo) and torso_owned(v_)]
                         best_i = max(band, key=lambda iv: (iv[1][0]*heading[0] +
                                                            iv[1][2]*heading[2]))[0]
                     elif at_ == "rear-hip":
@@ -3920,8 +3959,13 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
                             d_ = (v_[0]-ta[0])**2 + (v_[1]-ta[1])**2 + (v_[2]-ta[2])**2
                             if d_ < best_d:
                                 best_d, best_i = d_, i_
-                    accs.append({"joint": aj_, "vert": best_i, "embed": 10.0})
-                    print(f"canonical snap_accessories: joint {aj_} pinned to vert {best_i} ({at_})")
+                    emb = float(ent.get("embed", 10.0)) if isinstance(ent, dict) else 10.0
+                    accs.append({"joint": aj_, "vert": best_i, "embed": emb,
+                                  "pitch": float(ent.get("pitch", 0.0)) if isinstance(ent, dict) else 0.0,
+                                  "orient": 1.0 if (isinstance(ent, dict) and ent.get("orient")) else 0.0,
+                                  "scale": float(ent.get("scale", 0.0)) if isinstance(ent, dict) else 0.0})
+                    print(f"canonical snap_accessories: joint {aj_} pinned to vert {best_i} ({at_}"
+                          + (", orient-follow)" if emb < 0 else ")"))
                 sk["accessories"] = accs
                 # rotate the bind frame with the joint's geometry so the
                 # runtime skinning (rd * cbind, bind_local from BIND) keeps
@@ -4046,6 +4090,14 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
             for a in accs:
                 f.write(struct.pack("<IIf", a["joint"], a["vert"], a["embed"]))
             print(f"binary5: {len(accs)} accessory vertex pin(s) (ACC2 section)")
+            if any(a.get("pitch") or a.get("orient") for a in accs):
+                f.write(b"ACC3")
+                f.write(struct.pack("<I", len(accs)))
+                for a in accs:
+                    f.write(struct.pack("<fff", float(a.get("pitch", 0.0)),
+                                        float(a.get("orient", 0.0)),
+                                        float(a.get("scale", 0.0))))
+                print("binary5: accessory pitch/orient/scale (ACC3 section)")
         if canon:
             f.write(b"CAN1")
             f.write(struct.pack("<fff", *canon["root"]))
