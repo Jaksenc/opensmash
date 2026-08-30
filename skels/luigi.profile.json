@@ -27,5 +27,6 @@
  "tune": {
   "head_recenter": 0.85
  },
- "morph_yaw_axis": "shoulder"
+ "morph_yaw_axis": "shoulder",
+ "morph_yaw_trim": 16
 }
