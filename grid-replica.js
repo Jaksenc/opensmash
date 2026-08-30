@@ -8,6 +8,9 @@ const CELL_W = 45;
 const CELL_H = 43;
 const RULE = 2;
 const CELL_COUNT = 200;
+const FLAME_BRIDGE_CELL_COUNT = 4;
+const FLAME_BRIDGE_BREAKPOINT = 640;
+const FLAME_BRIDGE_HEIGHT_SCALE = 0.25;
 const GRID_COLUMN_BREAKPOINTS = Object.freeze([
   { minWidth: 1024, columns: 8 },
   { minWidth: 640, columns: 6 },
@@ -585,6 +588,47 @@ function renderOuterRules(frameWidth, frameHeight) {
   return dst;
 }
 
+function sharedPanelRuleSample(position, extent, segments, internalStart, sourceExtent) {
+  if (position < RULE) return position;
+  if (position >= extent - RULE) {
+    return sourceExtent - RULE + position - (extent - RULE);
+  }
+  for (let segment = 1; segment < segments; segment++) {
+    const laneStart = Math.round(extent * segment / segments) - Math.floor(RULE / 2);
+    if (position >= laneStart && position < laneStart + RULE) {
+      return internalStart + position - laneStart;
+    }
+  }
+  return null;
+}
+
+// The bridge has oversized cells, but its rule is rasterized at the roster's
+// native display scale. That keeps the shared video/bridge/roster boundary the
+// same visible thickness instead of magnifying a two-pixel rule with each cell.
+function renderSharedPanelRules(frameWidth, frameHeight, columns, rows) {
+  const sourceWidth = 96;
+  const sourceHeight = 92;
+  const reference = decodeReferenceRules();
+  const dst = new Uint8ClampedArray(frameWidth * frameHeight * 4);
+  for (let y = 0; y < frameHeight; y++) for (let x = 0; x < frameWidth; x++) {
+    const sourceRuleX = sharedPanelRuleSample(
+      x, frameWidth, columns, CELL_W + RULE, sourceWidth
+    );
+    const sourceRuleY = sharedPanelRuleSample(
+      y, frameHeight, rows, CELL_H + RULE, sourceHeight
+    );
+    if (sourceRuleX == null && sourceRuleY == null) continue;
+    const sourceX = sourceRuleX ?? mapRuleSample(x, frameWidth, CELL_W, sourceWidth);
+    const sourceY = sourceRuleY ?? mapRuleSample(y, frameHeight, CELL_H, sourceHeight);
+    const source = (sourceY * sourceWidth + sourceX) * 4;
+    put(
+      dst, frameWidth, x, y,
+      reference[source], reference[source + 1], reference[source + 2], reference[source + 3]
+    );
+  }
+  return dst;
+}
+
 function renderCellBackground() {
   const dst = new Uint8ClampedArray(CELL_W * CELL_H * 4);
   for (let i = 0; i < dst.length; i += 4) { dst[i] = 8; dst[i + 1] = 5; dst[i + 2] = 4; dst[i + 3] = 255; }
@@ -759,7 +803,18 @@ function paintCellCanvas(canvas, label, portraitName) {
 const grid = document.getElementById('replica-grid');
 const introVideoFrame = document.querySelector('.intro-video-frame');
 const introVideoRuleCanvas = document.querySelector('.intro-video-rule-layer');
+const flameBridge = document.getElementById('flame-bridge');
+const flameBridgeCells = [...document.querySelectorAll('.flame-bridge-cell')];
+const flameBridgeRuleCanvas = document.querySelector('.flame-bridge-rule-layer');
 const cells = new Map();
+
+const flameOnlyFramebuffer = renderCellFramebuffer();
+flameBridgeCells.forEach(cell => cell.append(canvasFromPixels(
+  flameOnlyFramebuffer.pixels,
+  flameOnlyFramebuffer.width,
+  flameOnlyFramebuffer.height,
+  'flame-bridge-texture-layer'
+)));
 
 CELL_IDS.forEach((id, index) => {
   const character = VANILLA_ROSTER[index % VANILLA_ROSTER.length];
@@ -789,6 +844,7 @@ grid.append(ruleCanvas);
 
 let currentGridLayout;
 let introVideoRuleSignature = '';
+let flameBridgeRuleSignature = '';
 
 function paintIntroVideoRule() {
   if (!currentGridLayout || !introVideoFrame || !introVideoRuleCanvas) return;
@@ -802,6 +858,37 @@ function paintIntroVideoRule() {
   introVideoRuleSignature = signature;
   paintPixels(
     introVideoRuleCanvas, renderOuterRules(width, height), width, height
+  );
+}
+
+function columnsForFlameBridge() {
+  const containerWidth = flameBridge?.clientWidth || window.innerWidth;
+  return containerWidth >= FLAME_BRIDGE_BREAKPOINT ? 2 : 1;
+}
+
+function paintFlameBridgeRule() {
+  if (!currentGridLayout || !flameBridge || !flameBridgeRuleCanvas) return;
+  const columns = columnsForFlameBridge();
+  const rows = Math.ceil(FLAME_BRIDGE_CELL_COUNT / columns);
+  const logicalWidth = RULE + columns * (CELL_W + RULE);
+  const logicalHeight = RULE + rows * (CELL_H + RULE);
+  const width = currentGridLayout.width;
+  const height = Math.max(
+    RULE * 2 + 1,
+    Math.round(width * logicalHeight / logicalWidth * FLAME_BRIDGE_HEIGHT_SCALE)
+  );
+  const signature = `${width}x${height}:${columns}x${rows}`;
+
+  flameBridge.style.setProperty('--flame-bridge-columns', String(columns));
+  flameBridge.style.aspectRatio =
+    `${logicalWidth} / ${logicalHeight * FLAME_BRIDGE_HEIGHT_SCALE}`;
+  if (signature === flameBridgeRuleSignature) return;
+  flameBridgeRuleSignature = signature;
+  paintPixels(
+    flameBridgeRuleCanvas,
+    renderSharedPanelRules(width, height, columns, rows),
+    width,
+    height
   );
 }
 
@@ -820,6 +907,9 @@ function applyGridLayout(columns = columnsForContainer()) {
   const height = RULE + rows * (CELL_H + RULE);
   currentGridLayout = Object.freeze({ columns, rows, width, height });
 
+  document.querySelector('.arena-shell').style.setProperty(
+    '--shared-rule-overlap', `${100 * RULE / width}%`
+  );
   grid.closest('.arena-surface').style.aspectRatio = `${width} / ${height}`;
   grid.setAttribute('aria-colcount', String(columns));
   grid.setAttribute('aria-rowcount', String(rows));
@@ -841,6 +931,7 @@ function applyGridLayout(columns = columnsForContainer()) {
 
   paintPixels(ruleCanvas, renderRules(width, height), width, height);
   paintIntroVideoRule();
+  paintFlameBridgeRule();
 
   const metrics = document.getElementById('replica-metrics');
   metrics.textContent =
@@ -854,6 +945,7 @@ applyGridLayout();
 function syncLayoutToVideoWidth() {
   applyGridLayout(columnsForContainer());
   paintIntroVideoRule();
+  paintFlameBridgeRule();
 }
 
 if (introVideoFrame && 'ResizeObserver' in window) {
