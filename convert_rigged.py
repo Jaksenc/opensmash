@@ -3899,6 +3899,99 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
                         v[5+i] = nacc[i] / nl
             for j in joint_ids:
                 bf[str(j)]["o"] = no[j]
+            # BALL MODE (kirby/purin): the target IS a giant head with
+            # shoes — drop torso/limb geometry (holes hide inside the
+            # head), scale the head about its joint to ball size, keep
+            # hands and shoes riding their joints.
+            if prof.get("ball_squash"):
+                # BALL (kirby/purin): giant head on a squashed body, real
+                # arms and shoes kept whole. All transforms weight-blended
+                # per vert so nothing tears at ownership seams.
+                k_ = float(prof.get("ball_squash", 0.25))
+                hs = float(prof.get("head_scale", 2.5))
+                fat = float(prof.get("ball_fat", 1.4))
+                fs_ = float(prof.get("feet_scale", 1.6))
+                ymin0_ = min(v_[1] for v_ in sk["verts"])
+                cx_, cz_ = no[6][0], no[6][2]
+                dy_ = (1.0-k_) * (no[12][1]-ymin0_) if 12 in no else 0.0
+                ball_cy = (no[12][1] - dy_*0.9) if 12 in no else ymin0_
+                hns = float(prof.get("hand_scale", 1.4))
+                for v in sk["verts"]:
+                    tot = sum(w for (ji, w) in v[8]) or 1.0
+                    w12 = sum(w for (ji, w) in v[8] if ji == 12) / tot
+                    wf = sum(w for (ji, w) in v[8] if ji in (22, 27)) / tot
+                    wh = sum(w for (ji, w) in v[8] if ji in (10, 16)) / tot
+                    fj = 22 if sum(w for (ji, w) in v[8] if ji == 22) >= \
+                               sum(w for (ji, w) in v[8] if ji == 27) else 27
+                    hj = 10 if sum(w for (ji, w) in v[8] if ji == 10) >= \
+                               sum(w for (ji, w) in v[8] if ji == 16) else 16
+                    wa = sum(w for (ji, w) in v[8] if ji in (8, 9, 14, 15)) / tot
+                    wb = max(0.0, 1.0 - w12 - wf - wh - wa)
+                    vh = [no[12][i] + hs * (v[i]-no[12][i]) for i in range(3)]
+                    vh[1] -= dy_ * 0.9
+                    vf = [no[fj][i] + fs_ * (v[i]-no[fj][i]) for i in range(3)] \
+                         if fj in no else list(v[:3])
+                    # hands crisp at their joints (like the shoes); arm
+                    # SEGMENTS fall into the body squash so they don't
+                    # fly in front as full-length arms
+                    vn = [no[hj][i] + hns * (v[i]-no[hj][i]) for i in range(3)] \
+                         if hj in no else list(v[:3])
+                    if hj in no:
+                        # tuck the fists toward the body axis so they hug
+                        # the ball instead of floating at chibi arm reach
+                        tk_ = float(prof.get("hand_tuck", 0.55))
+                        vn[0] -= tk_ * (no[hj][0] - cx_)
+                        vn[2] -= tk_ * (no[hj][2] - cz_)
+                    vb = [cx_ + fat*(v[0]-cx_),
+                          ymin0_ + k_*(v[1]-ymin0_),
+                          cz_ + fat*(v[2]-cz_)]
+                    # arm segments: body squash PLUS radial compression
+                    # toward the torso column so they hug the body
+                    ak_ = float(prof.get("arm_hug", 0.45))
+                    ad_ = float(prof.get("arm_drop", 0.0))
+                    va = [cx_ + ak_*(vb[0]-cx_), vb[1] - ad_, cz_ + ak_*(vb[2]-cz_)]
+                    for i in range(3):
+                        v[i] = w12*vh[i] + wf*vf[i] + wh*vn[i] + wa*va[i] + wb*vb[i]
+                # arm SEGMENTS reweighted to the chest: baked position
+                # can't stop runtime swing (verts follow arm joints), so
+                # flaps poked out of the ball during walks. Rigid with the
+                # body = flush forever; hands keep their joints and animate.
+                for v in sk["verts"]:
+                    neww = []
+                    for (ji, w) in v[8]:
+                        neww.append((6 if ji in (8, 9, 14, 15) else ji, w))
+                    merged = {}
+                    for (ji, w) in neww:
+                        merged[ji] = merged.get(ji, 0.0) + w
+                    v[8] = sorted(merged.items(), key=lambda kv: -kv[1])
+                print(f"ball squash k={k_} head x{hs} fat x{fat} (arms rigid)")
+            elif prof.get("ball_mode"):
+                hs = float(prof.get("head_scale", 2.2))
+                fs_ = float(prof.get("feet_scale", 1.8))
+                hs2 = float(prof.get("hand_scale", 1.4))
+                KEEP = {10, 12, 16, 22, 27}
+                CTR = {12: hs, 22: fs_, 27: fs_, 10: hs2, 16: hs2}
+                def dom(v_):
+                    return max(v_[8], key=lambda jw: jw[1])[0]
+                for v in sk["verts"]:
+                    dj = dom(v)
+                    if dj in CTR and dj in no:
+                        sc_ = CTR[dj]
+                        for i in range(3):
+                            v[i] = no[dj][i] + sc_ * (v[i] - no[dj][i])
+                # tuck the shoes up into the ball's underside
+                fr = float(prof.get("feet_raise", 0.0))
+                if fr:
+                    for v in sk["verts"]:
+                        if dom(v) in (22, 27):
+                            v[1] += fr
+                keepv = [dom(v_) in KEEP for v_ in sk["verts"]]
+                nt0 = len(sk["tris"])
+                # ALL verts must be head/hand/feet-owned: boundary tris
+                # dragged collar geometry into view under the ball
+                sk["tris"] = [t3 for t3 in sk["tris"]
+                              if keepv[t3[0]] and keepv[t3[1]] and keepv[t3[2]]]
+                print(f"ball mode: head x{hs}, tris {nt0} -> {len(sk['tris'])}")
             # accessory pins for canonical bakes: vanilla accessory roots
             # (pikachu's tail) hang off unmapped joints at vanilla-body
             # distance and float beside the smaller morph. Pin each
@@ -3931,7 +4024,16 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
                     if aj_ not in T:
                         print(f"canonical snap_accessories: joint {aj_} not in skel, skipped")
                         continue
-                    if at_ == "neck-front":
+                    if at_ == "head-top":
+                        # crown of the head, slightly forward — for
+                        # curl/tuft accessories
+                        band = [(i_, v_) for i_, v_ in enumerate(sk["verts"])
+                                if max(v_[8], key=lambda jw: jw[1])[0] == 12]
+                        ymax_ = max(iv[1][1] for iv in band)
+                        band = [iv for iv in band if iv[1][1] > ymax_ - 0.06*(yhi-ylo)]
+                        best_i = max(band, key=lambda iv: (iv[1][0]*heading[0] +
+                                                           iv[1][2]*heading[2]))[0]
+                    elif at_ == "neck-front":
                         # tight band just under the head joint, any
                         # ownership (collar skin is head-weighted),
                         # foremost along the facing
@@ -4105,7 +4207,7 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
             for a in accs:
                 f.write(struct.pack("<IIf", a["joint"], a["vert"], a["embed"]))
             print(f"binary5: {len(accs)} accessory vertex pin(s) (ACC2 section)")
-            if any(a.get("pitch") or a.get("orient") for a in accs):
+            if any(a.get("pitch") or a.get("orient") or a.get("scale") for a in accs):
                 f.write(b"ACC3")
                 f.write(struct.pack("<I", len(accs)))
                 for a in accs:

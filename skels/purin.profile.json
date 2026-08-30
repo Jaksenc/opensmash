@@ -24,5 +24,16 @@
   "27": 28
  },
  "parts": "vanilla-purin-parts.canonical.json",
- "conform": "uniform"
+ "conform": "uniform",
+ "ball_squash": 0.25,
+ "head_scale": 2.5,
+ "ball_fat": 1.4,
+ "feet_scale": 1.6,
+ "hand_scale": 1.4,
+ "hand_tuck": 0.6,
+ "arm_hug": 0.3,
+ "arm_drop": 10.0,
+ "morph_lambda": 0.6,
+ "dir_lambda": 0.0,
+ "morph_yaw_trim": 90
 }

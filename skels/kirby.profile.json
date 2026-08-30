@@ -28,5 +28,15 @@
  "tune": {
   "head_boost": 2.1,
   "leg_squash": 0.45
- }
+ },
+ "ball_squash": 0.25,
+ "head_scale": 2.5,
+ "ball_fat": 1.4,
+ "feet_scale": 1.6,
+ "hand_scale": 1.4,
+ "hand_tuck": 0.6,
+ "arm_hug": 0.3,
+ "arm_drop": 10.0,
+ "morph_lambda": 0.6,
+ "dir_lambda": 0.0
 }
