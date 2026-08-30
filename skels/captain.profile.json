@@ -28,5 +28,6 @@
   5,
   18
  ],
- "head_yaw_trim": -30
+ "head_yaw_trim": -30,
+ "feet_align": true
 }
