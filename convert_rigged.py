@@ -3639,6 +3639,12 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
         # its bone-local coords stretched along the bone axis only
         # (length follows the skeleton, girth stays the mesh's own).
         lam = float(morph_lambda or 0.0)
+    if canonical_profile is not None:
+        try:
+            _p0 = json.load(open(canonical_profile))
+            lam = float(_p0.get("morph_lambda", lam))
+        except Exception:
+            pass
         if lam > 0.0:
             skel_path = os.path.join(os.path.dirname(canonical_profile),
                                      prof["name"] + ".skel")
@@ -3755,7 +3761,13 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
                 else:
                     s[j] = 1.0 + lam * (seglen(dt)/seglen(dm) - 1.0)
                     ut = norm(dt)
-                    u = norm([(1.0-lam)*um[i] + lam*ut[i] for i in range(3)])
+                    dl_ = float(prof.get("dir_lambda", lam))
+                    u = norm([(1.0-dl_)*um[i] + dl_*ut[i] for i in range(3)])
+                # per-segment scale override (DK's long neck reads whack
+                # on a human chibi — clamp that bone via the profile)
+                ov = prof.get("seg_scale", {})
+                if str(j) in ov:
+                    s[j] = float(ov[str(j)])
                 bdir[j] = u
                 A[j] = rot_between(um, u)
             no = {}
@@ -3853,8 +3865,12 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
                     a, st = axis[ji], stretch[ji]
                     d = Lr[0]*a[0] + Lr[1]*a[1] + Lr[2]*a[2]
                     nr = rotv(G[ji], v[5:8])
+                    # girth: profile-scaled cross-section perpendicular to
+                    # the bone (head keeps identity — it anchors the look)
+                    g = 1.0 if ji == 12 else float(prof.get("girth", 1.0))
                     for i in range(3):
-                        acc[i] += w * (no[ji][i] + Lr[i] + (st - 1.0) * d * a[i])
+                        perp = Lr[i] - d * a[i]
+                        acc[i] += w * (no[ji][i] + g * perp + st * d * a[i])
                         nacc[i] += w * nr[i]
                     tw += w
                 if tw > 0.0:
@@ -3870,21 +3886,42 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
             # profile snap_accessories joint to the nearest morphed vert
             # (both in target-aligned space) — the engine's ACC2 seat
             # rides the skinned mesh, same as the ship path's tail pin.
-            snap_aj = [int(a) for a in prof.get("snap_accessories", [])]
-            if snap_aj:
+            snap_spec = prof.get("snap_accessories", [])
+            if snap_spec:
                 accs = list(sk.get("accessories", []))
-                for aj_ in snap_aj:
+                ys_ = [v_[1] for v_ in sk["verts"]]
+                ylo, yhi = min(ys_), max(ys_)
+                hipy = (no[19][1] + no[24][1]) / 2.0 if (19 in no and 24 in no) else ylo + 0.36*(yhi-ylo)
+                heading = bdir.get(6, [1.0, 0.0, 0.0])
+                for ent in snap_spec:
+                    aj_, at_ = (int(ent), "nearest") if not isinstance(ent, dict)                         else (int(ent["joint"]), ent.get("at", "nearest"))
                     if aj_ not in T:
                         print(f"canonical snap_accessories: joint {aj_} not in skel, skipped")
                         continue
-                    ta = T[aj_]
-                    best_i, best_d = -1, 1e18
-                    for i_, v_ in enumerate(sk["verts"]):
-                        d_ = (v_[0]-ta[0])**2 + (v_[1]-ta[1])**2 + (v_[2]-ta[2])**2
-                        if d_ < best_d:
-                            best_d, best_i = d_, i_
+                    if at_ == "chest-front":
+                        # chest-height band, foremost along the heading
+                        cy = no[6][1] if 6 in no else (ylo+yhi)/2
+                        band = [(i_, v_) for i_, v_ in enumerate(sk["verts"])
+                                if abs(v_[1]-cy) < 0.10*(yhi-ylo)]
+                        best_i = max(band, key=lambda iv: (iv[1][0]*heading[0] +
+                                                           iv[1][2]*heading[2]))[0]
+                    elif at_ == "rear-hip":
+                        # verts in the hip height band, rearmost (opposite
+                        # the chest heading) — blind nearest-vert lands on
+                        # the mid-back for high-tailed binds like yoshi's
+                        band = [(i_, v_) for i_, v_ in enumerate(sk["verts"])
+                                if abs(v_[1]-hipy) < 0.08*(yhi-ylo)]
+                        best_i = max(band, key=lambda iv: -(iv[1][0]*heading[0] +
+                                                            iv[1][2]*heading[2]))[0]
+                    else:
+                        ta = T[aj_]
+                        best_i, best_d = -1, 1e18
+                        for i_, v_ in enumerate(sk["verts"]):
+                            d_ = (v_[0]-ta[0])**2 + (v_[1]-ta[1])**2 + (v_[2]-ta[2])**2
+                            if d_ < best_d:
+                                best_d, best_i = d_, i_
                     accs.append({"joint": aj_, "vert": best_i, "embed": 10.0})
-                    print(f"canonical snap_accessories: joint {aj_} pinned to vert {best_i}")
+                    print(f"canonical snap_accessories: joint {aj_} pinned to vert {best_i} ({at_})")
                 sk["accessories"] = accs
                 # rotate the bind frame with the joint's geometry so the
                 # runtime skinning (rd * cbind, bind_local from BIND) keeps
