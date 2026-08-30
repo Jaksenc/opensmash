@@ -3658,12 +3658,18 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
             # makes the baked bind face like the target, so the runtime
             # rotation deltas render it at the target's true facing.
             if 8 in joint_ids and 14 in joint_ids:
-                # hip axis (thigh-to-thigh): the pelvis is the stiffest
-                # yaw reference — shoulder lines twist with the arm stance
-                # (link holds his shield arm forward and over-rotated 20deg)
-                am = [bfp[24][0]-bfp[19][0], bfp[24][2]-bfp[19][2]]
-                at = [T[cmap[24]][0]-T[cmap[19]][0], T[cmap[24]][2]-T[cmap[19]][2]]
+                # facing yaw estimate: bind stances twist along the spine,
+                # so no single bone axis is right for every fighter — the
+                # profile picks the reference ("hip" default: thigh-to-
+                # thigh, stiffest for stances whose arms hang forward like
+                # link's; "shoulder" for fighters whose LEGS carry the
+                # twist, like luigi). Calibrated per target vs vanilla.
+                ax = prof.get("morph_yaw_axis", "hip")
+                ja, jb = (19, 24) if ax == "hip" else (8, 14)
+                am = [bfp[jb][0]-bfp[ja][0], bfp[jb][2]-bfp[ja][2]]
+                at = [T[cmap[jb]][0]-T[cmap[ja]][0], T[cmap[jb]][2]-T[cmap[ja]][2]]
                 yaw = math.atan2(at[1], at[0]) - math.atan2(am[1], am[0])
+                yaw += math.radians(float(prof.get("morph_yaw_trim", 0.0)))
                 yaw += math.radians(float(os.environ.get("MORPH_YAW_TRIM", "0")))
                 cy, sy = math.cos(yaw), math.sin(yaw)
                 px, pz = bfp[6][0], bfp[6][2]   # pivot: chest column

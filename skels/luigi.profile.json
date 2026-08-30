@@ -26,5 +26,6 @@
  "parts": "vanilla-luigi-parts.canonical.json",
  "tune": {
   "head_recenter": 0.85
- }
+ },
+ "morph_yaw_axis": "shoulder"
 }
