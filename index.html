@@ -661,6 +661,8 @@ renderer.setPixelRatio(1);
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
 camera.position.set(0, 0, 16);
+const cameraRestPosition = camera.position.clone();
+const cameraRestQuaternion = camera.quaternion.clone();
 
 scene.add(new THREE.HemisphereLight(0xffffff, 0x9a9aa8, 0.4));
 
@@ -1152,7 +1154,119 @@ const CARTRIDGE_FACE_TURN_SPRING = 125;
 const CARTRIDGE_FACE_TURN_DAMPING = 20.5;
 const CARTRIDGE_FACE_TURN_LAUNCH_SPEED = 4.0;
 const CARTRIDGE_FACE_TURN_DIRECTION = 1;
+const CARTRIDGE_LOCK_ROUTE_PROGRESS = 0.82;
+const CARTRIDGE_LOCK_SHAKE_DURATION = 0.18;
+const CARTRIDGE_LOCK_SHAKE_STRENGTH = 0.055;
 const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+let cartridgeLockShakeStartedAt = -Infinity;
+let cartridgeAudioContext = null;
+
+function triggerCartridgeLockShake() {
+  if (prefersReducedMotion) return;
+  cartridgeLockShakeStartedAt = clock.elapsedTime;
+}
+
+function applyCartridgeLockShake(now) {
+  camera.position.copy(cameraRestPosition);
+  camera.quaternion.copy(cameraRestQuaternion);
+  const elapsed = now - cartridgeLockShakeStartedAt;
+  if (elapsed < 0 || elapsed >= CARTRIDGE_LOCK_SHAKE_DURATION) return;
+
+  const progress = elapsed / CARTRIDGE_LOCK_SHAKE_DURATION;
+  const envelope = (1 - progress) * (1 - progress);
+  const strength = CARTRIDGE_LOCK_SHAKE_STRENGTH * envelope;
+  camera.position.x += Math.sin(elapsed * 114) * strength;
+  camera.position.y += Math.sin(elapsed * 151 + 0.8) * strength * 0.65;
+  camera.position.z += Math.sin(elapsed * 97 + 1.7) * strength * 0.16;
+  camera.rotation.z += Math.sin(elapsed * 128 + 0.35) * strength * 0.14;
+  camera.updateMatrixWorld(true);
+}
+
+function resetCameraAfterShake() {
+  camera.position.copy(cameraRestPosition);
+  camera.quaternion.copy(cameraRestQuaternion);
+  camera.updateMatrixWorld(true);
+}
+
+function playCartridgeSound(kind) {
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) return;
+
+  try {
+    cartridgeAudioContext ||= new AudioContextClass();
+    const play = () => {
+      const context = cartridgeAudioContext;
+      const now = context.currentTime;
+      const profile = {
+        press: {
+          volume: 0.075, from: 520, to: 330, duration: 0.035,
+          noise: 0.24, noiseDuration: 0.016, filter: 3200,
+        },
+        release: {
+          volume: 0.065, from: 350, to: 480, duration: 0.04,
+          noise: 0.17, noiseDuration: 0.014, filter: 2800,
+        },
+        lock: {
+          volume: 0.18, from: 210, to: 82, duration: 0.09,
+          noise: 0.5, noiseDuration: 0.04, filter: 1500,
+        },
+      }[kind];
+      if (!profile) return;
+
+      const master = context.createGain();
+      master.gain.setValueAtTime(profile.volume, now);
+      master.connect(context.destination);
+
+      // A pitched impact supplies the body of each plastic/mechanical cue.
+      const impact = context.createOscillator();
+      const impactGain = context.createGain();
+      impact.type = 'triangle';
+      impact.frequency.setValueAtTime(profile.from, now);
+      impact.frequency.exponentialRampToValueAtTime(
+        profile.to, now + profile.duration
+      );
+      impactGain.gain.setValueAtTime(0.7, now);
+      impactGain.gain.exponentialRampToValueAtTime(
+        0.0001, now + profile.duration
+      );
+      impact.connect(impactGain).connect(master);
+      impact.start(now);
+      impact.stop(now + profile.duration + 0.005);
+
+      // A filtered noise transient adds the crisp contact at the start.
+      const noiseBuffer = context.createBuffer(
+        1, Math.ceil(context.sampleRate * profile.noiseDuration), context.sampleRate
+      );
+      const noise = noiseBuffer.getChannelData(0);
+      for (let index = 0; index < noise.length; index += 1) {
+        noise[index] = Math.random() * 2 - 1;
+      }
+      const click = context.createBufferSource();
+      const clickFilter = context.createBiquadFilter();
+      const clickGain = context.createGain();
+      click.buffer = noiseBuffer;
+      clickFilter.type = 'bandpass';
+      clickFilter.frequency.setValueAtTime(profile.filter, now);
+      clickFilter.Q.setValueAtTime(0.8, now);
+      clickGain.gain.setValueAtTime(profile.noise, now);
+      clickGain.gain.exponentialRampToValueAtTime(
+        0.0001, now + profile.noiseDuration
+      );
+      click.connect(clickFilter).connect(clickGain).connect(master);
+      click.start(now);
+      click.stop(now + profile.noiseDuration + 0.002);
+    };
+
+    if (cartridgeAudioContext.state === 'suspended') {
+      cartridgeAudioContext.resume().then(play).catch(() => {});
+    } else {
+      play();
+    }
+  } catch (_) {
+    // Audio is optional feedback; keep the click interaction working if the
+    // browser or device cannot create an audio context.
+  }
+}
 
 let cartridgeModel = null;
 let cartridgeHovered = false;
@@ -1174,6 +1288,7 @@ let cartridgeRouteActive = false;
 let cartridgeRouteProgress = 0;
 let cartridgeRouteDuration = 0.75;
 let cartridgeRouteKind = 'none';
+let cartridgeLockFeedbackPlayed = false;
 let cartridgeEjectDrag = false;
 let cartridgeInsertionTime = -1;
 let cartridgePointerStartX = 0;
@@ -1760,6 +1875,7 @@ function startCartridgeFaceTurn() {
 
 function finishCartridgeDrag(e, cancelled = false) {
   if (e.pointerId !== cartridgeDragPointerId) return;
+  if (!cancelled) playCartridgeSound('release');
   if (!cartridgeDragging) {
     cartridgePressed = false;
     if (!cancelled && cartridgeState === CARTRIDGE_STATE.FREE) {
@@ -1857,6 +1973,7 @@ cartridgeControl.addEventListener('pointerdown', e => {
   cartridgePreviousPointerWorld.copy(cartridgePointerWorld);
   cartridgePointerClientX = e.clientX;
   cartridgePointerClientY = e.clientY;
+  playCartridgeSound('press');
   cartridgeControl.setPointerCapture(e.pointerId);
   // A press stays a click until the pointer crosses the drag threshold. This
   // prevents a normal click from briefly entering the insertion physics.
@@ -1879,6 +1996,20 @@ cartridgeControl.addEventListener('click', e => {
   // Pointer releases are handled above. Keep keyboard activation equivalent.
   if (e.detail === 0 && cartridgeState === CARTRIDGE_STATE.FREE) {
     startCartridgeFaceTurn();
+  }
+});
+let cartridgeKeyboardPressed = false;
+cartridgeControl.addEventListener('keydown', e => {
+  if ((e.key === ' ' || e.key === 'Enter') && !e.repeat &&
+      cartridgeState === CARTRIDGE_STATE.FREE) {
+    cartridgeKeyboardPressed = true;
+    playCartridgeSound('press');
+  }
+});
+cartridgeControl.addEventListener('keyup', e => {
+  if ((e.key === ' ' || e.key === 'Enter') && cartridgeKeyboardPressed) {
+    cartridgeKeyboardPressed = false;
+    playCartridgeSound('release');
   }
 });
 
@@ -2167,6 +2298,7 @@ function beginCartridgeInsertionRoute(receiver, collision) {
   cartridgeRoutePoints.length = 0;
   cartridgeRoutePoints.push(cartridgePhysicsPosition.clone());
   cartridgeRoutePoints.push(cartridgeSocketWorld.clone());
+  cartridgeLockFeedbackPlayed = false;
   setCartridgeRoute('insert', 0.18, 0.28);
   hardwareInset.dataset.collision = 'slot-entered';
 }
@@ -2460,6 +2592,12 @@ function tick() {
     sampleCartridgeRoute(cartridgeRouteProgress, cartridgeRouteTarget);
     cartridgePhysicsPosition.copy(cartridgeRouteTarget);
     cartridgeVelocity.set(0, 0, 0);
+    if (cartridgeRouteKind === 'insert' && !cartridgeLockFeedbackPlayed &&
+        cartridgeRouteProgress >= CARTRIDGE_LOCK_ROUTE_PROGRESS) {
+      cartridgeLockFeedbackPlayed = true;
+      triggerCartridgeLockShake();
+      playCartridgeSound('lock');
+    }
     if (cartridgeRouteProgress >= 1) {
       const completedRoute = cartridgeRouteKind;
       cartridgeRouteActive = false;
@@ -2649,12 +2787,16 @@ function tick() {
 
   if (DBG.includes('raw') || !shaderSettings.enabled) {
     renderer.setRenderTarget(null);
+    applyCartridgeLockShake(t);
     renderer.render(scene, camera);
+    resetCameraAfterShake();
   } else {
     renderer.setRenderTarget(rt);
     renderer.setClearColor(0x000000, 0);
     renderer.clear();
+    applyCartridgeLockShake(t);
     renderer.render(scene, camera);
+    resetCameraAfterShake();
     renderer.setRenderTarget(null);
     renderer.render(postScene, postCam);
   }
