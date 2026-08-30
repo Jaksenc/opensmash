@@ -34,5 +34,6 @@
   "no_torn_cut": true,
   "rigid_legs": true,
   "force_seam_weld": true
- }
+ },
+ "morph_yaw_trim": 180
 }
