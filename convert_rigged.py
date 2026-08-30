@@ -3931,12 +3931,27 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
                     if aj_ not in T:
                         print(f"canonical snap_accessories: joint {aj_} not in skel, skipped")
                         continue
-                    if at_ == "chest-front":
+                    if at_ == "neck-front":
+                        # tight band just under the head joint, any
+                        # ownership (collar skin is head-weighted),
+                        # foremost along the facing
+                        ny_ = no[12][1] - 0.05*(yhi-ylo) if 12 in no else yhi
+                        def collar_owned(v_):
+                            best = max(v_[8], key=lambda jw: jw[1])
+                            return best[0] in (6, 11, 12)   # torso/head, not arms
+                        band = [(i_, v_) for i_, v_ in enumerate(sk["verts"])
+                                if abs(v_[1]-ny_) < 0.045*(yhi-ylo) and collar_owned(v_)]
+                        best_i = max(band, key=lambda iv: (iv[1][0]*heading[0] +
+                                                           iv[1][2]*heading[2]))[0]
+                    elif at_ == "chest-front":
                         # chest-height band, foremost along the heading —
                         # TORSO-owned verts only (the arms hang in front
                         # of the chest at bind; unfiltered "foremost"
                         # picked a fist)
-                        cy = no[6][1] if 6 in no else (ylo+yhi)/2
+                        # collar height: most of the way from the chest
+                        # joint to the head joint (the chest JOINT sits
+                        # mid-torso; a tie knot belongs at the collar)
+                        cy = (no[6][1] + 0.75*(no[12][1]-no[6][1])) if (6 in no and 12 in no)                              else (no[6][1] if 6 in no else (ylo+yhi)/2)
                         def torso_owned(v_):
                             best = max(v_[8], key=lambda jw: jw[1])
                             return best[0] in (6, 11)
