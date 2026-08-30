@@ -28,7 +28,7 @@
  "ball_squash": 0.25,
  "head_scale": 2.5,
   "ball_head_drop": 1.08,
-  "ball_neck_radius": 0.20,
+  "ball_neck_radius": 0.10,
   "ball_leg_squash": 0.03,
   "ball_leg_radius": 0.06,
   "feet_scale": 1.6,
