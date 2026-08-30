@@ -3777,9 +3777,16 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
                     stretch[j], axis[j], G[j] = s[ks[0]], bdir[ks[0]], A[ks[0]]
                 elif CPAR.get(j, -1) == -1:
                     stretch[j], axis[j], G[j] = s[j], bdir[j], A[j]  # torso
+                elif j in (22, 27):
+                    # FEET: keep the chibi bind orientation outright —
+                    # inheriting the shin's re-aim pitched toes skyward on
+                    # crouched binds (falcon); the runtime foot rotations
+                    # land on a flat base like the classic path
+                    stretch[j], axis[j] = 1.0, bdir[j]
+                    G[j] = [[1.0,0.0,0.0],[0.0,1.0,0.0],[0.0,0.0,1.0]]
                 else:
-                    # leaf (head/hands/feet): keep size, follow the
-                    # arriving bone's re-aim
+                    # other leaves (head/hands): keep size, follow the
+                    # arriving bone's re-aim (head is rebuilt below)
                     stretch[j], axis[j], G[j] = 1.0, bdir[j], A[j]
             # rebuild the HEAD's orientation outright: the capture
             # stance both turns and tilts the head (mario looks down/at
