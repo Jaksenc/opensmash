@@ -3781,21 +3781,38 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
                     # leaf (head/hands/feet): keep size, follow the
                     # arriving bone's re-aim
                     stretch[j], axis[j], G[j] = 1.0, bdir[j], A[j]
-            # the capture stance turns the HEAD toward the camera (bind
-            # head yaw vs chest yaw, ~-23deg on current bundles); leaf
-            # joints keep their bind orientation, so every render bakes
-            # the turn in while vanilla fighters' heads sit straight.
-            # Self-calibrating: undo the measured relative twist about
-            # the vertical axis through the head joint.
+            # rebuild the HEAD's orientation outright: the capture
+            # stance both turns and tilts the head (mario looks down/at
+            # the camera), and leaf joints keep bind orientation — after
+            # a big body yaw the tilt reads as crown-toward-camera. Set
+            # the head's bind basis to world-up vertical with its heading
+            # matched to the chest (plus per-profile head_yaw_trim), and
+            # rotate the geometry to follow.
             if 12 in joint_ids and 6 in joint_ids:
                 R6, R12 = bf["6"]["R"], bf["12"]["R"]
-                htw = (math.atan2(R12[0][2], R12[0][0])
-                       - math.atan2(R6[0][2], R6[0][0]))
-                ch, sh = math.cos(htw), math.sin(htw)
-                Yfix = [[ch, 0.0, -sh], [0.0, 1.0, 0.0], [sh, 0.0, ch]]
-                G[12] = [[sum(Yfix[r_][m]*G[12][m][c_] for m in range(3))
-                          for c_ in range(3)] for r_ in range(3)]
-                print(f"head twist corrected: {math.degrees(htw):+.1f} deg")
+                jm = [[R12[c_][r_] for c_ in range(3)] for r_ in range(3)]
+                hx = [R6[0][0], 0.0, R6[0][2]]
+                tr = math.radians(float(prof.get("head_yaw_trim", 0.0)))
+                ct, st_ = math.cos(tr), math.sin(tr)
+                hx = [ct*hx[0] - st_*hx[2], 0.0, st_*hx[0] + ct*hx[2]]
+                n = math.sqrt(hx[0]*hx[0] + hx[2]*hx[2]) or 1.0
+                c0 = [hx[0]/n, 0.0, hx[2]/n]
+                c1 = [0.0, 1.0, 0.0]
+                c2 = [c0[1]*c1[2]-c0[2]*c1[1], c0[2]*c1[0]-c0[0]*c1[2],
+                      c0[0]*c1[1]-c0[1]*c1[0]]
+                det = (jm[0][0]*(jm[1][1]*jm[2][2]-jm[1][2]*jm[2][1])
+                     - jm[0][1]*(jm[1][0]*jm[2][2]-jm[1][2]*jm[2][0])
+                     + jm[0][2]*(jm[1][0]*jm[2][1]-jm[1][1]*jm[2][0]))
+                if det < 0:
+                    c2 = [-c2[0], -c2[1], -c2[2]]
+                jmd = [[c0[i], c1[i], c2[i]] for i in range(3)]
+                jminv = [[jm[c_][r_] for c_ in range(3)] for r_ in range(3)]
+                # jm is orthonormal: inverse = transpose
+                Gh = [[sum(jmd[r_][m]*jminv[m][c_] for m in range(3))
+                       for c_ in range(3)] for r_ in range(3)]
+                G[12] = Gh
+                print("head uprighted (heading = chest%+.0f)"
+                      % float(prof.get("head_yaw_trim", 0.0)))
             for v in sk["verts"]:
                 acc = [0.0, 0.0, 0.0]
                 nacc = [0.0, 0.0, 0.0]
