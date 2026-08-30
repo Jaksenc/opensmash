@@ -14,11 +14,28 @@
   html, body { min-height: 100%; cursor: none; }
   html { background: #000; }
   body {
+    --stone-background-image: none;
     background: #000;
     overflow-x: hidden;
     color: #e9dfcf;
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   }
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-color: #000;
+    background-image: var(--stone-background-image);
+    background-repeat: repeat;
+    background-position: 0 0;
+    background-size: 256px 128px;
+    image-rendering: pixelated;
+    opacity: 0;
+    transition: opacity 520ms steps(5, end);
+  }
+  body.is-game-booted::before { opacity: 1; }
   .comparison-shell {
     position: relative;
     z-index: 1;
@@ -265,6 +282,7 @@
   .arena-shell {
     --arena-content-width: min(100vw, 100vh);
     --content-section-space: clamp(20px, 2.5vw, 28px);
+    --shared-rule-overlap: 0px;
     position: relative;
     z-index: 1;
     width: var(--arena-content-width);
@@ -324,7 +342,6 @@
     place-items: center;
     width: 100%;
     padding-top: var(--content-section-space);
-    margin-bottom: var(--content-section-space);
     background: transparent;
   }
   .intro-video-frame {
@@ -354,7 +371,40 @@
     pointer-events: none;
     image-rendering: auto;
   }
+  .flame-bridge {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: repeat(var(--flame-bridge-columns, 2), minmax(0, 1fr));
+    width: 100%;
+    margin-top: calc(-1 * var(--shared-rule-overlap));
+    overflow: hidden;
+    background: #080504;
+  }
+  .flame-bridge-cell {
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    background: #080504;
+  }
+  .flame-bridge-cell canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    image-rendering: auto;
+  }
+  .flame-bridge-rule-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: block;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    image-rendering: auto;
+  }
   .intro-video-stage,
+  .flame-bridge,
   .arena-surface {
     opacity: 0;
     filter: brightness(0) contrast(1.25);
@@ -378,17 +428,21 @@
     filter: none;
   }
   body.is-game-booted .intro-video-stage,
+  body.is-game-booted .flame-bridge,
   body.is-game-booted .arena-surface {
     opacity: 1;
     filter: none;
     transform: none;
   }
   .arena-surface {
+    position: relative;
+    z-index: 3;
     width: 100%;
     height: auto;
+    margin-top: calc(-1 * var(--shared-rule-overlap));
     aspect-ratio: 378 / 1127;
     background: transparent;
-    box-shadow: 0 0 0 1px #160d0a, 0 20px 80px rgba(0, 0, 0, .58);
+    box-shadow: 0 20px 80px rgba(0, 0, 0, .58);
   }
   .arena-shell .replica-grid {
     position: relative;
@@ -532,6 +586,7 @@
   @media (prefers-reduced-motion: reduce) {
     .presenter-credit,
     .intro-video-stage,
+    .flame-bridge,
     .arena-surface { transition: none; }
   }
   .visually-hidden {
@@ -580,6 +635,13 @@
         <canvas class="intro-video-rule-layer" aria-hidden="true"></canvas>
       </div>
     </section>
+    <div id="flame-bridge" class="flame-bridge" aria-hidden="true">
+      <div class="flame-bridge-cell"></div>
+      <div class="flame-bridge-cell"></div>
+      <div class="flame-bridge-cell"></div>
+      <div class="flame-bridge-cell"></div>
+      <canvas class="flame-bridge-rule-layer"></canvas>
+    </div>
     <div class="arena-surface">
       <div id="replica-grid" class="replica-grid" role="grid" aria-label="Two hundred code-rendered character cells"></div>
     </div>
@@ -645,11 +707,34 @@
   </details>
   <canvas id="glove-canvas"></canvas>
 
-<script type="module" src="./grid-replica.js?v=20260830c"></script>
+<script type="module" src="./grid-replica.js?v=20260830e"></script>
 <script type="module">
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
+import {
+  generateStoneFromSeed,
+  stoneTileDataUrl,
+} from './stone-tile-pipeline/playground.js?v=20260830b';
+
+const STONE_BACKGROUND_SEED = 3075641479;
+const STONE_BACKGROUND_CANDIDATES = 96;
+let stoneBackgroundReady = false;
+
+function ensureStoneBackground() {
+  if (stoneBackgroundReady) return;
+  const result = generateStoneFromSeed(
+    STONE_BACKGROUND_SEED,
+    STONE_BACKGROUND_CANDIDATES,
+  );
+  document.body.style.setProperty(
+    '--stone-background-image',
+    `url("${stoneTileDataUrl(result.tile)}")`,
+  );
+  document.body.dataset.stoneSeed = String(result.masterSeed);
+  document.body.dataset.stoneVariant = String(result.variant);
+  stoneBackgroundReady = true;
+}
 
 // ---------------------------------------------------------------------------
 // Renderer / scene — transparent overlay canvas above the page.
@@ -2443,6 +2528,7 @@ function setCartridgeState(next) {
     resetIntroVideoPlayback();
   }
   const gameRunning = next === CARTRIDGE_STATE.RUNNING;
+  if (gameRunning) ensureStoneBackground();
   document.body.classList.toggle('is-game-booted', gameRunning);
   if (gameRunning) document.body.classList.add('is-intro-credit-visible');
   if (next !== CARTRIDGE_STATE.BOOTING && !gameRunning) {
