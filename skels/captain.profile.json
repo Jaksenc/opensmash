@@ -27,5 +27,6 @@
  "blank_extra": [
   5,
   18
- ]
+ ],
+ "head_yaw_trim": -30
 }

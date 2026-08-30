@@ -26,5 +26,6 @@
  "parts": "vanilla-fox-parts.canonical.json",
  "blank_extra": [
   5
- ]
+ ],
+ "head_yaw_trim": -30
 }
