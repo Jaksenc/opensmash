@@ -28,5 +28,6 @@
   "head_recenter": 0.85
  },
  "morph_yaw_axis": "shoulder",
- "morph_yaw_trim": 16
+ "morph_yaw_trim": 16,
+ "head_yaw_trim": -30
 }
