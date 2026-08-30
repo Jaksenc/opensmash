@@ -3649,22 +3649,37 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
                 if mm:
                     T[int(mm.group(1))] = [float(mm.group(2 + i)) for i in (1, 2, 3)]
             bfp = {j: list(bf[str(j)]["o"]) for j in joint_ids}
-            # yaw-align the target skeleton to the canonical bind about
-            # the vertical axis (shoulder-to-shoulder line, XZ projection)
-            # — the two binds don't share a global yaw, and blending
-            # directions across that gap turned the whole torso toward
-            # the camera. Only per-limb aim differences should survive.
+            # yaw-align the CANONICAL side to the target's bind about the
+            # vertical axis (shoulder-to-shoulder line, XZ projection).
+            # The chibi bundle stands at MARIO's bind yaw; targets stand
+            # at their own (samus -33deg, link -83deg) — the canonical
+            # mesh always rendered yawed vs the vanilla/ship fighter.
+            # Rotating mesh + normals + bind frames to the target's yaw
+            # makes the baked bind face like the target, so the runtime
+            # rotation deltas render it at the target's true facing.
             if 8 in joint_ids and 14 in joint_ids:
                 am = [bfp[14][0]-bfp[8][0], bfp[14][2]-bfp[8][2]]
                 at = [T[cmap[14]][0]-T[cmap[8]][0], T[cmap[14]][2]-T[cmap[8]][2]]
-                import math as _m
-                yaw = _m.atan2(at[1], at[0]) - _m.atan2(am[1], am[0])
-                cy, sy = _m.cos(-yaw), _m.sin(-yaw)
-                t0g_ = T[0]
-                for k_ in T:
-                    dx, dz = T[k_][0]-t0g_[0], T[k_][2]-t0g_[2]
-                    T[k_] = [t0g_[0] + cy*dx - sy*dz, T[k_][1],
-                             t0g_[2] + sy*dx + cy*dz]
+                yaw = math.atan2(at[1], at[0]) - math.atan2(am[1], am[0])
+                cy, sy = math.cos(yaw), math.sin(yaw)
+                px, pz = bfp[6][0], bfp[6][2]   # pivot: chest column
+
+                def yawp(p):
+                    dx, dz = p[0]-px, p[2]-pz
+                    return [px + cy*dx - sy*dz, p[1], pz + sy*dx + cy*dz]
+                for j in joint_ids:
+                    bfp[j] = yawp(bfp[j])
+                    R = bf[str(j)]["R"]
+                    # world-side yaw on the bind basis: jm' = Y*jm
+                    # with R rows as basis (jm = R^T): R' = R * Y^T
+                    bf[str(j)]["R"] = [
+                        [cy*R[r_][0] - sy*R[r_][2], R[r_][1],
+                         sy*R[r_][0] + cy*R[r_][2]] for r_ in range(3)]
+                for v in sk["verts"]:
+                    v[0], v[1], v[2] = yawp(v[:3])
+                    nx, nz = v[5], v[7]
+                    v[5], v[7] = cy*nx - sy*nz, sy*nx + cy*nz
+                print(f"canonical yaw-aligned to target: {math.degrees(yaw):+.1f} deg")
             o6b = bfp[6]
             ymin0 = min(v[1] for v in sk["verts"])
             rootb = [o6b[0], ymin0, o6b[2]]
