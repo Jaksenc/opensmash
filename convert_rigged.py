@@ -3858,6 +3858,47 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
         canon = {"tids": [cmap[j] for j in joint_ids], "parents": parents,
                  "root": can_root, "blank": blank,
                  "name": prof.get("name", "?")}
+    # classic (non-canonical) path: straighten the HEAD bind. The engine's
+    # bind snapshot is mario's spawn stance with the head turned toward
+    # the camera and pitched down; leaf-joint replay bakes that into every
+    # render (systemic across all bundles — texture_check shows the GLB
+    # and offline OSB straight, engine turned). Rebuild the head's bind
+    # basis world-up with the chest's heading and rotate head-owned verts
+    # to follow — same treatment the canonical morph applies.
+    bf0 = sk.get("bind_frames")
+    if canon is None and bf0 and "6" in bf0 and "12" in bf0:
+        R6, R12 = bf0["6"]["R"], bf0["12"]["R"]
+        o12 = bf0["12"]["o"]
+        jm = [[R12[c_][r_] for c_ in range(3)] for r_ in range(3)]
+        hx = [R6[0][0], 0.0, R6[0][2]]
+        n = math.sqrt(hx[0]*hx[0] + hx[2]*hx[2]) or 1.0
+        c0 = [hx[0]/n, 0.0, hx[2]/n]
+        c1 = [0.0, 1.0, 0.0]
+        c2 = [c0[1]*c1[2]-c0[2]*c1[1], c0[2]*c1[0]-c0[0]*c1[2],
+              c0[0]*c1[1]-c0[1]*c1[0]]
+        det = (jm[0][0]*(jm[1][1]*jm[2][2]-jm[1][2]*jm[2][1])
+             - jm[0][1]*(jm[1][0]*jm[2][2]-jm[1][2]*jm[2][0])
+             + jm[0][2]*(jm[1][0]*jm[2][1]-jm[1][1]*jm[2][0]))
+        if det < 0:
+            c2 = [-c2[0], -c2[1], -c2[2]]
+        jmd = [[c0[i], c1[i], c2[i]] for i in range(3)]
+        jminv = [[jm[c_][r_] for c_ in range(3)] for r_ in range(3)]
+        Gh = [[sum(jmd[r_][m]*jminv[m][c_] for m in range(3))
+               for c_ in range(3)] for r_ in range(3)]
+        for v in sk["verts"]:
+            w12 = sum(w for (ji, w) in v[8] if ji == 12)
+            if w12 <= 0.0:
+                continue
+            L = [v[0]-o12[0], v[1]-o12[1], v[2]-o12[2]]
+            Lr = [Gh[i][0]*L[0]+Gh[i][1]*L[1]+Gh[i][2]*L[2] for i in range(3)]
+            nr = [Gh[i][0]*v[5]+Gh[i][1]*v[6]+Gh[i][2]*v[7] for i in range(3)]
+            for i in range(3):
+                v[i] = v[i]*(1.0-w12) + (o12[i]+Lr[i])*w12
+                v[5+i] = v[5+i]*(1.0-w12) + nr[i]*w12
+        # geometry ONLY: the classic render is jm_now * R_bind^-1 * (v-o),
+        # so rotating R_bind together with the verts cancels exactly —
+        # the bind R must stay the engine-matching original
+        print("binary5: head geometry straightened (classic path)")
     verts = sk["verts"]      # [x,y,z,u,v,nx,ny,nz, [(ji,w),...]]
     tris = sk["tris"]
 
