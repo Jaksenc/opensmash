@@ -4193,6 +4193,7 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
                 tb["slots"].append({"o": T.get(cmap[j]), "m": T2R.get(cmap[j])})
             cp_ = TP.get(cmap[6], -1)
             tb["cp_o"] = T.get(cp_) if cp_ >= 0 else None
+            tb["cp_m"] = T2R.get(cp_) if cp_ >= 0 else None
             for a in sk.get("accessories", []):
                 tb["accs"].append(T2R.get(int(a["joint"])))
             if tb["top_m"] and all(sl["m"] for sl in tb["slots"]):
@@ -4329,6 +4330,10 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
                 for am in tb["accs"]:
                     wmat(am or I3)
                 print("binary5: baked target bind (TBND section)")
+                if tb.get("cp_m"):
+                    f.write(b"CPM1")
+                    wmat(tb["cp_m"])
+                    print("binary5: baked chest-parent bind (CPM1 section)")
         fs = float(sk.get("fit_scale", 1.0) or 1.0)
         if canon:
             fs = 1.0
@@ -4338,6 +4343,69 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
             print(f"binary5: fit scale x{fs:.3f} (SCAL section)")
     print(f"binary5 (CPU-skinned): {len(verts)} verts, {len(tris)} tris, "
           f"{len(joint_ids)} joints -> {out_path}")
+
+
+def add_cpm1(in_path, out_path, canonical_profile):
+    """Add/replace CPM1 in an existing canonical OSB5 without rebaking it.
+
+    This preserves the approved mesh, weights, texture, BIND, and TBND bytes;
+    only the target chest-parent battle-bind basis used by menu retargeting
+    is inserted after TBND.
+    """
+    prof = json.load(open(canonical_profile))
+    skel_path = os.path.join(os.path.dirname(canonical_profile),
+                             prof["name"] + ".skel")
+    mats, parents = {}, {}
+    for line in open(skel_path):
+        m2 = re.search(r"SKELDUMP2: joint=(\d+) o=\([^)]*\) "
+                       r"x=\(([^)]*)\) y=\(([^)]*)\) z=\(([^)]*)\)", line)
+        if m2:
+            cols = [[float(v) for v in m2.group(k).split(",")] for k in (2, 3, 4)]
+            mats[int(m2.group(1))] = [[cols[c][r] for c in range(3)]
+                                      for r in range(3)]
+        mp = re.search(r"SKELDUMP: joint=(\d+) parent=(-?\d+)", line)
+        if mp:
+            parents[int(mp.group(1))] = int(mp.group(2))
+    cmap = {int(k): int(v) for k, v in prof["map"].items()}
+    chest = cmap[6]
+    cp = parents.get(chest, -1)
+    if cp < 0 or cp not in mats:
+        raise SystemExit(f"no chest-parent matrix found in {skel_path}")
+
+    data = open(in_path, "rb").read()
+    if data[:4] != b"OSB5" or len(data) < 24:
+        raise SystemExit(f"not an OSB5 file: {in_path}")
+    njoints, nverts, ntris, tex_w, tex_h = struct.unpack_from("<IIIII", data, 4)
+    sections_at = (24 + njoints * 4 + tex_w * tex_h * 2 +
+                   nverts * 28 + ntris * 8)
+    if sections_at > len(data):
+        raise SystemExit(f"truncated OSB5 payload: {in_path}")
+    tb = data.find(b"TBND", sections_at)
+    if tb < 0:
+        raise SystemExit(f"canonical OSB has no TBND section: {in_path}")
+    # TBND: tag + slot (origin+matrix) * njoints + TopN origin+matrix +
+    # chest-parent origin + chest origin + accessory count + matrices.
+    na_off = tb + 4 + njoints * 48 + 48 + 12 + 12
+    if na_off + 4 > len(data):
+        raise SystemExit(f"truncated TBND section: {in_path}")
+    na = struct.unpack_from("<I", data, na_off)[0]
+    if na > 8:
+        raise SystemExit(f"invalid TBND accessory count {na}: {in_path}")
+    insert_at = na_off + 4 + na * 36
+    if data[insert_at:insert_at + 4] == b"CPM1":
+        replace_end = insert_at + 40
+    else:
+        replace_end = insert_at
+
+    sec = bytearray(b"CPM1")
+    for row in mats[cp]:
+        sec += struct.pack("<fff", *row)
+    with open(out_path, "wb") as f:
+        f.write(data[:insert_at])
+        f.write(sec)
+        f.write(data[replace_end:])
+    print(f"binary5: preserved OSB and added chest-parent bind "
+          f"(joint {cp}, CPM1 section) -> {out_path}")
 
 
 if __name__ == "__main__":
@@ -4351,5 +4419,8 @@ if __name__ == "__main__":
         # --binary5-canonical mario-bundle.json out.osb skels/<t>.profile.json [morph_lambda]
         write_binary5(sys.argv[2], sys.argv[3], canonical_profile=sys.argv[4],
                       morph_lambda=float(sys.argv[5]) if len(sys.argv) > 5 else None)
+    elif len(sys.argv) == 5 and sys.argv[1] == "--add-cpm1":
+        # --add-cpm1 existing.osb out.osb skels/<target>.profile.json
+        add_cpm1(sys.argv[2], sys.argv[3], sys.argv[4])
     else:
         main()
