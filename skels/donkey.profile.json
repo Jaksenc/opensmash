@@ -31,5 +31,8 @@
   "perp_boost": 1.45,
   "widen_cap": 2.1,
   "no_part_fit": true
- }
+ },
+ "snap_accessories": [
+  18
+ ]
 }
