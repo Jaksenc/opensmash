@@ -3788,7 +3788,8 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
             # the head's bind basis to world-up vertical with its heading
             # matched to the chest (plus per-profile head_yaw_trim), and
             # rotate the geometry to follow.
-            if 12 in joint_ids and 6 in joint_ids:
+            if (12 in joint_ids and 6 in joint_ids
+                    and os.environ.get("OSB_MORPH_HEAD", "on") != "off"):
                 R6, R12 = bf["6"]["R"], bf["12"]["R"]
                 jm = [[R12[c_][r_] for c_ in range(3)] for r_ in range(3)]
                 hx = [R6[0][0], 0.0, R6[0][2]]
