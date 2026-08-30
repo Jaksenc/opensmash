@@ -41,17 +41,19 @@ throat around the cartridge centerline is open. Once the cartridge body reaches
 the visibly seated point inside that throat, it clamps to the slot mouth and
 finishes with a short non-overshooting insertion animation; high-speed pulls
 cannot tunnel through the console. Releasing any incomplete drag always
-springs it directly from the release point to the upper resting pose, without
-an intermediate slot or center waypoint. Inside a tapered cone above the slot,
+springs it directly from the release point to the upper resting pose with a
+small settling overshoot, without an intermediate slot or center waypoint.
+Inside a tapered cone above the slot,
 a progressive horizontal attraction stays gentle high up and grows assertive
 near the opening; outside that cone there is no positional assistance. Approach
 assistance also rotates the cartridge into the authored slot angle and eases it
 onto the slot's exact depth plane while the console tilts slightly upward to
 meet it. Once the cartridge is fully seated, the cartridge and console animate
 off the bottom of the viewport. The presenter credit fades in first, followed
-by the rest of the site two seconds later. Tapping the free cartridge spins it
-once; inserting it requires dragging it into the console slot. The hand mesh is
-always rendered above both pieces of hardware.
+by the rest of the site two seconds later. Releasing the free cartridge launches
+a fast clockwise Y-axis spring that leaves its label facing forward; inserting
+it requires dragging it into the console slot. The hand mesh is always rendered
+above both pieces of hardware.
 
 The default runtime shader uses 2× pixels, 12 color steps, 50% posterization,
 full edge dither, a 70%-strength 1px `#383838` outline, and display gamma 2.50.

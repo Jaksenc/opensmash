@@ -1147,6 +1147,11 @@ const CARTRIDGE_STATE = Object.freeze({
 const HARDWARE_EXIT_DURATION = 0.9;
 const CREDIT_REVEAL_DELAY = HARDWARE_EXIT_DURATION;
 const SITE_REVEAL_DELAY = CREDIT_REVEAL_DELAY + 2.0;
+const CARTRIDGE_DRAG_THRESHOLD = 6;
+const CARTRIDGE_FACE_TURN_SPRING = 125;
+const CARTRIDGE_FACE_TURN_DAMPING = 20.5;
+const CARTRIDGE_FACE_TURN_LAUNCH_SPEED = 4.0;
+const CARTRIDGE_FACE_TURN_DIRECTION = 1;
 const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 let cartridgeModel = null;
@@ -1157,7 +1162,6 @@ let cartridgePressAmount = 0;
 let cartridgeDragging = false;
 let cartridgeDragPointerId = null;
 let cartridgeDragDistance = 0;
-let cartridgeSuppressClick = false;
 let cartridgeLastPointerTime = 0;
 let cartridgePhysicsReady = false;
 let cartridgeState = CARTRIDGE_STATE.FREE;
@@ -1172,11 +1176,12 @@ let cartridgeRouteDuration = 0.75;
 let cartridgeRouteKind = 'none';
 let cartridgeEjectDrag = false;
 let cartridgeInsertionTime = -1;
+let cartridgePointerStartX = 0;
+let cartridgePointerStartY = 0;
 let cartridgeYaw = CARTRIDGE_FRONT_YAW;
 let cartridgeYawVelocity = CARTRIDGE_IDLE_SPIN_SPEED;
-let cartridgeClickSpin = 0;
-let cartridgeClickSpinVelocity = 0;
-let cartridgeClickSpinTarget = 0;
+let cartridgeFaceTurnActive = false;
+let cartridgeFaceTurnTarget = CARTRIDGE_FRONT_YAW;
 const cartridgePhysicsPosition = new THREE.Vector3();
 const cartridgeVelocity = new THREE.Vector3();
 const cartridgeDragTarget = new THREE.Vector3();
@@ -1734,10 +1739,39 @@ function tryBeginPhysicalCartridgeInsertion(receiver) {
   return true;
 }
 
+function startCartridgeFaceTurn() {
+  let frontDelta = Math.atan2(
+    Math.sin(CARTRIDGE_FRONT_YAW - cartridgeYaw),
+    Math.cos(CARTRIDGE_FRONT_YAW - cartridgeYaw)
+  );
+  // Positive yaw matches the authored clockwise idle direction. Keep adding a
+  // winding until the clockwise route is longer than half a turn.
+  if (CARTRIDGE_FACE_TURN_DIRECTION > 0) {
+    while (frontDelta <= Math.PI) frontDelta += Math.PI * 2;
+  } else {
+    while (frontDelta >= -Math.PI) frontDelta -= Math.PI * 2;
+  }
+  cartridgeFaceTurnTarget = cartridgeYaw + frontDelta;
+  cartridgeFaceTurnActive = true;
+  cartridgeYawVelocity = Math.sign(frontDelta) * Math.max(
+    Math.abs(cartridgeYawVelocity), CARTRIDGE_FACE_TURN_LAUNCH_SPEED
+  );
+}
+
 function finishCartridgeDrag(e, cancelled = false) {
-  if (!cartridgeDragging || e.pointerId !== cartridgeDragPointerId) return;
+  if (e.pointerId !== cartridgeDragPointerId) return;
+  if (!cartridgeDragging) {
+    cartridgePressed = false;
+    if (!cancelled && cartridgeState === CARTRIDGE_STATE.FREE) {
+      startCartridgeFaceTurn();
+    }
+    if (cartridgeControl.hasPointerCapture(e.pointerId)) {
+      cartridgeControl.releasePointerCapture(e.pointerId);
+    }
+    cartridgeDragPointerId = null;
+    return;
+  }
   const pulledFromConsole = cartridgeEjectDrag;
-  let shouldReturnHome = false;
   if (!cancelled) updateCartridgeDrag(e);
   if (!cancelled && cartridgeState === CARTRIDGE_STATE.DRAGGING && consoleSnapAnchor) {
     const receiver = consoleControl.getBoundingClientRect();
@@ -1745,12 +1779,10 @@ function finishCartridgeDrag(e, cancelled = false) {
   }
   if (cancelled) {
     setCartridgeState(CARTRIDGE_STATE.FREE);
-    shouldReturnHome = true;
   } else if (cartridgeState === CARTRIDGE_STATE.INSERTING) {
     startCartridgeBoot(clock.elapsedTime);
   } else {
     setCartridgeState(CARTRIDGE_STATE.FREE);
-    shouldReturnHome = true;
   }
   cartridgeDragging = false;
   cartridgeEjectDrag = false;
@@ -1760,13 +1792,11 @@ function finishCartridgeDrag(e, cancelled = false) {
   if (cartridgeState !== CARTRIDGE_STATE.BOOTING &&
       cartridgeState !== CARTRIDGE_STATE.RUNNING) cartridgeEntryTarget = 0;
   cartridgePressed = false;
-  cartridgeSuppressClick = pulledFromConsole || cartridgeDragDistance > 6;
   if (!cancelled && !pulledFromConsole) {
     cartridgeVelocity.addScaledVector(cartridgePointerVelocity, 0.24);
   }
-  if (shouldReturnHome && consoleSnapAnchor &&
-      (pulledFromConsole || cartridgePhysicsPosition.distanceTo(cartridgeTarget) > 0.12)) {
-    beginCartridgeHomeRoute();
+  if (!cancelled && !pulledFromConsole && cartridgeState === CARTRIDGE_STATE.FREE) {
+    startCartridgeFaceTurn();
   }
   if (cartridgeControl.hasPointerCapture(e.pointerId)) {
     cartridgeControl.releasePointerCapture(e.pointerId);
@@ -1774,12 +1804,9 @@ function finishCartridgeDrag(e, cancelled = false) {
   cartridgeDragPointerId = null;
 }
 
-cartridgeControl.addEventListener('pointerdown', e => {
-  cartridgePressed = true;
+function beginCartridgeDrag(e) {
+  if (cartridgeDragging || e.pointerId !== cartridgeDragPointerId) return;
   cartridgeDragging = true;
-  cartridgeDragPointerId = e.pointerId;
-  cartridgeDragDistance = 0;
-  cartridgeSuppressClick = false;
   cartridgeLastPointerTime = 0;
   cartridgePointerVelocity.set(0, 0, 0);
   const pullingFromConsole = cartridgeState === CARTRIDGE_STATE.BOOTING ||
@@ -1802,23 +1829,45 @@ cartridgeControl.addEventListener('pointerdown', e => {
   if (pullingFromConsole && consoleSnapAnchor) {
     const receiver = consoleControl.getBoundingClientRect();
     beginCartridgeEjectionRoute(receiver, getConsoleCollisionGeometry(receiver));
-    cartridgeSuppressClick = true;
   }
+}
+
+function trackCartridgePointer(e) {
+  if (e.pointerId !== cartridgeDragPointerId) return;
+  cartridgeDragDistance = Math.max(
+    cartridgeDragDistance,
+    Math.hypot(e.clientX - cartridgePointerStartX, e.clientY - cartridgePointerStartY)
+  );
+  if (!cartridgeDragging && cartridgeDragDistance >= CARTRIDGE_DRAG_THRESHOLD) {
+    beginCartridgeDrag(e);
+  }
+  if (cartridgeDragging) updateCartridgeDrag(e);
+}
+
+cartridgeControl.addEventListener('pointerdown', e => {
+  cartridgePressed = true;
+  cartridgeDragPointerId = e.pointerId;
+  cartridgeDragDistance = 0;
+  cartridgePointerStartX = e.clientX;
+  cartridgePointerStartY = e.clientY;
+  screenToCartridgeWorld(e.clientX, e.clientY, cartridgePointerWorld);
+  cartridgeDragOffset.copy(cartridgePhysicsPosition).sub(cartridgePointerWorld);
+  cartridgeDragOffset.z = 0;
+  cartridgeDragTarget.copy(cartridgePointerWorld).add(cartridgeDragOffset);
+  cartridgePreviousPointerWorld.copy(cartridgePointerWorld);
+  cartridgePointerClientX = e.clientX;
+  cartridgePointerClientY = e.clientY;
   cartridgeControl.setPointerCapture(e.pointerId);
-  // Dragging keeps the normal pointing cursor. The global pointerdown state
-  // below supplies the original backward tap tilt without closing the hand.
+  // A press stays a click until the pointer crosses the drag threshold. This
+  // prevents a normal click from briefly entering the insertion physics.
   e.preventDefault();
 });
 cartridgeControl.addEventListener('pointermove', e => {
-  if (!cartridgeDragging || e.pointerId !== cartridgeDragPointerId) return;
-  cartridgeDragDistance += Math.hypot(e.movementX || 0, e.movementY || 0);
-  updateCartridgeDrag(e);
+  trackCartridgePointer(e);
 });
 window.addEventListener('pointermove', e => {
-  if (!cartridgeDragging || e.pointerId !== cartridgeDragPointerId ||
-      e.target === cartridgeControl) return;
-  cartridgeDragDistance += Math.hypot(e.movementX || 0, e.movementY || 0);
-  updateCartridgeDrag(e);
+  if (e.target === cartridgeControl) return;
+  trackCartridgePointer(e);
 });
 cartridgeControl.addEventListener('pointerup', e => finishCartridgeDrag(e));
 cartridgeControl.addEventListener('pointercancel', e => finishCartridgeDrag(e, true));
@@ -1827,13 +1876,9 @@ window.addEventListener('pointerup', e => {
   cartridgePressed = false;
 });
 cartridgeControl.addEventListener('click', e => {
-  if (cartridgeSuppressClick) {
-    cartridgeSuppressClick = false;
-    e.preventDefault();
-    return;
-  }
-  if (cartridgeState === CARTRIDGE_STATE.FREE) {
-    cartridgeClickSpinTarget += Math.PI * 2;
+  // Pointer releases are handled above. Keep keyboard activation equivalent.
+  if (e.detail === 0 && cartridgeState === CARTRIDGE_STATE.FREE) {
+    startCartridgeFaceTurn();
   }
 });
 
@@ -2126,16 +2171,6 @@ function beginCartridgeInsertionRoute(receiver, collision) {
   hardwareInset.dataset.collision = 'slot-entered';
 }
 
-function beginCartridgeHomeRoute() {
-  cartridgeRoutePoints.length = 0;
-  cartridgeRoutePoints.push(cartridgePhysicsPosition.clone());
-  // A released drag has exactly one destination. Do not reuse the insertion
-  // pathfinder here: its slot-staging waypoint made the cartridge drift toward
-  // the console center before returning home.
-  cartridgeRoutePoints.push(cartridgeTarget.clone());
-  setCartridgeRoute('home', 0.46, 1.10);
-}
-
 function beginCartridgeEjectionRoute(receiver, collision) {
   cartridgeRoutePoints.length = 0;
   cartridgeRoutePoints.push(cartridgePhysicsPosition.clone());
@@ -2149,8 +2184,6 @@ function sampleCartridgeRoute(progress, target) {
   if (last < 1) return target.copy(cartridgeSocketWorld);
   if (cartridgeRouteKind === 'insert') {
     cartridgeRoutePoints[last].copy(cartridgeSocketWorld);
-  } else if (cartridgeRouteKind === 'home') {
-    cartridgeRoutePoints[last].copy(cartridgeTarget);
   }
 
   const lengths = [];
@@ -2162,7 +2195,7 @@ function sampleCartridgeRoute(progress, target) {
   }
   if (total < 1e-5) return target.copy(cartridgeSocketWorld);
 
-  const eased = cartridgeRouteKind === 'eject-pop' || cartridgeRouteKind === 'home'
+  const eased = cartridgeRouteKind === 'eject-pop'
     ? 1 - (1 - progress) ** 3
     : progress * progress * (3 - 2 * progress);
   let remaining = eased * total;
@@ -2437,8 +2470,6 @@ function tick() {
           cartridgeInsertionTime = t;
           startIntroVideoPlayback();
         }
-      } else if (completedRoute === 'home') {
-        hardwareInset.dataset.cartridgeRoute = 'home';
       } else if (completedRoute === 'eject-pop') {
         hardwareInset.dataset.cartridgeRoute = 'popped';
         if (cartridgeDragging) {
@@ -2487,35 +2518,42 @@ function tick() {
   cartridgeHoverAmount += ((cartridgeHovering ? 1 : 0) - cartridgeHoverAmount) * Math.min(1, dt * 9);
   cartridgePressAmount += ((cartridgePressed ? 1 : 0) - cartridgePressAmount) * Math.min(1, dt * 14);
 
-  // Hovering or grabbing rotates the nearest way to the authored front face.
-  if (cartridgeConstrained) {
-    cartridgeYawVelocity *= Math.max(0, 1 - dt * 12);
-  } else if (cartridgeHovering) {
-    const yawError = Math.atan2(
-      Math.sin(CARTRIDGE_FRONT_YAW - cartridgeYaw),
-      Math.cos(CARTRIDGE_FRONT_YAW - cartridgeYaw)
-    );
-    cartridgeYawVelocity += (yawError * 46 - cartridgeYawVelocity * 9.2) * dt;
-  } else {
+  // On release, a near-critically-damped spring drives the unwrapped clockwise
+  // target immediately and settles with the authored front face visible.
+  if (cartridgeFaceTurnActive) {
+    const faceTurnError = cartridgeFaceTurnTarget - cartridgeYaw;
     cartridgeYawVelocity += (
-      CARTRIDGE_IDLE_SPIN_SPEED - cartridgeYawVelocity
-    ) * Math.min(1, dt * 2.8);
+      faceTurnError * CARTRIDGE_FACE_TURN_SPRING
+      - cartridgeYawVelocity * CARTRIDGE_FACE_TURN_DAMPING
+    ) * dt;
+    cartridgeYaw += cartridgeYawVelocity * dt;
+    if (Math.abs(faceTurnError) < 0.002 && Math.abs(cartridgeYawVelocity) < 0.025) {
+      cartridgeYaw = cartridgeFaceTurnTarget;
+      cartridgeYawVelocity = 0;
+      cartridgeFaceTurnActive = false;
+    }
+  } else {
+    if (cartridgeConstrained) {
+      cartridgeYawVelocity *= Math.max(0, 1 - dt * 12);
+    } else if (cartridgeHovering) {
+      const yawError = Math.atan2(
+        Math.sin(CARTRIDGE_FRONT_YAW - cartridgeYaw),
+        Math.cos(CARTRIDGE_FRONT_YAW - cartridgeYaw)
+      );
+      cartridgeYawVelocity += (yawError * 46 - cartridgeYawVelocity * 9.2) * dt;
+    } else {
+      cartridgeYawVelocity += (
+        CARTRIDGE_IDLE_SPIN_SPEED - cartridgeYawVelocity
+      ) * Math.min(1, dt * 2.8);
+    }
+    cartridgeYaw += cartridgeYawVelocity * dt;
   }
-  cartridgeYaw += cartridgeYawVelocity * dt;
   if (Math.abs(cartridgeYaw) > Math.PI * 200) {
     cartridgeYaw = CARTRIDGE_FRONT_YAW + Math.atan2(
       Math.sin(cartridgeYaw - CARTRIDGE_FRONT_YAW),
       Math.cos(cartridgeYaw - CARTRIDGE_FRONT_YAW)
     );
   }
-
-  // A click performs one complete turn without changing the cartridge's
-  // position. Insertion remains exclusively tied to dragging into the slot.
-  cartridgeClickSpinVelocity += (
-    (cartridgeClickSpinTarget - cartridgeClickSpin) * 58
-    - cartridgeClickSpinVelocity * 10.5
-  ) * dt;
-  cartridgeClickSpin += cartridgeClickSpinVelocity * dt;
 
   // Velocity leans the shell into the movement, with its own soft springs.
   const tiltTargetX = THREE.MathUtils.clamp(cartridgeVelocity.y * 0.085, -0.2, 0.2);
@@ -2538,7 +2576,7 @@ function tick() {
   cartridgeVisual.rotation.set(
     -0.20 + cartridgeTilt.x - cartridgePressAmount * 0.12
       + Math.sin(t * 1.1) * 0.025,
-    cartridgeYaw + cartridgeClickSpin,
+    cartridgeYaw,
     0.08 + cartridgeTilt.z + Math.sin(t * 1.35) * 0.025
   );
   cartridgeFreeQuaternion.copy(cartridgeVisual.quaternion);
