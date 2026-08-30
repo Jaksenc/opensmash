@@ -3650,6 +3650,8 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
                                      prof["name"] + ".skel")
             T = {}
             T2 = {}
+            T2R = {}
+            TP = {}
             for line in open(skel_path):
                 mm = re.search(r"joint=(\d+) parent=(-?\d+) "
                                r"world=\(([-\d.]+),([-\d.]+),([-\d.]+)\)", line)
@@ -3660,11 +3662,17 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
                 if m2:
                     cols = [[float(v) for v in m2.group(k).split(",")] for k in (2, 3, 4)]
                     jmt = [[0.0]*3 for _ in range(3)]
+                    jmr = [[0.0]*3 for _ in range(3)]
                     for c_ in range(3):
                         n = math.sqrt(sum(cols[c_][r_]**2 for r_ in range(3))) or 1.0
                         for r_ in range(3):
                             jmt[r_][c_] = cols[c_][r_]/n
+                            jmr[r_][c_] = cols[c_][r_]
                     T2[int(m2.group(1))] = jmt
+                    T2R[int(m2.group(1))] = jmr
+                mp = re.search(r"SKELDUMP: joint=(\d+) parent=(-?\d+)", line)
+                if mp:
+                    TP[int(mp.group(1))] = int(mp.group(2))
             bfp = {j: list(bf[str(j)]["o"]) for j in joint_ids}
             # yaw-align the CANONICAL side to the target's bind about the
             # vertical axis (shoulder-to-shoulder line, XZ projection).
@@ -4174,6 +4182,21 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
         canon = {"tids": [cmap[j] for j in joint_ids], "parents": parents,
                  "root": can_root, "blank": blank,
                  "name": prof.get("name", "?")}
+        # TBND: the target's BATTLE-SPAWN bind, baked so the engine never
+        # has to sample live joints at inject — the CSS/results screens
+        # re-make fighters mid-victory-pose and a live capture there
+        # poisons every rotation delta (deformed select/win renders).
+        if lam >= 0.0 and T2R:
+            tb = {"slots": [], "top_o": T.get(0, [0,0,0]), "top_m": T2R.get(0),
+                  "chest_o": T.get(cmap[6]), "accs": []}
+            for j in joint_ids:
+                tb["slots"].append({"o": T.get(cmap[j]), "m": T2R.get(cmap[j])})
+            cp_ = TP.get(cmap[6], -1)
+            tb["cp_o"] = T.get(cp_) if cp_ >= 0 else None
+            for a in sk.get("accessories", []):
+                tb["accs"].append(T2R.get(int(a["joint"])))
+            if tb["top_m"] and all(sl["m"] for sl in tb["slots"]):
+                canon["tbnd"] = tb
     # classic (non-canonical) path: head orientation calibration. The
     # engine bakes mario's spawn head turn into every render (systemic);
     # the correction is a fixed rotation of head-owned verts about the
@@ -4289,6 +4312,23 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
                 f.write(struct.pack("<i", pslot))
             print(f"binary5: CANONICAL retarget -> {canon['name']} "
                   f"(target joints {canon['tids']}, CAN1 section)")
+            tb = canon.get("tbnd")
+            if tb:
+                f.write(b"TBND")
+                def wmat(m):
+                    for r in range(3):
+                        f.write(struct.pack("<fff", *m[r]))
+                for sl in tb["slots"]:
+                    f.write(struct.pack("<fff", *sl["o"]))
+                    wmat(sl["m"])
+                f.write(struct.pack("<fff", *tb["top_o"])); wmat(tb["top_m"])
+                f.write(struct.pack("<fff", *(tb["cp_o"] or tb["top_o"])))
+                f.write(struct.pack("<fff", *(tb["chest_o"] or tb["top_o"])))
+                f.write(struct.pack("<I", len(tb["accs"])))
+                I3 = [[1.0,0,0],[0,1.0,0],[0,0,1.0]]
+                for am in tb["accs"]:
+                    wmat(am or I3)
+                print("binary5: baked target bind (TBND section)")
         fs = float(sk.get("fit_scale", 1.0) or 1.0)
         if canon:
             fs = 1.0
