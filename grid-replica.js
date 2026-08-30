@@ -1,4 +1,4 @@
-// 8x25 extension of the supplied OpenSmash character grid. The lattice,
+// Responsive extension of the supplied OpenSmash character grid. The lattice,
 // fire, captions, and interaction stay code-rendered; only the twelve native
 // character portraits are layered into the cells as transparent cutouts.
 
@@ -7,11 +7,12 @@ const RASTER_DEBUG = new URLSearchParams(window.location.search);
 const CELL_W = 45;
 const CELL_H = 43;
 const RULE = 2;
-const GRID_COLUMNS = 8;
-const GRID_ROWS = 25;
-const CELL_COUNT = GRID_COLUMNS * GRID_ROWS;
-const GRID_W = RULE + GRID_COLUMNS * (CELL_W + RULE);
-const GRID_H = RULE + GRID_ROWS * (CELL_H + RULE);
+const CELL_COUNT = 200;
+const GRID_COLUMN_BREAKPOINTS = Object.freeze([
+  { minWidth: 1024, columns: 8 },
+  { minWidth: 640, columns: 6 },
+  { minWidth: 0, columns: 4 }
+]);
 const RASTER_SCALE = 2;
 // Placeholder portraits already carry their native roster captions. Keep the
 // code-rendered font pipeline intact, but hide it until caption-free art lands.
@@ -538,22 +539,46 @@ function mapRuleSample(position, extent, cellSize, sourceExtent) {
 // Repeat the calibrated 2x2 rule lattice across the larger board. Every
 // boundary remains real code geometry, but its pixels come from the sampled
 // frame treatment instead of a flat CSS color.
-function renderRules() {
+function renderRules(gridWidth, gridHeight) {
   const sourceWidth = 96;
   const sourceHeight = 92;
   const reference = decodeReferenceRules();
-  const dst = new Uint8ClampedArray(GRID_W * GRID_H * 4);
+  const dst = new Uint8ClampedArray(gridWidth * gridHeight * 4);
   const xStride = CELL_W + RULE;
   const yStride = CELL_H + RULE;
-  for (let y = 0; y < GRID_H; y++) for (let x = 0; x < GRID_W; x++) {
-    const xr = x < RULE || x >= GRID_W - RULE || x % xStride < RULE;
-    const yr = y < RULE || y >= GRID_H - RULE || y % yStride < RULE;
+  for (let y = 0; y < gridHeight; y++) for (let x = 0; x < gridWidth; x++) {
+    const xr = x < RULE || x >= gridWidth - RULE || x % xStride < RULE;
+    const yr = y < RULE || y >= gridHeight - RULE || y % yStride < RULE;
     if (!xr && !yr) continue;
-    const sourceX = mapRuleSample(x, GRID_W, CELL_W, sourceWidth);
-    const sourceY = mapRuleSample(y, GRID_H, CELL_H, sourceHeight);
+    const sourceX = mapRuleSample(x, gridWidth, CELL_W, sourceWidth);
+    const sourceY = mapRuleSample(y, gridHeight, CELL_H, sourceHeight);
     const source = (sourceY * sourceWidth + sourceX) * 4;
     put(
-      dst, GRID_W, x, y,
+      dst, gridWidth, x, y,
+      reference[source], reference[source + 1], reference[source + 2], reference[source + 3]
+    );
+  }
+  return dst;
+}
+
+// Wrap non-grid media in the very same sampled roster rule. The transparent
+// center lets the media show through while the two native edge pixels retain
+// the game's irregular, texture-derived color instead of becoming a flat CSS
+// border.
+function renderOuterRules(frameWidth, frameHeight) {
+  const sourceWidth = 96;
+  const sourceHeight = 92;
+  const reference = decodeReferenceRules();
+  const dst = new Uint8ClampedArray(frameWidth * frameHeight * 4);
+  for (let y = 0; y < frameHeight; y++) for (let x = 0; x < frameWidth; x++) {
+    const xr = x < RULE || x >= frameWidth - RULE;
+    const yr = y < RULE || y >= frameHeight - RULE;
+    if (!xr && !yr) continue;
+    const sourceX = mapRuleSample(x, frameWidth, CELL_W, sourceWidth);
+    const sourceY = mapRuleSample(y, frameHeight, CELL_H, sourceHeight);
+    const source = (sourceY * sourceWidth + sourceX) * 4;
+    put(
+      dst, frameWidth, x, y,
       reference[source], reference[source + 1], reference[source + 2], reference[source + 3]
     );
   }
@@ -732,11 +757,11 @@ function paintCellCanvas(canvas, label, portraitName) {
 }
 
 const grid = document.getElementById('replica-grid');
+const introVideoFrame = document.querySelector('.intro-video-frame');
+const introVideoRuleCanvas = document.querySelector('.intro-video-rule-layer');
 const cells = new Map();
 
 CELL_IDS.forEach((id, index) => {
-  const col = index % GRID_COLUMNS;
-  const row = Math.floor(index / GRID_COLUMNS);
   const character = VANILLA_ROSTER[index % VANILLA_ROSTER.length];
   const label = character.label;
   const button = document.createElement('button');
@@ -746,12 +771,8 @@ CELL_IDS.forEach((id, index) => {
   button.dataset.label = label;
   button.dataset.rosterCharacter = character.asset;
   button.dataset.portrait = character.portrait;
-  button.dataset.column = String(col + 1);
-  button.dataset.row = String(row + 1);
-  button.style.setProperty('--cell-x', RULE + col * (CELL_W + RULE));
-  button.style.setProperty('--cell-y', RULE + row * (CELL_H + RULE));
   button.setAttribute('role', 'gridcell');
-  button.setAttribute('aria-label', `${character.name}, row ${row + 1}, column ${col + 1}`);
+  button.setAttribute('aria-label', character.name);
   button.setAttribute('aria-pressed', 'false');
   const framebuffer = renderCellFramebuffer(label, character.portrait);
   button.append(canvasFromPixels(
@@ -761,7 +782,85 @@ CELL_IDS.forEach((id, index) => {
   cells.set(id, button);
 });
 
-grid.append(canvasFromPixels(renderRules(), GRID_W, GRID_H, 'replica-rule-layer'));
+const ruleCanvas = document.createElement('canvas');
+ruleCanvas.className = 'replica-rule-layer';
+ruleCanvas.setAttribute('aria-hidden', 'true');
+grid.append(ruleCanvas);
+
+let currentGridLayout;
+let introVideoRuleSignature = '';
+
+function paintIntroVideoRule() {
+  if (!currentGridLayout || !introVideoFrame || !introVideoRuleCanvas) return;
+  const frameRect = introVideoFrame.getBoundingClientRect();
+  const gridWidth = grid.getBoundingClientRect().width || window.innerWidth;
+  const rosterScale = gridWidth / currentGridLayout.width;
+  const width = Math.max(RULE * 2 + 1, Math.round(frameRect.width / rosterScale));
+  const height = Math.max(RULE * 2 + 1, Math.round(frameRect.height / rosterScale));
+  const signature = `${width}x${height}`;
+  if (signature === introVideoRuleSignature) return;
+  introVideoRuleSignature = signature;
+  paintPixels(
+    introVideoRuleCanvas, renderOuterRules(width, height), width, height
+  );
+}
+
+function columnsForContainer() {
+  const containerWidth = introVideoFrame?.clientWidth
+    || grid.closest('.arena-surface')?.clientWidth
+    || window.innerWidth;
+  return GRID_COLUMN_BREAKPOINTS.find(({ minWidth }) => containerWidth >= minWidth).columns;
+}
+
+function applyGridLayout(columns = columnsForContainer()) {
+  if (currentGridLayout?.columns === columns) return currentGridLayout;
+
+  const rows = Math.ceil(CELL_COUNT / columns);
+  const width = RULE + columns * (CELL_W + RULE);
+  const height = RULE + rows * (CELL_H + RULE);
+  currentGridLayout = Object.freeze({ columns, rows, width, height });
+
+  grid.closest('.arena-surface').style.aspectRatio = `${width} / ${height}`;
+  grid.setAttribute('aria-colcount', String(columns));
+  grid.setAttribute('aria-rowcount', String(rows));
+
+  [...cells.values()].forEach((button, index) => {
+    const col = index % columns;
+    const row = Math.floor(index / columns);
+    button.dataset.column = String(col + 1);
+    button.dataset.row = String(row + 1);
+    button.style.setProperty('--cell-left', `${100 * (RULE + col * (CELL_W + RULE)) / width}%`);
+    button.style.setProperty('--cell-top', `${100 * (RULE + row * (CELL_H + RULE)) / height}%`);
+    button.style.setProperty('--cell-width', `${100 * CELL_W / width}%`);
+    button.style.setProperty('--cell-height', `${100 * CELL_H / height}%`);
+    button.setAttribute(
+      'aria-label',
+      `${VANILLA_ROSTER[index % VANILLA_ROSTER.length].name}, row ${row + 1}, column ${col + 1}`
+    );
+  });
+
+  paintPixels(ruleCanvas, renderRules(width, height), width, height);
+  paintIntroVideoRule();
+
+  const metrics = document.getElementById('replica-metrics');
+  metrics.textContent =
+    `${CELL_COUNT} targetable cells · ${columns}×${rows} · ${width}×${height} native`;
+
+  return currentGridLayout;
+}
+
+applyGridLayout();
+
+function syncLayoutToVideoWidth() {
+  applyGridLayout(columnsForContainer());
+  paintIntroVideoRule();
+}
+
+if (introVideoFrame && 'ResizeObserver' in window) {
+  const videoWidthObserver = new ResizeObserver(syncLayoutToVideoWidth);
+  videoWidthObserver.observe(introVideoFrame);
+}
+window.addEventListener('resize', syncLayoutToVideoWidth);
 
 function getCell(name) {
   const key = String(name).toUpperCase();
@@ -953,6 +1052,8 @@ const FONT_GRADE = buildFontBench();
 window.characterGrid = Object.freeze({
   element: grid,
   cells,
+  get columnCount() { return currentGridLayout.columns; },
+  get rowCount() { return currentGridLayout.rows; },
   getCell,
   setLabel,
   highlight,
@@ -962,7 +1063,9 @@ window.characterGrid = Object.freeze({
 });
 
 window.__replicaMetrics = Object.freeze({
-  nativeGrid: GRID_W + 'x' + GRID_H,
+  get nativeGrid() { return currentGridLayout.width + 'x' + currentGridLayout.height; },
+  get columns() { return currentGridLayout.columns; },
+  get rows() { return currentGridLayout.rows; },
   cellInterior: CELL_W + 'x' + CELL_H,
   cellElements: cells.size,
   alphabetGlyphs: CAPTION_GLYPHS.size,
@@ -981,6 +1084,4 @@ window.__replicaMetrics = Object.freeze({
   portraitsGraded: false
 });
 
-document.getElementById('replica-metrics').textContent =
-  `${CELL_COUNT} targetable cells · ${GRID_COLUMNS}×${GRID_ROWS} · ${GRID_W}×${GRID_H} native`;
 document.documentElement.dataset.replicaReady = 'true';

@@ -4,13 +4,17 @@
 <meta charset="utf-8">
 <title>OpenSmash</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script>
+  if (location.protocol === 'file:') {
+    location.replace('http://localhost:4173/index.html');
+  }
+</script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { min-height: 100%; cursor: none; }
+  html { background: #000; }
   body {
-    background:
-      radial-gradient(circle at 50% -20%, #35130e 0, #130807 38%, #050303 74%),
-      #050303;
+    background: #000;
     overflow-x: hidden;
     color: #e9dfcf;
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -259,15 +263,131 @@
     overflow-y: auto;
   }
   .arena-shell {
+    --arena-content-width: min(100vw, 100vh);
+    --content-section-space: clamp(20px, 2.5vw, 28px);
     position: relative;
     z-index: 1;
-    width: 100vw;
+    width: var(--arena-content-width);
     min-height: 100vh;
+    margin-inline: auto;
+  }
+  .presenter-credit {
+    position: relative;
+    z-index: 4;
+    width: min(352px, 80vw);
+    max-width: 100%;
+    padding: 0;
+    margin: 16px auto 0;
+    line-height: 0;
+  }
+  .presenter-credit-art {
+    position: relative;
+    z-index: 1;
+    display: block;
+    width: 100%;
+    height: auto;
+    image-rendering: pixelated;
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-drag: none;
+  }
+  .presenter-credit-link {
+    position: absolute;
+    top: 0;
+    z-index: 0;
+    display: block;
+    height: 100%;
+    cursor: none;
+    outline: none;
+  }
+  .presenter-credit-link::after {
+    content: "";
+    position: absolute;
+    top: 81%;
+    right: 0;
+    left: 0;
+    border-bottom: 2px solid #f2f2f2;
+    box-shadow: 2px 2px #000;
+    transition: border-color 150ms;
+  }
+  .presenter-credit-link:hover::after,
+  .presenter-credit-link:focus-visible::after { border-bottom-color: #fff; }
+  .presenter-credit-link:focus-visible {
+    border-radius: 2px;
+    box-shadow: none;
+    outline: none;
+  }
+  .presenter-credit-link--thomas { left: 1.3%; width: 38.8%; }
+  .presenter-credit-link--joey { left: 51.8%; width: 27.3%; }
+  .intro-video-stage {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    padding-top: var(--content-section-space);
+    margin-bottom: var(--content-section-space);
+    background: transparent;
+  }
+  .intro-video-frame {
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    max-height: 75vh;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    background: #000;
+  }
+  .intro-video {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    background: #000;
+    pointer-events: none;
+  }
+  .intro-video-rule-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: block;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    image-rendering: auto;
+  }
+  .intro-video-stage,
+  .arena-surface {
+    opacity: 0;
+    filter: brightness(0) contrast(1.25);
+    transform: scale(1.008);
+    transform-origin: 50% 0;
+    transition:
+      opacity 520ms steps(5, end),
+      filter 620ms steps(5, end),
+      transform 620ms steps(5, end);
+  }
+  .presenter-credit {
+    opacity: 0;
+    filter: brightness(0) contrast(1.25);
+    transition:
+      opacity 520ms steps(5, end),
+      filter 620ms steps(5, end);
+  }
+  body:not(.is-game-booted) { overflow-y: hidden; }
+  body.is-intro-credit-visible .presenter-credit {
+    opacity: 1;
+    filter: none;
+  }
+  body.is-game-booted .intro-video-stage,
+  body.is-game-booted .arena-surface {
+    opacity: 1;
+    filter: none;
+    transform: none;
   }
   .arena-surface {
-    width: 100vw;
-    height: calc(100vw * 1127 / 378);
-    background: #080504;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 378 / 1127;
+    background: transparent;
     box-shadow: 0 0 0 1px #160d0a, 0 20px 80px rgba(0, 0, 0, .58);
   }
   .arena-shell .replica-grid {
@@ -275,13 +395,13 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
-    background: #080504;
+    background: transparent;
   }
   .arena-shell .replica-cell {
-    left: calc(var(--cell-x) * 100% / 378);
-    top: calc(var(--cell-y) * 100% / 1127);
-    width: calc(45 * 100% / 378);
-    height: calc(43 * 100% / 1127);
+    left: var(--cell-left);
+    top: var(--cell-top);
+    width: var(--cell-width);
+    height: var(--cell-height);
   }
   #glove-canvas {
     position: fixed; inset: 0;
@@ -289,13 +409,23 @@
     pointer-events: none;
     z-index: 1000;
   }
-  #cartridge-control {
+  #hardware-inset {
     position: fixed;
+    top: clamp(22px, 4vh, 48px);
     left: 50%;
-    bottom: clamp(42px, 7vh, 84px);
-    width: clamp(104px, 12vw, 164px);
-    aspect-ratio: 1;
+    bottom: clamp(22px, 4vh, 48px);
+    width: clamp(238px, 30vw, 390px);
     transform: translateX(-50%);
+    pointer-events: none;
+    z-index: 999;
+  }
+  #cartridge-control {
+    position: absolute;
+    left: 50%;
+    top: var(--cartridge-home-top, 30%);
+    width: clamp(116px, 14vw, 176px);
+    aspect-ratio: 1;
+    transform: translate(-50%, -50%);
     appearance: none;
     padding: 0;
     border: 0;
@@ -303,11 +433,106 @@
     background: transparent;
     cursor: none;
     touch-action: none;
-    z-index: 999;
+    pointer-events: auto;
+  }
+  #hardware-inset[data-cartridge-state="booting"] #cartridge-control,
+  #hardware-inset[data-cartridge-state="running"] #cartridge-control,
+  #hardware-inset[data-cartridge-state="ejecting"] #cartridge-control {
+    top: auto;
+    bottom: 12%;
+    transform: translateX(-50%);
+  }
+  #hardware-inset[data-cartridge-state="booting"] #cartridge-control,
+  #hardware-inset[data-cartridge-state="running"] #cartridge-control {
+    pointer-events: none;
+  }
+  #console-control {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    width: 100%;
+    aspect-ratio: 1.55;
+    transform: translateX(-50%);
+    pointer-events: none;
+  }
+  @media (max-width: 700px) {
+    #hardware-inset {
+      top: 16px;
+      left: 50%;
+      bottom: 16px;
+      width: min(100vw, 330px);
+    }
   }
   #cartridge-control:focus-visible {
     outline: 2px solid rgba(255, 240, 181, .9);
     outline-offset: 3px;
+  }
+  #shader-tuner {
+    position: fixed;
+    left: 16px;
+    bottom: 16px;
+    z-index: 1100;
+    width: min(310px, calc(100vw - 32px));
+    border: 1px solid rgba(189, 157, 125, .34);
+    border-radius: 8px;
+    background: rgba(12, 8, 7, .94);
+    box-shadow: 0 12px 36px rgba(0, 0, 0, .58), inset 0 1px rgba(255, 227, 194, .05);
+    color: #d7c5b3;
+    font: 11px/1.3 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    pointer-events: auto;
+    cursor: auto;
+    backdrop-filter: blur(10px);
+  }
+  #shader-tuner * { cursor: auto; }
+  #shader-tuner summary {
+    padding: 10px 12px;
+    color: #ead8c5;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    user-select: none;
+  }
+  #shader-tuner[open] summary { border-bottom: 1px solid rgba(189, 157, 125, .2); }
+  .shader-tuner-body { display: grid; gap: 9px; padding: 11px 12px 12px; }
+  .shader-control { display: grid; gap: 5px; }
+  .shader-control > span,
+  .shader-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .shader-control output {
+    color: #f2c985;
+    font-variant-numeric: tabular-nums;
+  }
+  .shader-control input[type="range"] { width: 100%; accent-color: #d58b48; }
+  .shader-control input[type="color"] {
+    width: 42px;
+    height: 24px;
+    padding: 1px;
+    border: 1px solid #67503f;
+    border-radius: 4px;
+    background: #17100d;
+  }
+  .shader-toggle input { accent-color: #d58b48; }
+  .shader-tuner-actions { display: flex; justify-content: flex-end; padding-top: 2px; }
+  .shader-tuner-actions button {
+    padding: 6px 9px;
+    border: 1px solid #5c4636;
+    border-radius: 4px;
+    background: #21150f;
+    color: #d7c5b3;
+    font: inherit;
+  }
+  .shader-tuner-actions button:hover { border-color: #a97850; color: #fff0df; }
+  @media (max-width: 520px) {
+    #shader-tuner { left: 8px; bottom: 8px; width: min(280px, calc(100vw - 16px)); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .presenter-credit,
+    .intro-video-stage,
+    .arena-surface { transition: none; }
   }
   .visually-hidden {
     position: absolute;
@@ -330,6 +555,31 @@
 </head>
 <body>
   <main class="arena-shell" aria-label="Two hundred cell character grid">
+    <div class="presenter-credit" aria-label="Thomas Dimson and Joey Flynn present">
+      <img class="presenter-credit-art" src="./assets/credit-presents.png"
+           alt="Thomas Dimson and Joey Flynn present" draggable="false">
+      <a class="presenter-credit-link presenter-credit-link--thomas"
+         href="https://x.com/turtlesoupy" target="_blank" rel="noreferrer"
+         aria-label="Thomas Dimson on X">
+        <span class="visually-hidden">Thomas Dimson</span>
+      </a>
+      <a class="presenter-credit-link presenter-credit-link--joey"
+         href="https://x.com/wjosephflynn" target="_blank" rel="noreferrer"
+         aria-label="Joey Flynn on X">
+        <span class="visually-hidden">Joey Flynn</span>
+      </a>
+    </div>
+    <section class="intro-video-stage" aria-label="Intro video">
+      <div class="intro-video-frame">
+        <iframe class="intro-video"
+                data-src="https://www.youtube-nocookie.com/embed/_2rnnactus4?autoplay=1&amp;mute=1&amp;loop=1&amp;playlist=_2rnnactus4&amp;playsinline=1&amp;rel=0&amp;start=151&amp;controls=0&amp;disablekb=1&amp;fs=0&amp;iv_load_policy=3&amp;modestbranding=1"
+                title="J - Z"
+                allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+                referrerpolicy="strict-origin-when-cross-origin"
+                allowfullscreen></iframe>
+        <canvas class="intro-video-rule-layer" aria-hidden="true"></canvas>
+      </div>
+    </section>
     <div class="arena-surface">
       <div id="replica-grid" class="replica-grid" role="grid" aria-label="Two hundred code-rendered character cells"></div>
     </div>
@@ -344,12 +594,58 @@
     </section>
   </main>
 
-  <button id="cartridge-control" type="button" aria-label="Spin the OpenSmash cartridge">
-    <span class="visually-hidden">Spin the OpenSmash cartridge</span>
-  </button>
+  <aside id="hardware-inset" data-cartridge-state="free" aria-label="Interactive cartridge and console">
+    <button id="cartridge-control" type="button" aria-label="Drag the cartridge into the console">
+      <span class="visually-hidden">Drag the cartridge into the console</span>
+    </button>
+    <div id="console-control" aria-hidden="true"></div>
+  </aside>
+  <details id="shader-tuner" hidden>
+    <summary>Shader tuning</summary>
+    <div class="shader-tuner-body">
+      <label class="shader-toggle">
+        <span>Effect enabled</span>
+        <input type="checkbox" data-shader="enabled" checked>
+      </label>
+      <label class="shader-control">
+        <span>Pixel size <output data-value-for="pixelSize"></output></span>
+        <input type="range" min="1" max="6" step="1" data-shader="pixelSize">
+      </label>
+      <label class="shader-control">
+        <span>Color steps <output data-value-for="colorSteps"></output></span>
+        <input type="range" min="2" max="32" step="1" data-shader="colorSteps">
+      </label>
+      <label class="shader-control">
+        <span>Posterize <output data-value-for="posterize"></output></span>
+        <input type="range" min="0" max="1" step="0.05" data-shader="posterize">
+      </label>
+      <label class="shader-control">
+        <span>Edge dither <output data-value-for="dither"></output></span>
+        <input type="range" min="0" max="1" step="0.05" data-shader="dither">
+      </label>
+      <label class="shader-control">
+        <span>Outline width <output data-value-for="outlineWidth"></output></span>
+        <input type="range" min="0" max="3" step="1" data-shader="outlineWidth">
+      </label>
+      <label class="shader-control">
+        <span>Outline strength <output data-value-for="outlineStrength"></output></span>
+        <input type="range" min="0" max="1" step="0.05" data-shader="outlineStrength">
+      </label>
+      <label class="shader-control">
+        <span>Display gamma <output data-value-for="gamma"></output></span>
+        <input type="range" min="1" max="3" step="0.05" data-shader="gamma">
+      </label>
+      <label class="shader-control">
+        <span>Outline color <input type="color" data-shader="outlineColor"></span>
+      </label>
+      <div class="shader-tuner-actions">
+        <button id="shader-reset" type="button">Reset defaults</button>
+      </div>
+    </div>
+  </details>
   <canvas id="glove-canvas"></canvas>
 
-<script type="module" src="./grid-replica.js?v=20260829g"></script>
+<script type="module" src="./grid-replica.js?v=20260830c"></script>
 <script type="module">
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -372,7 +668,45 @@ scene.add(new THREE.HemisphereLight(0xffffff, 0x9a9aa8, 0.4));
 // N64 retro pipeline: render tiny -> nearest-neighbor upscale, posterized
 // grays, Bayer-dithered alpha edge, and a 1-texel dark outline.
 // ---------------------------------------------------------------------------
-const PIX = 2;  // screen pixels per texel — 2x: each texel is a 2x2 block
+const SHADER_DEFAULTS = Object.freeze({
+  enabled: true,
+  pixelSize: 2,
+  colorSteps: 12,
+  posterize: 0.5,
+  dither: 1,
+  outlineWidth: 1,
+  outlineStrength: 0.7,
+  outlineColor: '#383838',
+  gamma: 2.5,
+});
+const SHADER_STORAGE_KEY = 'opensmash.shader-tuning.v3';
+
+function loadShaderSettings() {
+  let stored = {};
+  try { stored = JSON.parse(localStorage.getItem(SHADER_STORAGE_KEY) || '{}'); }
+  catch (_) { /* Ignore malformed or unavailable local storage. */ }
+  const settings = { ...SHADER_DEFAULTS };
+  for (const key of ['pixelSize', 'colorSteps', 'posterize', 'dither',
+                     'outlineWidth', 'outlineStrength', 'gamma']) {
+    if (Number.isFinite(Number(stored[key]))) settings[key] = Number(stored[key]);
+  }
+  if (typeof stored.enabled === 'boolean') settings.enabled = stored.enabled;
+  if (/^#[0-9a-f]{6}$/i.test(stored.outlineColor || '')) {
+    settings.outlineColor = stored.outlineColor;
+  }
+  return settings;
+}
+
+function shaderColor(hex) {
+  const value = Number.parseInt(hex.slice(1), 16);
+  return new THREE.Vector3(
+    ((value >> 16) & 255) / 255,
+    ((value >> 8) & 255) / 255,
+    (value & 255) / 255
+  );
+}
+
+const shaderSettings = loadShaderSettings();
 const rt = new THREE.WebGLRenderTarget(4, 4, {
   minFilter: THREE.NearestFilter,
   magFilter: THREE.NearestFilter,
@@ -382,11 +716,23 @@ const postScene = new THREE.Scene();
 const postCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 const postMat = new THREE.ShaderMaterial({
   transparent: true,
-  uniforms: { tex: { value: rt.texture }, res: { value: new THREE.Vector2(4, 4) } },
+  uniforms: {
+    tex: { value: rt.texture },
+    res: { value: new THREE.Vector2(4, 4) },
+    colorSteps: { value: shaderSettings.colorSteps },
+    posterize: { value: shaderSettings.posterize },
+    dither: { value: shaderSettings.dither },
+    outlineWidth: { value: shaderSettings.outlineWidth },
+    outlineStrength: { value: shaderSettings.outlineStrength },
+    outlineColor: { value: shaderColor(shaderSettings.outlineColor) },
+    gamma: { value: shaderSettings.gamma },
+  },
   vertexShader: `varying vec2 vUv;
     void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }`,
   fragmentShader: `
     uniform sampler2D tex; uniform vec2 res; varying vec2 vUv;
+    uniform float colorSteps, posterize, dither, outlineWidth, outlineStrength, gamma;
+    uniform vec3 outlineColor;
     float bayer4(vec2 p) {
       int x = int(mod(p.x, 4.0)), y = int(mod(p.y, 4.0));
       int m[16]; m[0]=0; m[1]=8; m[2]=2; m[3]=10; m[4]=12; m[5]=4; m[6]=14; m[7]=6;
@@ -394,17 +740,30 @@ const postMat = new THREE.ShaderMaterial({
       return (float(m[y*4+x]) + 0.5) / 16.0;
     }
     bool solidAt(vec2 t) {
-      return texture2D(tex, (t + 0.5) / res).a >= bayer4(t);
+      float threshold = mix(0.5, bayer4(t), dither);
+      return texture2D(tex, (t + 0.5) / res).a >= threshold;
     }
     void main() {
       vec2 texel = floor(vUv * res);
       if (!solidAt(texel)) discard;
       vec4 c = texture2D(tex, (texel + 0.5) / res);
-      vec3 col = pow(clamp(c.rgb, 0.0, 1.0), vec3(0.4545));  // linear -> sRGB
-      col = floor(col * 9.0 + 0.5) / 9.0;
-      bool edge = !solidAt(texel + vec2(1.0, 0.0)) || !solidAt(texel - vec2(1.0, 0.0))
-               || !solidAt(texel + vec2(0.0, 1.0)) || !solidAt(texel - vec2(0.0, 1.0));
-      if (edge) col = min(col, vec3(0.22));
+      vec3 col = pow(clamp(c.rgb, 0.0, 1.0), vec3(1.0 / gamma));
+      vec3 stepped = floor(col * colorSteps + 0.5) / colorSteps;
+      col = mix(col, stepped, posterize);
+      bool edge = false;
+      if (outlineWidth >= 0.5) {
+        edge = !solidAt(texel + vec2(1.0, 0.0)) || !solidAt(texel - vec2(1.0, 0.0))
+            || !solidAt(texel + vec2(0.0, 1.0)) || !solidAt(texel - vec2(0.0, 1.0));
+      }
+      if (outlineWidth >= 1.5) {
+        edge = edge || !solidAt(texel + vec2(2.0, 0.0)) || !solidAt(texel - vec2(2.0, 0.0))
+            || !solidAt(texel + vec2(0.0, 2.0)) || !solidAt(texel - vec2(0.0, 2.0));
+      }
+      if (outlineWidth >= 2.5) {
+        edge = edge || !solidAt(texel + vec2(3.0, 0.0)) || !solidAt(texel - vec2(3.0, 0.0))
+            || !solidAt(texel + vec2(0.0, 3.0)) || !solidAt(texel - vec2(0.0, 3.0));
+      }
+      if (edge) col = mix(col, min(col, outlineColor), outlineStrength);
       gl_FragColor = vec4(col, 1.0);
     }`,
 });
@@ -414,24 +773,38 @@ postScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), postMat));
 const VIEW_H = 2 * Math.tan(THREE.MathUtils.degToRad(35 / 2)) * 16;
 const GLOVE_PX = 32;   // tuned so the rendered silhouette spans the sprite's 36 rows
 let handUnitH = 0;     // hand height in world units; set once the mesh is built
-const CARTRIDGE_PX = 58;
+const CONSOLE_PX = 150;
+const CARTRIDGE_FIT_SCALE = 0.44;
+const CARTRIDGE_IDLE_Z = 1.55;
+const CARTRIDGE_DRAG_Z = -0.48;
+const CONSOLE_PRESS_CUE = 0.20;
+const CARTRIDGE_MAGNET_MAX = 0.88;
+const CARTRIDGE_ROUTE_SPEED = 6.0;
 const CARTRIDGE_IDLE_SPIN_SPEED = 0.22;
 const CARTRIDGE_FRONT_YAW = Math.PI * 1.5 - 0.28;
 let cartridgeUnitH = 0;
+let cartridgeUnitW = 0;
+let cartridgeUnitD = 0;
+let consoleUnitW = 0;
+let consoleScaleValue = 0;
 
-function applyGloveScale(rtTexelH) {
+function applyGloveScale(viewportPixelH, targetScreenPx = GLOVE_PX * SHADER_DEFAULTS.pixelSize) {
   if (!handUnitH) return;
-  let s = GLOVE_PX * (VIEW_H / rtTexelH) / handUnitH;
+  let s = targetScreenPx * (VIEW_H / viewportPixelH) / handUnitH;
   if (location.hash.includes('big')) s *= 4;
   glove.scale.setScalar(s);
   keyLight.intensity = 24 * s * s;   // inverse-square compensation
 }
 
-function applyCartridgeScale(rtTexelH) {
-  if (!cartridgeUnitH) return;
-  const responsivePx = window.innerWidth < 640 ? CARTRIDGE_PX * 0.76 : CARTRIDGE_PX;
-  const s = responsivePx * (VIEW_H / rtTexelH) / cartridgeUnitH;
-  cartridgeVisual.scale.setScalar(s);
+function applyHardwareScale(viewportPixelH) {
+  if (!consoleUnitW) return;
+  const responsivePx = window.innerWidth < 640 ? CONSOLE_PX * 0.76 : CONSOLE_PX;
+  consoleScaleValue = responsivePx * SHADER_DEFAULTS.pixelSize
+    * (VIEW_H / viewportPixelH) / consoleUnitW;
+  consoleVisual.scale.setScalar(consoleScaleValue);
+  if (cartridgeUnitH) {
+    cartridgeVisual.scale.setScalar(consoleScaleValue * CARTRIDGE_FIT_SCALE);
+  }
 }
 
 function resize() {
@@ -440,15 +813,69 @@ function resize() {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.fov = 35;
   camera.updateProjectionMatrix();
-  const w = Math.max(4, Math.round(window.innerWidth / PIX));
-  const h = Math.max(4, Math.round(window.innerHeight / PIX));
+  const w = Math.max(4, Math.round(window.innerWidth / shaderSettings.pixelSize));
+  const h = Math.max(4, Math.round(window.innerHeight / shaderSettings.pixelSize));
   rt.setSize(w, h);
   postMat.uniforms.res.value.set(w, h);
-  applyGloveScale(h);
-  applyCartridgeScale(h);
+  applyGloveScale(window.innerHeight);
+  applyHardwareScale(window.innerHeight);
 }
 window.addEventListener('resize', resize);
 resize();
+
+const shaderTuner = document.getElementById('shader-tuner');
+const shaderControls = [...shaderTuner.querySelectorAll('[data-shader]')];
+
+function shaderValueLabel(key, value) {
+  if (['posterize', 'dither', 'outlineStrength'].includes(key)) {
+    return `${Math.round(value * 100)}%`;
+  }
+  if (key === 'pixelSize') return `${value}×`;
+  if (key === 'outlineWidth') return `${value} px`;
+  if (key === 'gamma') return Number(value).toFixed(2);
+  return String(value);
+}
+
+function syncShaderTuner() {
+  for (const control of shaderControls) {
+    const key = control.dataset.shader;
+    if (control.type === 'checkbox') control.checked = shaderSettings[key];
+    else control.value = shaderSettings[key];
+    const output = shaderTuner.querySelector(`[data-value-for="${key}"]`);
+    if (output) output.value = shaderValueLabel(key, shaderSettings[key]);
+  }
+}
+
+function applyShaderSettings(pixelSizeChanged = false) {
+  postMat.uniforms.colorSteps.value = shaderSettings.colorSteps;
+  postMat.uniforms.posterize.value = shaderSettings.posterize;
+  postMat.uniforms.dither.value = shaderSettings.dither;
+  postMat.uniforms.outlineWidth.value = shaderSettings.outlineWidth;
+  postMat.uniforms.outlineStrength.value = shaderSettings.outlineStrength;
+  postMat.uniforms.outlineColor.value.copy(shaderColor(shaderSettings.outlineColor));
+  postMat.uniforms.gamma.value = shaderSettings.gamma;
+  try { localStorage.setItem(SHADER_STORAGE_KEY, JSON.stringify(shaderSettings)); }
+  catch (_) { /* Settings still work for this session. */ }
+  if (pixelSizeChanged) resize();
+  syncShaderTuner();
+}
+
+for (const control of shaderControls) {
+  control.addEventListener('input', () => {
+    const key = control.dataset.shader;
+    const previousPixelSize = shaderSettings.pixelSize;
+    shaderSettings[key] = control.type === 'checkbox' ? control.checked
+      : control.type === 'color' ? control.value : Number(control.value);
+    applyShaderSettings(key === 'pixelSize' && shaderSettings.pixelSize !== previousPixelSize);
+  });
+}
+document.getElementById('shader-reset').addEventListener('click', () => {
+  Object.assign(shaderSettings, SHADER_DEFAULTS);
+  applyShaderSettings(true);
+});
+shaderTuner.addEventListener('pointerdown', event => event.stopPropagation());
+syncShaderTuner();
+window.__shaderSettings = shaderSettings;
 
 // ---------------------------------------------------------------------------
 // Rig: bone skeleton retargeted onto the Meshy GLB's anatomy (hand-local
@@ -593,6 +1020,7 @@ function sdRoot(p) {
 
 const gloveMat = new THREE.MeshStandardMaterial({
   color: 0xe9e9ec, roughness: 0.9, metalness: 0.0,
+  transparent: true, opacity: 1, depthTest: false, depthWrite: false,
 });
 
 // ---------------------------------------------------------------------------
@@ -622,6 +1050,19 @@ scene.add(glove);
 // so it receives the glove's low-res, posterized, dithered-outline pass.
 // ---------------------------------------------------------------------------
 const cartridgeControl = document.getElementById('cartridge-control');
+const consoleControl = document.getElementById('console-control');
+const hardwareInset = document.getElementById('hardware-inset');
+
+function updateCartridgeHomeLayout() {
+  const inset = hardwareInset.getBoundingClientRect();
+  const consoleRect = consoleControl.getBoundingClientRect();
+  const homeViewportY = consoleRect.top * 0.5;
+  const homeInsetY = Math.max(0, homeViewportY - inset.top);
+  hardwareInset.style.setProperty('--cartridge-home-top', `${homeInsetY}px`);
+}
+updateCartridgeHomeLayout();
+window.addEventListener('resize', updateCartridgeHomeLayout);
+
 const cartridgeRig = new THREE.Group();
 const cartridgeVisual = new THREE.Group();
 const cartridgeLight = new THREE.DirectionalLight(0xfff0d4, 2.65);
@@ -635,6 +1076,22 @@ cartridgeRig.add(
 );
 scene.add(cartridgeRig);
 
+const consoleRig = new THREE.Group();
+const consoleVisual = new THREE.Group();
+const consoleRestQuaternion = new THREE.Quaternion();
+const consoleInviteQuaternion = new THREE.Quaternion();
+const consoleBaseQuaternion = new THREE.Quaternion();
+const consoleIdleQuaternion = new THREE.Quaternion();
+const consoleIdleEuler = new THREE.Euler();
+const consoleLight = new THREE.DirectionalLight(0xffead0, 2.2);
+consoleLight.position.set(-1.2, 3.5, 2.8);
+consoleLight.target.position.set(0, 0, 0);
+const consoleFillLight = new THREE.DirectionalLight(0x9db7e8, 0.42);
+consoleFillLight.position.set(2.2, 0.4, 2.1);
+consoleFillLight.target = consoleLight.target;
+consoleRig.add(consoleVisual, consoleLight, consoleFillLight, consoleLight.target);
+scene.add(consoleRig);
+
 const cartridgeMaterial = new THREE.MeshStandardMaterial({
   color: 0xb8b5ba,
   emissive: 0x121116,
@@ -642,6 +1099,55 @@ const cartridgeMaterial = new THREE.MeshStandardMaterial({
   roughness: 0.84,
   metalness: 0,
 });
+const cartridgeLabelTexture = new THREE.TextureLoader().load(
+  'assets/cartridge-label-art.png'
+);
+cartridgeLabelTexture.colorSpace = THREE.SRGBColorSpace;
+cartridgeLabelTexture.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+const cartridgeLabelMaterial = new THREE.MeshBasicMaterial({
+  map: cartridgeLabelTexture,
+  transparent: true,
+  alphaTest: 0.02,
+  depthWrite: false,
+  side: THREE.DoubleSide,
+  polygonOffset: true,
+  polygonOffsetFactor: -4,
+  polygonOffsetUnits: -4,
+});
+const CARTRIDGE_LABEL_PANEL = Object.freeze({
+  width: 0.48046875,
+  height: 0.587890625,
+  frontX: 0.0876,
+  centerY: 0.015625,
+  centerZ: 0.0087890625,
+});
+const funLetterMaterials = {
+  FUN_F: new THREE.MeshStandardMaterial({
+    color: 0x111824, emissive: 0x1687ff, emissiveIntensity: 0,
+    roughness: 0.48, metalness: 0,
+  }),
+  FUN_U: new THREE.MeshStandardMaterial({
+    color: 0x211d0c, emissive: 0xffcf20, emissiveIntensity: 0,
+    roughness: 0.48, metalness: 0,
+  }),
+  FUN_N: new THREE.MeshStandardMaterial({
+    color: 0x251012, emissive: 0xff2d24, emissiveIntensity: 0,
+    roughness: 0.48, metalness: 0,
+  }),
+};
+
+const CARTRIDGE_STATE = Object.freeze({
+  FREE: 'free',
+  DRAGGING: 'dragging',
+  INSERTING: 'inserting',
+  BOOTING: 'booting',
+  RUNNING: 'running',
+  EJECTING: 'ejecting',
+});
+const HARDWARE_EXIT_DURATION = 0.9;
+const CREDIT_REVEAL_DELAY = HARDWARE_EXIT_DURATION;
+const SITE_REVEAL_DELAY = CREDIT_REVEAL_DELAY + 2.0;
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 let cartridgeModel = null;
 let cartridgeHovered = false;
@@ -654,6 +1160,18 @@ let cartridgeDragDistance = 0;
 let cartridgeSuppressClick = false;
 let cartridgeLastPointerTime = 0;
 let cartridgePhysicsReady = false;
+let cartridgeState = CARTRIDGE_STATE.FREE;
+let cartridgeSnapAmount = 0;
+let cartridgeEntryTarget = 0;
+let cartridgeEntryAmount = 0;
+let consoleApproachTarget = 0;
+let consoleApproachAmount = 0;
+let cartridgeRouteActive = false;
+let cartridgeRouteProgress = 0;
+let cartridgeRouteDuration = 0.75;
+let cartridgeRouteKind = 'none';
+let cartridgeEjectDrag = false;
+let cartridgeInsertionTime = -1;
 let cartridgeYaw = CARTRIDGE_FRONT_YAW;
 let cartridgeYawVelocity = CARTRIDGE_IDLE_SPIN_SPEED;
 let cartridgeClickSpin = 0;
@@ -666,7 +1184,316 @@ const cartridgeDragOffset = new THREE.Vector3();
 const cartridgePointerWorld = new THREE.Vector3();
 const cartridgePreviousPointerWorld = new THREE.Vector3();
 const cartridgePointerVelocity = new THREE.Vector3();
+const cartridgeCollisionScreen = new THREE.Vector2();
+const cartridgeRouteScreen = new THREE.Vector2();
+const cartridgeRouteTarget = new THREE.Vector3();
+const cartridgeRoutePoints = [];
+const cartridgeEjectHoldWorld = new THREE.Vector3();
+let cartridgePointerClientX = 0;
+let cartridgePointerClientY = 0;
 const cartridgeTilt = { x: 0, z: 0, vx: 0, vz: 0 };
+const cartridgeFreeQuaternion = new THREE.Quaternion();
+const cartridgeSocketQuaternion = new THREE.Quaternion();
+const cartridgeSocketWorld = new THREE.Vector3();
+const cartridgeVisibleSocketWorld = new THREE.Vector3();
+let consoleModel = null;
+let consoleSnapAnchor = null;
+
+// ---------------------------------------------------------------------------
+// Cartridge light wisps. Each strand is rebuilt in world space so its source
+// stays on the cartridge's spinning front plane while its tail can curl toward
+// the console without inheriting that rotation all the way down.
+// ---------------------------------------------------------------------------
+const CARTRIDGE_WISP_COUNT = 14;
+const CARTRIDGE_WISP_TRAIL_SEGMENTS = 5;
+const cartridgeWispSeeds = Array.from({ length: CARTRIDGE_WISP_COUNT }, (_, index) => {
+  const hash = value => {
+    const x = Math.sin(value * 127.1 + 311.7) * 43758.5453;
+    return x - Math.floor(x);
+  };
+  return {
+    phase: index / CARTRIDGE_WISP_COUNT + hash(index + 1) * 0.045,
+    speed: 0.13 + hash(index + 7) * 0.055,
+    across: hash(index + 13) * 2 - 1,
+    curl: hash(index + 23) * 2 - 1,
+    hue: hash(index + 31),
+  };
+});
+
+const cartridgeWispLinePositions = new Float32Array(
+  CARTRIDGE_WISP_COUNT * CARTRIDGE_WISP_TRAIL_SEGMENTS * 2 * 3
+);
+const cartridgeWispLineColors = new Float32Array(cartridgeWispLinePositions.length);
+const cartridgeWispLineAlphas = new Float32Array(
+  CARTRIDGE_WISP_COUNT * CARTRIDGE_WISP_TRAIL_SEGMENTS * 2
+);
+const cartridgeWispPointPositions = new Float32Array(CARTRIDGE_WISP_COUNT * 3);
+const cartridgeWispPointColors = new Float32Array(CARTRIDGE_WISP_COUNT * 3);
+const cartridgeWispPointAlphas = new Float32Array(CARTRIDGE_WISP_COUNT);
+
+const cartridgeWispLineGeometry = new THREE.BufferGeometry();
+cartridgeWispLineGeometry.setAttribute(
+  'position', new THREE.BufferAttribute(cartridgeWispLinePositions, 3).setUsage(THREE.DynamicDrawUsage)
+);
+cartridgeWispLineGeometry.setAttribute(
+  'color', new THREE.BufferAttribute(cartridgeWispLineColors, 3).setUsage(THREE.DynamicDrawUsage)
+);
+cartridgeWispLineGeometry.setAttribute(
+  'alpha', new THREE.BufferAttribute(cartridgeWispLineAlphas, 1).setUsage(THREE.DynamicDrawUsage)
+);
+
+const cartridgeWispPointGeometry = new THREE.BufferGeometry();
+cartridgeWispPointGeometry.setAttribute(
+  'position', new THREE.BufferAttribute(cartridgeWispPointPositions, 3).setUsage(THREE.DynamicDrawUsage)
+);
+cartridgeWispPointGeometry.setAttribute(
+  'color', new THREE.BufferAttribute(cartridgeWispPointColors, 3).setUsage(THREE.DynamicDrawUsage)
+);
+cartridgeWispPointGeometry.setAttribute(
+  'alpha', new THREE.BufferAttribute(cartridgeWispPointAlphas, 1).setUsage(THREE.DynamicDrawUsage)
+);
+
+const cartridgeWispVertexShader = `
+  attribute vec3 color;
+  attribute float alpha;
+  varying vec3 vColor;
+  varying float vAlpha;
+  void main() {
+    vColor = color;
+    vAlpha = alpha;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`;
+const cartridgeWispMaterialOptions = {
+  transparent: true,
+  depthWrite: false,
+  depthTest: true,
+  blending: THREE.AdditiveBlending,
+  toneMapped: false,
+};
+const cartridgeWispLineMaterial = new THREE.ShaderMaterial({
+  ...cartridgeWispMaterialOptions,
+  vertexShader: cartridgeWispVertexShader,
+  fragmentShader: `
+    varying vec3 vColor;
+    varying float vAlpha;
+    void main() {
+      if (vAlpha < 0.01) discard;
+      gl_FragColor = vec4(vColor, vAlpha);
+    }
+  `,
+});
+const cartridgeWispPointMaterial = new THREE.ShaderMaterial({
+  ...cartridgeWispMaterialOptions,
+  vertexShader: cartridgeWispVertexShader.replace(
+    'gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);',
+    `vec4 viewPosition = modelViewMatrix * vec4(position, 1.0);
+     gl_Position = projectionMatrix * viewPosition;
+     gl_PointSize = mix(2.2, 3.7, alpha);`
+  ),
+  fragmentShader: `
+    varying vec3 vColor;
+    varying float vAlpha;
+    void main() {
+      float radius = length(gl_PointCoord - vec2(0.5));
+      float glow = 1.0 - smoothstep(0.08, 0.5, radius);
+      float alpha = vAlpha * glow;
+      if (alpha < 0.01) discard;
+      gl_FragColor = vec4(vColor * (1.0 + glow * 0.35), alpha);
+    }
+  `,
+});
+const cartridgeWispLines = new THREE.LineSegments(
+  cartridgeWispLineGeometry, cartridgeWispLineMaterial
+);
+const cartridgeWispPoints = new THREE.Points(
+  cartridgeWispPointGeometry, cartridgeWispPointMaterial
+);
+cartridgeWispLines.frustumCulled = false;
+cartridgeWispPoints.frustumCulled = false;
+cartridgeWispLines.renderOrder = 3;
+cartridgeWispPoints.renderOrder = 4;
+scene.add(cartridgeWispLines, cartridgeWispPoints);
+
+let cartridgeWispVisibility = 0;
+let cartridgeWispRouteLength = 0;
+const cartridgeWispSource = new THREE.Vector3();
+const cartridgeWispTarget = new THREE.Vector3();
+const cartridgeWispControlA = new THREE.Vector3();
+const cartridgeWispControlB = new THREE.Vector3();
+const cartridgeWispAcross = new THREE.Vector3();
+const cartridgeWispDown = new THREE.Vector3();
+const cartridgeWispSlotAcross = new THREE.Vector3();
+const cartridgeWispRoute = new THREE.Vector3();
+const cartridgeWispTwirlA = new THREE.Vector3();
+const cartridgeWispTwirlB = new THREE.Vector3();
+const cartridgeWispScale = new THREE.Vector3();
+const cartridgeWispSampleA = new THREE.Vector3();
+const cartridgeWispSampleB = new THREE.Vector3();
+const cartridgeWispColor = new THREE.Color();
+const cartridgeWispWarm = new THREE.Color(0xfff1c7);
+const cartridgeWispCool = new THREE.Color(0xa9dfff);
+const cartridgeWispLocal = new THREE.Vector3();
+
+function cartridgeWispSmoothstep(edge0, edge1, value) {
+  const x = THREE.MathUtils.clamp((value - edge0) / (edge1 - edge0), 0, 1);
+  return x * x * (3 - 2 * x);
+}
+
+function writeCartridgeWispVector(array, offset, vector) {
+  array[offset] = vector.x;
+  array[offset + 1] = vector.y;
+  array[offset + 2] = vector.z;
+}
+
+function sampleCartridgeWisp(progress, seed, target) {
+  const inverse = 1 - progress;
+  const a = inverse * inverse * inverse;
+  const b = 3 * inverse * inverse * progress;
+  const c = 3 * inverse * progress * progress;
+  const d = progress * progress * progress;
+  target.set(
+    cartridgeWispSource.x * a + cartridgeWispControlA.x * b +
+      cartridgeWispControlB.x * c + cartridgeWispTarget.x * d,
+    cartridgeWispSource.y * a + cartridgeWispControlA.y * b +
+      cartridgeWispControlB.y * c + cartridgeWispTarget.y * d,
+    cartridgeWispSource.z * a + cartridgeWispControlA.z * b +
+      cartridgeWispControlB.z * c + cartridgeWispTarget.z * d
+  );
+
+  // Begin flat in the cartridge's face plane, then wind that plane around the
+  // source-to-slot route. The radius closes completely at the slot mouth.
+  const radius = cartridgeWispRouteLength * (0.018 + Math.abs(seed.curl) * 0.014) *
+    Math.sin(Math.PI * progress) * cartridgeWispSmoothstep(0, 0.28, progress);
+  const angle = seed.curl * 1.35 + progress * progress * Math.PI * 3.2;
+  target.addScaledVector(cartridgeWispTwirlA, Math.cos(angle) * radius);
+  target.addScaledVector(cartridgeWispTwirlB, Math.sin(angle) * radius);
+  return target;
+}
+
+function updateCartridgeWisps(now, dt) {
+  const hasHardware = cartridgeModel && consoleModel && cartridgeUnitH && cartridgeUnitW;
+  if (!hasHardware) return;
+
+  cartridgeRig.updateMatrixWorld(true);
+  cartridgeVisual.getWorldScale(cartridgeWispScale);
+  cartridgeWispTarget.copy(cartridgeSocketWorld);
+
+  cartridgeWispLocal.set(0, -cartridgeUnitH * 0.52, 0);
+  cartridgeWispSource.copy(cartridgeWispLocal);
+  cartridgeVisual.localToWorld(cartridgeWispSource);
+  const distanceVisibility = cartridgeWispSmoothstep(
+    0.16, 0.72, cartridgeWispSource.distanceTo(cartridgeWispTarget)
+  );
+  const cartridgeRestingAtHome = cartridgeState === CARTRIDGE_STATE.FREE &&
+    !cartridgePressed && !cartridgeDragging && !cartridgeRouteActive &&
+    cartridgePhysicsReady &&
+    cartridgePhysicsPosition.distanceToSquared(cartridgeTarget) < 0.0016 &&
+    cartridgeVelocity.lengthSq() < 0.0225;
+  const visibilityGoal = prefersReducedMotion || !cartridgeRestingAtHome
+    ? 0
+    : distanceVisibility;
+  const visibilityRate = visibilityGoal < cartridgeWispVisibility ? 12 : 3.4;
+  cartridgeWispVisibility += (visibilityGoal - cartridgeWispVisibility) *
+    Math.min(1, dt * visibilityRate);
+  cartridgeWispLines.visible = cartridgeWispVisibility > 0.01;
+  cartridgeWispPoints.visible = cartridgeWispVisibility > 0.01;
+
+  // Transform the cartridge's emitter plane and the console slot width without
+  // translation. The fitted assets use local +Z as their horizontal axis.
+  cartridgeWispAcross.set(0, 0, 1).transformDirection(cartridgeVisual.matrixWorld);
+  cartridgeWispDown.set(0, -1, 0).transformDirection(cartridgeVisual.matrixWorld);
+  cartridgeWispSlotAcross.set(0, 0, 1).transformDirection(consoleVisual.matrixWorld);
+
+  const emitterHalfWidth = cartridgeUnitW * cartridgeWispScale.z * 0.36;
+  const slotHalfWidth = cartridgeUnitW * cartridgeWispScale.z * 0.42;
+  let lineVertex = 0;
+  for (let index = 0; index < CARTRIDGE_WISP_COUNT; index += 1) {
+    const seed = cartridgeWispSeeds[index];
+    const progress = (now * seed.speed + seed.phase) % 1;
+
+    cartridgeWispLocal.set(
+      cartridgeUnitD * 0.51,
+      -cartridgeUnitH * 0.52,
+      cartridgeUnitW * seed.across * 0.34
+    );
+    cartridgeWispSource.copy(cartridgeWispLocal);
+    cartridgeVisual.localToWorld(cartridgeWispSource);
+
+    // Preserve each particle's place across the emitter and deliver it to the
+    // corresponding place across the cartridge aperture, rather than pulling
+    // every strand into the socket's center point.
+    cartridgeWispTarget.copy(cartridgeSocketWorld)
+      .addScaledVector(cartridgeWispSlotAcross, slotHalfWidth * seed.across);
+    cartridgeWispRoute.subVectors(cartridgeWispTarget, cartridgeWispSource);
+    cartridgeWispRouteLength = Math.max(0.001, cartridgeWispRoute.length());
+    cartridgeWispRoute.divideScalar(cartridgeWispRouteLength);
+    cartridgeWispTwirlA.copy(cartridgeWispAcross)
+      .addScaledVector(cartridgeWispRoute, -cartridgeWispAcross.dot(cartridgeWispRoute));
+    if (cartridgeWispTwirlA.lengthSq() < 0.0001) {
+      cartridgeWispTwirlA.set(1, 0, 0)
+        .addScaledVector(cartridgeWispRoute, -cartridgeWispRoute.x);
+    }
+    cartridgeWispTwirlA.normalize();
+    cartridgeWispTwirlB.crossVectors(cartridgeWispRoute, cartridgeWispTwirlA).normalize();
+
+    const launchDistance = Math.min(cartridgeWispRouteLength * 0.24, 0.62);
+    const arrivalLift = Math.min(cartridgeWispRouteLength * 0.18, 0.48);
+    cartridgeWispControlA.copy(cartridgeWispSource)
+      .addScaledVector(cartridgeWispDown, launchDistance)
+      .addScaledVector(cartridgeWispAcross, emitterHalfWidth * seed.curl * 0.26);
+    cartridgeWispControlB.copy(cartridgeWispTarget)
+      .addScaledVector(cartridgeWispRoute, -arrivalLift);
+
+    cartridgeWispColor.copy(cartridgeWispCool).lerp(cartridgeWispWarm, seed.hue);
+    const pointAlpha = cartridgeWispVisibility *
+      cartridgeWispSmoothstep(0.015, 0.12, progress) *
+      (1 - cartridgeWispSmoothstep(0.72, 0.995, progress));
+    sampleCartridgeWisp(progress, seed, cartridgeWispSampleA);
+    writeCartridgeWispVector(cartridgeWispPointPositions, index * 3, cartridgeWispSampleA);
+    writeCartridgeWispVector(cartridgeWispPointColors, index * 3, cartridgeWispColor);
+    cartridgeWispPointAlphas[index] = pointAlpha;
+
+    for (let segment = 0; segment < CARTRIDGE_WISP_TRAIL_SEGMENTS; segment += 1) {
+      const frontProgress = progress - segment * 0.018;
+      const backProgress = progress - (segment + 1) * 0.018;
+      const frontValid = frontProgress >= 0;
+      const backValid = backProgress >= 0;
+      sampleCartridgeWisp(Math.max(0, frontProgress), seed, cartridgeWispSampleA);
+      sampleCartridgeWisp(Math.max(0, backProgress), seed, cartridgeWispSampleB);
+      const trailFade = 1 - segment / CARTRIDGE_WISP_TRAIL_SEGMENTS;
+      const frontAlpha = frontValid ? cartridgeWispVisibility * trailFade *
+        cartridgeWispSmoothstep(0.015, 0.12, frontProgress) *
+        (1 - cartridgeWispSmoothstep(0.68, 0.995, frontProgress)) : 0;
+      const backAlpha = backValid ? cartridgeWispVisibility * trailFade * 0.72 *
+        cartridgeWispSmoothstep(0.015, 0.12, backProgress) *
+        (1 - cartridgeWispSmoothstep(0.68, 0.995, backProgress)) : 0;
+      writeCartridgeWispVector(
+        cartridgeWispLinePositions, lineVertex * 3, cartridgeWispSampleA
+      );
+      writeCartridgeWispVector(
+        cartridgeWispLineColors, lineVertex * 3, cartridgeWispColor
+      );
+      cartridgeWispLineAlphas[lineVertex] = frontAlpha;
+      lineVertex += 1;
+      writeCartridgeWispVector(
+        cartridgeWispLinePositions, lineVertex * 3, cartridgeWispSampleB
+      );
+      writeCartridgeWispVector(
+        cartridgeWispLineColors, lineVertex * 3, cartridgeWispColor
+      );
+      cartridgeWispLineAlphas[lineVertex] = backAlpha;
+      lineVertex += 1;
+    }
+  }
+
+  cartridgeWispLineGeometry.attributes.position.needsUpdate = true;
+  cartridgeWispLineGeometry.attributes.color.needsUpdate = true;
+  cartridgeWispLineGeometry.attributes.alpha.needsUpdate = true;
+  cartridgeWispPointGeometry.attributes.position.needsUpdate = true;
+  cartridgeWispPointGeometry.attributes.color.needsUpdate = true;
+  cartridgeWispPointGeometry.attributes.alpha.needsUpdate = true;
+}
 
 cartridgeControl.addEventListener('pointerenter', () => { cartridgeHovered = true; });
 cartridgeControl.addEventListener('pointerleave', () => {
@@ -674,7 +1501,117 @@ cartridgeControl.addEventListener('pointerleave', () => {
   if (!cartridgeDragging) cartridgePressed = false;
 });
 
+function getConsoleCollisionGeometry(receiver) {
+  const centerX = receiver.left + receiver.width * 0.5;
+  const slotY = receiver.top + receiver.height * 0.32;
+  const cartridgeHalfWidth = receiver.width * 0.21;
+  const cartridgeHalfHeight = receiver.width * 0.14;
+  const shellInsetX = receiver.width * 0.065;
+  const shellInsetTop = receiver.height * 0.24;
+  const shellInsetBottom = receiver.height * 0.04;
+  const clearance = Math.max(5, receiver.width * 0.014);
+  const obstacleLeft = receiver.left + shellInsetX - cartridgeHalfWidth - clearance;
+  const obstacleRight = receiver.right - shellInsetX + cartridgeHalfWidth + clearance;
+  const obstacleTop = receiver.top + shellInsetTop - cartridgeHalfHeight - clearance;
+  const obstacleBottom = receiver.bottom - shellInsetBottom + cartridgeHalfHeight + clearance;
+  return {
+    centerX,
+    slotY,
+    slotCaptureHalfWidth: Math.max(10, receiver.width * 0.05),
+    slotEntryY: slotY - receiver.height * 0.11,
+    slotCaptureY: slotY - receiver.height * 0.025,
+    slotExitY: slotY + receiver.height * 0.075,
+    obstacleLeft,
+    obstacleRight,
+    obstacleTop,
+    obstacleBottom,
+    cornerRadius: Math.max(42, receiver.width * 0.15),
+    safeY: obstacleTop - Math.max(10, receiver.width * 0.025),
+    leftLaneX: obstacleLeft - Math.max(12, receiver.width * 0.035),
+    rightLaneX: obstacleRight + Math.max(12, receiver.width * 0.035),
+    belowLaneY: obstacleBottom + Math.max(12, receiver.width * 0.035),
+  };
+}
+
+function consoleColliderSdf(clientX, clientY, collision) {
+  const centerX = (collision.obstacleLeft + collision.obstacleRight) * 0.5;
+  const centerY = (collision.obstacleTop + collision.obstacleBottom) * 0.5;
+  const halfWidth = (collision.obstacleRight - collision.obstacleLeft) * 0.5;
+  const halfHeight = (collision.obstacleBottom - collision.obstacleTop) * 0.5;
+  const radius = Math.min(collision.cornerRadius, halfWidth - 1, halfHeight - 1);
+  const qx = Math.abs(clientX - centerX) - (halfWidth - radius);
+  const qy = Math.abs(clientY - centerY) - (halfHeight - radius);
+  return Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) +
+    Math.min(Math.max(qx, qy), 0) - radius;
+}
+
+function cartridgeFitsSlotPassage(clientX, clientY, collision) {
+  return Math.abs(clientX - collision.centerX) <= collision.slotCaptureHalfWidth &&
+    clientY >= collision.obstacleTop - 2 && clientY <= collision.slotExitY;
+}
+
+function resolveCartridgeConsoleCollision(receiver) {
+  if (cartridgeState !== CARTRIDGE_STATE.DRAGGING || cartridgeRouteActive) return;
+  const collision = getConsoleCollisionGeometry(receiver);
+  cartridgeWorldToScreen(cartridgePhysicsPosition, cartridgeCollisionScreen);
+  if (cartridgeFitsSlotPassage(
+    cartridgeCollisionScreen.x, cartridgeCollisionScreen.y, collision
+  )) {
+    hardwareInset.dataset.collision = 'slot-clear';
+    return;
+  }
+
+  const distance = consoleColliderSdf(
+    cartridgeCollisionScreen.x, cartridgeCollisionScreen.y, collision
+  );
+  if (distance >= 0) {
+    hardwareInset.dataset.collision = 'clear';
+    return;
+  }
+
+  const epsilon = 1;
+  let normalX = consoleColliderSdf(
+    cartridgeCollisionScreen.x + epsilon, cartridgeCollisionScreen.y, collision
+  ) - consoleColliderSdf(
+    cartridgeCollisionScreen.x - epsilon, cartridgeCollisionScreen.y, collision
+  );
+  let normalY = consoleColliderSdf(
+    cartridgeCollisionScreen.x, cartridgeCollisionScreen.y + epsilon, collision
+  ) - consoleColliderSdf(
+    cartridgeCollisionScreen.x, cartridgeCollisionScreen.y - epsilon, collision
+  );
+  const normalLength = Math.hypot(normalX, normalY) || 1;
+  normalX /= normalLength;
+  normalY /= normalLength;
+  const correction = -distance + 0.8;
+  cartridgeCollisionScreen.x += normalX * correction;
+  cartridgeCollisionScreen.y += normalY * correction;
+  screenToCartridgeWorld(
+    cartridgeCollisionScreen.x,
+    cartridgeCollisionScreen.y,
+    cartridgePhysicsPosition,
+    cartridgePhysicsPosition.z
+  );
+
+  // The console is the fixed rigid body. Remove the cartridge's inward normal
+  // velocity, retain a little tangential motion, and add a tiny restitution so
+  // a miss feels like a solid catch rather than a positional clamp.
+  const normalWorldX = normalX;
+  const normalWorldY = -normalY;
+  const inwardVelocity = cartridgeVelocity.x * normalWorldX +
+    cartridgeVelocity.y * normalWorldY;
+  if (inwardVelocity < 0) {
+    cartridgeVelocity.x -= inwardVelocity * 1.08 * normalWorldX;
+    cartridgeVelocity.y -= inwardVelocity * 1.08 * normalWorldY;
+  }
+  cartridgeVelocity.x *= 0.74;
+  cartridgeVelocity.y *= 0.74;
+  hardwareInset.dataset.collision = 'contact';
+}
+
 function updateCartridgeDrag(e, trackVelocity = true) {
+  cartridgePointerClientX = e.clientX;
+  cartridgePointerClientY = e.clientY;
   screenToCartridgeWorld(e.clientX, e.clientY, cartridgePointerWorld);
   const now = e.timeStamp || performance.now();
   if (trackVelocity && cartridgeLastPointerTime) {
@@ -688,15 +1625,149 @@ function updateCartridgeDrag(e, trackVelocity = true) {
   cartridgePreviousPointerWorld.copy(cartridgePointerWorld);
   cartridgeLastPointerTime = now;
   cartridgeDragTarget.copy(cartridgePointerWorld).add(cartridgeDragOffset);
+  if (trackVelocity && consoleSnapAnchor) {
+    const receiver = consoleControl.getBoundingClientRect();
+    const collision = getConsoleCollisionGeometry(receiver);
+    const receiverX = collision.centerX;
+    const receiverY = collision.slotY;
+    cartridgeWorldToScreen(cartridgeDragTarget, cartridgeCollisionScreen);
+    if (!cartridgeEjectDrag) {
+      const home = cartridgeControl.getBoundingClientRect();
+      const homeY = home.top + home.height * 0.5;
+      const travel = Math.max(1, receiverY - homeY);
+      const verticalProgress = THREE.MathUtils.clamp(
+        (cartridgeCollisionScreen.y - homeY) / travel, 0, 1
+      );
+      const rawSlotOffsetX = cartridgeCollisionScreen.x - receiverX;
+      const coneHalfWidth = THREE.MathUtils.lerp(
+        receiver.width * 0.55,
+        receiver.width * 0.19,
+        verticalProgress
+      );
+      const coneRatio = Math.abs(rawSlotOffsetX) / Math.max(1, coneHalfWidth);
+      let magneticStrength = 0;
+      if (cartridgeCollisionScreen.y <= collision.slotExitY && coneRatio < 1) {
+        const proximity = THREE.MathUtils.clamp(
+          (verticalProgress - 0.22) / 0.78, 0, 1
+        );
+        const proximityEase = proximity * proximity * (3 - 2 * proximity);
+        const edgeWeight = 1 - THREE.MathUtils.clamp(
+          (coneRatio - 0.68) / 0.32, 0, 1
+        );
+        magneticStrength = CARTRIDGE_MAGNET_MAX * proximityEase * proximityEase * edgeWeight;
+        if (magneticStrength > 0) {
+          cartridgeCollisionScreen.x = THREE.MathUtils.lerp(
+            cartridgeCollisionScreen.x, receiverX, magneticStrength
+          );
+          const dragDepth = cartridgeDragTarget.z;
+          screenToCartridgeWorld(
+            cartridgeCollisionScreen.x,
+            cartridgeCollisionScreen.y,
+            cartridgeDragTarget,
+            dragDepth
+          );
+        }
+      }
+      hardwareInset.dataset.magnetism = magneticStrength.toFixed(3);
+      const slotOffsetX = cartridgeCollisionScreen.x - receiverX;
+      const horizontalAlignment = 1 - THREE.MathUtils.clamp(
+        Math.abs(slotOffsetX) / (receiver.width * 0.85), 0, 1
+      );
+      const approach = verticalProgress * verticalProgress * (3 - 2 * verticalProgress);
+      const entryProgress = THREE.MathUtils.clamp((verticalProgress - 0.04) / 0.44, 0, 1);
+      const entryEase = entryProgress * entryProgress * (3 - 2 * entryProgress);
+      const slotAlignment = entryEase * horizontalAlignment;
+      const continuousApproach = CONSOLE_PRESS_CUE +
+        (1 - CONSOLE_PRESS_CUE) * approach;
+      consoleApproachTarget = continuousApproach * horizontalAlignment;
+      cartridgeEntryTarget = slotAlignment;
+      // The cursor continues to own X/Y, while the approach easing moves the
+      // cartridge onto the receiver's authored depth plane. This keeps a
+      // straight-down drag physically coplanar with the slot at entry instead
+      // of leaving the cartridge slightly closer to the camera.
+      alignCartridgeDragDepth(slotAlignment);
+    }
+  }
+}
+
+function tryBeginPhysicalCartridgeInsertion(receiver) {
+  if (cartridgeState !== CARTRIDGE_STATE.DRAGGING || cartridgeEjectDrag ||
+      cartridgeRouteActive) return false;
+  const collision = getConsoleCollisionGeometry(receiver);
+  cartridgeWorldToScreen(cartridgePhysicsPosition, cartridgeRouteScreen);
+  let insideCapture =
+    Math.abs(cartridgeRouteScreen.x - collision.centerX) <=
+      collision.slotCaptureHalfWidth &&
+    cartridgeRouteScreen.y >= collision.slotCaptureY;
+  const bodyIsAtMouth =
+    Math.abs(cartridgeRouteScreen.x - collision.centerX) <=
+      collision.slotCaptureHalfWidth * 1.35 &&
+    cartridgeRouteScreen.y >= collision.slotCaptureY - receiver.height * 0.035;
+  if (!insideCapture && bodyIsAtMouth) {
+    // The spring-driven body can trail the pointer during a fast pull. Treat
+    // the guided target as a swept collision only once the visible cartridge
+    // is already beside the mouth. This prevents it from leaving the cursor
+    // early while still catching a last-frame threshold crossing.
+    cartridgeWorldToScreen(cartridgeDragTarget, cartridgeCollisionScreen);
+    insideCapture =
+      Math.abs(cartridgeCollisionScreen.x - collision.centerX) <=
+        collision.slotCaptureHalfWidth &&
+      cartridgeCollisionScreen.y >= collision.slotCaptureY;
+  }
+  if (!insideCapture) return false;
+
+  // Commit at the visually seated point. Clamp to the slot mouth before the
+  // short insertion route so a fast downward frame can never penetrate the
+  // console or make the route reverse upward from an overshot position.
+  screenToCartridgeWorld(
+    collision.centerX,
+    collision.slotCaptureY,
+    cartridgePhysicsPosition,
+    cartridgeSocketWorld.z
+  );
+  cartridgeVelocity.set(0, 0, 0);
+
+  beginCartridgeInsertionRoute(receiver, collision);
+  setCartridgeState(CARTRIDGE_STATE.INSERTING);
+  consoleApproachTarget = 1;
+  cartridgeEntryTarget = 1;
+  return true;
 }
 
 function finishCartridgeDrag(e, cancelled = false) {
   if (!cartridgeDragging || e.pointerId !== cartridgeDragPointerId) return;
+  const pulledFromConsole = cartridgeEjectDrag;
+  let shouldReturnHome = false;
   if (!cancelled) updateCartridgeDrag(e);
+  if (!cancelled && cartridgeState === CARTRIDGE_STATE.DRAGGING && consoleSnapAnchor) {
+    const receiver = consoleControl.getBoundingClientRect();
+    tryBeginPhysicalCartridgeInsertion(receiver);
+  }
+  if (cancelled) {
+    setCartridgeState(CARTRIDGE_STATE.FREE);
+    shouldReturnHome = true;
+  } else if (cartridgeState === CARTRIDGE_STATE.INSERTING) {
+    startCartridgeBoot(clock.elapsedTime);
+  } else {
+    setCartridgeState(CARTRIDGE_STATE.FREE);
+    shouldReturnHome = true;
+  }
   cartridgeDragging = false;
+  cartridgeEjectDrag = false;
+  hardwareInset.dataset.collision = 'idle';
+  hardwareInset.dataset.magnetism = '0.000';
+  consoleApproachTarget = 0;
+  if (cartridgeState !== CARTRIDGE_STATE.BOOTING &&
+      cartridgeState !== CARTRIDGE_STATE.RUNNING) cartridgeEntryTarget = 0;
   cartridgePressed = false;
-  cartridgeSuppressClick = cartridgeDragDistance > 6;
-  if (!cancelled) cartridgeVelocity.addScaledVector(cartridgePointerVelocity, 0.24);
+  cartridgeSuppressClick = pulledFromConsole || cartridgeDragDistance > 6;
+  if (!cancelled && !pulledFromConsole) {
+    cartridgeVelocity.addScaledVector(cartridgePointerVelocity, 0.24);
+  }
+  if (shouldReturnHome && consoleSnapAnchor &&
+      (pulledFromConsole || cartridgePhysicsPosition.distanceTo(cartridgeTarget) > 0.12)) {
+    beginCartridgeHomeRoute();
+  }
   if (cartridgeControl.hasPointerCapture(e.pointerId)) {
     cartridgeControl.releasePointerCapture(e.pointerId);
   }
@@ -711,10 +1782,28 @@ cartridgeControl.addEventListener('pointerdown', e => {
   cartridgeSuppressClick = false;
   cartridgeLastPointerTime = 0;
   cartridgePointerVelocity.set(0, 0, 0);
+  const pullingFromConsole = cartridgeState === CARTRIDGE_STATE.BOOTING ||
+    cartridgeState === CARTRIDGE_STATE.RUNNING;
+  cartridgeEjectDrag = pullingFromConsole;
+  hardwareInset.dataset.collision = pullingFromConsole ? 'ejecting' : 'clear';
+  hardwareInset.dataset.magnetism = '0.000';
+  consoleApproachTarget = pullingFromConsole ? 0 : CONSOLE_PRESS_CUE;
+  cartridgeEntryTarget = pullingFromConsole ? 1 : 0;
+  setCartridgeState(pullingFromConsole
+    ? CARTRIDGE_STATE.EJECTING
+    : CARTRIDGE_STATE.DRAGGING);
   screenToCartridgeWorld(e.clientX, e.clientY, cartridgePointerWorld);
   cartridgeDragOffset.copy(cartridgePhysicsPosition).sub(cartridgePointerWorld);
-  cartridgeDragTarget.copy(cartridgePhysicsPosition);
+  cartridgeDragOffset.z = 0;
+  cartridgeDragTarget.copy(cartridgePointerWorld).add(cartridgeDragOffset);
   cartridgePreviousPointerWorld.copy(cartridgePointerWorld);
+  cartridgePointerClientX = e.clientX;
+  cartridgePointerClientY = e.clientY;
+  if (pullingFromConsole && consoleSnapAnchor) {
+    const receiver = consoleControl.getBoundingClientRect();
+    beginCartridgeEjectionRoute(receiver, getConsoleCollisionGeometry(receiver));
+    cartridgeSuppressClick = true;
+  }
   cartridgeControl.setPointerCapture(e.pointerId);
   // Dragging keeps the normal pointing cursor. The global pointerdown state
   // below supplies the original backward tap tilt without closing the hand.
@@ -725,16 +1814,27 @@ cartridgeControl.addEventListener('pointermove', e => {
   cartridgeDragDistance += Math.hypot(e.movementX || 0, e.movementY || 0);
   updateCartridgeDrag(e);
 });
+window.addEventListener('pointermove', e => {
+  if (!cartridgeDragging || e.pointerId !== cartridgeDragPointerId ||
+      e.target === cartridgeControl) return;
+  cartridgeDragDistance += Math.hypot(e.movementX || 0, e.movementY || 0);
+  updateCartridgeDrag(e);
+});
 cartridgeControl.addEventListener('pointerup', e => finishCartridgeDrag(e));
 cartridgeControl.addEventListener('pointercancel', e => finishCartridgeDrag(e, true));
-window.addEventListener('pointerup', () => { cartridgePressed = false; });
+window.addEventListener('pointerup', e => {
+  finishCartridgeDrag(e);
+  cartridgePressed = false;
+});
 cartridgeControl.addEventListener('click', e => {
   if (cartridgeSuppressClick) {
     cartridgeSuppressClick = false;
     e.preventDefault();
     return;
   }
-  cartridgeClickSpinTarget += Math.PI * 2;
+  if (cartridgeState === CARTRIDGE_STATE.FREE) {
+    cartridgeClickSpinTarget += Math.PI * 2;
+  }
 });
 
 new GLTFLoader().load('assets/n64-cartridge-tripo.glb', (gltf) => {
@@ -748,10 +1848,59 @@ new GLTFLoader().load('assets/n64-cartridge-tripo.glb', (gltf) => {
     o.frustumCulled = false;
     o.material = cartridgeMaterial;
   });
+  const labelArtwork = new THREE.Mesh(
+    new THREE.PlaneGeometry(CARTRIDGE_LABEL_PANEL.width, CARTRIDGE_LABEL_PANEL.height),
+    cartridgeLabelMaterial
+  );
+  labelArtwork.name = 'CartridgeLabelArtwork';
+  labelArtwork.position.set(
+    CARTRIDGE_LABEL_PANEL.frontX,
+    CARTRIDGE_LABEL_PANEL.centerY,
+    CARTRIDGE_LABEL_PANEL.centerZ
+  );
+  labelArtwork.rotation.y = Math.PI * 0.5;
+  labelArtwork.renderOrder = 1;
+  cartridgeModel.add(labelArtwork);
   cartridgeVisual.add(cartridgeModel);
   cartridgeUnitH = size.y;
+  cartridgeUnitW = size.z;
+  cartridgeUnitD = size.x;
   resize();
 }, undefined, error => console.error('Could not load cartridge GLB', error));
+
+new GLTFLoader().load('assets/hybrid-four-port-console-fitted.glb', (gltf) => {
+  consoleModel = gltf.scene;
+  consoleSnapAnchor = consoleModel.getObjectByName('CartridgeSnapAnchor');
+  hardwareInset.dataset.snapAnchor = consoleSnapAnchor ? 'ready' : 'missing';
+  const bounds = new THREE.Box3().setFromObject(consoleModel);
+  const center = bounds.getCenter(new THREE.Vector3());
+  const size = bounds.getSize(new THREE.Vector3());
+  consoleModel.position.sub(center);
+  consoleModel.traverse(o => {
+    if (!o.isMesh) return;
+    o.frustumCulled = false;
+    const letterKey = Object.keys(funLetterMaterials).find(key => o.name.startsWith(key));
+    if (letterKey) o.material = funLetterMaterials[letterKey];
+  });
+  consoleVisual.add(consoleModel);
+  // In glTF/Three.js the fitted asset is +X front, +Y up, and +Z width.
+  // Map those axes to a slightly elevated front view: the top faces the
+  // camera while the controller ports remain readable along the lower edge.
+  const consoleFront = new THREE.Vector3(0, -0.42, 0.907).normalize();
+  const consoleUp = new THREE.Vector3(0, 0.907, 0.42).normalize();
+  const consoleWidth = new THREE.Vector3(-1, 0, 0);
+  consoleVisual.quaternion.setFromRotationMatrix(
+    new THREE.Matrix4().makeBasis(consoleFront, consoleUp, consoleWidth)
+  );
+  consoleRestQuaternion.copy(consoleVisual.quaternion);
+  const consoleInviteFront = new THREE.Vector3(0, -0.30, 0.954).normalize();
+  const consoleInviteUp = new THREE.Vector3(0, 0.954, 0.30).normalize();
+  consoleInviteQuaternion.setFromRotationMatrix(
+    new THREE.Matrix4().makeBasis(consoleInviteFront, consoleInviteUp, consoleWidth)
+  );
+  consoleUnitW = size.z;
+  resize();
+}, undefined, error => console.error('Could not load fitted console GLB', error));
 
 let mesh = null;   // set when the GLB loads
 
@@ -847,6 +1996,7 @@ new GLTFLoader().load('assets/hand-cursor-meshy.glb', (gltf) => {
     poseFingers(0);
     const newMesh = new THREE.SkinnedMesh(g2, gloveMat);
     newMesh.frustumCulled = false;
+    newMesh.renderOrder = 1000;
     newMesh.add(rootBone);
     newMesh.updateMatrixWorld(true);
     newMesh.bind(new THREE.Skeleton(bones));
@@ -879,7 +2029,8 @@ new GLTFLoader().load('assets/hand-cursor-meshy.glb', (gltf) => {
 });
 
 window.__dbg = { scene, camera, rt, renderer, bones, rigs, hand, wrist, glove,
-  qPoint, qGrab, THREE, capsules };
+  qPoint, qGrab, THREE, capsules, cartridgeRig, cartridgeVisual,
+  consoleRig, consoleVisual, funLetterMaterials };
 
 // ---------------------------------------------------------------------------
 // Springy physics
@@ -902,20 +2053,145 @@ const rayPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
 const raycaster = new THREE.Raycaster();
 const worldPt = new THREE.Vector3();
 const cartridgeTarget = new THREE.Vector3();
+const consoleTarget = new THREE.Vector3();
 
-function screenToCartridgeWorld(clientX, clientY, target) {
+function screenToSceneWorld(clientX, clientY, z, target) {
+  const planeViewHeight = 2 * Math.tan(THREE.MathUtils.degToRad(camera.fov * 0.5)) *
+    Math.abs(camera.position.z - z);
   return target.set(
-    ((clientX / window.innerWidth) * 2 - 1) * VIEW_H * camera.aspect * 0.5,
-    (1 - (clientY / window.innerHeight) * 2) * VIEW_H * 0.5,
-    -0.65
+    ((clientX / window.innerWidth) * 2 - 1) * planeViewHeight * camera.aspect * 0.5,
+    (1 - (clientY / window.innerHeight) * 2) * planeViewHeight * 0.5,
+    z
   );
 }
 
-function updateCartridgeTarget() {
+function screenToCartridgeWorld(clientX, clientY, target, z = CARTRIDGE_DRAG_Z) {
+  return screenToSceneWorld(clientX, clientY, z, target);
+}
+
+function cartridgeWorldToScreen(world, target) {
+  const planeViewHeight = 2 * Math.tan(THREE.MathUtils.degToRad(camera.fov * 0.5)) *
+    Math.abs(camera.position.z - world.z);
+  return target.set(
+    (world.x / (planeViewHeight * camera.aspect * 0.5) + 1) * window.innerWidth * 0.5,
+    (1 - world.y / (planeViewHeight * 0.5)) * window.innerHeight * 0.5
+  );
+}
+
+function alignCartridgeDragDepth(amount) {
+  // Preserve the exact pointer-space X/Y while changing depth. Simply editing
+  // world Z would shift the cartridge on screen under perspective projection.
+  cartridgeWorldToScreen(cartridgeDragTarget, cartridgeCollisionScreen);
+  const alignedZ = THREE.MathUtils.lerp(
+    CARTRIDGE_DRAG_Z, cartridgeSocketWorld.z, amount
+  );
+  screenToCartridgeWorld(
+    cartridgeCollisionScreen.x,
+    cartridgeCollisionScreen.y,
+    cartridgeDragTarget,
+    alignedZ
+  );
+}
+
+function pushCartridgeRouteScreenPoint(clientX, clientY) {
+  const point = screenToCartridgeWorld(
+    clientX, clientY, new THREE.Vector3(), CARTRIDGE_DRAG_Z
+  );
+  const previous = cartridgeRoutePoints[cartridgeRoutePoints.length - 1];
+  if (!previous || previous.distanceToSquared(point) > 0.0004) {
+    cartridgeRoutePoints.push(point);
+  }
+}
+
+function setCartridgeRoute(kind, minDuration, maxDuration) {
+  let routeLength = 0;
+  for (let index = 1; index < cartridgeRoutePoints.length; index += 1) {
+    routeLength += cartridgeRoutePoints[index - 1].distanceTo(cartridgeRoutePoints[index]);
+  }
+  cartridgeRouteDuration = THREE.MathUtils.clamp(
+    routeLength / CARTRIDGE_ROUTE_SPEED, minDuration, maxDuration
+  );
+  cartridgeRouteProgress = 0;
+  cartridgeRouteKind = kind;
+  cartridgeRouteActive = true;
+  cartridgeVelocity.set(0, 0, 0);
+  hardwareInset.dataset.cartridgeRoute = kind;
+}
+
+function beginCartridgeInsertionRoute(receiver, collision) {
+  cartridgeRoutePoints.length = 0;
+  cartridgeRoutePoints.push(cartridgePhysicsPosition.clone());
+  cartridgeRoutePoints.push(cartridgeSocketWorld.clone());
+  setCartridgeRoute('insert', 0.18, 0.28);
+  hardwareInset.dataset.collision = 'slot-entered';
+}
+
+function beginCartridgeHomeRoute() {
+  cartridgeRoutePoints.length = 0;
+  cartridgeRoutePoints.push(cartridgePhysicsPosition.clone());
+  // A released drag has exactly one destination. Do not reuse the insertion
+  // pathfinder here: its slot-staging waypoint made the cartridge drift toward
+  // the console center before returning home.
+  cartridgeRoutePoints.push(cartridgeTarget.clone());
+  setCartridgeRoute('home', 0.46, 1.10);
+}
+
+function beginCartridgeEjectionRoute(receiver, collision) {
+  cartridgeRoutePoints.length = 0;
+  cartridgeRoutePoints.push(cartridgePhysicsPosition.clone());
+  pushCartridgeRouteScreenPoint(collision.centerX, collision.safeY);
+  cartridgeEjectHoldWorld.copy(cartridgeRoutePoints[cartridgeRoutePoints.length - 1]);
+  setCartridgeRoute('eject-pop', 0.34, 0.62);
+}
+
+function sampleCartridgeRoute(progress, target) {
+  const last = cartridgeRoutePoints.length - 1;
+  if (last < 1) return target.copy(cartridgeSocketWorld);
+  if (cartridgeRouteKind === 'insert') {
+    cartridgeRoutePoints[last].copy(cartridgeSocketWorld);
+  } else if (cartridgeRouteKind === 'home') {
+    cartridgeRoutePoints[last].copy(cartridgeTarget);
+  }
+
+  const lengths = [];
+  let total = 0;
+  for (let index = 1; index <= last; index += 1) {
+    const length = cartridgeRoutePoints[index - 1].distanceTo(cartridgeRoutePoints[index]);
+    lengths.push(length);
+    total += length;
+  }
+  if (total < 1e-5) return target.copy(cartridgeSocketWorld);
+
+  const eased = cartridgeRouteKind === 'eject-pop' || cartridgeRouteKind === 'home'
+    ? 1 - (1 - progress) ** 3
+    : progress * progress * (3 - 2 * progress);
+  let remaining = eased * total;
+  for (let index = 0; index < lengths.length; index += 1) {
+    const length = lengths[index];
+    if (remaining <= length || index === lengths.length - 1) {
+      const local = length > 1e-5 ? THREE.MathUtils.clamp(remaining / length, 0, 1) : 1;
+      return target.lerpVectors(
+        cartridgeRoutePoints[index], cartridgeRoutePoints[index + 1], local
+      );
+    }
+    remaining -= length;
+  }
+  return target.copy(cartridgeRoutePoints[last]);
+}
+
+function updateHardwareTargets() {
   const rect = cartridgeControl.getBoundingClientRect();
   const cx = rect.left + rect.width * 0.5;
   const cy = rect.top + rect.height * 0.5;
-  screenToCartridgeWorld(cx, cy, cartridgeTarget);
+  screenToCartridgeWorld(cx, cy, cartridgeTarget, CARTRIDGE_IDLE_Z);
+
+  const consoleRect = consoleControl.getBoundingClientRect();
+  const consoleX = consoleRect.left + consoleRect.width * 0.5;
+  const consoleY = consoleRect.top + consoleRect.height * 0.55;
+  screenToSceneWorld(consoleX, consoleY, -0.92, consoleTarget);
+  screenToCartridgeWorld(
+    consoleX, consoleRect.top + consoleRect.height * 0.32, cartridgeVisibleSocketWorld
+  );
 }
 
 function updateTargetFromEvent(e) {
@@ -950,7 +2226,7 @@ window.captureGlove = (mode = 0) => {
   camera.updateProjectionMatrix();
   rt.setSize(w, h);
   postMat.uniforms.res.value.set(w, h);
-  applyGloveScale(h);
+  applyGloveScale(h, GLOVE_PX);
   scene.updateMatrixWorld(true);
   rtOut.setSize(w, h);
   renderer.setRenderTarget(rt);
@@ -990,6 +2266,79 @@ window.uploadCaptures = async () => {
   return { point: [p.w, p.h], grab: [g.w, g.h] };
 };
 
+function setCartridgeState(next) {
+  if (cartridgeState === next) return;
+  cartridgeState = next;
+  hardwareInset.dataset.cartridgeState = next;
+  if (next === CARTRIDGE_STATE.FREE || next === CARTRIDGE_STATE.DRAGGING ||
+      next === CARTRIDGE_STATE.EJECTING) {
+    cartridgeRouteActive = false;
+    cartridgeRouteKind = 'none';
+    hardwareInset.dataset.cartridgeRoute = 'idle';
+    resetIntroVideoPlayback();
+  }
+  const gameRunning = next === CARTRIDGE_STATE.RUNNING;
+  document.body.classList.toggle('is-game-booted', gameRunning);
+  if (gameRunning) document.body.classList.add('is-intro-credit-visible');
+  if (next !== CARTRIDGE_STATE.BOOTING && !gameRunning) {
+    document.body.classList.remove('is-intro-credit-visible');
+  }
+  cartridgeControl.disabled = next === CARTRIDGE_STATE.BOOTING || gameRunning;
+  if (next !== CARTRIDGE_STATE.BOOTING && next !== CARTRIDGE_STATE.RUNNING) {
+    cartridgeInsertionTime = -1;
+  }
+  const labels = {
+    [CARTRIDGE_STATE.FREE]: 'Drag the cartridge into the console',
+    [CARTRIDGE_STATE.DRAGGING]: 'Dragging cartridge',
+    [CARTRIDGE_STATE.INSERTING]: 'Release to insert the cartridge',
+    [CARTRIDGE_STATE.BOOTING]: 'Cartridge inserted. Game booting',
+    [CARTRIDGE_STATE.RUNNING]: 'Game running. Drag the cartridge out to reset',
+    [CARTRIDGE_STATE.EJECTING]: 'Cartridge lifting out of the console',
+  };
+  cartridgeControl.setAttribute('aria-label', labels[next]);
+}
+
+const introVideo = document.querySelector('.intro-video');
+const introVideoPlaybackUrl = introVideo.dataset.src;
+
+function startIntroVideoPlayback() {
+  if (introVideo.getAttribute('src') !== introVideoPlaybackUrl) {
+    introVideo.setAttribute('src', introVideoPlaybackUrl);
+  }
+}
+
+function resetIntroVideoPlayback() {
+  introVideo.removeAttribute('src');
+}
+
+function startCartridgeBoot(now) {
+  setCartridgeState(CARTRIDGE_STATE.BOOTING);
+  // Auto-insert begins booting before its route is fully seated. Start the
+  // reveal choreography only when the insert route has actually completed.
+  cartridgeInsertionTime = cartridgeRouteActive ? -1 : now;
+  if (!cartridgeRouteActive) startIntroVideoPlayback();
+  cartridgeYawVelocity = 0;
+  cartridgeVelocity.set(0, 0, 0);
+}
+
+function updateFunLights(now) {
+  let f = 0, u = 0, n = 0;
+  if ((cartridgeState === CARTRIDGE_STATE.BOOTING ||
+       cartridgeState === CARTRIDGE_STATE.RUNNING) && cartridgeInsertionTime >= 0) {
+    const elapsed = now - cartridgeInsertionTime;
+    f = elapsed >= 0.16 ? 8.5 : 0;
+    if (elapsed >= 0.46 && elapsed < 0.92) {
+      u = Math.floor((elapsed - 0.46) * 22) % 2 ? 10.0 : 0.35;
+    } else if (elapsed >= 0.92) {
+      u = 9.0;
+    }
+    n = elapsed >= 1.12 ? 9.5 : 0;
+  }
+  funLetterMaterials.FUN_F.emissiveIntensity = f;
+  funLetterMaterials.FUN_U.emissiveIntensity = u;
+  funLetterMaterials.FUN_N.emissiveIntensity = n;
+}
+
 const clock = new THREE.Clock();
 const DBG = location.hash;
 function tick() {
@@ -998,39 +2347,150 @@ function tick() {
   const dt = Math.min(clock.getDelta(), 1 / 30);
   const t = clock.elapsedTime;
 
-  // --- cartridge drag body: pointer-follow spring, return spring, air drag ---
-  updateCartridgeTarget();
-  const cartridgeSpringTarget = cartridgeDragging ? cartridgeDragTarget : cartridgeTarget;
+  if (cartridgeState === CARTRIDGE_STATE.BOOTING && cartridgeInsertionTime >= 0) {
+    const introElapsed = t - cartridgeInsertionTime;
+    if (introElapsed >= CREDIT_REVEAL_DELAY) {
+      document.body.classList.add('is-intro-credit-visible');
+    }
+    if (introElapsed >= SITE_REVEAL_DELAY) {
+      setCartridgeState(CARTRIDGE_STATE.RUNNING);
+    }
+  }
+
+  // --- fitted console receiver + cartridge rigid-body interaction ---
+  const cartridgeDocked = cartridgeState === CARTRIDGE_STATE.INSERTING ||
+    cartridgeState === CARTRIDGE_STATE.BOOTING ||
+    cartridgeState === CARTRIDGE_STATE.RUNNING;
+  const cartridgeConstrained = cartridgeDocked ||
+    cartridgeState === CARTRIDGE_STATE.EJECTING || cartridgeRouteActive;
+  if (!cartridgeDragging && !cartridgeDocked) {
+    consoleApproachTarget = 0;
+    cartridgeEntryTarget = 0;
+  }
+  consoleApproachAmount += (consoleApproachTarget - consoleApproachAmount)
+    * Math.min(1, dt * 6.5);
+  const entryGoal = cartridgeDocked ? 1 : cartridgeEntryTarget;
+  cartridgeEntryAmount += (entryGoal - cartridgeEntryAmount) * Math.min(1, dt * 8.5);
+
+  updateHardwareTargets();
+  consoleRig.position.copy(consoleTarget);
+  consoleIdleEuler.set(
+    Math.sin(t * 0.58) * 0.012,
+    Math.sin(t * 0.43 + 0.8) * 0.018,
+    Math.sin(t * 0.51 + 1.7) * 0.009
+  );
+  consoleIdleQuaternion.setFromEuler(consoleIdleEuler);
+  consoleBaseQuaternion.slerpQuaternions(
+    consoleRestQuaternion, consoleInviteQuaternion, consoleApproachAmount
+  );
+  consoleVisual.quaternion.copy(consoleBaseQuaternion).multiply(consoleIdleQuaternion);
+  consoleVisual.position.set(
+    Math.sin(t * 0.37 + 0.4) * 0.014,
+    Math.sin(t * 0.62) * 0.026 + consoleApproachAmount * 0.10,
+    Math.sin(t * 0.48 + 1.1) * 0.012
+  );
+  consoleRig.updateMatrixWorld(true);
+  if (consoleSnapAnchor) {
+    consoleSnapAnchor.getWorldPosition(cartridgeSocketWorld);
+    // Keep the modeled insertion depth, but align X/Y to the receiver's actual
+    // screen projection so the visible aperture is also the interaction target.
+    cartridgeSocketWorld.x = cartridgeVisibleSocketWorld.x;
+    cartridgeSocketWorld.y = cartridgeVisibleSocketWorld.y + consoleApproachAmount * 0.10;
+    consoleVisual.getWorldQuaternion(cartridgeSocketQuaternion);
+  } else {
+    cartridgeSocketWorld.copy(consoleTarget).add(new THREE.Vector3(0, 0.45, 0.12));
+    cartridgeSocketQuaternion.identity();
+  }
+  if (cartridgeDragging && !cartridgeEjectDrag && !cartridgeRouteActive) {
+    // Follow the animated receiver depth every frame so console tilt/idle
+    // motion cannot leave the drag target on a stale plane.
+    alignCartridgeDragDepth(cartridgeEntryTarget);
+  }
+
+  cartridgeSnapAmount += (
+    (cartridgeConstrained ? 1 : 0) - cartridgeSnapAmount
+  ) * Math.min(1, dt * 7.5);
+  const cartridgeSpringTarget = cartridgeDocked
+    ? cartridgeSocketWorld
+    : (cartridgeState === CARTRIDGE_STATE.EJECTING
+      ? cartridgeEjectHoldWorld
+      : (cartridgeDragging ? cartridgeDragTarget : cartridgeTarget));
   if (!cartridgePhysicsReady) {
     cartridgePhysicsPosition.copy(cartridgeSpringTarget);
     cartridgeRig.position.copy(cartridgePhysicsPosition);
     cartridgePhysicsReady = true;
   }
-  const cartridgeSpeed = cartridgeVelocity.length();
-  const cartridgeK = cartridgeDragging ? 105 : 54;
-  const cartridgeLinearDrag = cartridgeDragging ? 15 : 6.5;
-  const cartridgeAirDrag = cartridgeLinearDrag + cartridgeSpeed * 0.30;
-  cartridgeVelocity.x += (
-    (cartridgeSpringTarget.x - cartridgePhysicsPosition.x) * cartridgeK
-    - cartridgeVelocity.x * cartridgeAirDrag
-  ) * dt;
-  cartridgeVelocity.y += (
-    (cartridgeSpringTarget.y - cartridgePhysicsPosition.y) * cartridgeK
-    - cartridgeVelocity.y * cartridgeAirDrag
-  ) * dt;
-  cartridgeVelocity.z += (
-    (cartridgeSpringTarget.z - cartridgePhysicsPosition.z) * cartridgeK
-    - cartridgeVelocity.z * cartridgeAirDrag
-  ) * dt;
-  cartridgePhysicsPosition.addScaledVector(cartridgeVelocity, dt);
+  if (cartridgeRouteActive) {
+    cartridgeRouteProgress = Math.min(
+      1, cartridgeRouteProgress + dt / cartridgeRouteDuration
+    );
+    sampleCartridgeRoute(cartridgeRouteProgress, cartridgeRouteTarget);
+    cartridgePhysicsPosition.copy(cartridgeRouteTarget);
+    cartridgeVelocity.set(0, 0, 0);
+    if (cartridgeRouteProgress >= 1) {
+      const completedRoute = cartridgeRouteKind;
+      cartridgeRouteActive = false;
+      cartridgeRouteKind = 'none';
+      if (completedRoute === 'insert') {
+        hardwareInset.dataset.cartridgeRoute = 'seated';
+        if (cartridgeState === CARTRIDGE_STATE.BOOTING) {
+          cartridgeInsertionTime = t;
+          startIntroVideoPlayback();
+        }
+      } else if (completedRoute === 'home') {
+        hardwareInset.dataset.cartridgeRoute = 'home';
+      } else if (completedRoute === 'eject-pop') {
+        hardwareInset.dataset.cartridgeRoute = 'popped';
+        if (cartridgeDragging) {
+          cartridgeEjectDrag = false;
+          cartridgeEntryTarget = 0;
+          cartridgeDragOffset.set(0, 0, 0);
+          screenToCartridgeWorld(
+            cartridgePointerClientX, cartridgePointerClientY, cartridgePointerWorld
+          );
+          cartridgePreviousPointerWorld.copy(cartridgePointerWorld);
+          cartridgeDragTarget.copy(cartridgePointerWorld);
+          setCartridgeState(CARTRIDGE_STATE.DRAGGING);
+          hardwareInset.dataset.collision = 'clear';
+        }
+      }
+    }
+  } else {
+    const cartridgeSpeed = cartridgeVelocity.length();
+    const cartridgeK = cartridgeDocked ? 138 : (cartridgeDragging ? 105 : 54);
+    const cartridgeLinearDrag = cartridgeDocked ? 19 : (cartridgeDragging ? 15 : 6.5);
+    const cartridgeAirDrag = cartridgeLinearDrag + cartridgeSpeed * 0.30;
+    cartridgeVelocity.x += (
+      (cartridgeSpringTarget.x - cartridgePhysicsPosition.x) * cartridgeK
+      - cartridgeVelocity.x * cartridgeAirDrag
+    ) * dt;
+    cartridgeVelocity.y += (
+      (cartridgeSpringTarget.y - cartridgePhysicsPosition.y) * cartridgeK
+      - cartridgeVelocity.y * cartridgeAirDrag
+    ) * dt;
+    cartridgeVelocity.z += (
+      (cartridgeSpringTarget.z - cartridgePhysicsPosition.z) * cartridgeK
+      - cartridgeVelocity.z * cartridgeAirDrag
+    ) * dt;
+    cartridgePhysicsPosition.addScaledVector(cartridgeVelocity, dt);
+  }
+  if (!cartridgeRouteActive && cartridgeState === CARTRIDGE_STATE.DRAGGING) {
+    const receiver = consoleControl.getBoundingClientRect();
+    if (!tryBeginPhysicalCartridgeInsertion(receiver)) {
+      resolveCartridgeConsoleCollision(receiver);
+    }
+  }
   cartridgeRig.position.copy(cartridgePhysicsPosition);
+  updateFunLights(t);
 
-  const cartridgeHovering = cartridgeHovered || cartridgeDragging;
+  const cartridgeHovering = !cartridgeConstrained && (cartridgeHovered || cartridgeDragging);
   cartridgeHoverAmount += ((cartridgeHovering ? 1 : 0) - cartridgeHoverAmount) * Math.min(1, dt * 9);
   cartridgePressAmount += ((cartridgePressed ? 1 : 0) - cartridgePressAmount) * Math.min(1, dt * 14);
 
   // Hovering or grabbing rotates the nearest way to the authored front face.
-  if (cartridgeHovering) {
+  if (cartridgeConstrained) {
+    cartridgeYawVelocity *= Math.max(0, 1 - dt * 12);
+  } else if (cartridgeHovering) {
     const yawError = Math.atan2(
       Math.sin(CARTRIDGE_FRONT_YAW - cartridgeYaw),
       Math.cos(CARTRIDGE_FRONT_YAW - cartridgeYaw)
@@ -1049,7 +2509,8 @@ function tick() {
     );
   }
 
-  // A click still performs one complete turn, independently of idle/hover.
+  // A click performs one complete turn without changing the cartridge's
+  // position. Insertion remains exclusively tied to dragging into the slot.
   cartridgeClickSpinVelocity += (
     (cartridgeClickSpinTarget - cartridgeClickSpin) * 58
     - cartridgeClickSpinVelocity * 10.5
@@ -1064,10 +2525,15 @@ function tick() {
   cartridgeTilt.x += cartridgeTilt.vx * dt;
   cartridgeTilt.z += cartridgeTilt.vz * dt;
 
+  const snapEase = cartridgeSnapAmount * cartridgeSnapAmount * (3 - 2 * cartridgeSnapAmount);
+  const entryEase = cartridgeEntryAmount * cartridgeEntryAmount * (3 - 2 * cartridgeEntryAmount);
+  const orientationEase = Math.max(snapEase, entryEase);
+  const freeMotion = 1 - snapEase;
   cartridgeVisual.position.set(
     0,
-    Math.sin(t * 1.7) * 0.055 + cartridgeHoverAmount * 0.09 - cartridgePressAmount * 0.045,
-    cartridgeHoverAmount * 0.12 - cartridgePressAmount * 0.08
+    (Math.sin(t * 1.7) * 0.055 + cartridgeHoverAmount * 0.09
+      - cartridgePressAmount * 0.045) * freeMotion,
+    (cartridgeHoverAmount * 0.12 - cartridgePressAmount * 0.08) * freeMotion
   );
   cartridgeVisual.rotation.set(
     -0.20 + cartridgeTilt.x - cartridgePressAmount * 0.12
@@ -1075,6 +2541,27 @@ function tick() {
     cartridgeYaw + cartridgeClickSpin,
     0.08 + cartridgeTilt.z + Math.sin(t * 1.35) * 0.025
   );
+  cartridgeFreeQuaternion.copy(cartridgeVisual.quaternion);
+  cartridgeVisual.quaternion.slerpQuaternions(
+    cartridgeFreeQuaternion, cartridgeSocketQuaternion, orientationEase
+  );
+  updateCartridgeWisps(t, dt);
+
+  // Once the cartridge is fully seated, carry it and the console offscreen as
+  // one unit. Their base positions are rebuilt every frame, so this visual
+  // offset cannot feed back into the insertion physics.
+  if ((cartridgeState === CARTRIDGE_STATE.BOOTING ||
+       cartridgeState === CARTRIDGE_STATE.RUNNING) && cartridgeInsertionTime >= 0) {
+    const exitProgress = prefersReducedMotion
+      ? 1
+      : THREE.MathUtils.clamp(
+        (t - cartridgeInsertionTime) / HARDWARE_EXIT_DURATION, 0, 1
+      );
+    const exitEase = exitProgress * exitProgress * (3 - 2 * exitProgress);
+    const hardwareExitOffset = exitEase * VIEW_H;
+    consoleRig.position.y -= hardwareExitOffset;
+    cartridgeRig.position.y -= hardwareExitOffset;
+  }
 
   // --- position spring ---
   const K = 320, D = 24;
@@ -1122,7 +2609,7 @@ function tick() {
   }
   poseFingers(ease, gEase);
 
-  if (DBG.includes('raw')) {
+  if (DBG.includes('raw') || !shaderSettings.enabled) {
     renderer.setRenderTarget(null);
     renderer.render(scene, camera);
   } else {

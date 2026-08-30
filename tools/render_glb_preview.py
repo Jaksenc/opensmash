@@ -1,13 +1,14 @@
 """Render four clay previews of a GLB for geometry QA.
 
 Usage:
-    blender --background --python tools/render_glb_preview.py -- model.glb output-dir
+    blender --background --python tools/render_glb_preview.py -- model.glb output-dir [textured]
 """
 
 import math
 import sys
 from pathlib import Path
 
+import bmesh
 import bpy
 from mathutils import Vector
 
@@ -27,6 +28,7 @@ def main():
     args = sys.argv[sys.argv.index("--") + 1:]
     source = Path(args[0]).expanduser().resolve()
     output = Path(args[1]).expanduser().resolve()
+    use_textures = len(args) > 2 and args[2] == "textured"
     output.mkdir(parents=True, exist_ok=True)
 
     bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -39,15 +41,16 @@ def main():
         if obj.parent is None and obj.type != "CAMERA":
             obj.location -= center
 
-    clay = bpy.data.materials.new("Clay")
-    clay.diffuse_color = (0.42, 0.45, 0.48, 1)
-    clay.use_nodes = True
-    shader = clay.node_tree.nodes.get("Principled BSDF")
-    shader.inputs["Base Color"].default_value = (0.42, 0.45, 0.48, 1)
-    shader.inputs["Roughness"].default_value = 0.86
-    for obj in meshes:
-        obj.data.materials.clear()
-        obj.data.materials.append(clay)
+    if not use_textures:
+        clay = bpy.data.materials.new("Clay")
+        clay.diffuse_color = (0.18, 0.21, 0.24, 1)
+        clay.use_nodes = True
+        shader = clay.node_tree.nodes.get("Principled BSDF")
+        shader.inputs["Base Color"].default_value = (0.18, 0.21, 0.24, 1)
+        shader.inputs["Roughness"].default_value = 0.86
+        for obj in meshes:
+            obj.data.materials.clear()
+            obj.data.materials.append(clay)
 
     bpy.ops.object.camera_add()
     camera = bpy.context.object
@@ -56,13 +59,13 @@ def main():
 
     bpy.ops.object.light_add(type="AREA")
     key = bpy.context.object
-    key.data.energy = 900
+    key.data.energy = 80
     key.data.shape = "DISK"
     key.data.size = max(size) * 2.5
 
     bpy.ops.object.light_add(type="AREA", location=(-2, 1, 2))
     fill = bpy.context.object
-    fill.data.energy = 450
+    fill.data.energy = 40
     fill.data.size = max(size) * 2
 
     scene = bpy.context.scene
@@ -83,6 +86,7 @@ def main():
         "neg_x": Vector((-distance, 0, distance * 0.08)),
         "pos_y": Vector((0, distance, distance * 0.08)),
         "neg_y": Vector((0, -distance, distance * 0.08)),
+        "top": Vector((0, 0, distance)),
         "three_quarter": Vector((distance * 0.75, -distance * 0.75, distance * 0.28)),
     }
     for name, location in views.items():
@@ -93,7 +97,25 @@ def main():
         scene.render.filepath = str(output / f"{name}.png")
         bpy.ops.render.render(write_still=True)
 
+    for obj in meshes:
+        obj.data.calc_loop_triangles()
+    edge_counts = {"boundary": 0, "non_manifold": 0, "wire": 0}
+    for obj in meshes:
+        mesh = bmesh.new()
+        mesh.from_mesh(obj.data)
+        bmesh.ops.remove_doubles(mesh, verts=list(mesh.verts), dist=1e-6)
+        edge_counts["boundary"] += sum(edge.is_boundary for edge in mesh.edges)
+        edge_counts["non_manifold"] += sum(not edge.is_manifold for edge in mesh.edges)
+        edge_counts["wire"] += sum(edge.is_wire for edge in mesh.edges)
+        mesh.free()
     print(f"bounds={tuple(round(v, 4) for v in size)}")
+    print(f"meshes={len(meshes)}")
+    print(f"vertices={sum(len(obj.data.vertices) for obj in meshes)}")
+    print(f"triangles={sum(len(obj.data.loop_triangles) for obj in meshes)}")
+    print(f"materials={sum(len(obj.data.materials) for obj in meshes)}")
+    print(f"boundary_edges={edge_counts['boundary']}")
+    print(f"non_manifold_edges={edge_counts['non_manifold']}")
+    print(f"wire_edges={edge_counts['wire']}")
     print(f"renders={output}")
 
 

@@ -289,6 +289,37 @@ def create_tripo_multiview_task(args: argparse.Namespace, tokens: list[str]) -> 
     return task_id
 
 
+def create_tripo_image_task(args: argparse.Namespace, token: str) -> str:
+    file_type = args.image.suffix.lower().lstrip(".")
+    if file_type == "jpeg":
+        file_type = "jpg"
+    body: dict[str, Any] = {
+        "type": "image_to_model",
+        "file": {"type": file_type, "file_token": token},
+        "texture": args.textured,
+        "pbr": args.textured,
+        "export_uv": args.textured,
+    }
+    if args.target_polycount is not None:
+        body["face_limit"] = args.target_polycount
+        if not (args.model_version or "").startswith("P1-"):
+            body["smart_low_poly"] = True
+    if args.model_version:
+        body["model_version"] = args.model_version
+
+    response = request_json(
+        f"{TRIPO_BASE_URL}/task",
+        token=api_key("tripo"),
+        method="POST",
+        body=body,
+    )
+    ensure_tripo_success(response)
+    task_id = response.get("data", {}).get("task_id")
+    if not isinstance(task_id, str) or not task_id:
+        raise ApiError("Tripo did not return an image-to-model task ID")
+    return task_id
+
+
 def get_tripo_task(task_id: str) -> dict[str, Any]:
     response = request_json(
         f"{TRIPO_BASE_URL}/task/{task_id}", token=api_key("tripo")
@@ -503,6 +534,33 @@ def command_generate_multiview(args: argparse.Namespace) -> int:
     return 0
 
 
+def command_generate_image(args: argparse.Namespace) -> int:
+    print(f"Uploading image reference: {args.image.name}...", flush=True)
+    token = upload_tripo_image(args.image)
+    print("Submitting Tripo image-to-3D task...", flush=True)
+    task_id = create_tripo_image_task(args, token)
+    print(f"Task ID: {task_id}")
+    if args.no_wait:
+        print(
+            "Check later with: "
+            f"python3 tools/generate_mesh.py status --provider tripo --task-id {task_id}"
+        )
+        return 0
+
+    task = wait_for_task(
+        "tripo", task_id, timeout=args.timeout, poll_interval=args.poll_interval
+    )
+    destination = output_path(args, task_id)
+    print(f"Downloading {destination.name}...")
+    download_model(task_model_url("tripo", task, args.textured), destination)
+    try:
+        display_path = destination.relative_to(PROJECT_ROOT)
+    except ValueError:
+        display_path = destination
+    print(f"Saved: {display_path}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Generate text or multiview GLB meshes with Meshy or Tripo.",
@@ -556,6 +614,34 @@ def build_parser() -> argparse.ArgumentParser:
     )
     generate_parser.set_defaults(handler=command_generate)
 
+    image_parser = subparsers.add_parser(
+        "generate-image", help="generate a Tripo GLB from one image reference"
+    )
+    image_parser.add_argument("--image", type=Path, required=True)
+    image_parser.add_argument(
+        "--textured", action="store_true", help="also generate textures and PBR maps"
+    )
+    image_parser.add_argument(
+        "--target-polycount", type=int, help="requested face count"
+    )
+    image_parser.add_argument(
+        "--model-version", default="P1-20260311", help="Tripo model version"
+    )
+    image_parser.add_argument(
+        "--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR, help="download directory"
+    )
+    image_parser.add_argument("--name", help="output filename (GLB)")
+    image_parser.add_argument(
+        "--no-wait", action="store_true", help="submit the task and return immediately"
+    )
+    image_parser.add_argument(
+        "--timeout", type=float, default=1200, help="maximum polling time in seconds"
+    )
+    image_parser.add_argument(
+        "--poll-interval", type=float, default=5, help="seconds between status requests"
+    )
+    image_parser.set_defaults(provider="tripo", handler=command_generate_image)
+
     multiview_parser = subparsers.add_parser(
         "generate-multiview",
         help="generate a Tripo GLB from ordered front/left/back/right references",
@@ -589,9 +675,9 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def validate_args(args: argparse.Namespace) -> None:
-    if args.command not in {"generate", "generate-multiview"}:
+    if args.command not in {"generate", "generate-image", "generate-multiview"}:
         return
-    if args.command == "generate-multiview":
+    if args.command in {"generate-image", "generate-multiview"}:
         if args.target_polycount is not None and args.target_polycount <= 0:
             raise ApiError("--target-polycount must be greater than zero")
         if args.poll_interval <= 0 or args.timeout <= 0:
