@@ -1,0 +1,37 @@
+{
+ "mao": {
+  "display": "Mao Zedong",
+  "desc": "Mao Zedong: round face, receding hairline with short black hair at the sides and back, the famous mole on the chin, gentle closed-mouth smile; gray-green Zhongshan suit with four front pockets and five buttons, matching trousers, black blocky shoes",
+  "refs": []
+ },
+ "joey": {
+  "display": "Joey Flynn",
+  "desc": "a fair-skinned man in his late 30s with a big messy mop of loose ringlet curls, dark brown with lots of silver-gray on top, a scruffy dark-brown beard, very large round translucent amber tortoiseshell glasses, a thin silver chain necklace, an oversized boxy off-white t-shirt with a chest pocket, loose faded light-blue straight-leg jeans to the ankles, and black woven leather fisherman sandals with bare feet",
+  "refs": [
+   "refs/joey-face.png",
+   "refs/joey-full.png"
+  ]
+ },
+ "thomas": {
+  "display": "Thomas",
+  "desc": "a fair-skinned man in his late 30s with a big soft voluminous tousled mop of dark-brown hair with a swept fringe, light ginger-brown stubble, blue-gray eyes, a slight half-smile, a white long-sleeve crew-neck t-shirt with a dark wristwatch on the left wrist, dark slim trousers and simple dark sneakers",
+  "refs": [
+   "refs/p3-face.png"
+  ]
+ },
+ "lincoln": {
+  "display": "Abraham Lincoln",
+  "desc": "Abraham Lincoln: tall gaunt face with deep-set eyes, dark chin-curtain beard with no mustache, tall black stovepipe hat, long black frock coat over a black waistcoat, white shirt with a black bow tie, black trousers and black boots",
+  "refs": []
+ },
+ "obama": {
+  "display": "Barack Obama",
+  "desc": "Barack Obama: short close-cropped black hair graying at the temples, clean-shaven, warm smile, big ears, charcoal suit jacket over a crisp white shirt with a blue tie, an American flag lapel pin, dark trousers and black dress shoes",
+  "refs": []
+ },
+ "queen": {
+  "display": "Queen Elizabeth II",
+  "desc": "Queen Elizabeth II is an elderly woman of petite, sturdy build, featuring a round, fair-skinned face with soft wrinkles, gentle blue eyes, and a closed mouth with light pink lipstick, framed by short, voluminous curled white hair beneath a solid lilac wide-brimmed hat with a flower, wearing a solid lilac knee-length coat dress with a silver brooch on the lapel, a white pearl necklace, empty hands in solid white gloves, sheer beige tights, and low-heeled solid black dress shoes",
+  "refs": []
+ }
+}

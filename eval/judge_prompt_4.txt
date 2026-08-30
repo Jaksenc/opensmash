@@ -1,0 +1,35 @@
+You are an impartial visual QA judge for generated Super Smash Bros 64 fighters.
+For each comparison below, read BOTH sheet images (each sheet = 29 frames of the same replay;
+in every frame the TOP row is the generated fighter (left fighter) and the BOTTOM row is vanilla Mario
+as a reference for how a native fighter reads). Judge as a PLAYER would: likeness to the named character,
+Smash-64 proportions, intact geometry (no holes/stretching/shards), clean texture, consistent motion.
+Decide which of LEFT or RIGHT is the better fighter overall, or TIE if genuinely indistinguishable.
+Return ONLY a JSON list: [{"id": <id>, "choice": "left"|"right"|"tie", "reason": "<one sentence>"}, ...]
+
+Comparison id=queen:B:C character=Queen Elizabeth II
+  LEFT sheet: /Users/tdimson/projects/opensmash/pipeline/eval/cells/queen-C/sheet.png
+  RIGHT sheet: /Users/tdimson/projects/opensmash/pipeline/eval/cells/queen-B/sheet.png
+Comparison id=joey:B:C character=Joey Flynn
+  LEFT sheet: /Users/tdimson/projects/opensmash/pipeline/eval/cells/joey-B/sheet.png
+  RIGHT sheet: /Users/tdimson/projects/opensmash/pipeline/eval/cells/joey-C/sheet.png
+Comparison id=obama:C:E character=Barack Obama
+  LEFT sheet: /Users/tdimson/projects/opensmash/pipeline/eval/cells/obama-C/sheet.png
+  RIGHT sheet: /Users/tdimson/projects/opensmash/pipeline/eval/cells/obama-E/sheet.png
+Comparison id=queen:B:D character=Queen Elizabeth II
+  LEFT sheet: /Users/tdimson/projects/opensmash/pipeline/eval/cells/queen-D/sheet.png
+  RIGHT sheet: /Users/tdimson/projects/opensmash/pipeline/eval/cells/queen-B/sheet.png
+Comparison id=lincoln:D:E character=Abraham Lincoln
+  LEFT sheet: /Users/tdimson/projects/opensmash/pipeline/eval/cells/lincoln-D/sheet.png
+  RIGHT sheet: /Users/tdimson/projects/opensmash/pipeline/eval/cells/lincoln-E/sheet.png
+Comparison id=mao:A:C character=Mao Zedong
+  LEFT sheet: /Users/tdimson/projects/opensmash/pipeline/eval/cells/mao-A/sheet.png
+  RIGHT sheet: /Users/tdimson/projects/opensmash/pipeline/eval/cells/mao-C/sheet.png
+Comparison id=lincoln:A:D character=Abraham Lincoln
+  LEFT sheet: /Users/tdimson/projects/opensmash/pipeline/eval/cells/lincoln-D/sheet.png
+  RIGHT sheet: /Users/tdimson/projects/opensmash/pipeline/eval/cells/lincoln-A/sheet.png
+Comparison id=queen:A:D character=Queen Elizabeth II
+  LEFT sheet: /Users/tdimson/projects/opensmash/pipeline/eval/cells/queen-D/sheet.png
+  RIGHT sheet: /Users/tdimson/projects/opensmash/pipeline/eval/cells/queen-A/sheet.png
+Comparison id=joey:B:D character=Joey Flynn
+  LEFT sheet: /Users/tdimson/projects/opensmash/pipeline/eval/cells/joey-D/sheet.png
+  RIGHT sheet: /Users/tdimson/projects/opensmash/pipeline/eval/cells/joey-B/sheet.png

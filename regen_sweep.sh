@@ -1,0 +1,23 @@
+#!/bin/bash
+# Regenerate the demo roster from scratch (post-purge pipeline health check).
+# Each character runs the full run_character.py pipeline: expand -> tpose ->
+# Tripo mesh/rig -> convert -> portrait -> stock -> emblem -> ui pack -> voice
+# -> stage into web-dist/bundles.
+cd "$(dirname "$0")"
+set -u
+
+run() {
+  local label="$1"; shift
+  echo "SWEEP: START $label"
+  if python3 run_character.py "$@"; then
+    echo "SWEEP: DONE $label"
+  else
+    echo "SWEEP: FAILED $label (exit $?)"
+  fi
+}
+
+run obama "Barack Obama"
+run joeyflynn "Joey Flynn" --photo refs/joey-full.png
+run weirdal "Weird Al Yankovic"
+run moritz "Moritz Baier-Lentz" --photo refs/moritz-ref.png
+echo "SWEEP: ALL COMPLETE"

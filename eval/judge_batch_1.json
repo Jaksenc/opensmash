@@ -1,0 +1,11 @@
+[
+  {"id": "thomas:B:D", "choice": "right", "reason": "D has a readable face, hair, and shirt at every scale, while B's head is a featureless dark hair blob with no face and its torso texture is washed out."},
+  {"id": "lincoln:C:D", "choice": "left", "reason": "D (left) keeps intact arms and a clean black suit through crouch, smash, and taunt, whereas C (right) sprouts large white stretched shards from both arms in most action frames."},
+  {"id": "obama:B:E", "choice": "right", "reason": "B (right) reads more like Obama with a visible white shirt and blue tie and slightly cleaner arms, while E (left) is darker and lower-contrast with a shard spiking off the shoulder; both share minor hand stretching."},
+  {"id": "joey:A:C", "choice": "right", "reason": "C has a cleaner face with glasses and beard, a properly shaded shirt with pocket, and tidier limbs, while A's torso is blown-out flat white and its proportions are wider and lumpier."},
+  {"id": "joey:C:D", "choice": "left", "reason": "C (left) is clean and intact, whereas D's texture is badly fractured into mottled patches across the face, shirt, and jeans, making the character hard to read."},
+  {"id": "queen:C:D", "choice": "right", "reason": "C (right) has a clean face, hat, and lilac coat with intact legs, while D (left) has stretched shard-like legs, a mottled distorted face texture, and an oversized hat."},
+  {"id": "lincoln:A:C", "choice": "left", "reason": "Both have stretched arm shards, but A's are dark and blend with the suit while C's are large bright white shards that dominate the silhouette; A's face and hat also read more clearly as Lincoln."},
+  {"id": "queen:A:E", "choice": "tie", "reason": "Could not judge: queen-E has no sheet.png (only bundle/clip/convert.log present), so no comparison image was available."},
+  {"id": "queen:D:E", "choice": "tie", "reason": "Could not judge: queen-E has no sheet.png (only bundle/clip/convert.log present), so no comparison image was available."}
+]
