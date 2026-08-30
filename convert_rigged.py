@@ -3899,26 +3899,69 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
                         v[5+i] = nacc[i] / nl
             for j in joint_ids:
                 bf[str(j)]["o"] = no[j]
-            # BALL MODE (kirby/purin): the target IS a giant head with
-            # shoes — drop torso/limb geometry (holes hide inside the
-            # head), scale the head about its joint to ball size, keep
-            # hands and shoes riding their joints.
+            # BALL MODE (kirby/purin): inflate a clean head into a balloon
+            # while the connected neck/torso narrows into an internal plug.
+            # Every triangle stays present, so the balloon remains a single
+            # continuous mesh; hands and shoes keep riding their own joints.
             if prof.get("ball_squash"):
-                # BALL (kirby/purin): giant head on a squashed body, real
-                # arms and shoes kept whole. All transforms weight-blended
-                # per vert so nothing tears at ownership seams.
                 k_ = float(prof.get("ball_squash", 0.25))
                 hs = float(prof.get("head_scale", 2.5))
-                fat = float(prof.get("ball_fat", 1.4))
                 fs_ = float(prof.get("feet_scale", 1.6))
                 ymin0_ = min(v_[1] for v_ in sk["verts"])
+                ymax0_ = max(v_[1] for v_ in sk["verts"])
                 cx_, cz_ = no[6][0], no[6][2]
                 dy_ = (1.0-k_) * (no[12][1]-ymin0_) if 12 in no else 0.0
-                ball_cy = (no[12][1] - dy_*0.9) if 12 in no else ymin0_
+                hdrop_ = float(prof.get("ball_head_drop", 1.0))
                 hns = float(prof.get("hand_scale", 1.4))
+                # Joint 12 deliberately collects the source neck as well
+                # as the head.  Raw skin weight is therefore too generous
+                # a definition of the ball: even 10-30% neck weight pulls
+                # collars and upper-chest faces into long, magnified fins.
+                # Require both confident Head ownership and a position
+                # above the anatomical head joint. The narrow smoothstep
+                # bands produce a continuous inflation field instead of a
+                # hard cut between head and body.
+                bh_ = max(1e-6, ymax0_ - ymin0_)
+                hf_ = (no[12][1] + float(prof.get("ball_head_floor", 0.02)) * bh_
+                       if 12 in no else ymin0_ + 0.6 * bh_)
+                hyb_ = max(1e-6, float(prof.get("ball_head_blend", 0.02)) * bh_)
+                hw0_ = float(prof.get("ball_head_weight", 0.5))
+
+                def smoothstep_(lo_, hi_, x_):
+                    t_ = max(0.0, min(1.0, (x_ - lo_) / max(1e-6, hi_ - lo_)))
+                    return t_ * t_ * (3.0 - 2.0 * t_)
+
+                hn_, hsupp_, ncollar_, nchin_ = 0, 0.0, 0, 0
                 for v in sk["verts"]:
                     tot = sum(w for (ji, w) in v[8]) or 1.0
-                    w12 = sum(w for (ji, w) in v[8] if ji == 12) / tot
+                    w12_raw = sum(w for (ji, w) in v[8] if ji == 12) / tot
+                    # The chin shares the low/upward-facing cues of a
+                    # collar, but lies forward of the spine along the
+                    # already-established face axis. Extend the head floor
+                    # downward only there; centered/rear neck geometry keeps
+                    # the stricter floor and disappears into the plug.
+                    fd_ = ((v[0] - no[12][0]) * Dax[0]
+                           + (v[2] - no[12][2]) * Dax[2])
+                    front_ = smoothstep_(0.0, 0.10 * bh_, fd_)
+                    vhf_ = hf_ - 0.06 * bh_ * front_
+                    wy_ = smoothstep_(vhf_ - hyb_, vhf_, v[1])
+                    ww_ = smoothstep_(hw0_, 0.9, w12_raw)
+                    # Collars can still be rigidly head-weighted.  Near
+                    # the base of the head they are distinguished from a
+                    # jaw/beard shell by their upward-facing surface.
+                    # Fade that cue out quickly with height so cheeks,
+                    # glasses, hair, etc. are never orientation-clipped.
+                    bz_ = 1.0 - smoothstep_(hf_, hf_ + 0.06 * bh_, v[1])
+                    up_ = smoothstep_(0.25, 0.75, v[6])
+                    collar_ = bz_ * up_ * (1.0 - front_)
+                    w12 = w12_raw * wy_ * ww_ * (1.0 - collar_)
+                    if collar_ > 0.5 and w12_raw > 0.5:
+                        ncollar_ += 1
+                    if w12 >= 0.5:
+                        hn_ += 1
+                        if front_ > 0.5 and v[1] < hf_:
+                            nchin_ += 1
+                    hsupp_ += w12_raw - w12
                     wf = sum(w for (ji, w) in v[8] if ji in (22, 27)) / tot
                     wh = sum(w for (ji, w) in v[8] if ji in (10, 16)) / tot
                     fj = 22 if sum(w for (ji, w) in v[8] if ji == 22) >= \
@@ -3926,9 +3969,10 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
                     hj = 10 if sum(w for (ji, w) in v[8] if ji == 10) >= \
                                sum(w for (ji, w) in v[8] if ji == 16) else 16
                     wa = sum(w for (ji, w) in v[8] if ji in (8, 9, 14, 15)) / tot
-                    wb = max(0.0, 1.0 - w12 - wf - wh - wa)
+                    wl = sum(w for (ji, w) in v[8] if ji in (19, 20, 24, 25)) / tot
+                    wb = max(0.0, 1.0 - w12 - wf - wh - wa - wl)
                     vh = [no[12][i] + hs * (v[i]-no[12][i]) for i in range(3)]
-                    vh[1] -= dy_ * 0.9
+                    vh[1] -= dy_ * hdrop_
                     vf = [no[fj][i] + fs_ * (v[i]-no[fj][i]) for i in range(3)] \
                          if fj in no else list(v[:3])
                     # hands crisp at their joints (like the shoes); arm
@@ -3942,29 +3986,52 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
                         tk_ = float(prof.get("hand_tuck", 0.55))
                         vn[0] -= tk_ * (no[hj][0] - cx_)
                         vn[2] -= tk_ * (no[hj][2] - cz_)
-                    vb = [cx_ + fat*(v[0]-cx_),
+                    # Balloon plug: every ordinary body/leg vertex narrows
+                    # toward the body axis. Hands and feet use their own
+                    # transforms, and mixed skin weights provide a continuous
+                    # flare from the plug into those stubs. Keeping any lower
+                    # body region broad merely stacks trousers/shirt into a
+                    # visible band after the vertical squash.
+                    nr_ = float(prof.get("ball_neck_radius", 0.25))
+                    br_ = nr_
+                    vb = [cx_ + br_*(v[0]-cx_),
                           ymin0_ + k_*(v[1]-ymin0_),
-                          cz_ + fat*(v[2]-cz_)]
+                          cz_ + br_*(v[2]-cz_)]
+                    # Flatten and center the source leg tubes into a tiny,
+                    # rigid bridge. Unlike deleting their faces, this keeps
+                    # the complete shoe boundary and avoids open-edge spikes.
+                    lk_ = float(prof.get("ball_leg_squash", 0.03))
+                    lr_ = float(prof.get("ball_leg_radius", 0.06))
+                    vl = [cx_ + lr_*(v[0]-cx_),
+                          ymin0_ + lk_*(v[1]-ymin0_),
+                          cz_ + lr_*(v[2]-cz_)]
                     # arm segments: body squash PLUS radial compression
                     # toward the torso column so they hug the body
                     ak_ = float(prof.get("arm_hug", 0.45))
                     ad_ = float(prof.get("arm_drop", 0.0))
                     va = [cx_ + ak_*(vb[0]-cx_), vb[1] - ad_, cz_ + ak_*(vb[2]-cz_)]
                     for i in range(3):
-                        v[i] = w12*vh[i] + wf*vf[i] + wh*vn[i] + wa*va[i] + wb*vb[i]
-                # arm SEGMENTS reweighted to the chest: baked position
-                # can't stop runtime swing (verts follow arm joints), so
-                # flaps poked out of the ball during walks. Rigid with the
-                # body = flush forever; hands keep their joints and animate.
+                        v[i] = (w12*vh[i] + wf*vf[i] + wh*vn[i]
+                                + wa*va[i] + wl*vl[i] + wb*vb[i])
+                # The narrow plug must remain rigid at runtime: a collapsed
+                # bind-pose leg/arm tube explodes back across its separate
+                # joints as soon as the fighter walks. Move all segment
+                # weights to the chest while terminal hand/foot weights keep
+                # their animation and provide the blended stub connection.
                 for v in sk["verts"]:
                     neww = []
                     for (ji, w) in v[8]:
-                        neww.append((6 if ji in (8, 9, 14, 15) else ji, w))
+                        neww.append((6 if ji in (8, 9, 14, 15,
+                                                 19, 20, 24, 25) else ji, w))
                     merged = {}
                     for (ji, w) in neww:
                         merged[ji] = merged.get(ji, 0.0) + w
                     v[8] = sorted(merged.items(), key=lambda kv: -kv[1])
-                print(f"ball squash k={k_} head x{hs} fat x{fat} (arms rigid)")
+                print(f"ball squash k={k_} head x{hs} "
+                      f"head-floor={hf_:.1f} kept={hn_} suppressed={hsupp_:.1f} "
+                      f"drop={hdrop_:.2f} collar={ncollar_} chin={nchin_} "
+                      f"neck-radius={nr_:.2f} leg={lk_:.2f}/{lr_:.2f} "
+                      f"(continuous rigid balloon)")
             elif prof.get("ball_mode"):
                 hs = float(prof.get("head_scale", 2.2))
                 fs_ = float(prof.get("feet_scale", 1.8))
