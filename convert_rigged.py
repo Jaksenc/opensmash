@@ -3658,9 +3658,13 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
             # makes the baked bind face like the target, so the runtime
             # rotation deltas render it at the target's true facing.
             if 8 in joint_ids and 14 in joint_ids:
-                am = [bfp[14][0]-bfp[8][0], bfp[14][2]-bfp[8][2]]
-                at = [T[cmap[14]][0]-T[cmap[8]][0], T[cmap[14]][2]-T[cmap[8]][2]]
+                # hip axis (thigh-to-thigh): the pelvis is the stiffest
+                # yaw reference — shoulder lines twist with the arm stance
+                # (link holds his shield arm forward and over-rotated 20deg)
+                am = [bfp[24][0]-bfp[19][0], bfp[24][2]-bfp[19][2]]
+                at = [T[cmap[24]][0]-T[cmap[19]][0], T[cmap[24]][2]-T[cmap[19]][2]]
                 yaw = math.atan2(at[1], at[0]) - math.atan2(am[1], am[0])
+                yaw += math.radians(float(os.environ.get("MORPH_YAW_TRIM", "0")))
                 cy, sy = math.cos(yaw), math.sin(yaw)
                 px, pz = bfp[6][0], bfp[6][2]   # pivot: chest column
 
