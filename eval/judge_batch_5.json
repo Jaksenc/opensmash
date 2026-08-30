@@ -1,0 +1,9 @@
+[
+  {"id": "mao:C:E", "choice": "left", "reason": "C has distinct arms and a clean head, while E's arms merge into a blobby torso and the head is stretched."},
+  {"id": "queen:C:E", "choice": "right", "reason": "C has a crisp purple coat, handbag and strong likeness; E is washed out with arms fused to the body."},
+  {"id": "obama:A:C", "choice": "right", "reason": "C has long stretched shard geometry spiking out of the arms; A is clean with a comparable likeness."},
+  {"id": "thomas:B:E", "choice": "left", "reason": "B's head faces backwards (only hair visible from the front), whereas E shows the face and beard correctly."},
+  {"id": "lincoln:A:B", "choice": "left", "reason": "B is a clean top-hat Lincoln; A has huge stretched black shards across the arms and torso."},
+  {"id": "thomas:A:E", "choice": "tie", "reason": "The two sheets are pixel-for-pixel nearly identical (under 0.1% of pixels differ), with no visible difference in any frame."},
+  {"id": "queen:B:E", "choice": "left", "reason": "E has an intact silhouette and hat, while B has floating stretched shards off the arm and a paler texture."}
+]

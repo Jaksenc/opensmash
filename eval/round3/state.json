@@ -1,0 +1,11 @@
+{
+ "cells": {
+  "queen-BT": {
+   "image": "/Users/tdimson/projects/opensmash/pipeline/eval/round3/cells/queen-BT/tpose.png",
+   "rigged": "/Users/tdimson/projects/opensmash/pipeline/eval/round3/cells/queen-BT/rigged.glb",
+   "torn": 8,
+   "osb": "/Users/tdimson/projects/opensmash/pipeline/eval/round3/cells/queen-BT/bundle.osb",
+   "done": true
+  }
+ }
+}

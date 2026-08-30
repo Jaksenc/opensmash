@@ -1,0 +1,165 @@
+#!/usr/bin/env python3
+"""Serve the A/B rating UI and record ratings.
+
+  python3 eval/eval_server.py [--port 8765] [--rater tom]
+
+GET  /              rating UI
+GET  /pairs.json    comparison schedule (technique ids stripped)
+GET  /cells/...     clips and sheets
+POST /rate          {"id": N, "choice": "left"|"right"|"tie", "ms": elapsed}
+GET  /progress      rated ids for this rater
+Ratings append to eval/ratings.jsonl (one JSON per line, with the hidden
+left/right technique ids resolved server-side).
+"""
+import argparse
+import json
+import os
+import time
+from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+CELLS = os.environ.get("EVAL_OUT", os.path.join(HERE, "cells"))
+PAIRS = os.environ.get("EVAL_PAIRS", os.path.join(HERE, "pairs.json"))
+RATINGS = os.environ.get("EVAL_RATINGS", os.path.join(HERE, "ratings.jsonl"))
+RATER = "anon"
+
+
+def rated_ids(rater):
+    ids = set()
+    if os.path.exists(RATINGS):
+        for line in open(RATINGS):
+            try:
+                r = json.loads(line)
+                if r.get("rater") == rater:
+                    ids.add(r["id"])
+            except Exception:
+                pass
+    return ids
+
+
+class H(SimpleHTTPRequestHandler):
+    def __init__(self, *a, **k):
+        super().__init__(*a, directory=HERE, **k)
+
+    def log_message(self, *a):
+        pass
+
+    def end_headers(self):
+        # the UI evolves between eval runs on the same port; a heuristically
+        # cached index.html silently serves last month's rating page
+        if self.path.endswith(".html") or self.path == "/":
+            self.send_header("Cache-Control", "no-store")
+        super().end_headers()
+
+    def _json(self, obj, code=200):
+        b = json.dumps(obj).encode()
+        self.send_response(code)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(b)))
+        self.end_headers()
+        self.wfile.write(b)
+
+    def do_GET(self):
+        if self.path == "/":
+            self.path = "/ui/index.html"
+        elif self.path.startswith("/pairs.json"):
+            pairs = json.load(open(PAIRS))
+            pub = [{"id": p["id"], "char": p["char"], "display": p["display"],
+                    "left_clip": f"/cells/{p['char']}-{p['left']}/clip.mp4",
+                    "right_clip": f"/cells/{p['char']}-{p['right']}/clip.mp4",
+                    "left_sheet": f"/cells/{p['char']}-{p['left']}/sheet.png",
+                    "right_sheet": f"/cells/{p['char']}-{p['right']}/sheet.png"} for p in pairs]
+            return self._json(pub)
+        elif self.path == "/triage":
+            self.path = "/ui/triage.html"
+        elif self.path.startswith("/cells.json"):
+            import random
+            chars = json.load(open(os.path.join(HERE, "characters.json")))
+            cells = []
+            for ch in chars:
+                for cf in sorted({d_.split("-", 1)[1] for d_ in os.listdir(CELLS) if d_.startswith(ch + "-")}):
+                    d = os.path.join(CELLS, f"{ch}-{cf}")
+                    if os.path.exists(os.path.join(d, "clip.mp4")):
+                        cells.append({"cell": f"{ch}-{cf}", "display": chars[ch]["display"], "clip": f"/cells/{ch}-{cf}/clip.mp4"})
+            random.Random(7).shuffle(cells)   # hide technique order; stable across reloads
+            for i, c in enumerate(cells):
+                c["idx"] = i + 1
+            return self._json(cells)
+        elif self.path.startswith("/triage.json"):
+            out = {}
+            tp = os.path.join(HERE, "triage.jsonl")
+            if os.path.exists(tp):
+                for line in open(tp):
+                    r = json.loads(line); out[r["cell"]] = r
+            return self._json(out)
+        elif self.path.startswith("/progress"):
+            return self._json({"rated": sorted(rated_ids(RATER)), "rater": RATER})
+        if self.path.startswith("/cells/"):
+            fp = os.path.join(CELLS, self.path[len("/cells/"):].split("?")[0])
+            if os.path.exists(fp):
+                ctype = "video/mp4" if fp.endswith(".mp4") else "image/png"
+                size = os.path.getsize(fp)
+                # honor Range requests: without 206 responses the browser
+                # reports an empty seekable range and <video> scrubbing
+                # silently snaps back to t=0
+                rng = self.headers.get("Range")
+                start, end = 0, size - 1
+                if rng and rng.startswith("bytes="):
+                    a, _, b = rng[len("bytes="):].partition("-")
+                    if a:
+                        start = int(a)
+                        end = int(b) if b else size - 1
+                    elif b:   # suffix range: last N bytes
+                        start = max(0, size - int(b))
+                    start = min(start, size - 1); end = min(end, size - 1)
+                with open(fp, "rb") as f:
+                    f.seek(start)
+                    data = f.read(end - start + 1)
+                self.send_response(206 if rng else 200)
+                self.send_header("Content-Type", ctype)
+                self.send_header("Accept-Ranges", "bytes")
+                if rng:
+                    self.send_header("Content-Range", f"bytes {start}-{end}/{size}")
+                self.send_header("Content-Length", str(len(data)))
+                self.end_headers()
+                try:
+                    self.wfile.write(data)
+                except BrokenPipeError:
+                    pass   # browser aborts range reads constantly while seeking
+                return
+        return super().do_GET()
+
+    def do_POST(self):
+        if self.path == "/tag":
+            n = int(self.headers.get("Content-Length", 0))
+            body = json.loads(self.rfile.read(n))
+            with open(os.path.join(HERE, "triage.jsonl"), "a") as f:
+                f.write(json.dumps({"cell": body["cell"], "tags": body.get("tags", []), "note": body.get("note", ""),
+                                    "rater": RATER, "t": time.time()}) + "\n")
+            return self._json({"ok": True})
+        if self.path != "/rate":
+            return self._json({"error": "nope"}, 404)
+        n = int(self.headers.get("Content-Length", 0))
+        body = json.loads(self.rfile.read(n))
+        pairs = {p["id"]: p for p in json.load(open(PAIRS))}
+        p = pairs[body["id"]]
+        rec = {"id": p["id"], "char": p["char"], "left": p["left"], "right": p["right"],
+               "choice": body["choice"], "ms": body.get("ms"), "rater": RATER, "t": time.time()}
+        with open(RATINGS, "a") as f:
+            f.write(json.dumps(rec) + "\n")
+        return self._json({"ok": True})
+
+
+def main():
+    global RATER
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--port", type=int, default=8765)
+    ap.add_argument("--rater", default="tom")
+    a = ap.parse_args()
+    RATER = a.rater
+    print(f"rating UI: http://localhost:{a.port}/  (rater={RATER})")
+    ThreadingHTTPServer(("0.0.0.0", a.port), H).serve_forever()
+
+
+if __name__ == "__main__":
+    main()

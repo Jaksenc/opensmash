@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>OpenSmash technique tournament</title>
+<style>
+  :root { --bg:#121417; --panel:#1c2026; --fg:#e8e8ea; --mut:#9aa3ad; --acc:#ffcc33; --ok:#3ddc84; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:15px/1.4 -apple-system, Inter, system-ui, sans-serif; }
+  header { display:flex; align-items:center; gap:16px; padding:10px 18px; border-bottom:1px solid #2a2f36; }
+  header h1 { font-size:16px; margin:0; font-weight:600; }
+  .prog { flex:1; height:8px; background:#2a2f36; border-radius:4px; overflow:hidden; }
+  .prog i { display:block; height:100%; background:var(--ok); width:0; }
+  .who { color:var(--mut); font-variant-numeric:tabular-nums; }
+  main { padding:14px 18px; }
+  .q { font-size:18px; margin:4px 0 12px; }
+  .q b { color:var(--acc); }
+  .arena { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .card { background:var(--panel); border:2px solid #2a2f36; border-radius:10px; padding:10px; cursor:pointer; transition:border-color .12s, transform .12s; }
+  .card:hover { border-color:var(--acc); transform:translateY(-2px); }
+  .card.picked { border-color:var(--ok); }
+  .card video { width:100%; display:block; border-radius:6px; background:#000; aspect-ratio:842/540; }
+  .card .lbl { display:flex; justify-content:space-between; margin-top:8px; color:var(--mut); }
+  .card .lbl kbd { background:#2a2f36; border-radius:4px; padding:1px 6px; color:var(--fg); }
+  .tie { margin:14px auto 0; display:block; background:#2a2f36; color:var(--fg); border:0; padding:10px 18px; border-radius:8px; cursor:pointer; font-size:15px; }
+  .tie:hover { background:#353b44; }
+  .scrub { display:flex; align-items:center; gap:10px; margin-top:12px; }
+  .scrub button { background:#2a2f36; color:var(--fg); border:0; border-radius:6px; padding:4px 10px; cursor:pointer; font-size:14px; }
+  .scrub button:hover { background:#353b44; }
+  .scrub input[type=range] { flex:1; accent-color:var(--acc); }
+  .scrub .tc { color:var(--mut); font-variant-numeric:tabular-nums; min-width:88px; text-align:right; }
+  .hint { color:var(--mut); text-align:center; margin-top:10px; font-size:13px; }
+  .done { text-align:center; padding:60px 0; font-size:22px; }
+  a { color:var(--acc); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Which one is the better Smash 64 fighter?</h1>
+  <div class="prog"><i id="bar"></i></div>
+  <div class="who" id="who">…</div>
+</header>
+<main>
+  <div class="q" id="q"></div>
+  <div class="arena" id="arena">
+    <div class="card" id="L" data-side="left"><video muted loop autoplay playsinline preload="auto"></video><div class="lbl"><span>Left</span><kbd>←</kbd></div></div>
+    <div class="card" id="R" data-side="right"><video muted loop autoplay playsinline preload="auto"></video><div class="lbl"><span>Right</span><kbd>→</kbd></div></div>
+  </div>
+  <div class="scrub">
+    <button id="pp" title="play/pause (k)">⏸</button>
+    <button id="stepb" title="step back one frame (,)">⋖</button>
+    <button id="stepf" title="step forward one frame (.)">⋗</button>
+    <input type="range" id="bar2" min="0" max="1000" value="0">
+    <span class="tc" id="tc">0.00s</span>
+  </div>
+  <button class="tie" id="tie">Can't tell / tie <kbd>space</kbd></button>
+  <div class="hint">Both clips are the same replay, looping in sync. Judge likeness <i>and</i> how clean it looks in play (holes, stretching, jitter, proportions). Scrub or step with <kbd>k</kbd> <kbd>,</kbd> <kbd>.</kbd> — <kbd>←</kbd>/<kbd>→</kbd> rate.</div>
+</main>
+<script>
+let pairs=[], rated=new Set(), idx=0, t0=0;
+const L=document.getElementById('L'), R=document.getElementById('R');
+const vL=L.querySelector('video'), vR=R.querySelector('video');
+async function load(){
+  pairs=await (await fetch('/pairs.json')).json();
+  const pr=await (await fetch('/progress')).json();
+  rated=new Set(pr.rated); document.getElementById('who').textContent=pr.rater;
+  idx=pairs.findIndex(p=>!rated.has(p.id)); show();
+}
+function show(){
+  const bar=document.getElementById('bar'); bar.style.width=(100*rated.size/pairs.length)+'%';
+  document.getElementById('who').textContent=`${rated.size} / ${pairs.length}`;
+  if(idx<0||idx>=pairs.length){ document.querySelector('main').innerHTML='<div class="done">All done — thank you. Run <code>python3 eval/analyze.py</code>.</div>'; return; }
+  const p=pairs[idx];
+  document.getElementById('q').innerHTML=`Character: <b>${p.display}</b> — same replay, same moves. Left vs right.`;
+  vL.src=p.left_clip; vR.src=p.right_clip; vL.load(); vR.load();
+  // same replay on both sides: autoplay both, looped, kept in sync
+  Promise.all([new Promise(r=>vL.oncanplay=r), new Promise(r=>vR.oncanplay=r)]).then(()=>{ vL.currentTime=0; vR.currentTime=0; vL.play().catch(()=>{}); vR.play().catch(()=>{}); document.getElementById('pp').textContent='⏸'; });
+  L.classList.remove('picked'); R.classList.remove('picked'); t0=performance.now();
+  // preload next pair
+  const n=pairs[idx+1]; if(n){ [n.left_clip,n.right_clip].forEach(u=>{const v=document.createElement('video'); v.preload='auto'; v.src=u;}); }
+}
+async function rate(choice){
+  const p=pairs[idx]; if(!p) return;
+  (choice==='left'?L:R).classList.add('picked');
+  await fetch('/rate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:p.id,choice,ms:Math.round(performance.now()-t0)})});
+  rated.add(p.id); idx=pairs.findIndex((q,i)=>i>idx&&!rated.has(q.id)); if(idx<0) idx=pairs.length; setTimeout(show,120);
+}
+[L,R].forEach(c=>{ c.addEventListener('click',()=>rate(c.dataset.side)); });
+// keep the two loops locked together
+setInterval(()=>{ if(!vL.paused && !vR.paused && Math.abs(vL.currentTime-vR.currentTime)>0.15) vR.currentTime=vL.currentTime; }, 500);
+document.getElementById('tie').onclick=()=>rate('tie');
+
+// ---- transport: synced scrubber / frame stepping over both clips.
+// Clips are 20fps (eval/capture_clip.py), so 1 clip frame = 1/20 s.
+// Autoplay-first: releasing the scrubber resumes the loop; pausing is
+// the advanced flow (k to hold, , / . to step).
+const FPS=20, pp=document.getElementById('pp'), bar2=document.getElementById('bar2'), tc=document.getElementById('tc');
+let userPaused=false;   // only a deliberate pause sticks — the browser
+                        // pauses muted background video on its own
+function seekBoth(t){ t=Math.max(0, Math.min(t, (vL.duration||0)-0.001)); vL.currentTime=t; vR.currentTime=t; }
+function pauseBoth(){ userPaused=true; vL.pause(); vR.pause(); pp.textContent='▶'; }
+function playBoth(){ userPaused=false; vL.play().catch(()=>{}); vR.play().catch(()=>{}); pp.textContent='⏸'; }
+setInterval(()=>{ if(!userPaused && vL.paused && vL.readyState>=3) playBoth(); }, 800);
+pp.onclick=()=>{ vL.paused?playBoth():pauseBoth(); };
+document.getElementById('stepb').onclick=()=>{ pauseBoth(); seekBoth(vL.currentTime-1/FPS); };
+document.getElementById('stepf').onclick=()=>{ pauseBoth(); seekBoth(vL.currentTime+1/FPS); };
+bar2.addEventListener('input',()=>{ pauseBoth(); if(vL.duration) seekBoth(bar2.value/1000*vL.duration); });
+bar2.addEventListener('change',()=>{ playBoth(); });   // drag released -> resume the loop
+vL.addEventListener('timeupdate',()=>{ if(vL.duration){ bar2.value=Math.round(1000*vL.currentTime/vL.duration); tc.textContent=vL.currentTime.toFixed(2)+'s · f'+Math.round(vL.currentTime*FPS); } });
+
+document.addEventListener('keydown',e=>{ if(e.key==='ArrowLeft') rate('left'); else if(e.key==='ArrowRight') rate('right');
+  else if(e.key===' '){e.preventDefault(); rate('tie');}
+  else if(e.key==='k'||e.key==='p'){ vL.paused?playBoth():pauseBoth(); }
+  else if(e.key===','){ pauseBoth(); seekBoth(vL.currentTime-1/FPS); }
+  else if(e.key==='.'){ pauseBoth(); seekBoth(vL.currentTime+1/FPS); } });
+load();
+</script>
+</body>
+</html>

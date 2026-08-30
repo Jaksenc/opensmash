@@ -1,0 +1,53 @@
+{
+  "clone_model": "fal-ai/minimax/voice-clone",
+  "tts_model": "fal-ai/minimax/speech-02-hd",
+  "conditioning_audio": "../announcer_conditioning_corrected/conditioning_style.wav",
+  "conditioning_seconds": 13.981,
+  "custom_voice_id": "Voice2bb4ec971787673452",
+  "clone_settings": {
+    "noise_reduction": false,
+    "need_volume_normalization": false
+  },
+  "tts_settings": {
+    "speed": 1.0,
+    "volume": 1.0,
+    "pitch": 0,
+    "english_normalization": true,
+    "language_boost": "English",
+    "emotion_override": null
+  },
+  "output": {
+    "container": "wav",
+    "codec": "pcm_s16le",
+    "sample_rate": 32000,
+    "channels": 1
+  },
+  "tests": [
+    {
+      "slug": "mao_zedong",
+      "prompt": "Mao Zedong!",
+      "file": "mao_zedong.wav",
+      "duration_seconds": 1.311938,
+      "asr_check": "Miles and Dom!"
+    },
+    {
+      "slug": "queen_elizabeth_the_second",
+      "prompt": "Queen Elizabeth the Second!",
+      "file": "queen_elizabeth_the_second.wav",
+      "duration_seconds": 2.507781,
+      "asr_check": "Queen Elizabeth II."
+    },
+    {
+      "slug": "weird_al_yankovic",
+      "prompt": "Weird Al Yankovic!",
+      "file": "weird_al_yankovic.wav",
+      "duration_seconds": 1.706688,
+      "asr_check": "Weird. Oh, Yankovic!"
+    }
+  ],
+  "notes": [
+    "Each test is one direct TTS request from the exact prompt shown above.",
+    "The provider returned MPEG audio; files were decoded to mono 32 kHz PCM WAV without pitch or timing changes.",
+    "ASR is only a warning signal for these stylized, very short clips and is not ground truth."
+  ]
+}

@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Cell triage</title>
+<style>
+  :root { --bg:#121417; --panel:#1c2026; --fg:#e8e8ea; --mut:#9aa3ad; --acc:#ffcc33; --bad:#ff5c5c; --ok:#3ddc84; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:14px/1.4 -apple-system, Inter, system-ui, sans-serif; }
+  header { padding:10px 18px; border-bottom:1px solid #2a2f36; display:flex; gap:16px; align-items:center; }
+  header h1 { font-size:16px; margin:0; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(420px, 1fr)); gap:12px; padding:14px 18px; }
+  .cell { background:var(--panel); border:2px solid #2a2f36; border-radius:10px; padding:8px; }
+  .cell.ok { border-color:var(--ok); } .cell.bad { border-color:var(--bad); }
+  .cell video { width:100%; border-radius:6px; background:#000; display:block; }
+  .hdr { display:flex; justify-content:space-between; margin:6px 0; }
+  .hdr b { color:var(--acc); }
+  .tags { display:flex; flex-wrap:wrap; gap:6px; }
+  .tag { border:1px solid #3a414b; border-radius:14px; padding:3px 10px; cursor:pointer; color:var(--mut); user-select:none; }
+  .tag.on { background:var(--bad); color:#111; border-color:var(--bad); }
+  .tag.clean.on { background:var(--ok); border-color:var(--ok); }
+  .note { width:100%; margin-top:6px; background:#14171b; border:1px solid #2a2f36; color:var(--fg); border-radius:6px; padding:5px 8px; }
+  .hint { color:var(--mut); }
+</style>
+</head>
+<body>
+<header><h1>Cell triage — tag what is wrong with each fighter</h1><span class="hint" id="n"></span><span class="hint">Technique ids are hidden. Click tags; "clean" = nothing wrong. Saves instantly.</span></header>
+<div class="grid" id="grid"></div>
+<script>
+const TAGS=["facing wrong","flying verts / shards","holes","corrupted mesh","bad proportions","bad likeness","texture garbage","other"];
+async function load(){
+  const cells=await (await fetch('/cells.json')).json();
+  const saved=await (await fetch('/triage.json')).json();
+  document.getElementById('n').textContent=cells.length+' cells';
+  const g=document.getElementById('grid');
+  for(const c of cells){
+    const d=document.createElement('div'); d.className='cell'; d.dataset.cell=c.cell;
+    const cur=saved[c.cell]||{tags:[],note:''};
+    d.innerHTML=`<video src="${c.clip}" muted loop autoplay playsinline></video>
+      <div class="hdr"><b>${c.display}</b><span class="hint">${c.cell.split('-')[0]} #${c.idx}</span></div>
+      <div class="tags"><span class="tag clean ${cur.tags.includes('clean')?'on':''}" data-t="clean">clean</span>${TAGS.map(t=>`<span class="tag ${cur.tags.includes(t)?'on':''}" data-t="${t}">${t}</span>`).join('')}</div>
+      <input class="note" placeholder="optional note" value="${(cur.note||'').replace(/"/g,'&quot;')}">`;
+    d.querySelectorAll('.tag').forEach(s=>s.onclick=()=>{ s.classList.toggle('on');
+      if(s.dataset.t==='clean' && s.classList.contains('on')) d.querySelectorAll('.tag:not(.clean)').forEach(x=>x.classList.remove('on'));
+      if(s.dataset.t!=='clean' && s.classList.contains('on')) d.querySelector('.tag.clean').classList.remove('on');
+      save(d); });
+    d.querySelector('.note').onchange=()=>save(d);
+    paint(d); g.appendChild(d);
+  }
+}
+function paint(d){ const on=[...d.querySelectorAll('.tag.on')].map(x=>x.dataset.t); d.classList.toggle('ok',on.includes('clean')); d.classList.toggle('bad',on.length>0&&!on.includes('clean')); }
+async function save(d){
+  paint(d);
+  const tags=[...d.querySelectorAll('.tag.on')].map(x=>x.dataset.t);
+  await fetch('/tag',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cell:d.dataset.cell,tags,note:d.querySelector('.note').value})});
+}
+load();
+</script>
+</body>
+</html>

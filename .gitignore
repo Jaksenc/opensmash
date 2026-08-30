@@ -5,3 +5,10 @@ opensmash/
 assets/generated/
 __pycache__/
 *.pyc
+eval/cells/
+eval/ratings.jsonl
+eval/state*.json
+eval/*.log
+eval/pairs.json
+eval/*/cells/*/shots/
+eval/*/cells/*/shots-full/

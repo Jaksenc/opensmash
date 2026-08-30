@@ -1,0 +1,11 @@
+[
+  {"id": "joey:A:D", "choice": "left", "reason": "LEFT has a clean white shirt, legible glasses/beard face and intact jeans, while RIGHT's texture is smeared brown/muddy with a broken, unreadable face."},
+  {"id": "thomas:C:E", "choice": "right", "reason": "RIGHT is a clean, intact, Smash-proportioned Thomas; LEFT has a stretched shard-like arm geometry in the taunt frames despite a sharper face."},
+  {"id": "lincoln:B:E", "choice": "left", "reason": "LEFT is a clean, intact Lincoln with top hat and suit; RIGHT has badly stretched arm shards and a disjointed, blocky body in every frame."},
+  {"id": "mao:A:B", "choice": "left", "reason": "LEFT (mao-B) is a clear Mao in a grey suit with recognizable face; RIGHT (mao-A) is just an untouched vanilla Mario with no likeness at all."},
+  {"id": "lincoln:B:C", "choice": "left", "reason": "LEFT is clean and intact; RIGHT shows large white stretched arm/hand shards poking out of the black suit in the close-up frames."},
+  {"id": "thomas:C:D", "choice": "left", "reason": "LEFT has a sharp, recognizable face and clean shirt (despite one stretched arm), while RIGHT's texture is blurry and muddy with an indistinct face."},
+  {"id": "thomas:A:D", "choice": "left", "reason": "LEFT has a clean texture, clear face and intact limbs; RIGHT is blurry/muddy with a smeared face and less defined geometry."},
+  {"id": "thomas:A:B", "choice": "left", "reason": "LEFT reads as Thomas with a visible face and beard; RIGHT is a faceless hair blob whose head texture never resolves into a face."},
+  {"id": "queen:A:C", "choice": "left", "reason": "LEFT (queen-C) has a sharper face, lilac coat with pearls and solid proportions; RIGHT (queen-A) has a blurrier face and thin bare stick legs that read less like a native fighter."}
+]
