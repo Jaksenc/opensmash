@@ -3864,6 +3864,28 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
                         v[5+i] = nacc[i] / nl
             for j in joint_ids:
                 bf[str(j)]["o"] = no[j]
+            # accessory pins for canonical bakes: vanilla accessory roots
+            # (pikachu's tail) hang off unmapped joints at vanilla-body
+            # distance and float beside the smaller morph. Pin each
+            # profile snap_accessories joint to the nearest morphed vert
+            # (both in target-aligned space) — the engine's ACC2 seat
+            # rides the skinned mesh, same as the ship path's tail pin.
+            snap_aj = [int(a) for a in prof.get("snap_accessories", [])]
+            if snap_aj:
+                accs = list(sk.get("accessories", []))
+                for aj_ in snap_aj:
+                    if aj_ not in T:
+                        print(f"canonical snap_accessories: joint {aj_} not in skel, skipped")
+                        continue
+                    ta = T[aj_]
+                    best_i, best_d = -1, 1e18
+                    for i_, v_ in enumerate(sk["verts"]):
+                        d_ = (v_[0]-ta[0])**2 + (v_[1]-ta[1])**2 + (v_[2]-ta[2])**2
+                        if d_ < best_d:
+                            best_d, best_i = d_, i_
+                    accs.append({"joint": aj_, "vert": best_i, "embed": 10.0})
+                    print(f"canonical snap_accessories: joint {aj_} pinned to vert {best_i}")
+                sk["accessories"] = accs
                 # rotate the bind frame with the joint's geometry so the
                 # runtime skinning (rd * cbind, bind_local from BIND) keeps
                 # the mesh glued to the re-aimed bones under posed deltas.
