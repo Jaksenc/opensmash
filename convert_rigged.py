@@ -3858,33 +3858,41 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
         canon = {"tids": [cmap[j] for j in joint_ids], "parents": parents,
                  "root": can_root, "blank": blank,
                  "name": prof.get("name", "?")}
-    # classic (non-canonical) path: straighten the HEAD bind. The engine's
-    # bind snapshot is mario's spawn stance with the head turned toward
-    # the camera and pitched down; leaf-joint replay bakes that into every
-    # render (systemic across all bundles — texture_check shows the GLB
-    # and offline OSB straight, engine turned). Rebuild the head's bind
-    # basis world-up with the chest's heading and rotate head-owned verts
-    # to follow — same treatment the canonical morph applies.
+    # classic (non-canonical) path: head orientation calibration. The
+    # engine bakes mario's spawn head turn into every render (systemic);
+    # the correction is a fixed rotation of head-owned verts about the
+    # head joint. Angles come from empirical sweeps against the vanilla
+    # fighter (OSB_HEAD_YAW / OSB_HEAD_PITCH degrees, world vertical yaw
+    # then pitch about the horizontal axis perpendicular to facing).
+    # conform face offset: the rig fit seats the face ~15deg toward the
+    # camera relative to the bind head joint (measured against vanilla
+    # mario's one-eye walk profile with the facing-fixed engine; constant
+    # across bundles — same fit pipeline). OSB_HEAD_YAW overrides.
     bf0 = sk.get("bind_frames")
-    if canon is None and bf0 and "6" in bf0 and "12" in bf0:
-        R6, R12 = bf0["6"]["R"], bf0["12"]["R"]
+    by = float(os.environ.get("OSB_BODY_YAW", "0"))
+    if canon is None and bf0 and "6" in bf0 and by:
+        o6b = bf0["6"]["o"]
+        ba = math.radians(by)
+        cb, sb = math.cos(ba), math.sin(ba)
+        for v in sk["verts"]:
+            dx, dz = v[0]-o6b[0], v[2]-o6b[2]
+            v[0], v[2] = o6b[0]+cb*dx-sb*dz, o6b[2]+sb*dx+cb*dz
+            nx, nz = v[5], v[7]
+            v[5], v[7] = cb*nx-sb*nz, sb*nx+cb*nz
+        # geometry only — rotating the bind frames too cancels exactly
+        print(f"binary5: body test yaw {by}")
+    hy = float(os.environ.get("OSB_HEAD_YAW", "-15"))
+    hp = float(os.environ.get("OSB_HEAD_PITCH", "0"))
+    if canon is None and bf0 and "12" in bf0 and (hy or hp):
         o12 = bf0["12"]["o"]
-        jm = [[R12[c_][r_] for c_ in range(3)] for r_ in range(3)]
-        hx = [R6[0][0], 0.0, R6[0][2]]
-        n = math.sqrt(hx[0]*hx[0] + hx[2]*hx[2]) or 1.0
-        c0 = [hx[0]/n, 0.0, hx[2]/n]
-        c1 = [0.0, 1.0, 0.0]
-        c2 = [c0[1]*c1[2]-c0[2]*c1[1], c0[2]*c1[0]-c0[0]*c1[2],
-              c0[0]*c1[1]-c0[1]*c1[0]]
-        det = (jm[0][0]*(jm[1][1]*jm[2][2]-jm[1][2]*jm[2][1])
-             - jm[0][1]*(jm[1][0]*jm[2][2]-jm[1][2]*jm[2][0])
-             + jm[0][2]*(jm[1][0]*jm[2][1]-jm[1][1]*jm[2][0]))
-        if det < 0:
-            c2 = [-c2[0], -c2[1], -c2[2]]
-        jmd = [[c0[i], c1[i], c2[i]] for i in range(3)]
-        jminv = [[jm[c_][r_] for c_ in range(3)] for r_ in range(3)]
-        Gh = [[sum(jmd[r_][m]*jminv[m][c_] for m in range(3))
-               for c_ in range(3)] for r_ in range(3)]
+        ya, pa = math.radians(hy), math.radians(hp)
+        cy_, sy_ = math.cos(ya), math.sin(ya)
+        Ry = [[cy_,0.0,-sy_],[0.0,1.0,0.0],[sy_,0.0,cy_]]
+        cp_, sp_ = math.cos(pa), math.sin(pa)
+        # pitch about world Z (facing is along +-X at capture)
+        Rp = [[cp_,-sp_,0.0],[sp_,cp_,0.0],[0.0,0.0,1.0]]
+        Gh = [[sum(Ry[r_][m]*Rp[m][c_] for m in range(3)) for c_ in range(3)]
+              for r_ in range(3)]
         for v in sk["verts"]:
             w12 = sum(w for (ji, w) in v[8] if ji == 12)
             if w12 <= 0.0:
@@ -3895,10 +3903,7 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
             for i in range(3):
                 v[i] = v[i]*(1.0-w12) + (o12[i]+Lr[i])*w12
                 v[5+i] = v[5+i]*(1.0-w12) + nr[i]*w12
-        # geometry ONLY: the classic render is jm_now * R_bind^-1 * (v-o),
-        # so rotating R_bind together with the verts cancels exactly —
-        # the bind R must stay the engine-matching original
-        print("binary5: head geometry straightened (classic path)")
+        print(f"binary5: head test rotation yaw={hy} pitch={hp}")
     verts = sk["verts"]      # [x,y,z,u,v,nx,ny,nz, [(ji,w),...]]
     tris = sk["tris"]
 
