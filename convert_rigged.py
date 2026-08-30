@@ -3781,6 +3781,21 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
                     # leaf (head/hands/feet): keep size, follow the
                     # arriving bone's re-aim
                     stretch[j], axis[j], G[j] = 1.0, bdir[j], A[j]
+            # the capture stance turns the HEAD toward the camera (bind
+            # head yaw vs chest yaw, ~-23deg on current bundles); leaf
+            # joints keep their bind orientation, so every render bakes
+            # the turn in while vanilla fighters' heads sit straight.
+            # Self-calibrating: undo the measured relative twist about
+            # the vertical axis through the head joint.
+            if 12 in joint_ids and 6 in joint_ids:
+                R6, R12 = bf["6"]["R"], bf["12"]["R"]
+                htw = (math.atan2(R12[0][2], R12[0][0])
+                       - math.atan2(R6[0][2], R6[0][0]))
+                ch, sh = math.cos(htw), math.sin(htw)
+                Yfix = [[ch, 0.0, -sh], [0.0, 1.0, 0.0], [sh, 0.0, ch]]
+                G[12] = [[sum(Yfix[r_][m]*G[12][m][c_] for m in range(3))
+                          for c_ in range(3)] for r_ in range(3)]
+                print(f"head twist corrected: {math.degrees(htw):+.1f} deg")
             for v in sk["verts"]:
                 acc = [0.0, 0.0, 0.0]
                 nacc = [0.0, 0.0, 0.0]
