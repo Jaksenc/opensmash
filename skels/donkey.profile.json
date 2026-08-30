@@ -35,9 +35,9 @@
  "snap_accessories": [
   {
    "joint": 18,
-   "at": "chest-front",
+   "at": "neck-front",
    "orient": true,
-   "embed": -6.0,
+   "embed": -4.0,
    "pitch": -0.8,
    "scale": 0.6
   }
