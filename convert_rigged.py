@@ -3643,23 +3643,11 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
             skel_path = os.path.join(os.path.dirname(canonical_profile),
                                      prof["name"] + ".skel")
             T = {}
-            T2 = {}
             for line in open(skel_path):
                 mm = re.search(r"joint=(\d+) parent=(-?\d+) "
                                r"world=\(([-\d.]+),([-\d.]+),([-\d.]+)\)", line)
                 if mm:
                     T[int(mm.group(1))] = [float(mm.group(2 + i)) for i in (1, 2, 3)]
-                m2 = re.search(r"SKELDUMP2: joint=(\d+) o=\([^)]*\) "
-                               r"x=\(([^)]*)\) y=\(([^)]*)\) z=\(([^)]*)\)", line)
-                if m2:
-                    cols = [[float(v) for v in m2.group(k).split(",")] for k in (2, 3, 4)]
-                    # columns = world images of local axes, normalized
-                    jmt = [[0.0]*3 for _ in range(3)]
-                    for c_ in range(3):
-                        n = math.sqrt(sum(cols[c_][r_]**2 for r_ in range(3))) or 1.0
-                        for r_ in range(3):
-                            jmt[r_][c_] = cols[c_][r_]/n
-                    T2[int(m2.group(1))] = jmt
             bfp = {j: list(bf[str(j)]["o"]) for j in joint_ids}
             # yaw-align the CANONICAL side to the target's bind about the
             # vertical axis (shoulder-to-shoulder line, XZ projection).
@@ -3790,23 +3778,12 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
                 elif CPAR.get(j, -1) == -1:
                     stretch[j], axis[j], G[j] = s[j], bdir[j], A[j]  # torso
                 elif j in (22, 27):
-                    # FEET: align the geometry to the TARGET's bind foot
-                    # basis (SKELDUMP2), so the runtime deltas — computed
-                    # against that same bind — land the foot exactly where
-                    # the vanilla foot lands. Identity kept the chibi's
-                    # flat base, which crouched binds' deltas over-rotated
-                    # (falcon's toes pointed skyward).
+                    # FEET: keep the chibi bind orientation outright —
+                    # inheriting the shin's re-aim pitched toes skyward on
+                    # crouched binds (falcon); the runtime foot rotations
+                    # land on a flat base like the classic path
                     stretch[j], axis[j] = 1.0, bdir[j]
-                    tid_ = cmap[j]
-                    if tid_ in T2:
-                        R_ = bf[str(j)]["R"]
-                        jmc = [[R_[c_][r_] for c_ in range(3)] for r_ in range(3)]
-                        jmcinv = [[jmc[c_][r_] for c_ in range(3)] for r_ in range(3)]
-                        jmt = T2[tid_]
-                        G[j] = [[sum(jmt[r_][m]*jmcinv[m][c_] for m in range(3))
-                                 for c_ in range(3)] for r_ in range(3)]
-                    else:
-                        G[j] = [[1.0,0.0,0.0],[0.0,1.0,0.0],[0.0,0.0,1.0]]
+                    G[j] = [[1.0,0.0,0.0],[0.0,1.0,0.0],[0.0,0.0,1.0]]
                 else:
                     # other leaves (head/hands): keep size, follow the
                     # arriving bone's re-aim (head is rebuilt below)
