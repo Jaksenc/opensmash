@@ -3638,41 +3638,43 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
         # undersized — then each vert re-emits from the new joints with
         # its bone-local coords stretched along the bone axis only
         # (length follows the skeleton, girth stays the mesh's own).
-        lam = float(morph_lambda or 0.0)
-    if canonical_profile is not None:
-        try:
-            _p0 = json.load(open(canonical_profile))
-            lam = float(_p0.get("morph_lambda", lam))
-        except Exception:
-            pass
+        # An explicit CLI value is a real override, including zero. With no
+        # override, use the profile's production default.
+        lam = (float(morph_lambda) if morph_lambda is not None
+               else float(prof.get("morph_lambda", 0.0)))
+
+        # TBND/CPM1 need the target reference frames even for a pure
+        # canonical (lambda=0) bundle. Previously these were parsed only in
+        # the optional morph block, so canonical zero-morph builds crashed
+        # later while serializing their target bind metadata.
+        skel_path = os.path.join(os.path.dirname(canonical_profile),
+                                 prof["name"] + ".skel")
+        T = {}
+        T2 = {}
+        T2R = {}
+        TP = {}
+        for line in open(skel_path):
+            mm = re.search(r"joint=(\d+) parent=(-?\d+) "
+                           r"world=\(([-\d.]+),([-\d.]+),([-\d.]+)\)", line)
+            if mm:
+                T[int(mm.group(1))] = [float(mm.group(2 + i)) for i in (1, 2, 3)]
+            m2 = re.search(r"SKELDUMP2: joint=(\d+) o=\([^)]*\) "
+                           r"x=\(([^)]*)\) y=\(([^)]*)\) z=\(([^)]*)\)", line)
+            if m2:
+                cols = [[float(v) for v in m2.group(k).split(",")] for k in (2, 3, 4)]
+                jmt = [[0.0]*3 for _ in range(3)]
+                jmr = [[0.0]*3 for _ in range(3)]
+                for c_ in range(3):
+                    n = math.sqrt(sum(cols[c_][r_]**2 for r_ in range(3))) or 1.0
+                    for r_ in range(3):
+                        jmt[r_][c_] = cols[c_][r_]/n
+                        jmr[r_][c_] = cols[c_][r_]
+                T2[int(m2.group(1))] = jmt
+                T2R[int(m2.group(1))] = jmr
+            mp = re.search(r"SKELDUMP: joint=(\d+) parent=(-?\d+)", line)
+            if mp:
+                TP[int(mp.group(1))] = int(mp.group(2))
         if lam > 0.0:
-            skel_path = os.path.join(os.path.dirname(canonical_profile),
-                                     prof["name"] + ".skel")
-            T = {}
-            T2 = {}
-            T2R = {}
-            TP = {}
-            for line in open(skel_path):
-                mm = re.search(r"joint=(\d+) parent=(-?\d+) "
-                               r"world=\(([-\d.]+),([-\d.]+),([-\d.]+)\)", line)
-                if mm:
-                    T[int(mm.group(1))] = [float(mm.group(2 + i)) for i in (1, 2, 3)]
-                m2 = re.search(r"SKELDUMP2: joint=(\d+) o=\([^)]*\) "
-                               r"x=\(([^)]*)\) y=\(([^)]*)\) z=\(([^)]*)\)", line)
-                if m2:
-                    cols = [[float(v) for v in m2.group(k).split(",")] for k in (2, 3, 4)]
-                    jmt = [[0.0]*3 for _ in range(3)]
-                    jmr = [[0.0]*3 for _ in range(3)]
-                    for c_ in range(3):
-                        n = math.sqrt(sum(cols[c_][r_]**2 for r_ in range(3))) or 1.0
-                        for r_ in range(3):
-                            jmt[r_][c_] = cols[c_][r_]/n
-                            jmr[r_][c_] = cols[c_][r_]
-                    T2[int(m2.group(1))] = jmt
-                    T2R[int(m2.group(1))] = jmr
-                mp = re.search(r"SKELDUMP: joint=(\d+) parent=(-?\d+)", line)
-                if mp:
-                    TP[int(mp.group(1))] = int(mp.group(2))
             bfp = {j: list(bf[str(j)]["o"]) for j in joint_ids}
             # yaw-align the CANONICAL side to the target's bind about the
             # vertical axis (shoulder-to-shoulder line, XZ projection).
@@ -3893,6 +3895,18 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
                          else float(prof.get("girth_limbs", prof.get("girth", 1.0))))
                     gd = 1.0 if ji == 12 else (float(prof.get("girth_depth", prof.get("girth", 1.0))) if torso_
                          else g)
+                    # Match the direct-target retargeter's stretch
+                    # compensation: when a target lengthens a limb segment,
+                    # leaving its canonical cross-section unchanged produces
+                    # spaghetti arms/legs. Widen by sqrt(stretch), capped,
+                    # while hands, feet, head, and non-lengthened segments
+                    # naturally remain unchanged because st == 1 (or < 1).
+                    if not torso_ and ji != 12:
+                        widen = min(float(prof.get("widen_cap", 1.55)),
+                                    max(1.0, st)
+                                    ** float(prof.get("widen_pow", 0.5)))
+                        g *= widen
+                        gd *= widen
                     pv = [Lr[i] - d * a[i] for i in range(3)]
                     dd = pv[0]*Dax[0] + pv[2]*Dax[2]
                     for i in range(3):

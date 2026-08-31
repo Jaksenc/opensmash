@@ -36,7 +36,7 @@
  "hand_tuck": 0.6,
  "arm_hug": 0.3,
  "arm_drop": 10.0,
- "morph_lambda": 0.6,
+ "morph_lambda": 0.0,
  "dir_lambda": 0.0,
  "morph_yaw_trim": 90
 }

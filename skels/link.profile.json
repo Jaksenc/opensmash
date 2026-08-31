@@ -24,6 +24,7 @@
   "13": 12
  },
  "parts": "vanilla-link-parts.canonical.json",
+ "morph_lambda": 0.5,
  "blank_extra": [
   5,
   24
