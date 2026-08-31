@@ -31,10 +31,15 @@ import sys
 import numpy as np
 from PIL import Image
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, HERE)
-import emblem_stencil  # noqa: E402
-from sprite_codec import encode, u32rev  # noqa: E402
+HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+try:
+    from . import emblem_stencil
+    from .pixel_font import render_caption, render_panel_name
+    from .sprite_codec import encode, u32rev
+except ImportError:  # direct execution: python3 pipeline/gen_ui_assets.py
+    import emblem_stencil
+    from pixel_font import render_caption, render_panel_name
+    from sprite_codec import encode, u32rev
 
 # (width, height, source row) per strip. spDraw advances the screen y by
 # bmheight (20) per strip but each strip stores/draws bmHreal (21) rows, so
@@ -92,7 +97,6 @@ def compose_tile_text(text):
     fixed cap height and stroke weight, fit by tracking, never resampled.
     (The old path composited auto-sliced screenshot glyphs and Lanczos-
     squashed overflow, which dropped stroke columns and varied the size.)"""
-    from pixel_font import render_caption
     return render_caption(text, PORTRAIT_DRAW_W - 1)
 
 
@@ -100,7 +104,6 @@ def compose_name(text, max_width=None):
     """Bold panel name from the hand-authored pixel font (pixel_font.py) —
     fixed cap height, never resampled (the old auto-sliced atlas produced
     the WEJR-DAI style garbage on synthesized letters)."""
-    from pixel_font import render_panel_name
     # the engine grows the target name sprite up to 64 texels (vanilla
     # sizes them per name, FOX 32 .. DK 72), so the full canvas is usable
     return render_panel_name(text, max_width or 58)

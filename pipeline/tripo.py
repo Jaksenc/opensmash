@@ -17,7 +17,7 @@ import subprocess
 import sys
 import urllib.request
 
-ROOT = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 KEY = next(line.split("=", 1)[1].strip() for line in open(os.path.join(ROOT, ".env"))
            if line.startswith("TRIPO_API_KEY="))
 BASE = "https://api.tripo3d.ai/v2/openapi"

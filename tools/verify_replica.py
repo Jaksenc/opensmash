@@ -25,7 +25,7 @@ JS = (WEBSITE / "grid-replica.js").read_text()
 HTML = (WEBSITE / "index.html").read_text()
 ASSETS = WEBSITE / "assets" / "charselect"
 sys.path.insert(0, str(ROOT))
-from pixel_font import CAP, FACE, GLYPHS, OUTLINE  # noqa: E402
+from pipeline.pixel_font import CAP, FACE, GLYPHS, OUTLINE  # noqa: E402
 
 
 def js_string(name: str) -> str:

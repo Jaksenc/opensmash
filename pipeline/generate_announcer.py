@@ -2,14 +2,14 @@
 """Generate one SSB64-style character announcement with the MiniMax clone.
 
 Command line:
-    python generate_announcer.py "Mao Zedong" --out build/mao.wav
+    python3 pipeline/generate_announcer.py "Mao Zedong" --out build/mao.wav
 
 Python:
     from generate_announcer import generate_announcer
     generate_announcer("Mao Zedong", "build/mao.wav")
 
 Configuration is read from environment variables first, then from the .env
-file next to this script:
+file at the repository root:
 
     FAL_KEY
     MINIMAX_ANNOUNCER_VOICE_ID
@@ -37,7 +37,7 @@ import urllib.request
 
 
 MODEL = "fal-ai/minimax/speech-02-hd"
-SCRIPT_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
 def _load_env_file(path: Path) -> None:
@@ -57,16 +57,16 @@ def _load_env_file(path: Path) -> None:
 
 
 def _require_configuration() -> str:
-    _load_env_file(SCRIPT_DIR / ".env")
+    _load_env_file(PROJECT_ROOT / ".env")
     if not os.environ.get("FAL_KEY"):
         raise RuntimeError(
-            "FAL_KEY is missing; set it in the environment or pipeline/.env"
+            "FAL_KEY is missing; set it in the environment or .env"
         )
     voice_id = os.environ.get("MINIMAX_ANNOUNCER_VOICE_ID")
     if not voice_id:
         raise RuntimeError(
             "MINIMAX_ANNOUNCER_VOICE_ID is missing; set it in the environment "
-            "or pipeline/.env"
+            "or .env"
         )
     return voice_id
 

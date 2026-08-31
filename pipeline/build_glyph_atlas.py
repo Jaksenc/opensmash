@@ -13,7 +13,7 @@ import os
 
 from PIL import Image
 
-HERE = os.path.dirname(os.path.abspath(__file__))
+HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 REFS = os.path.join(HERE, "website", "assets", "ui_refs")
 
 

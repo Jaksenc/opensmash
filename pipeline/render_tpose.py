@@ -13,7 +13,10 @@ import sys
 import numpy as np
 from PIL import Image, ImageDraw
 
-import convert_rigged as cr
+try:
+    from . import convert_rigged as cr
+except ImportError:  # direct execution: python3 pipeline/render_tpose.py
+    import convert_rigged as cr
 
 
 def render(P, UV, T, N, atlas, view, S=760):

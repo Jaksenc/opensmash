@@ -22,9 +22,12 @@ import os
 import re
 import shutil
 
-from generate_announcer import generate_announcer
+try:
+    from .generate_announcer import generate_announcer
+except ImportError:  # direct execution: python3 pipeline/announcer_voice.py
+    from generate_announcer import generate_announcer
 
-HERE = os.path.dirname(os.path.abspath(__file__))
+HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 WEBDIST = os.path.join(HERE, "..", "BattleShip", "web-dist", "bundles")
 
 

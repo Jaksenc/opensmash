@@ -21,7 +21,7 @@ import zipfile
 import numpy as np
 from PIL import Image
 
-HERE = os.path.dirname(os.path.abspath(__file__))
+HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 O2R = os.path.join(HERE, "..", "BattleShip", "build-us", "BattleShip.o2r")
 ENTRY = "reloc_fighters_common/FTEmblemSprites"
 FIRST, STRIDE = 0x58, 0x660

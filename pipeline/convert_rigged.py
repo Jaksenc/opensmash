@@ -27,9 +27,19 @@ import sys
 
 from PIL import Image
 
-from convert_glb import (load_glb, read_accessor, load_frames, inv3,
-                         row_apply, rot_between, mat_apply, normalize,
-                         write_binary)
+try:
+    from .convert_glb import (load_glb, read_accessor, load_frames, inv3,
+                              row_apply, rot_between, mat_apply, normalize,
+                              write_binary)
+    from . import auto_skin
+except ImportError:  # direct execution: python3 pipeline/convert_rigged.py
+    from convert_glb import (load_glb, read_accessor, load_frames, inv3,
+                             row_apply, rot_between, mat_apply, normalize,
+                             write_binary)
+    import auto_skin
+
+
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 # ---------------------------------------------------------------- glTF rig
@@ -313,7 +323,6 @@ def load_autoskin(path):
         for i in group:
             nrm[i] = sn
 
-    import auto_skin
     names, jpos, jix, wts = auto_skin.skin(pos, tris)
     print(f"auto-skin: {len(pos)} verts, skeleton "
           f"H={max(p[1] for p in pos)-min(p[1] for p in pos):.2f}")
@@ -641,7 +650,6 @@ def main():
     if "--reskin" in sys.argv and not autoskin:
         # keep the Meshy skeleton (joint placement is good) but replace
         # its spilly weights with band-limited capsule weights
-        import auto_skin
         jix, wts = auto_skin.reskin(pos, tris, names, jpos, jix, wts)
         print("reskin: disciplined weights on the Meshy skeleton")
 
@@ -1018,7 +1026,7 @@ def main():
         # target top = highest head-part vertex of the vanilla fighter
         # (local -> world via the head joint's spawn frame), else neck
         _mtop = frames[11][0][1]
-        _vp_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), TARGET_PARTS_JSON or "skels/parts/vanilla-mario-parts.json")
+        _vp_path = os.path.join(PROJECT_ROOT, TARGET_PARTS_JSON or "skels/parts/vanilla-mario-parts.json")
         if os.path.exists(_vp_path):
             _vp = json.load(open(_vp_path))
             if "12" in _vp and 12 in frames:
@@ -1190,7 +1198,7 @@ def main():
     s_head = s_perp
     _mhead_h = 1.0
     try:
-        _vp_path2 = os.path.join(os.path.dirname(os.path.abspath(__file__)), TARGET_PARTS_JSON or "skels/parts/vanilla-mario-parts.json")
+        _vp_path2 = os.path.join(PROJECT_ROOT, TARGET_PARTS_JSON or "skels/parts/vanilla-mario-parts.json")
         if os.path.exists(_vp_path2) and 12 in frames and "Head" in name_idx:
             _vp2 = json.load(open(_vp_path2))
             _o12, _R12 = frames[12]
@@ -1565,7 +1573,7 @@ def main():
         Tg_u = triad(_g_up_u, _g_lat_u)
         R_u = [[sum(Tg_u[t][r] * Tm[t][c] for t in range(3)) for c in range(3)]
                for r in range(3)]
-        _pj_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+        _pj_path = os.path.join(PROJECT_ROOT,
                                 TARGET_PARTS_JSON or "skels/parts/vanilla-mario-parts.json")
         _pj = json.load(open(_pj_path))
         _tys = [frames[int(pid)][0][1] + v[0] * frames[int(pid)][1][0][1]
@@ -1679,7 +1687,7 @@ def main():
     # landing exactly on the mario joints. Composed per-BONE below, so
     # LBS still blends smoothly across part seams.
     import os as _os
-    _vanilla_path = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)),
+    _vanilla_path = _os.path.join(PROJECT_ROOT,
                                   "skels/parts/vanilla-mario-parts.json")
     # --no-profile: skip the Mario-part-bounds fit (per-part thickness
     # scales disagree at part boundaries and tear non-chibi meshes);
@@ -1689,7 +1697,7 @@ def main():
     # targets a Mario-sized boot wraps a Pikachu-sized leg otherwise.
     _tpf = bool(TARGET_TUNE.get("target_part_fit")) and TARGET_PARTS_JSON
     if _tpf:
-        _vanilla_path = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)),
+        _vanilla_path = _os.path.join(PROJECT_ROOT,
                                       TARGET_PARTS_JSON)
     vanilla_parts = ({} if ("--no-profile" in sys.argv or TARGET_CONFORM == "uniform"
                             or TARGET_TUNE.get("no_part_fit")) else
@@ -3390,7 +3398,7 @@ def main():
     # silhouette already fits.
     fit_scale = 1.0
     try:
-        _fs_vp = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+        _fs_vp = os.path.join(PROJECT_ROOT,
                               TARGET_PARTS_JSON or "skels/parts/vanilla-mario-parts.json")
         if os.path.exists(_fs_vp) and 12 in frames:
             _fs_parts = json.load(open(_fs_vp))

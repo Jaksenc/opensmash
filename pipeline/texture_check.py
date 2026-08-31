@@ -36,7 +36,8 @@ import tempfile
 
 from PIL import Image, ImageDraw
 
-HERE = os.path.dirname(os.path.abspath(__file__))
+PIPELINE_DIR = os.path.dirname(os.path.abspath(__file__))
+HERE = os.path.dirname(PIPELINE_DIR)
 
 # camera angles: front / rear / top-down (yaw, pitch)
 VIEWS = [("front", -90, 0), ("rear", 90, 0), ("top", -90, 90)]
@@ -65,7 +66,10 @@ def vanilla_ghost(yaw, pitch, size, target="mario"):
     dump. Flat colors so the row reads at a glance; it is a proportions
     reference, not a faithful vanilla render."""
     import numpy as np
-    from preview_bundle import load_skeleton
+    try:
+        from .preview_bundle import load_skeleton
+    except ImportError:
+        from preview_bundle import load_skeleton
 
     # the canonical part dumps are keyed in Mario's joint numbering, so
     # the blob layout below is target-independent; only the origins move
@@ -278,7 +282,7 @@ def engine_tpose(bundle_json, osb, tmp, fkind=0, target="mario"):
             for view, spin, tip, frame, eye, at in views:
                 skel = os.path.join(tmp, f"tpose-{view}.skel")
                 subprocess.run([sys.executable,
-                                os.path.join(HERE, "preview_bundle.py"),
+                                os.path.join(PIPELINE_DIR, "preview_bundle.py"),
                                 bundle_json, os.path.join(tmp, "_pose_scratch.png"),
                                 "--tpose", "--unlit", "--size", "120",
                                 "--dump-frames", skel, "--dump-yaw", str(spin),
@@ -294,7 +298,7 @@ def engine_tpose(bundle_json, osb, tmp, fkind=0, target="mario"):
         env = dict(os.environ)
         env["SSB64_POSE_OVERRIDE"] = combined
         env["SSB64_CAM_PLAN"] = ";".join(plan)
-        cmd = [sys.executable, os.path.join(HERE, "run_eval.py"),
+        cmd = [sys.executable, os.path.join(PIPELINE_DIR, "run_eval.py"),
                shots, "--bundle", osb, "--fkind", str(fkind),
                "--frames-list", ",".join(str(v[3]) for v in views),
                "--pose", "--width", "1280"]
@@ -314,7 +318,7 @@ def engine_tpose(bundle_json, osb, tmp, fkind=0, target="mario"):
 
 
 def run(script, src, out, yaw, pitch, unlit, extra=()):
-    cmd = [sys.executable, os.path.join(HERE, script), src, out,
+    cmd = [sys.executable, os.path.join(PIPELINE_DIR, script), src, out,
            "--yaw", str(yaw), "--pitch", str(pitch), *extra]
     if unlit:
         cmd.append("--unlit")
@@ -373,7 +377,7 @@ def main():
     heat_bind = os.path.join(tmp, "heat-bind.png")
     skel = os.path.join(HERE, "skels", "reference", "mario.skel") if target == "mario" else \
         os.path.join(HERE, "skels", f"{target}.skel")
-    subprocess.run([sys.executable, os.path.join(HERE, "preview_bundle.py"),
+    subprocess.run([sys.executable, os.path.join(PIPELINE_DIR, "preview_bundle.py"),
                     bundle, skel, heat_bind, "--heat", "--yaw", "-90"],
                    check=True, cwd=HERE, capture_output=True)
 

@@ -22,6 +22,10 @@ STATE = os.environ.get("EVAL_STATE", os.path.join(HERE, "state.json"))
 TORN_GATE = int(os.environ.get("EVAL_TORN_GATE", "80"))
 
 
+def pipeline_script(name):
+    return os.path.join(PIPE, "pipeline", name)
+
+
 def cdef_shares(c):
     return bool(c.get("shares_image_with") or c.get("shares_mesh_with"))
 
@@ -84,7 +88,7 @@ def stage_image(ch, cdef, cf, cdef_cfg, st):
         prompt += STYLE_NOTE.format(display=cdef["display"])
     if cdef.get("refs"):
         prompt += PHOTO_NOTE
-    cmd = ["python3", "gen.py", "image", "--api", cdef_cfg["image_api"]]
+    cmd = ["python3", pipeline_script("gen.py"), "image", "--api", cdef_cfg["image_api"]]
     cmd += ["--model", "gpt-image-2" if cdef_cfg["image_api"] == "openai" else "gemini-3.1-flash-image"]
     for r in refs:
         cmd += ["--ref", r]
@@ -124,29 +128,29 @@ def stage_mesh(ch, cf, cdef_cfg, img, st):
     log(f"[{ch}-{cf}] mesh via {provider}")
     try:
         if provider == "meshy":
-            rc, out = run(["python3", "gen.py", "img3d", "--polycount", "4000", img], timeout=300)
+            rc, out = run(["python3", pipeline_script("gen.py"), "img3d", "--polycount", "4000", img], timeout=300)
             tid = json.loads(out.strip().splitlines()[-1])["result"]
-            ok = poll(["python3", "gen.py", "status", tid],
+            ok = poll(["python3", pipeline_script("gen.py"), "status", tid],
                       lambda o: json.loads(o.strip().splitlines()[-1]).get("status"),
                       {"SUCCEEDED"}, {"FAILED", "CANCELED"})
             if not ok:
                 raise RuntimeError("meshy img3d failed")
             base = os.path.join(d, "base.glb")
-            run(["python3", "gen.py", "download", tid, base], timeout=600)
-            rc, out = run(["python3", "gen.py", "rig", base], timeout=300)
+            run(["python3", pipeline_script("gen.py"), "download", tid, base], timeout=600)
+            rc, out = run(["python3", pipeline_script("gen.py"), "rig", base], timeout=300)
             rid = json.loads(out.strip().splitlines()[-1])
             rid = rid.get("result", rid) if isinstance(rid, dict) else rid
-            ok = poll(["python3", "gen.py", "rigstatus", rid],
+            ok = poll(["python3", pipeline_script("gen.py"), "rigstatus", rid],
                       lambda o: json.loads(o.strip().splitlines()[-1]).get("status"),
                       {"SUCCEEDED"}, {"FAILED", "CANCELED"})
             if not ok:
                 raise RuntimeError("meshy rig failed")
-            run(["python3", "gen.py", "rigdownload", rid, p], timeout=600)
+            run(["python3", pipeline_script("gen.py"), "rigdownload", rid, p], timeout=600)
         else:  # tripo
-            rc, out = run(["python3", "tripo.py", "upload", img], timeout=300)
+            rc, out = run(["python3", pipeline_script("tripo.py"), "upload", img], timeout=300)
             tok = json.loads(out.strip().splitlines()[-1])
             tok = tok.get("data", tok)["image_token"]
-            rc, out = run(["python3", "tripo.py", "img3d", tok], timeout=300)
+            rc, out = run(["python3", pipeline_script("tripo.py"), "img3d", tok], timeout=300)
             if rc != 0:
                 raise RuntimeError("tripo rejected: " + out[-160:].strip())
             tid = json.loads(out.strip().splitlines()[-1])
@@ -156,16 +160,16 @@ def stage_mesh(ch, cf, cdef_cfg, img, st):
                 import re
                 m = re.search(r'"status": "([a-z]+)"', o)
                 return m.group(1) if m else None
-            if not poll(["python3", "tripo.py", "status", tid], tstat, {"success"}, {"failed", "cancelled", "banned"}):
+            if not poll(["python3", pipeline_script("tripo.py"), "status", tid], tstat, {"success"}, {"failed", "cancelled", "banned"}):
                 raise RuntimeError("tripo img3d failed")
             base = os.path.join(d, "base.glb")
-            run(["python3", "tripo.py", "download", tid, base], timeout=600)
-            rc, out = run(["python3", "tripo.py", "rig", tid], timeout=300)
+            run(["python3", pipeline_script("tripo.py"), "download", tid, base], timeout=600)
+            rc, out = run(["python3", pipeline_script("tripo.py"), "rig", tid], timeout=300)
             rid = json.loads(out.strip().splitlines()[-1])
             rid = rid.get("data", rid)["task_id"]
-            if not poll(["python3", "tripo.py", "status", rid], tstat, {"success"}, {"failed", "cancelled", "banned"}):
+            if not poll(["python3", pipeline_script("tripo.py"), "status", rid], tstat, {"success"}, {"failed", "cancelled", "banned"}):
                 raise RuntimeError("tripo rig failed")
-            run(["python3", "tripo.py", "download", rid, p], timeout=600)
+            run(["python3", pipeline_script("tripo.py"), "download", rid, p], timeout=600)
         if not os.path.exists(p):
             raise RuntimeError("no rigged glb")
         return p
@@ -181,7 +185,7 @@ def stage_convert(ch, cf, cdef_cfg, img, rigged, st):
     if os.path.exists(osb):
         return osb
     bundle = os.path.join(d, "bundle.json")
-    cmd = ["python3", "convert_rigged.py", "--mild-color", "--no-profile", "--flatten"]
+    cmd = ["python3", pipeline_script("convert_rigged.py"), "--mild-color", "--no-profile", "--flatten"]
     for x in cdef_cfg.get("convert_extra", []):
         cmd.append(x)
         if x == "--project-source":
@@ -206,7 +210,7 @@ def stage_convert(ch, cf, cdef_cfg, img, rigged, st):
             open(os.path.join(d, "convert.log"), "a").write("\n--- reconverted with --flip-facing ---\n" + out)
             rcv, vout = run(["python3", os.path.join(HERE, "verify_facing.py"), bundle], timeout=600)
             log(f"[{ch}-{cf}] facing check after flip: {(vout.strip().splitlines() or ['unknown'])[0]}")
-    rc, out = run(["python3", "convert_rigged.py", "--binary5", bundle, osb], timeout=600)
+    rc, out = run(["python3", pipeline_script("convert_rigged.py"), "--binary5", bundle, osb], timeout=600)
     if rc != 0 or not os.path.exists(osb):
         st.setdefault("errors", []).append({"cell": f"{ch}-{cf}", "stage": "binary5", "out": out[-400:]})
         return None

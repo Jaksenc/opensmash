@@ -5,13 +5,17 @@ print bone-length / conform-scale diagnostics against the Mario skeleton.
 Usage: debug_rig.py rigged.glb skels/mario-frames.skel out.png
 """
 import math
+import os
 import sys
 
 from PIL import Image, ImageDraw
 
-sys.path.insert(0, __file__.rsplit("/", 1)[0])
-from convert_glb import load_glb, read_accessor, load_frames
-from convert_rigged import load_rigged, build_bone_map
+try:
+    from .convert_glb import load_glb, read_accessor, load_frames
+    from .convert_rigged import load_rigged, build_bone_map
+except ImportError:  # direct execution: python3 pipeline/debug_rig.py
+    from convert_glb import load_glb, read_accessor, load_frames
+    from convert_rigged import load_rigged, build_bone_map
 
 
 def main():
@@ -90,7 +94,7 @@ def main():
     import subprocess
     tmp = out_path + ".base.png"
     subprocess.run([sys.executable,
-                    __file__.rsplit("/", 1)[0] + "/render_textured.py",
+                    os.path.join(os.path.dirname(__file__), "render_textured.py"),
                     glb_path, tmp, "--size", "900", "--unlit"], check=True)
     im = Image.open(tmp)
     d = ImageDraw.Draw(im)

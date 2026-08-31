@@ -3,6 +3,8 @@
 ## Repository layout
 
 - `website/` — the standalone project website and all of its browser assets
+- `pipeline/` — directly executable Python generation and evaluation tools
+- `scripts/` — batch sweep drivers
 - `play/` — production character bundles consumed by BattleShip
 - `skels/` — canonical skeletons, profiles, and extracted part data
 - `eval/` — evaluation code, fixtures, and generated results

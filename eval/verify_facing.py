@@ -6,7 +6,7 @@ import json, math, os, sys
 import numpy as np
 from PIL import Image
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from render_tpose import render
+from pipeline.render_tpose import render
 
 def main(bundle):
     import cv2

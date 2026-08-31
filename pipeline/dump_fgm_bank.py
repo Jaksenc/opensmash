@@ -164,7 +164,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("outdir")
     ap.add_argument("--rom", default=os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "..", "BattleShip", "baserom.us.z64"))
+        os.path.dirname(os.path.abspath(__file__)), "..", "..", "BattleShip", "baserom.us.z64"))
     ap.add_argument("--segment", default="sounds2")
     args = ap.parse_args()
 

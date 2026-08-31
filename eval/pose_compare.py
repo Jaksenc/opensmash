@@ -24,7 +24,8 @@ TOUR_START = 360   # replay ticks (control unlocks at the GO, tick ~370)
 
 
 def capture(out_dir, bundle, fkind, replay, frames):
-    cmd = ["python3", "run_eval.py", out_dir, "--frames-list", ",".join(map(str, frames)),
+    cmd = ["python3", os.path.join(PIPE, "pipeline", "run_eval.py"),
+           out_dir, "--frames-list", ",".join(map(str, frames)),
            "--fkind", str(fkind), "--replay", replay, "--pose", "--width", "960"]
     if bundle:
         cmd += ["--bundle", bundle]
@@ -93,7 +94,7 @@ def main():
 
     replay = os.path.join(PIPE, "eval", "fixtures", "replays",
                           f"eval-tour-fk{a.fkind}.rpl")
-    subprocess.run(["python3", "make_replay.py", replay,
+    subprocess.run(["python3", os.path.join(PIPE, "pipeline", "make_replay.py"), replay,
                     "--p1", str(a.fkind), "--p2", str(a.fkind)], cwd=PIPE, check=True)
     import hashlib
     import json
