@@ -12,6 +12,8 @@ function engineUrl(action) {
   const params = new URLSearchParams({ cb: String(Date.now()) });
   if (action.type === "character") {
     params.set("inject", `bundles/${action.character.bundle}`);
+    params.set("inject_ui", `bundles/${action.character.slug}.osbui`);
+    params.set("inject_voice", `bundles/${action.character.slug}.wav`);
     params.set("fkind", String(action.character.fkind));
     params.set("player", "0");
     params.set(
