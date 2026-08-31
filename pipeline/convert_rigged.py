@@ -909,12 +909,20 @@ def main():
                     _W0, _H0 = img.size
                     _hj = jpos[name_idx["Head"]]; _ny = jpos[name_idx["neck"]][1]
                     _acc = [0.0, 0.0, 0.0]; _nsk = 0
+                    # Fixed "skin" thresholds miss dark complexions: the
+                    # face can be both more saturated and much lower-value
+                    # than this legacy band. Keep warm head texels for an
+                    # adaptive brightest-cluster fallback below.
+                    _warm = []
                     for vi in range(len(pos)):
                         if pos[vi][1] <= _ny:
                             continue
                         _u, _v = uv[vi]
                         _x = min(_W0-1, max(0, int(_u*_W0))); _y = min(_H0-1, max(0, int(_v*_H0)))
                         _h, _s_, _vv = _hsvF[_y, _x]
+                        if (_h <= 35 or _h >= 245) and _s_ >= 35 and _vv >= 20:
+                            _warm.append((int(_vv),
+                                          [pos[vi][k] - _hj[k] for k in range(3)]))
                         if 3 <= _h <= 30 and 35 <= _s_ <= 190 and _vv >= 110:
                             for k in range(3): _acc[k] += pos[vi][k] - _hj[k]
                             _nsk += 1
@@ -931,6 +939,33 @@ def main():
                             print(f"facing: face cue from {_nsk} skin verts (|offset| {_fm/_Hf*100:.1f}% H, votes {_fvote})")
                     else:
                         print(f"facing: face cue insufficient ({_nsk} skin verts above neck)")
+                    if _face_h is None and len(_warm) >= 120:
+                        # Use the brightest 35% *relative to this head*, not
+                        # an absolute value cutoff. This separates visible
+                        # facial planes from shadowed hair on dark textures
+                        # while producing the same vote as the legacy band
+                        # on the existing lighter roster.
+                        _vals = sorted(v for v, _ in _warm)
+                        _cut = _vals[int(0.65 * (len(_vals) - 1))]
+                        _sel = [p for v, p in _warm if v >= _cut]
+                        if len(_sel) >= 40:
+                            _acc = [sum(p[k] for p in _sel) / len(_sel)
+                                    for k in range(3)]
+                            _dv3 = sum(_acc[k]*_upn[k] for k in range(3))
+                            _cand = [_acc[k] - _dv3*_upn[k] for k in range(3)]
+                            _fm = math.sqrt(sum(c*c for c in _cand))
+                            _fvote = ('flip' if sum(_cand[k]*_fwd[k]
+                                                   for k in range(3)) < 0
+                                      else 'keep')
+                            if _fm >= 0.01 * _Hf:
+                                _face_h = _cand
+                                print(f"facing: adaptive face cue from {len(_sel)} "
+                                      f"warm highlight verts (cut V={_cut}, "
+                                      f"|offset| {_fm/_Hf*100:.1f}% H, votes {_fvote})")
+                            else:
+                                print(f"facing: adaptive face cue weak "
+                                      f"({len(_sel)} verts, |offset| "
+                                      f"{_fm/_Hf*100:.1f}% H) — ignored")
                 except Exception as _e:
                     print(f"facing: face cue errored ({_e!r})")
                     _face_h = None
@@ -3591,6 +3626,9 @@ def write_binary3(bundle_json_path, out_path):
 
 
 
+DEFAULT_MORPH_LAMBDA = 0.5
+
+
 def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lambda=None):
     """OSB5: single CPU-skinned mesh (true smooth skinning in game).
 
@@ -3647,10 +3685,13 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
         # undersized — then each vert re-emits from the new joints with
         # its bone-local coords stretched along the bone axis only
         # (length follows the skeleton, girth stays the mesh's own).
-        # An explicit CLI value is a real override, including zero. With no
-        # override, use the profile's production default.
+        # An explicit CLI value is a real override, including zero. Profiles
+        # can pin a target-specific production recipe; otherwise use the
+        # validated midpoint blend from the samus-morph work. Pure canonical
+        # chibi is now opt-in (`... profile.json 0`) rather than an accidental
+        # consequence of a missing profile key.
         lam = (float(morph_lambda) if morph_lambda is not None
-               else float(prof.get("morph_lambda", 0.0)))
+               else float(prof.get("morph_lambda", DEFAULT_MORPH_LAMBDA)))
 
         # TBND/CPM1 need the target reference frames even for a pure
         # canonical (lambda=0) bundle. Previously these were parsed only in
@@ -4646,6 +4687,8 @@ if __name__ == "__main__":
         write_binary5(sys.argv[2], sys.argv[3])
     elif len(sys.argv) >= 5 and sys.argv[1] == "--binary5-canonical":
         # --binary5-canonical mario-bundle.json out.osb skels/<t>.profile.json [morph_lambda]
+        # Default lambda: profile morph_lambda, otherwise 0.5. Pass 0 for a
+        # deliberate pure-canonical/chibi export.
         write_binary5(sys.argv[2], sys.argv[3], canonical_profile=sys.argv[4],
                       morph_lambda=float(sys.argv[5]) if len(sys.argv) > 5 else None)
     elif len(sys.argv) == 5 and sys.argv[1] == "--add-cpm1":
