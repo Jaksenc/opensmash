@@ -11,7 +11,7 @@ Subcommands:
 Keys come from .env next to this script. State (task ids) is the caller's
 problem — everything prints JSON to stdout.
 """
-import argparse, base64, json, os, sys, time, urllib.request
+import argparse, base64, json, os, sys, time, urllib.error, urllib.request
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -38,8 +38,12 @@ def http(url, method="GET", headers=None, body=None, timeout=180):
     if body is not None:
         data = json.dumps(body).encode()
         req.add_header("Content-Type", "application/json")
-    with urllib.request.urlopen(req, data, timeout=timeout) as r:
-        return json.loads(r.read().decode())
+    try:
+        with urllib.request.urlopen(req, data, timeout=timeout) as r:
+            return json.loads(r.read().decode())
+    except urllib.error.HTTPError as e:
+        detail = e.read().decode(errors="replace")
+        raise RuntimeError(f"HTTP {e.code} from {url}: {detail}") from e
 
 
 # --- cost accounting --------------------------------------------------
@@ -49,6 +53,7 @@ def http(url, method="GET", headers=None, body=None, timeout=180):
 # tokens for a flat emblem, 439 for a T-pose sheet). Gemini bills thinking
 # tokens as output. Rates checked 2026-08-26 against the published tables.
 PRICES = {
+    "gpt-5.6-luna":          (0.20,  0.20,   1.20),
     "gpt-image-2":            (5.00,  8.00,  30.00),
     "gpt-image-1.5":          (5.00,  8.00,  32.00),
     "gpt-image-1":            (5.00, 10.00,  40.00),
@@ -202,8 +207,14 @@ def cmd_image(args):
                 "https://api.openai.com/v1/images/edits", body,
                 {"Authorization": f"Bearer {ENV['OPENAI_API_KEY']}",
                  "Content-Type": f"multipart/form-data; boundary={boundary}"})
-            with urllib.request.urlopen(req, timeout=300) as resp:
-                out = json.loads(resp.read())
+            try:
+                with urllib.request.urlopen(req, timeout=300) as resp:
+                    out = json.loads(resp.read())
+            except urllib.error.HTTPError as e:
+                detail = e.read().decode(errors="replace")
+                raise RuntimeError(
+                    f"HTTP {e.code} from images/edits: {detail}"
+                ) from e
         else:
             out = http("https://api.openai.com/v1/images/generations", "POST",
                        {"Authorization": f"Bearer {ENV['OPENAI_API_KEY']}"},

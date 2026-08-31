@@ -9,9 +9,9 @@ Stages (each skipped if its output already exists — delete a file or use
 --force-stage to redo): expand -> tpose -> mesh (Tripo v3 + rig) ->
 convert -> portrait art -> stock art -> ui pack -> announcer voice -> stage.
 
-LLM callouts: Gemini for the character description, gpt-image-2 for the
-three images, MiniMax (via fal) for the announcer clip. Everything else is
-deterministic.
+Model callouts: gpt-5.6-luna for the character description, gpt-image-2 for
+the generated images, and MiniMax (via fal) for the announcer clip. Everything
+else is deterministic.
 """
 import argparse
 import glob
@@ -246,7 +246,6 @@ def main():
     # 3. mesh + rig ------------------------------------------------------
     if stage_needed(F("rigged.glb"), force, "mesh"):
         log("mesh: uploading to Tripo")
-        credits_before = tripo_balance()
         tok = tripo_json(sh(["python3", pipeline_script("tripo.py"), "upload", F("tpose.png")], timeout=300))["image_token"]
         task = tripo_json(sh(["python3", pipeline_script("tripo.py"), "img3d", tok], timeout=120))["task_id"]
         log(f"mesh: img3d task {task}")
@@ -257,6 +256,7 @@ def main():
             time.sleep(10)
         if st["status"] != "success":
             raise RuntimeError(f"img3d {st['status']}")
+        model_credits = st.get("consumed_credit")
         rig = tripo_json(sh(["python3", pipeline_script("tripo.py"), "rig", task], timeout=120))["task_id"]
         log(f"mesh: rig task {rig}")
         for _ in range(90):
@@ -266,10 +266,14 @@ def main():
             time.sleep(10)
         if st["status"] != "success":
             raise RuntimeError(f"rig {st['status']}")
+        rig_credits = st.get("consumed_credit")
         sh(["python3", pipeline_script("tripo.py"), "download", rig, F("rigged.glb")], timeout=600)
-        credits = credits_before - tripo_balance()
-        log(f"mesh: {credits} Tripo credits (img3d + rig)")
-        bill("mesh", credits * TRIPO_USD_PER_CREDIT)
+        if model_credits is None or rig_credits is None:
+            log("mesh: Tripo did not report per-task credits")
+        else:
+            credits = model_credits + rig_credits
+            log(f"mesh: {credits} Tripo credits (img3d + rig)")
+            bill("mesh", credits * TRIPO_USD_PER_CREDIT)
 
     # 4. convert ---------------------------------------------------------
     osb = os.path.join(HERE, "play", f"{slug}.osb")

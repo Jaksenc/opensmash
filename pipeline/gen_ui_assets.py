@@ -254,6 +254,7 @@ def main():
         st = out
     q = st.convert("RGB").quantize(colors=15, method=Image.MEDIANCUT)
     qpal = q.getpalette()[:45]
+    qpal += [0] * (45 - len(qpal))
     pal = [0] + [rgba5551(qpal[i * 3], qpal[i * 3 + 1], qpal[i * 3 + 2]) for i in range(15)]
     idx = [0 if st.getpixel((x, y))[3] < 128 else q.getpixel((x, y)) + 1
            for y in range(STOCK_H) for x in range(STOCK_W)]
