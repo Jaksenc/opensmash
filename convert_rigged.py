@@ -3950,6 +3950,33 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
                 hyb_ = max(1e-6, float(prof.get("ball_head_blend", 0.02)) * bh_)
                 hw0_ = float(prof.get("ball_head_weight", 0.5))
 
+                # ball_clearance: solve the head drop instead of hand-tuning
+                # ball_head_drop per rig. In bind pose, the ball's bottom
+                # (confident head verts, inflated about joint 12) must sit
+                # `clearance` units above the shoe tops — purin's chin was
+                # clipping through her shoes at any fixed drop that also
+                # looked right on kirby.
+                if prof.get("ball_clearance") is not None and 12 in no and dy_ > 1e-6:
+                    clr_ = float(prof.get("ball_clearance", 8.0))
+                    bb0_, st0_ = 1e9, -1e9
+                    for v in sk["verts"]:
+                        tot0 = sum(w for (ji, w) in v[8]) or 1.0
+                        w12r_ = sum(w for (ji, w) in v[8] if ji == 12) / tot0
+                        wfr_ = sum(w for (ji, w) in v[8] if ji in (22, 27)) / tot0
+                        if w12r_ >= 0.6 and v[1] >= hf_:
+                            bb0_ = min(bb0_, no[12][1] + hs*(v[1] - no[12][1]))
+                        if wfr_ >= 0.5:
+                            fj0_ = 22 if 22 in no else 27
+                            fj0_ = fj0_ if fj0_ in no else None
+                            if fj0_ is not None:
+                                st0_ = max(st0_, no[fj0_][1]
+                                           + float(prof.get("feet_scale", 1.6))
+                                           * (v[1] - no[fj0_][1]))
+                    if bb0_ < 1e8 and st0_ > -1e8:
+                        hdrop_ = max(0.0, (bb0_ - (st0_ + clr_)) / dy_)
+                        print(f"ball clearance: bottom={bb0_:.1f} shoetop={st0_:.1f} "
+                              f"-> drop {hdrop_:.3f}")
+
                 def smoothstep_(lo_, hi_, x_):
                     t_ = max(0.0, min(1.0, (x_ - lo_) / max(1e-6, hi_ - lo_)))
                     return t_ * t_ * (3.0 - 2.0 * t_)

@@ -31,7 +31,7 @@
  },
  "ball_squash": 0.25,
  "head_scale": 2.5,
- "ball_head_drop": 1.35,
+ "ball_head_drop": 1.08,
  "ball_neck_radius": 0.05,
  "ball_leg_squash": 0.03,
  "ball_leg_radius": 0.04,
@@ -43,5 +43,6 @@
  "morph_lambda": 0.6,
  "dir_lambda": 0.0,
  "ball_plug_lift": 0.9,
- "ball_hide_plug": true
+ "ball_hide_plug": true,
+ "ball_clearance": 16.0
 }
