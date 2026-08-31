@@ -28,5 +28,21 @@
  "tune": {
   "head_boost": 2.1,
   "leg_squash": 0.45
- }
+ },
+ "ball_squash": 0.25,
+ "head_scale": 2.5,
+ "ball_head_drop": 1.08,
+ "ball_neck_radius": 0.05,
+ "ball_leg_squash": 0.03,
+ "ball_leg_radius": 0.04,
+ "feet_scale": 2.4,
+ "hand_scale": 1.4,
+ "hand_tuck": 0.6,
+ "arm_hug": 0.3,
+ "arm_drop": 10.0,
+ "morph_lambda": 0.6,
+ "dir_lambda": 0.0,
+ "ball_plug_lift": 0.9,
+ "ball_hide_plug": true,
+ "ball_clearance": 16.0
 }

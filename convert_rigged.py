@@ -3582,7 +3582,7 @@ def write_binary3(bundle_json_path, out_path):
 
 
 
-def write_binary5(bundle_json_path, out_path):
+def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lambda=None):
     """OSB5: single CPU-skinned mesh (true smooth skinning in game).
 
     Layout (little-endian):
@@ -3607,13 +3607,870 @@ def write_binary5(bundle_json_path, out_path):
     px = atlas.load()
     sk = d["skinned"]
     joint_ids = sk["joint_ids"]
+
+    # ---- canonical retarget: ship the MARIO bundle onto another fighter.
+    # The mesh, weights, and BIND section stay canonical (mario); only the
+    # joint_ids are remapped to the target skeleton, and a CAN1 section
+    # tells the engine to rebuild VIRTUAL joint frames each tick: mario's
+    # bone offsets driven by the target joints' rotation deltas from their
+    # own bind. Geometry quality is inherited from the validated mario
+    # build instead of re-earned per target.
+    canon = None
+    if canonical_profile is not None:
+        prof = json.load(open(canonical_profile))
+        cmap = {int(k): int(v) for k, v in prof["map"].items()}
+        missing = [j for j in joint_ids if j not in cmap]
+        if missing:
+            raise SystemExit(f"canonical: profile lacks map for joints {missing}")
+        # canonical parent per mario joint; -1 anchors to fighter joint 0
+        CPAR = {6: -1, 12: 6, 8: 6, 9: 8, 10: 9, 14: 6, 15: 14, 16: 15,
+                19: -1, 20: 19, 22: 20, 24: -1, 25: 24, 27: 25}
+        slot = {j: k for k, j in enumerate(joint_ids)}
+        parents = []
+        for j in joint_ids:
+            pj = CPAR.get(j, -1)
+            parents.append(-1 if pj == -1 else slot[pj])
+        bf = sk["bind_frames"]
+        # ---- optional proportion morph: stretch the canonical (mario)
+        # mesh onto the TARGET skeleton's bone lengths (lam=0 pure chibi,
+        # lam=1 full target proportions). The skeleton is scaled FIRST —
+        # joint positions dictate overall size, so the skin can't come out
+        # undersized — then each vert re-emits from the new joints with
+        # its bone-local coords stretched along the bone axis only
+        # (length follows the skeleton, girth stays the mesh's own).
+        # An explicit CLI value is a real override, including zero. With no
+        # override, use the profile's production default.
+        lam = (float(morph_lambda) if morph_lambda is not None
+               else float(prof.get("morph_lambda", 0.0)))
+
+        # TBND/CPM1 need the target reference frames even for a pure
+        # canonical (lambda=0) bundle. Previously these were parsed only in
+        # the optional morph block, so canonical zero-morph builds crashed
+        # later while serializing their target bind metadata.
+        skel_path = os.path.join(os.path.dirname(canonical_profile),
+                                 prof["name"] + ".skel")
+        T = {}
+        T2 = {}
+        T2R = {}
+        TP = {}
+        for line in open(skel_path):
+            mm = re.search(r"joint=(\d+) parent=(-?\d+) "
+                           r"world=\(([-\d.]+),([-\d.]+),([-\d.]+)\)", line)
+            if mm:
+                T[int(mm.group(1))] = [float(mm.group(2 + i)) for i in (1, 2, 3)]
+            m2 = re.search(r"SKELDUMP2: joint=(\d+) o=\([^)]*\) "
+                           r"x=\(([^)]*)\) y=\(([^)]*)\) z=\(([^)]*)\)", line)
+            if m2:
+                cols = [[float(v) for v in m2.group(k).split(",")] for k in (2, 3, 4)]
+                jmt = [[0.0]*3 for _ in range(3)]
+                jmr = [[0.0]*3 for _ in range(3)]
+                for c_ in range(3):
+                    n = math.sqrt(sum(cols[c_][r_]**2 for r_ in range(3))) or 1.0
+                    for r_ in range(3):
+                        jmt[r_][c_] = cols[c_][r_]/n
+                        jmr[r_][c_] = cols[c_][r_]
+                T2[int(m2.group(1))] = jmt
+                T2R[int(m2.group(1))] = jmr
+            mp = re.search(r"SKELDUMP: joint=(\d+) parent=(-?\d+)", line)
+            if mp:
+                TP[int(mp.group(1))] = int(mp.group(2))
+        if lam > 0.0:
+            bfp = {j: list(bf[str(j)]["o"]) for j in joint_ids}
+            # yaw-align the CANONICAL side to the target's bind about the
+            # vertical axis (shoulder-to-shoulder line, XZ projection).
+            # The chibi bundle stands at MARIO's bind yaw; targets stand
+            # at their own (samus -33deg, link -83deg) — the canonical
+            # mesh always rendered yawed vs the vanilla/ship fighter.
+            # Rotating mesh + normals + bind frames to the target's yaw
+            # makes the baked bind face like the target, so the runtime
+            # rotation deltas render it at the target's true facing.
+            if 8 in joint_ids and 14 in joint_ids:
+                # facing yaw estimate: bind stances twist along the spine,
+                # so no single bone axis is right for every fighter — the
+                # profile picks the reference ("hip" default: thigh-to-
+                # thigh, stiffest for stances whose arms hang forward like
+                # link's; "shoulder" for fighters whose LEGS carry the
+                # twist, like luigi). Calibrated per target vs vanilla.
+                ax = prof.get("morph_yaw_axis", "hip")
+                ja, jb = (19, 24) if ax == "hip" else (8, 14)
+                am = [bfp[jb][0]-bfp[ja][0], bfp[jb][2]-bfp[ja][2]]
+                at = [T[cmap[jb]][0]-T[cmap[ja]][0], T[cmap[jb]][2]-T[cmap[ja]][2]]
+                yaw = math.atan2(at[1], at[0]) - math.atan2(am[1], am[0])
+                yaw += math.radians(float(prof.get("morph_yaw_trim", 0.0)))
+                yaw += math.radians(float(os.environ.get("MORPH_YAW_TRIM", "0")))
+                cy, sy = math.cos(yaw), math.sin(yaw)
+                px, pz = bfp[6][0], bfp[6][2]   # pivot: chest column
+
+                def yawp(p):
+                    dx, dz = p[0]-px, p[2]-pz
+                    return [px + cy*dx - sy*dz, p[1], pz + sy*dx + cy*dz]
+                for j in joint_ids:
+                    bfp[j] = yawp(bfp[j])
+                    R = bf[str(j)]["R"]
+                    # world-side yaw on the bind basis: jm' = Y*jm
+                    # with R rows as basis (jm = R^T): R' = R * Y^T
+                    bf[str(j)]["R"] = [
+                        [cy*R[r_][0] - sy*R[r_][2], R[r_][1],
+                         sy*R[r_][0] + cy*R[r_][2]] for r_ in range(3)]
+                for v in sk["verts"]:
+                    v[0], v[1], v[2] = yawp(v[:3])
+                    nx, nz = v[5], v[7]
+                    v[5], v[7] = cy*nx - sy*nz, sy*nx + cy*nz
+                print(f"canonical yaw-aligned to target: {math.degrees(yaw):+.1f} deg")
+            o6b = bfp[6]
+            ymin0 = min(v[1] for v in sk["verts"])
+            rootb = [o6b[0], ymin0, o6b[2]]
+            t0g = T[0]
+
+            def seglen(a):
+                return math.sqrt(a[0]*a[0] + a[1]*a[1] + a[2]*a[2]) or 1e-6
+
+            def sub(a, b):
+                return [a[0]-b[0], a[1]-b[1], a[2]-b[2]]
+
+            def norm(a):
+                n = seglen(a)
+                return [a[0]/n, a[1]/n, a[2]/n]
+
+            def rot_between(a, b):
+                # minimal rotation matrix taking unit vector a to unit b
+                k = [a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]]
+                c = a[0]*b[0]+a[1]*b[1]+a[2]*b[2]
+                s2 = k[0]*k[0]+k[1]*k[1]+k[2]*k[2]
+                if s2 < 1e-12:
+                    return [[1,0,0],[0,1,0],[0,0,1]] if c > 0 else [[-1,0,0],[0,-1,0],[0,0,1]]
+                K = [[0,-k[2],k[1]],[k[2],0,-k[0]],[-k[1],k[0],0]]
+                f = (1.0-c)/s2
+                G = [[0.0]*3 for _ in range(3)]
+                for r_ in range(3):
+                    for c_ in range(3):
+                        kk2 = sum(K[r_][m]*K[m][c_] for m in range(3))
+                        G[r_][c_] = (1.0 if r_ == c_ else 0.0) + K[r_][c_] + f*kk2
+                return G
+
+            def rotv(G, v):
+                return [G[i][0]*v[0]+G[i][1]*v[1]+G[i][2]*v[2] for i in range(3)]
+
+            # per-bone scale AND direction: blend each segment's length and
+            # its bind direction toward the target's. At lam=1 the baked
+            # skeleton IS the target bind — the target's rotation deltas
+            # then reproduce its posed joint positions exactly at our size
+            # (the charge stance held the cannon at face height because
+            # samus's deltas landed on the chibi's differently-hung bind
+            # arm). Collapsed target chains keep length and direction.
+            s, bdir, A = {}, {}, {}
+            for j in joint_ids:
+                pj = CPAR.get(j, -1)
+                if pj == -1:
+                    dm, dt = sub(bfp[j], rootb), sub(T[cmap[j]], t0g)
+                else:
+                    dm, dt = sub(bfp[j], bfp[pj]), sub(T[cmap[j]], T[cmap[pj]])
+                um = norm(dm)
+                if seglen(dt) < 1.0:
+                    s[j], u = 1.0, um
+                else:
+                    s[j] = 1.0 + lam * (seglen(dt)/seglen(dm) - 1.0)
+                    ut = norm(dt)
+                    dl_ = float(prof.get("dir_lambda", lam))
+                    u = norm([(1.0-dl_)*um[i] + dl_*ut[i] for i in range(3)])
+                # per-segment scale override (DK's long neck reads whack
+                # on a human chibi — clamp that bone via the profile)
+                ov = prof.get("seg_scale", {})
+                if str(j) in ov:
+                    s[j] = float(ov[str(j)])
+                bdir[j] = u
+                A[j] = rot_between(um, u)
+            no = {}
+
+            def place(j):
+                if j in no:
+                    return no[j]
+                pj = CPAR.get(j, -1)
+                base = rootb if pj == -1 else place(pj)
+                ref = rootb if pj == -1 else bfp[pj]
+                L = s[j] * seglen(sub(bfp[j], ref))
+                no[j] = [base[i] + L * bdir[j][i] for i in range(3)]
+                return no[j]
+            for j in joint_ids:
+                place(j)
+            # vert stretch per owning joint: its geometry spans the bone
+            # toward its unique child; leaves (head/hands/feet) keep size
+            kids = {}
+            for j in joint_ids:
+                pj = CPAR.get(j, -1)
+                if pj != -1:
+                    kids.setdefault(pj, []).append(j)
+            # per-joint geometry transform: rotate the joint's verts by the
+            # bone it spans (unique child's bone; leaves follow the bone
+            # arriving at them), then stretch along that bone's NEW axis
+            stretch, axis, G = {}, {}, {}
+            for j in joint_ids:
+                ks = kids.get(j, [])
+                if len(ks) == 1:
+                    stretch[j], axis[j], G[j] = s[ks[0]], bdir[ks[0]], A[ks[0]]
+                elif CPAR.get(j, -1) == -1:
+                    stretch[j], axis[j], G[j] = s[j], bdir[j], A[j]  # torso
+                elif j in (22, 27):
+                    # FEET: default keeps the chibi bind orientation (flat
+                    # base). Targets whose bind feet are splayed/pitched
+                    # (falcon) opt into aligning the geometry to the
+                    # TARGET's bind foot basis via profile feet_align —
+                    # runtime deltas then land the foot like vanilla's.
+                    # Scoped per profile after a converter-wide attempt
+                    # regressed leg reads elsewhere.
+                    stretch[j], axis[j] = 1.0, bdir[j]
+                    G[j] = [[1.0,0.0,0.0],[0.0,1.0,0.0],[0.0,0.0,1.0]]
+                    if prof.get("feet_align") and cmap[j] in T2:
+                        R_ = bf[str(j)]["R"]
+                        jmc = [[R_[c_][r_] for c_ in range(3)] for r_ in range(3)]
+                        jmcinv = [[jmc[c_][r_] for c_ in range(3)] for r_ in range(3)]
+                        jmt = T2[cmap[j]]
+                        G[j] = [[sum(jmt[r_][m]*jmcinv[m][c_] for m in range(3))
+                                 for c_ in range(3)] for r_ in range(3)]
+                else:
+                    # other leaves (head/hands): keep size, follow the
+                    # arriving bone's re-aim (head is rebuilt below)
+                    stretch[j], axis[j], G[j] = 1.0, bdir[j], A[j]
+            # rebuild the HEAD's orientation outright: the capture
+            # stance both turns and tilts the head (mario looks down/at
+            # the camera), and leaf joints keep bind orientation — after
+            # a big body yaw the tilt reads as crown-toward-camera. Set
+            # the head's bind basis to world-up vertical with its heading
+            # matched to the chest (plus per-profile head_yaw_trim), and
+            # rotate the geometry to follow.
+            if (12 in joint_ids and 6 in joint_ids
+                    and os.environ.get("OSB_MORPH_HEAD", "on") != "off"):
+                R6, R12 = bf["6"]["R"], bf["12"]["R"]
+                jm = [[R12[c_][r_] for c_ in range(3)] for r_ in range(3)]
+                hx = [R6[0][0], 0.0, R6[0][2]]
+                tr = math.radians(float(prof.get("head_yaw_trim", 0.0)))
+                ct, st_ = math.cos(tr), math.sin(tr)
+                hx = [ct*hx[0] - st_*hx[2], 0.0, st_*hx[0] + ct*hx[2]]
+                n = math.sqrt(hx[0]*hx[0] + hx[2]*hx[2]) or 1.0
+                c0 = [hx[0]/n, 0.0, hx[2]/n]
+                c1 = [0.0, 1.0, 0.0]
+                c2 = [c0[1]*c1[2]-c0[2]*c1[1], c0[2]*c1[0]-c0[0]*c1[2],
+                      c0[0]*c1[1]-c0[1]*c1[0]]
+                det = (jm[0][0]*(jm[1][1]*jm[2][2]-jm[1][2]*jm[2][1])
+                     - jm[0][1]*(jm[1][0]*jm[2][2]-jm[1][2]*jm[2][0])
+                     + jm[0][2]*(jm[1][0]*jm[2][1]-jm[1][1]*jm[2][0]))
+                if det < 0:
+                    c2 = [-c2[0], -c2[1], -c2[2]]
+                jmd = [[c0[i], c1[i], c2[i]] for i in range(3)]
+                jminv = [[jm[c_][r_] for c_ in range(3)] for r_ in range(3)]
+                # jm is orthonormal: inverse = transpose
+                Gh = [[sum(jmd[r_][m]*jminv[m][c_] for m in range(3))
+                       for c_ in range(3)] for r_ in range(3)]
+                G[12] = Gh
+                print("head uprighted (heading = chest%+.0f)"
+                      % float(prof.get("head_yaw_trim", 0.0)))
+            # facing axis for anisotropic girth: horizontal perpendicular
+            # of the shoulder line, sign toward the face (nose side)
+            shv = sub(no[14], no[8]) if (14 in no and 8 in no) else [0.0, 0.0, 1.0]
+            Dax = norm([shv[2], 0.0, -shv[0]])
+            if 12 in no:
+                fx_, fz_, fn_ = 0.0, 0.0, 0
+                for v_ in sk["verts"]:
+                    if sum(w for (ji, w) in v_[8] if ji == 12) > 0.5:
+                        fx_ += v_[0]-no[12][0]; fz_ += v_[2]-no[12][2]; fn_ += 1
+                if fn_ and (fx_*Dax[0] + fz_*Dax[2]) < 0:
+                    Dax = [-Dax[0], 0.0, -Dax[2]]
+            for v in sk["verts"]:
+                acc = [0.0, 0.0, 0.0]
+                nacc = [0.0, 0.0, 0.0]
+                tw = 0.0
+                for (ji, w) in v[8]:
+                    if w <= 0.0:
+                        continue
+                    Lr = rotv(G[ji], sub(v[:3], bfp[ji]))
+                    a, st = axis[ji], stretch[ji]
+                    d = Lr[0]*a[0] + Lr[1]*a[1] + Lr[2]*a[2]
+                    nr = rotv(G[ji], v[5:8])
+                    # girth: profile-scaled cross-section perpendicular to
+                    # the bone (head keeps identity — it anchors the look).
+                    # girth_depth scales the facing-axis component alone so
+                    # wide characters (DK) don't get a pot belly.
+                    torso_ = ji in (6, 11)
+                    g = 1.0 if ji == 12 else (float(prof.get("girth", 1.0)) if torso_
+                         else float(prof.get("girth_limbs", prof.get("girth", 1.0))))
+                    gd = 1.0 if ji == 12 else (float(prof.get("girth_depth", prof.get("girth", 1.0))) if torso_
+                         else g)
+                    # Match the direct-target retargeter's stretch
+                    # compensation: when a target lengthens a limb segment,
+                    # leaving its canonical cross-section unchanged produces
+                    # spaghetti arms/legs. Widen by sqrt(stretch), capped,
+                    # while hands, feet, head, and non-lengthened segments
+                    # naturally remain unchanged because st == 1 (or < 1).
+                    if (prof.get("canonical_widen", False)
+                            and not torso_ and ji != 12):
+                        widen = min(float(prof.get("widen_cap", 1.55)),
+                                    max(1.0, st)
+                                    ** float(prof.get("widen_pow", 0.5)))
+                        g *= widen
+                        gd *= widen
+                    pv = [Lr[i] - d * a[i] for i in range(3)]
+                    dd = pv[0]*Dax[0] + pv[2]*Dax[2]
+                    for i in range(3):
+                        perp = g * pv[i] + (gd - g) * dd * Dax[i]
+                        acc[i] += w * (no[ji][i] + perp + st * d * a[i])
+                        nacc[i] += w * nr[i]
+                    tw += w
+                if tw > 0.0:
+                    nl = seglen(nacc)
+                    for i in range(3):
+                        v[i] = acc[i] / tw
+                        v[5+i] = nacc[i] / nl
+            for j in joint_ids:
+                bf[str(j)]["o"] = no[j]
+            # BALL MODE (kirby/purin): inflate a clean head into a balloon
+            # while the connected neck/torso narrows into an internal plug.
+            # Every triangle stays present, so the balloon remains a single
+            # continuous mesh; hands and shoes keep riding their own joints.
+            if prof.get("ball_squash"):
+                k_ = float(prof.get("ball_squash", 0.25))
+                hs = float(prof.get("head_scale", 2.5))
+                fs_ = float(prof.get("feet_scale", 1.6))
+                ymin0_ = min(v_[1] for v_ in sk["verts"])
+                ymax0_ = max(v_[1] for v_ in sk["verts"])
+                cx_, cz_ = no[6][0], no[6][2]
+                dy_ = (1.0-k_) * (no[12][1]-ymin0_) if 12 in no else 0.0
+                hdrop_ = float(prof.get("ball_head_drop", 1.0))
+                hns = float(prof.get("hand_scale", 1.4))
+                # Joint 12 deliberately collects the source neck as well
+                # as the head.  Raw skin weight is therefore too generous
+                # a definition of the ball: even 10-30% neck weight pulls
+                # collars and upper-chest faces into long, magnified fins.
+                # Require both confident Head ownership and a position
+                # above the anatomical head joint. The narrow smoothstep
+                # bands produce a continuous inflation field instead of a
+                # hard cut between head and body.
+                bh_ = max(1e-6, ymax0_ - ymin0_)
+                hf_ = (no[12][1] + float(prof.get("ball_head_floor", 0.02)) * bh_
+                       if 12 in no else ymin0_ + 0.6 * bh_)
+                hyb_ = max(1e-6, float(prof.get("ball_head_blend", 0.02)) * bh_)
+                hw0_ = float(prof.get("ball_head_weight", 0.5))
+
+                # ball_clearance: solve the head drop instead of hand-tuning
+                # ball_head_drop per rig. In bind pose, the ball's bottom
+                # (confident head verts, inflated about joint 12) must sit
+                # `clearance` units above the shoe tops — purin's chin was
+                # clipping through her shoes at any fixed drop that also
+                # looked right on kirby.
+                if prof.get("ball_clearance") is not None and 12 in no and dy_ > 1e-6:
+                    clr_ = float(prof.get("ball_clearance", 8.0))
+                    bb0_, st0_ = 1e9, -1e9
+                    for v in sk["verts"]:
+                        tot0 = sum(w for (ji, w) in v[8]) or 1.0
+                        w12r_ = sum(w for (ji, w) in v[8] if ji == 12) / tot0
+                        wfr_ = sum(w for (ji, w) in v[8] if ji in (22, 27)) / tot0
+                        if w12r_ >= 0.6 and v[1] >= hf_:
+                            bb0_ = min(bb0_, no[12][1] + hs*(v[1] - no[12][1]))
+                        if wfr_ >= 0.5:
+                            fj0_ = 22 if 22 in no else 27
+                            fj0_ = fj0_ if fj0_ in no else None
+                            if fj0_ is not None:
+                                st0_ = max(st0_, no[fj0_][1]
+                                           + float(prof.get("feet_scale", 1.6))
+                                           * (v[1] - no[fj0_][1]))
+                    if bb0_ < 1e8 and st0_ > -1e8:
+                        hdrop_ = max(0.0, (bb0_ - (st0_ + clr_)) / dy_)
+                        print(f"ball clearance: bottom={bb0_:.1f} shoetop={st0_:.1f} "
+                              f"-> drop {hdrop_:.3f}")
+
+                def smoothstep_(lo_, hi_, x_):
+                    t_ = max(0.0, min(1.0, (x_ - lo_) / max(1e-6, hi_ - lo_)))
+                    return t_ * t_ * (3.0 - 2.0 * t_)
+
+                # UV donor for the plug: a definitely-shoe vertex. The
+                # ball->shoe bridge triangles are the only place the
+                # collapsed torso is ever seen, and with shirt/jean UVs
+                # they glow against the dark shoes; retexturing the plug
+                # verts to the shoe's UV makes the bridge render as shoe-
+                # colored shadow between the feet.
+                duv_ = None
+                dbest_ = 0.0
+                for v in sk["verts"]:
+                    tot0 = sum(w for (ji, w) in v[8]) or 1.0
+                    wf0 = sum(w for (ji, w) in v[8] if ji in (22, 27)) / tot0
+                    if wf0 > dbest_:
+                        dbest_ = wf0
+                        duv_ = (v[3], v[4])
+                hn_, hsupp_, ncollar_, nchin_ = 0, 0.0, 0, 0
+                plugset_ = set()
+                for v in sk["verts"]:
+                    tot = sum(w for (ji, w) in v[8]) or 1.0
+                    w12_raw = sum(w for (ji, w) in v[8] if ji == 12) / tot
+                    # The chin shares the low/upward-facing cues of a
+                    # collar, but lies forward of the spine along the
+                    # already-established face axis. Extend the head floor
+                    # downward only there; centered/rear neck geometry keeps
+                    # the stricter floor and disappears into the plug.
+                    fd_ = ((v[0] - no[12][0]) * Dax[0]
+                           + (v[2] - no[12][2]) * Dax[2])
+                    front_ = smoothstep_(0.0, 0.10 * bh_, fd_)
+                    vhf_ = hf_ - 0.06 * bh_ * front_
+                    wy_ = smoothstep_(vhf_ - hyb_, vhf_, v[1])
+                    ww_ = smoothstep_(hw0_, 0.9, w12_raw)
+                    # Collars can still be rigidly head-weighted.  Near
+                    # the base of the head they are distinguished from a
+                    # jaw/beard shell by their upward-facing surface.
+                    # Fade that cue out quickly with height so cheeks,
+                    # glasses, hair, etc. are never orientation-clipped.
+                    bz_ = 1.0 - smoothstep_(hf_, hf_ + 0.06 * bh_, v[1])
+                    up_ = smoothstep_(0.25, 0.75, v[6])
+                    collar_ = bz_ * up_ * (1.0 - front_)
+                    w12 = w12_raw * wy_ * ww_ * (1.0 - collar_)
+                    if collar_ > 0.5 and w12_raw > 0.5:
+                        ncollar_ += 1
+                    if w12 >= 0.5:
+                        hn_ += 1
+                        if front_ > 0.5 and v[1] < hf_:
+                            nchin_ += 1
+                    hsupp_ += w12_raw - w12
+                    wf = sum(w for (ji, w) in v[8] if ji in (22, 27)) / tot
+                    wh = sum(w for (ji, w) in v[8] if ji in (10, 16)) / tot
+                    fj = 22 if sum(w for (ji, w) in v[8] if ji == 22) >= \
+                               sum(w for (ji, w) in v[8] if ji == 27) else 27
+                    hj = 10 if sum(w for (ji, w) in v[8] if ji == 10) >= \
+                               sum(w for (ji, w) in v[8] if ji == 16) else 16
+                    wa = sum(w for (ji, w) in v[8] if ji in (8, 9, 14, 15)) / tot
+                    wl = sum(w for (ji, w) in v[8] if ji in (19, 20, 24, 25)) / tot
+                    wb = max(0.0, 1.0 - w12 - wf - wh - wa - wl)
+                    vh = [no[12][i] + hs * (v[i]-no[12][i]) for i in range(3)]
+                    vh[1] -= dy_ * hdrop_
+                    vf = [no[fj][i] + fs_ * (v[i]-no[fj][i]) for i in range(3)] \
+                         if fj in no else list(v[:3])
+                    # hands crisp at their joints (like the shoes); arm
+                    # SEGMENTS fall into the body squash so they don't
+                    # fly in front as full-length arms
+                    vn = [no[hj][i] + hns * (v[i]-no[hj][i]) for i in range(3)] \
+                         if hj in no else list(v[:3])
+                    if hj in no:
+                        # tuck the fists toward the body axis so they hug
+                        # the ball instead of floating at chibi arm reach
+                        tk_ = float(prof.get("hand_tuck", 0.55))
+                        vn[0] -= tk_ * (no[hj][0] - cx_)
+                        vn[2] -= tk_ * (no[hj][2] - cz_)
+                    # Balloon plug: every ordinary body/leg vertex narrows
+                    # toward the body axis. Hands and feet use their own
+                    # transforms, and mixed skin weights provide a continuous
+                    # flare from the plug into those stubs. Keeping any lower
+                    # body region broad merely stacks trousers/shirt into a
+                    # visible band after the vertical squash.
+                    nr_ = float(prof.get("ball_neck_radius", 0.25))
+                    br_ = nr_
+                    # ball_plug_lift raises the plug's resting band from the
+                    # floor (0, the classic torso column visible between the
+                    # shoes) up toward the inflated ball's underside (1):
+                    # the body disappears inside the head, and the shoe
+                    # stubs' weight blend flares straight off the ball —
+                    # a floating head with attached feet. Topology (and the
+                    # no-holes guarantee) is untouched.
+                    pl_ = float(prof.get("ball_plug_lift", 0.0))
+                    # target the inflated ball's CENTER, not its underside:
+                    # parking the plug at the underside leaves the
+                    # mixed-weight blend band bridging outside the surface
+                    # as a skin/cloth fin at the back. At the center the
+                    # whole bridge lives inside the volume.
+                    hu_ = (no[12][1] - dy_*hdrop_) if 12 in no else ymin0_
+                    py_ = max(ymin0_, ymin0_ + pl_*(hu_ - ymin0_))
+                    vb = [cx_ + br_*(v[0]-cx_),
+                          py_ + k_*(v[1]-ymin0_),
+                          cz_ + br_*(v[2]-cz_)]
+                    # Flatten and center the source leg tubes into a tiny,
+                    # rigid bridge. Unlike deleting their faces, this keeps
+                    # the complete shoe boundary and avoids open-edge spikes.
+                    lk_ = float(prof.get("ball_leg_squash", 0.03))
+                    lr_ = float(prof.get("ball_leg_radius", 0.06))
+                    vl = [cx_ + lr_*(v[0]-cx_),
+                          py_ + lk_*(v[1]-ymin0_),
+                          cz_ + lr_*(v[2]-cz_)]
+                    # arm segments: body squash PLUS radial compression
+                    # toward the torso column so they hug the body
+                    ak_ = float(prof.get("arm_hug", 0.45))
+                    ad_ = float(prof.get("arm_drop", 0.0))
+                    va = [cx_ + ak_*(vb[0]-cx_), vb[1] - ad_, cz_ + ak_*(vb[2]-cz_)]
+                    # With a lifted plug, sharpen the shoe blend: verts that
+                    # are mostly-foot go fully to the shoe and mostly-body
+                    # verts fully into the ball, so the ball->shoe bridge is
+                    # a few edge-on triangles spanning the gap instead of a
+                    # band of shirt/jean verts hanging in the open (the fin
+                    # visible from the rear-under angle).
+                    if pl_ > 0.0:
+                        wfs_ = smoothstep_(0.45, 0.75, wf)
+                        rest_ = w12 + wh + wa + wl + wb
+                        if rest_ > 1e-6:
+                            rs_ = (1.0 - wfs_) / rest_
+                            w12, wh, wa, wl, wb = (w12*rs_, wh*rs_,
+                                                   wa*rs_, wl*rs_, wb*rs_)
+                        wf = wfs_
+                    for i in range(3):
+                        v[i] = (w12*vh[i] + wf*vf[i] + wh*vn[i]
+                                + wa*va[i] + wl*vl[i] + wb*vb[i])
+                    # body/leg/arm-dominated verts vanish into the plug —
+                    # retexture them to the shoe donor UV so their bridge
+                    # triangles shade dark instead of flashing shirt/jeans
+                    if pl_ > 0.0 and duv_ is not None and (wb + wl + wa) > 0.5:
+                        v[3], v[4] = duv_
+                        plugset_.add(id(v))
+                # ball_hide_plug: drop every triangle that touches a plug
+                # vertex — the collapsed torso AND its ball->shoe bridge fan
+                # (the visible "cylinder"). This opens two small holes (the
+                # ball's neck opening, the shoe tops) but both live inside
+                # the ball/shoe overlap, while the fan was visibly ugly at
+                # the rear-under angle.
+                if prof.get("ball_hide_plug") and plugset_:
+                    ntb_ = len(sk["tris"])
+                    vid_ = {id(v): i for i, v in enumerate(sk["verts"])}
+                    plugidx_ = {vid_[k] for k in plugset_ if k in vid_}
+                    # positions of every vert of every deleted triangle
+                    # (rounded grid): boundary loops qualify for capping by
+                    # coinciding with these — index identity fails across
+                    # UV-seam duplicates (the neck ring shares POSITIONS
+                    # with the deleted shirt, not indices)
+                    dpos_ = set()
+                    for t in sk["tris"]:
+                        if t[0] in plugidx_ or t[1] in plugidx_ or t[2] in plugidx_:
+                            for i_ in t[:3]:
+                                v_ = sk["verts"][i_]
+                                dpos_.add((round(v_[0], 1), round(v_[1], 1),
+                                           round(v_[2], 1)))
+                    sk["tris"] = [t for t in sk["tris"]
+                                  if not (t[0] in plugidx_ or t[1] in plugidx_
+                                          or t[2] in plugidx_)]
+                    # Cap every boundary loop the deletion opened (the
+                    # ball's neck ring, shoe tops, fist wrists) with a
+                    # centroid fan: each piece becomes its own CLOSED
+                    # surface — "disconnected but closed", no see-through
+                    # into the ball interior. Cap verts take the ring's
+                    # dominant joint at full weight so they ride rigidly.
+                    from collections import defaultdict, Counter
+                    ec_ = defaultdict(int)
+                    for t in sk["tris"]:
+                        for a_, b_ in ((t[0], t[1]), (t[1], t[2]), (t[2], t[0])):
+                            ec_[(min(a_, b_), max(a_, b_))] += 1
+                    # qualifying boundary edges: bordering the deleted
+                    # region by POSITION (index identity fails across
+                    # UV-seam duplicates). Group them into connected
+                    # components in position-welded space — seam-split
+                    # arcs of one ring merge back together — and fan
+                    # every edge to its component centroid. No ordering
+                    # or winding needed (the renderer is double-sided).
+                    wk_ = lambda i_: (round(sk["verts"][i_][0], 1),
+                                      round(sk["verts"][i_][1], 1),
+                                      round(sk["verts"][i_][2], 1))
+                    bedges_ = []
+                    for (a_, b_), c_ in ec_.items():
+                        if c_ == 1 and wk_(a_) in dpos_ and wk_(b_) in dpos_:
+                            bedges_.append((a_, b_))
+                    parent_ = {}
+                    def find_(x_):
+                        while parent_.get(x_, x_) != x_:
+                            parent_[x_] = parent_.get(parent_[x_], parent_[x_])
+                            x_ = parent_[x_]
+                        return x_
+                    for a_, b_ in bedges_:
+                        ka_, kb_ = wk_(a_), wk_(b_)
+                        parent_.setdefault(ka_, ka_)
+                        parent_.setdefault(kb_, kb_)
+                        parent_[find_(ka_)] = find_(kb_)
+                    comps_ = defaultdict(list)
+                    for a_, b_ in bedges_:
+                        comps_[find_(wk_(a_))].append((a_, b_))
+                    # each cap takes its ring's REPRESENTATIVE texel: the
+                    # median-luminance sample among the ring verts. The
+                    # neck ring is skin/hair so its cap reads as skin (a
+                    # chin/neck underside); ankle rings are mostly shoe so
+                    # those caps stay dark; wrists come out fist-skin.
+                    # (Darkest-of-ring gave a tan queen neck beside purple;
+                    # global-darkest made the neck an unnatural black.)
+                    apx_ = atlas.load()  # `px` is shadowed by the yaw pivot above
+                    ncaps_ = 0
+                    for edges_ in comps_.values():
+                        if len(edges_) < 3:
+                            continue
+                        vidx_ = sorted({i_ for e_ in edges_ for i_ in e_})
+                        vs_ = [sk["verts"][i_] for i_ in vidx_]
+                        ctr_ = [sum(v_[k_] for v_ in vs_) / len(vs_) for k_ in range(3)]
+                        samp_ = []
+                        for v_ in vs_:
+                            sx_ = max(0, min(TW - 1, int(v_[3] * TW)))
+                            sy_ = max(0, min(TH - 1, int(v_[4] * TH)))
+                            r_, g_, b2_, a2_ = apx_[sx_, sy_]
+                            if a2_ > 128:
+                                samp_.append((0.3*r_ + 0.6*g_ + 0.1*b2_,
+                                              (v_[3], v_[4])))
+                        samp_.sort(key=lambda s_: s_[0])
+                        duvd_ = (samp_[len(samp_)//2][1] if samp_
+                                 else (vs_[0][3], vs_[0][4]))
+                        dc_ = Counter()
+                        for v_ in vs_:
+                            dc_[max(v_[8], key=lambda jw: jw[1])[0]] += 1
+                        dj_ = dc_.most_common(1)[0][0]
+                        ni_ = len(sk["verts"])
+                        sk["verts"].append([ctr_[0], ctr_[1], ctr_[2],
+                                            duvd_[0], duvd_[1],
+                                            0.0, -1.0, 0.0, [(dj_, 1.0)]])
+                        # duplicate ring corners with the donor UV so cap
+                        # triangles sample a single texel throughout
+                        dup_ = {}
+                        for i_ in vidx_:
+                            v_ = sk["verts"][i_]
+                            dup_[i_] = len(sk["verts"])
+                            sk["verts"].append([v_[0], v_[1], v_[2],
+                                                duvd_[0], duvd_[1],
+                                                v_[5], v_[6], v_[7],
+                                                list(v_[8])])
+                        for a_, b_ in edges_:
+                            sk["tris"].append([dup_[a_], dup_[b_], ni_])
+                        ncaps_ += 1
+                    print(f"ball hide-plug: {ntb_} -> {len(sk['tris'])} tris "
+                          f"({len(plugidx_)} plug verts, {ncaps_} holes capped)")
+                # The narrow plug must remain rigid at runtime: a collapsed
+                # bind-pose leg/arm tube explodes back across its separate
+                # joints as soon as the fighter walks. Move all segment
+                # weights to the chest while terminal hand/foot weights keep
+                # their animation and provide the blended stub connection.
+                pl2_ = float(prof.get("ball_plug_lift", 0.0))
+                for v in sk["verts"]:
+                    neww = []
+                    for (ji, w) in v[8]:
+                        neww.append((6 if ji in (8, 9, 14, 15,
+                                                 19, 20, 24, 25) else ji, w))
+                    merged = {}
+                    for (ji, w) in neww:
+                        merged[ji] = merged.get(ji, 0.0) + w
+                    # runtime counterpart of the sharpened shoe blend:
+                    # mostly-foot verts ride the foot rigidly, mostly-body
+                    # verts ride the chest rigidly — no mixed band to
+                    # stretch across the gap during walks.
+                    if pl2_ > 0.0:
+                        tot2 = sum(merged.values()) or 1.0
+                        ffrac = (merged.get(22, 0.0) + merged.get(27, 0.0)) / tot2
+                        if ffrac >= 0.70:
+                            fj2 = 22 if merged.get(22, 0.0) >= merged.get(27, 0.0) else 27
+                            merged = {fj2: 1.0}
+                        elif ffrac <= 0.45 and ffrac > 0.0:
+                            for fj2 in (22, 27):
+                                if fj2 in merged:
+                                    merged[6] = merged.get(6, 0.0) + merged.pop(fj2)
+                    v[8] = sorted(merged.items(), key=lambda kv: -kv[1])
+                print(f"ball squash k={k_} head x{hs} "
+                      f"head-floor={hf_:.1f} kept={hn_} suppressed={hsupp_:.1f} "
+                      f"drop={hdrop_:.2f} collar={ncollar_} chin={nchin_} "
+                      f"neck-radius={nr_:.2f} leg={lk_:.2f}/{lr_:.2f} "
+                      f"(continuous rigid balloon)")
+            elif prof.get("ball_mode"):
+                hs = float(prof.get("head_scale", 2.2))
+                fs_ = float(prof.get("feet_scale", 1.8))
+                hs2 = float(prof.get("hand_scale", 1.4))
+                KEEP = {10, 12, 16, 22, 27}
+                CTR = {12: hs, 22: fs_, 27: fs_, 10: hs2, 16: hs2}
+                def dom(v_):
+                    return max(v_[8], key=lambda jw: jw[1])[0]
+                for v in sk["verts"]:
+                    dj = dom(v)
+                    if dj in CTR and dj in no:
+                        sc_ = CTR[dj]
+                        for i in range(3):
+                            v[i] = no[dj][i] + sc_ * (v[i] - no[dj][i])
+                # tuck the shoes up into the ball's underside
+                fr = float(prof.get("feet_raise", 0.0))
+                if fr:
+                    for v in sk["verts"]:
+                        if dom(v) in (22, 27):
+                            v[1] += fr
+                keepv = [dom(v_) in KEEP for v_ in sk["verts"]]
+                nt0 = len(sk["tris"])
+                # ALL verts must be head/hand/feet-owned: boundary tris
+                # dragged collar geometry into view under the ball
+                sk["tris"] = [t3 for t3 in sk["tris"]
+                              if keepv[t3[0]] and keepv[t3[1]] and keepv[t3[2]]]
+                print(f"ball mode: head x{hs}, tris {nt0} -> {len(sk['tris'])}")
+            # accessory pins for canonical bakes: vanilla accessory roots
+            # (pikachu's tail) hang off unmapped joints at vanilla-body
+            # distance and float beside the smaller morph. Pin each
+            # profile snap_accessories joint to the nearest morphed vert
+            # (both in target-aligned space) — the engine's ACC2 seat
+            # rides the skinned mesh, same as the ship path's tail pin.
+            snap_spec = prof.get("snap_accessories", [])
+            if snap_spec:
+                accs = list(sk.get("accessories", []))
+                ys_ = [v_[1] for v_ in sk["verts"]]
+                ylo, yhi = min(ys_), max(ys_)
+                hipy = (no[19][1] + no[24][1]) / 2.0 if (19 in no and 24 in no) else ylo + 0.36*(yhi-ylo)
+                # facing = horizontal perpendicular of the shoulder axis,
+                # sign toward the face (head verts' horizontal centroid
+                # offset from the head joint points at the nose). The old
+                # bdir[6] "heading" was the vertical torso bone — its xz
+                # projection was junk and pins landed on random sides.
+                sh = sub(no[14], no[8]) if (14 in no and 8 in no) else [0.0, 0.0, 1.0]
+                heading = norm([sh[2], 0.0, -sh[0]])
+                if 12 in no:
+                    hx_, hz_, nw_ = 0.0, 0.0, 0
+                    for v_ in sk["verts"]:
+                        w12_ = sum(w for (ji, w) in v_[8] if ji == 12)
+                        if w12_ > 0.5:
+                            hx_ += v_[0]-no[12][0]; hz_ += v_[2]-no[12][2]; nw_ += 1
+                    if nw_ and (hx_*heading[0] + hz_*heading[2]) < 0:
+                        heading = [-heading[0], 0.0, -heading[2]]
+                for ent in snap_spec:
+                    aj_, at_ = (int(ent), "nearest") if not isinstance(ent, dict)                         else (int(ent["joint"]), ent.get("at", "nearest"))
+                    if aj_ not in T:
+                        print(f"canonical snap_accessories: joint {aj_} not in skel, skipped")
+                        continue
+                    if at_ == "head-top":
+                        # crown of the head, slightly forward — for
+                        # curl/tuft accessories
+                        band = [(i_, v_) for i_, v_ in enumerate(sk["verts"])
+                                if max(v_[8], key=lambda jw: jw[1])[0] == 12]
+                        ymax_ = max(iv[1][1] for iv in band)
+                        band = [iv for iv in band if iv[1][1] > ymax_ - 0.06*(yhi-ylo)]
+                        best_i = max(band, key=lambda iv: (iv[1][0]*heading[0] +
+                                                           iv[1][2]*heading[2]))[0]
+                    elif at_ == "neck-front":
+                        # tight band just under the head joint, any
+                        # ownership (collar skin is head-weighted),
+                        # foremost along the facing
+                        ny_ = no[12][1] - 0.05*(yhi-ylo) if 12 in no else yhi
+                        def collar_owned(v_):
+                            best = max(v_[8], key=lambda jw: jw[1])
+                            return best[0] in (6, 11, 12)   # torso/head, not arms
+                        band = [(i_, v_) for i_, v_ in enumerate(sk["verts"])
+                                if abs(v_[1]-ny_) < 0.045*(yhi-ylo) and collar_owned(v_)]
+                        best_i = max(band, key=lambda iv: (iv[1][0]*heading[0] +
+                                                           iv[1][2]*heading[2]))[0]
+                    elif at_ == "chest-front":
+                        # chest-height band, foremost along the heading —
+                        # TORSO-owned verts only (the arms hang in front
+                        # of the chest at bind; unfiltered "foremost"
+                        # picked a fist)
+                        # collar height: most of the way from the chest
+                        # joint to the head joint (the chest JOINT sits
+                        # mid-torso; a tie knot belongs at the collar)
+                        cy = (no[6][1] + 0.75*(no[12][1]-no[6][1])) if (6 in no and 12 in no)                              else (no[6][1] if 6 in no else (ylo+yhi)/2)
+                        def torso_owned(v_):
+                            best = max(v_[8], key=lambda jw: jw[1])
+                            return best[0] in (6, 11)
+                        band = [(i_, v_) for i_, v_ in enumerate(sk["verts"])
+                                if abs(v_[1]-cy) < 0.10*(yhi-ylo) and torso_owned(v_)]
+                        best_i = max(band, key=lambda iv: (iv[1][0]*heading[0] +
+                                                           iv[1][2]*heading[2]))[0]
+                    elif at_ == "rear-hip":
+                        # verts in the hip height band, rearmost (opposite
+                        # the chest heading) — blind nearest-vert lands on
+                        # the mid-back for high-tailed binds like yoshi's
+                        band = [(i_, v_) for i_, v_ in enumerate(sk["verts"])
+                                if abs(v_[1]-hipy) < 0.08*(yhi-ylo)]
+                        best_i = max(band, key=lambda iv: -(iv[1][0]*heading[0] +
+                                                            iv[1][2]*heading[2]))[0]
+                    else:
+                        ta = T[aj_]
+                        best_i, best_d = -1, 1e18
+                        for i_, v_ in enumerate(sk["verts"]):
+                            d_ = (v_[0]-ta[0])**2 + (v_[1]-ta[1])**2 + (v_[2]-ta[2])**2
+                            if d_ < best_d:
+                                best_d, best_i = d_, i_
+                    emb = float(ent.get("embed", 10.0)) if isinstance(ent, dict) else 10.0
+                    accs.append({"joint": aj_, "vert": best_i, "embed": emb,
+                                  "pitch": float(ent.get("pitch", 0.0)) if isinstance(ent, dict) else 0.0,
+                                  "orient": 1.0 if (isinstance(ent, dict) and ent.get("orient")) else 0.0,
+                                  "scale": float(ent.get("scale", 0.0)) if isinstance(ent, dict) else 0.0})
+                    print(f"canonical snap_accessories: joint {aj_} pinned to vert {best_i} ({at_}"
+                          + (", orient-follow)" if emb < 0 else ")"))
+                sk["accessories"] = accs
+                # rotate the bind frame with the joint's geometry so the
+                # runtime skinning (rd * cbind, bind_local from BIND) keeps
+                # the mesh glued to the re-aimed bones under posed deltas.
+                # R stores basis vectors as rows (jm = R^T): jm' = G*jm
+                # => R' = R * G^T
+                R = bf[str(j)]["R"]
+                Gj = G[j]
+                bf[str(j)]["R"] = [[sum(R[r_][m]*Gj[c_][m] for m in range(3))
+                                    for c_ in range(3)] for r_ in range(3)]
+            print(f"canonical morph lam={lam}: " +
+                  " ".join(f"{j}:{s[j]:.2f}" for j in joint_ids))
+        # root anchor: ground point under the chest (TopN sits at ground).
+        # bind_frames are world-space from the capture run, where the
+        # chest sat exactly at the spawn TopN x/z — so this IS the
+        # canonical TopN column, grounded at the mesh's lowest vertex.
+        o6 = bf[str(6)]["o"] if "6" in bf else [0.0, 0.0, 0.0]
+        ymin = min(v[1] for v in sk["verts"])
+        can_root = [o6[0], ymin, o6[2]]
+        blank = sorted((set(cmap.values()) | set(prof.get("blank_extra", ())))
+                       - {0} - set(prof.get("keep_vanilla", ())))
+        canon = {"tids": [cmap[j] for j in joint_ids], "parents": parents,
+                 "root": can_root, "blank": blank,
+                 "name": prof.get("name", "?")}
+        # TBND: the target's BATTLE-SPAWN bind, baked so the engine never
+        # has to sample live joints at inject — the CSS/results screens
+        # re-make fighters mid-victory-pose and a live capture there
+        # poisons every rotation delta (deformed select/win renders).
+        if lam >= 0.0 and T2R:
+            tb = {"slots": [], "top_o": T.get(0, [0,0,0]), "top_m": T2R.get(0),
+                  "chest_o": T.get(cmap[6]), "accs": []}
+            for j in joint_ids:
+                tb["slots"].append({"o": T.get(cmap[j]), "m": T2R.get(cmap[j])})
+            cp_ = TP.get(cmap[6], -1)
+            tb["cp_o"] = T.get(cp_) if cp_ >= 0 else None
+            tb["cp_m"] = T2R.get(cp_) if cp_ >= 0 else None
+            for a in sk.get("accessories", []):
+                tb["accs"].append(T2R.get(int(a["joint"])))
+            if tb["top_m"] and all(sl["m"] for sl in tb["slots"]):
+                canon["tbnd"] = tb
+    # classic (non-canonical) path: head orientation calibration. The
+    # engine bakes mario's spawn head turn into every render (systemic);
+    # the correction is a fixed rotation of head-owned verts about the
+    # head joint. Angles come from empirical sweeps against the vanilla
+    # fighter (OSB_HEAD_YAW / OSB_HEAD_PITCH degrees, world vertical yaw
+    # then pitch about the horizontal axis perpendicular to facing).
+    # conform face offset: the rig fit seats the face ~15deg toward the
+    # camera relative to the bind head joint (measured against vanilla
+    # mario's one-eye walk profile with the facing-fixed engine; constant
+    # across bundles — same fit pipeline). OSB_HEAD_YAW overrides.
+    bf0 = sk.get("bind_frames")
+    by = float(os.environ.get("OSB_BODY_YAW", "0"))
+    if canon is None and bf0 and "6" in bf0 and by:
+        o6b = bf0["6"]["o"]
+        ba = math.radians(by)
+        cb, sb = math.cos(ba), math.sin(ba)
+        for v in sk["verts"]:
+            dx, dz = v[0]-o6b[0], v[2]-o6b[2]
+            v[0], v[2] = o6b[0]+cb*dx-sb*dz, o6b[2]+sb*dx+cb*dz
+            nx, nz = v[5], v[7]
+            v[5], v[7] = cb*nx-sb*nz, sb*nx+cb*nz
+        # geometry only — rotating the bind frames too cancels exactly
+        print(f"binary5: body test yaw {by}")
+    hy = float(os.environ.get("OSB_HEAD_YAW", "-15"))
+    hp = float(os.environ.get("OSB_HEAD_PITCH", "0"))
+    if canon is None and bf0 and "12" in bf0 and (hy or hp):
+        o12 = bf0["12"]["o"]
+        ya, pa = math.radians(hy), math.radians(hp)
+        cy_, sy_ = math.cos(ya), math.sin(ya)
+        Ry = [[cy_,0.0,-sy_],[0.0,1.0,0.0],[sy_,0.0,cy_]]
+        cp_, sp_ = math.cos(pa), math.sin(pa)
+        # pitch about world Z (facing is along +-X at capture)
+        Rp = [[cp_,-sp_,0.0],[sp_,cp_,0.0],[0.0,0.0,1.0]]
+        Gh = [[sum(Ry[r_][m]*Rp[m][c_] for m in range(3)) for c_ in range(3)]
+              for r_ in range(3)]
+        for v in sk["verts"]:
+            w12 = sum(w for (ji, w) in v[8] if ji == 12)
+            if w12 <= 0.0:
+                continue
+            L = [v[0]-o12[0], v[1]-o12[1], v[2]-o12[2]]
+            Lr = [Gh[i][0]*L[0]+Gh[i][1]*L[1]+Gh[i][2]*L[2] for i in range(3)]
+            nr = [Gh[i][0]*v[5]+Gh[i][1]*v[6]+Gh[i][2]*v[7] for i in range(3)]
+            for i in range(3):
+                v[i] = v[i]*(1.0-w12) + (o12[i]+Lr[i])*w12
+                v[5+i] = v[5+i]*(1.0-w12) + nr[i]*w12
+        print(f"binary5: head test rotation yaw={hy} pitch={hp}")
     verts = sk["verts"]      # [x,y,z,u,v,nx,ny,nz, [(ji,w),...]]
     tris = sk["tris"]
 
     with open(out_path, "wb") as f:
         f.write(b"OSB5")
         f.write(struct.pack("<IIIII", len(joint_ids), len(verts), len(tris), TW, TH))
-        for j in joint_ids:
+        for j in (canon["tids"] if canon else joint_ids):
             f.write(struct.pack("<I", j))
         f.write(pack_rgba16_dithered(atlas))
         jindex = {j: k for k, j in enumerate(joint_ids)}
@@ -3646,7 +4503,7 @@ def write_binary5(bundle_json_path, out_path):
                 for r in range(3):
                     f.write(struct.pack("<fff", R[0][r], R[1][r], R[2][r]))
             print("binary5: embedded bind skeleton (BIND section)")
-        blank_ids = sk.get("blank_ids", joint_ids)
+        blank_ids = canon["blank"] if canon else sk.get("blank_ids", joint_ids)
         f.write(b"BLNK")
         f.write(struct.pack("<I", len(blank_ids)))
         for j in blank_ids:
@@ -3661,13 +4518,114 @@ def write_binary5(bundle_json_path, out_path):
             for a in accs:
                 f.write(struct.pack("<IIf", a["joint"], a["vert"], a["embed"]))
             print(f"binary5: {len(accs)} accessory vertex pin(s) (ACC2 section)")
+            if any(a.get("pitch") or a.get("orient") or a.get("scale") for a in accs):
+                f.write(b"ACC3")
+                f.write(struct.pack("<I", len(accs)))
+                for a in accs:
+                    f.write(struct.pack("<fff", float(a.get("pitch", 0.0)),
+                                        float(a.get("orient", 0.0)),
+                                        float(a.get("scale", 0.0))))
+                print("binary5: accessory pitch/orient/scale (ACC3 section)")
+        if canon:
+            f.write(b"CAN1")
+            f.write(struct.pack("<fff", *canon["root"]))
+            for pslot in canon["parents"]:
+                f.write(struct.pack("<i", pslot))
+            print(f"binary5: CANONICAL retarget -> {canon['name']} "
+                  f"(target joints {canon['tids']}, CAN1 section)")
+            tb = canon.get("tbnd")
+            if tb:
+                f.write(b"TBND")
+                def wmat(m):
+                    for r in range(3):
+                        f.write(struct.pack("<fff", *m[r]))
+                for sl in tb["slots"]:
+                    f.write(struct.pack("<fff", *sl["o"]))
+                    wmat(sl["m"])
+                f.write(struct.pack("<fff", *tb["top_o"])); wmat(tb["top_m"])
+                f.write(struct.pack("<fff", *(tb["cp_o"] or tb["top_o"])))
+                f.write(struct.pack("<fff", *(tb["chest_o"] or tb["top_o"])))
+                f.write(struct.pack("<I", len(tb["accs"])))
+                I3 = [[1.0,0,0],[0,1.0,0],[0,0,1.0]]
+                for am in tb["accs"]:
+                    wmat(am or I3)
+                print("binary5: baked target bind (TBND section)")
+                if tb.get("cp_m"):
+                    f.write(b"CPM1")
+                    wmat(tb["cp_m"])
+                    print("binary5: baked chest-parent bind (CPM1 section)")
         fs = float(sk.get("fit_scale", 1.0) or 1.0)
+        if canon:
+            fs = 1.0
         if fs < 0.995:
             f.write(b"SCAL")
             f.write(struct.pack("<f", fs))
             print(f"binary5: fit scale x{fs:.3f} (SCAL section)")
     print(f"binary5 (CPU-skinned): {len(verts)} verts, {len(tris)} tris, "
           f"{len(joint_ids)} joints -> {out_path}")
+
+
+def add_cpm1(in_path, out_path, canonical_profile):
+    """Add/replace CPM1 in an existing canonical OSB5 without rebaking it.
+
+    This preserves the approved mesh, weights, texture, BIND, and TBND bytes;
+    only the target chest-parent battle-bind basis used by menu retargeting
+    is inserted after TBND.
+    """
+    prof = json.load(open(canonical_profile))
+    skel_path = os.path.join(os.path.dirname(canonical_profile),
+                             prof["name"] + ".skel")
+    mats, parents = {}, {}
+    for line in open(skel_path):
+        m2 = re.search(r"SKELDUMP2: joint=(\d+) o=\([^)]*\) "
+                       r"x=\(([^)]*)\) y=\(([^)]*)\) z=\(([^)]*)\)", line)
+        if m2:
+            cols = [[float(v) for v in m2.group(k).split(",")] for k in (2, 3, 4)]
+            mats[int(m2.group(1))] = [[cols[c][r] for c in range(3)]
+                                      for r in range(3)]
+        mp = re.search(r"SKELDUMP: joint=(\d+) parent=(-?\d+)", line)
+        if mp:
+            parents[int(mp.group(1))] = int(mp.group(2))
+    cmap = {int(k): int(v) for k, v in prof["map"].items()}
+    chest = cmap[6]
+    cp = parents.get(chest, -1)
+    if cp < 0 or cp not in mats:
+        raise SystemExit(f"no chest-parent matrix found in {skel_path}")
+
+    data = open(in_path, "rb").read()
+    if data[:4] != b"OSB5" or len(data) < 24:
+        raise SystemExit(f"not an OSB5 file: {in_path}")
+    njoints, nverts, ntris, tex_w, tex_h = struct.unpack_from("<IIIII", data, 4)
+    sections_at = (24 + njoints * 4 + tex_w * tex_h * 2 +
+                   nverts * 28 + ntris * 8)
+    if sections_at > len(data):
+        raise SystemExit(f"truncated OSB5 payload: {in_path}")
+    tb = data.find(b"TBND", sections_at)
+    if tb < 0:
+        raise SystemExit(f"canonical OSB has no TBND section: {in_path}")
+    # TBND: tag + slot (origin+matrix) * njoints + TopN origin+matrix +
+    # chest-parent origin + chest origin + accessory count + matrices.
+    na_off = tb + 4 + njoints * 48 + 48 + 12 + 12
+    if na_off + 4 > len(data):
+        raise SystemExit(f"truncated TBND section: {in_path}")
+    na = struct.unpack_from("<I", data, na_off)[0]
+    if na > 8:
+        raise SystemExit(f"invalid TBND accessory count {na}: {in_path}")
+    insert_at = na_off + 4 + na * 36
+    if data[insert_at:insert_at + 4] == b"CPM1":
+        replace_end = insert_at + 40
+    else:
+        replace_end = insert_at
+
+    sec = bytearray(b"CPM1")
+    for row in mats[cp]:
+        sec += struct.pack("<fff", *row)
+    with open(out_path, "wb") as f:
+        f.write(data[:insert_at])
+        f.write(sec)
+        f.write(data[replace_end:])
+    print(f"binary5: preserved OSB and added chest-parent bind "
+          f"(joint {cp}, CPM1 section) -> {out_path}")
 
 
 if __name__ == "__main__":
@@ -3677,5 +4635,12 @@ if __name__ == "__main__":
         write_binary3(sys.argv[2], sys.argv[3])
     elif len(sys.argv) >= 4 and sys.argv[1] == "--binary5":
         write_binary5(sys.argv[2], sys.argv[3])
+    elif len(sys.argv) >= 5 and sys.argv[1] == "--binary5-canonical":
+        # --binary5-canonical mario-bundle.json out.osb skels/<t>.profile.json [morph_lambda]
+        write_binary5(sys.argv[2], sys.argv[3], canonical_profile=sys.argv[4],
+                      morph_lambda=float(sys.argv[5]) if len(sys.argv) > 5 else None)
+    elif len(sys.argv) == 5 and sys.argv[1] == "--add-cpm1":
+        # --add-cpm1 existing.osb out.osb skels/<target>.profile.json
+        add_cpm1(sys.argv[2], sys.argv[3], sys.argv[4])
     else:
         main()

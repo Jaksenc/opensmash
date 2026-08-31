@@ -31,5 +31,23 @@
   "perp_boost": 1.45,
   "widen_cap": 2.1,
   "no_part_fit": true
- }
+ },
+ "snap_accessories": [
+  {
+   "joint": 18,
+   "at": "neck-front",
+   "orient": true,
+   "embed": -4.0,
+   "pitch": -0.8,
+   "scale": 0.6
+  }
+ ],
+ "girth": 1.3,
+ "dir_lambda": 0.0,
+ "morph_lambda": 0.25,
+ "seg_scale": {
+  "12": 1.0
+ },
+ "girth_depth": 1.0,
+ "girth_limbs": 1.7
 }
