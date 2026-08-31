@@ -139,6 +139,7 @@ export default function App() {
   const gameRef = useRef(null);
   const engineRef = useRef(null);
   const devMenuRef = useRef(null);
+  const announcerRef = useRef(null);
 
   useEffect(() => {
     Promise.all([
@@ -202,6 +203,29 @@ export default function App() {
     if (pendingAction) launch(pendingAction);
   }
 
+  function selectCharacter(character) {
+    const previous = announcerRef.current;
+    if (previous) {
+      previous.pause();
+      previous.currentTime = 0;
+    }
+
+    if (soundOn && character.announcer) {
+      const announcer = new Audio(character.announcer);
+      announcerRef.current = announcer;
+      announcer.play().catch(() => {
+        if (announcerRef.current === announcer) announcerRef.current = null;
+      });
+      announcer.addEventListener("ended", () => {
+        if (announcerRef.current === announcer) announcerRef.current = null;
+      }, { once: true });
+    } else {
+      announcerRef.current = null;
+    }
+
+    requestLaunch({ type: "character", character });
+  }
+
   async function clearVerification() {
     setPageError("");
     const response = await fetch("/api/dev/clear-rom", { method: "POST" });
@@ -219,6 +243,11 @@ export default function App() {
     setSoundOn((current) => {
       const next = !current;
       localStorage.setItem("opensmash-sound", next ? "on" : "off");
+      if (!next && announcerRef.current) {
+        announcerRef.current.pause();
+        announcerRef.current.currentTime = 0;
+        announcerRef.current = null;
+      }
       return next;
     });
   }
@@ -316,7 +345,7 @@ export default function App() {
               type="button"
               key={character.slug}
               style={{ "--index": index }}
-              onClick={() => requestLaunch({ type: "character", character })}
+              onClick={() => selectCharacter(character)}
             >
               <span className="portrait-wrap">
                 <img src={character.portrait} alt="" />

@@ -186,6 +186,7 @@ async function configuredCharacters() {
         name: metadata.display || slug,
         short: metadata.short || metadata.display || slug,
         portrait: `/character-assets/${slug}/portrait.png`,
+        announcer: `/character-assets/${slug}/announcer.wav`,
         fkind,
         bundle,
       });
@@ -309,11 +310,14 @@ async function handleRequest(req, res, vite) {
   }
 
   if (pathname.startsWith("/character-assets/")) {
-    const match = pathname.match(/^\/character-assets\/([a-z0-9]+)\/portrait\.png$/);
+    const match = pathname.match(
+      /^\/character-assets\/([a-z0-9]+)\/(portrait\.png|announcer\.wav)$/,
+    );
     if (!match) return json(res, 404, { error: "Character asset not found" });
     const allowed = (await configuredCharacters()).some((character) => character.slug === match[1]);
     if (!allowed) return json(res, 404, { error: "Character asset not found" });
-    const filePath = path.join(PIPELINE_UI_ROOT, match[1], "portrait_raw.png");
+    const fileName = match[2] === "portrait.png" ? "portrait_raw.png" : "announcer.wav";
+    const filePath = path.join(PIPELINE_UI_ROOT, match[1], fileName);
     if (await serveFile(req, res, filePath, "public, max-age=300")) return;
     return json(res, 404, { error: "Character asset not found" });
   }
