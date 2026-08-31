@@ -84,13 +84,13 @@ def main():
     def bake_and_capture(trim):
         osb = os.path.join(wd, f"trim{trim}.osb")
         env = dict(os.environ, MORPH_YAW_TRIM=str(trim))
-        r = subprocess.run(["python3", "convert_rigged.py", "--binary5-canonical",
+        r = subprocess.run(["python3", os.path.join(PIPE, "pipeline", "convert_rigged.py"), "--binary5-canonical",
                             a.bundle, osb, profile, a.lam],
                            cwd=PIPE, env=env, capture_output=True, text=True)
         if r.returncode:
             return trim, None, r.stderr[-200:]
         shots = os.path.join(wd, f"shots{trim}")
-        r = subprocess.run(["python3", "run_eval.py", shots, "--frames-list",
+        r = subprocess.run(["python3", os.path.join(PIPE, "pipeline", "run_eval.py"), shots, "--frames-list",
                             ",".join(map(str, TICKS)), "--fkind", str(fk),
                             "--bundle", osb, "--pose"],
                            cwd=PIPE, capture_output=True, text=True)

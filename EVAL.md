@@ -3,7 +3,8 @@
 Historical model, texture, atlas, bundle, and report filenames mentioned below
 live in `artifacts/experiments/`. Production roster bundles live in `play/`,
 canonical skeleton inputs in `skels/`, and deterministic replay fixtures in
-`eval/fixtures/replays/`.
+`eval/fixtures/replays/`. Pipeline script names below refer to the unchanged
+filenames now collected under `pipeline/`.
 
 | Strategy | Result | Verdict |
 |---|---|---|
@@ -526,7 +527,7 @@ Build: convert_rigged.py --mild-color --no-profile --flatten
 - `SSB64_POSE_CAPTURE=1` makes the engine draw ONLY P1's fighter (+ its
   accessories) on a grey-cleared frame — no stage, HUD, P2, or effects.
   The mode for judging mesh quality in isolation.
-- Exposed as `run_eval.py --pose`, `eval/capture_clip.py --pose` (pose
+- Exposed as `pipeline/run_eval.py --pose`, `eval/capture_clip.py --pose` (pose
   vanilla refs cache in cells/vanilla[-fkK]-pose), and used by default in
   `eval/pose_compare.py` and `eval/ab_smoothing.py`.
 - Parallel capture: run_eval honours EVAL_BUILD (per-worker game-dir clone;

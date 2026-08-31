@@ -12,8 +12,10 @@ import sys
 
 from PIL import Image
 
-sys.path.insert(0, __file__.rsplit("/", 1)[0])
-from convert_glb import load_glb, read_accessor
+try:
+    from .convert_glb import load_glb, read_accessor
+except ImportError:  # direct execution: python3 pipeline/render_textured.py
+    from convert_glb import load_glb, read_accessor
 
 
 def main():

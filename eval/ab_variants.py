@@ -56,7 +56,8 @@ def convert_cell(char, target, variant):
     osb = os.path.join(BUILD, f"{tag}.osb")
     if os.path.exists(osb):
         return tag, True
-    cmd = ["python3", "convert_rigged.py", "--mild-color", "--flatten"] + VARIANTS[variant]
+    converter = os.path.join(PIPE, "pipeline", "convert_rigged.py")
+    cmd = ["python3", converter, "--mild-color", "--flatten"] + VARIANTS[variant]
     if target == "mario":
         cmd += ["--no-profile", rigged, "skels/mario-frames.skel", bundle]
     else:
@@ -67,7 +68,7 @@ def convert_cell(char, target, variant):
     if r.returncode != 0:
         log(f"[{tag}] CONVERT FAILED: {r.stdout[-200:]}{r.stderr[-200:]}")
         return tag, False
-    r = subprocess.run(["python3", "convert_rigged.py", "--binary5", bundle, osb],
+    r = subprocess.run(["python3", converter, "--binary5", bundle, osb],
                        cwd=PIPE, capture_output=True, text=True, timeout=600)
     if r.returncode != 0 or not os.path.exists(osb):
         log(f"[{tag}] BINARY5 FAILED: {r.stdout[-200:]}{r.stderr[-200:]}")

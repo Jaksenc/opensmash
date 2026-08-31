@@ -13,7 +13,7 @@ problem — everything prints JSON to stdout.
 """
 import argparse, base64, json, os, sys, time, urllib.request
 
-ROOT = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 def load_env():

@@ -22,8 +22,13 @@ import subprocess
 import sys
 import time
 
-HERE = os.path.dirname(os.path.abspath(__file__))
+PIPELINE_DIR = os.path.dirname(os.path.abspath(__file__))
+HERE = os.path.dirname(PIPELINE_DIR)
 WEBDIST = os.path.join(HERE, "..", "BattleShip", "web-dist", "bundles")
+
+
+def pipeline_script(name):
+    return os.path.join(PIPELINE_DIR, name)
 
 TRIPO_USD_PER_CREDIT = 0.01     # https://developers.tripo3d.ai/en/pricing
 FAL_TTS_USD_PER_1K_CHARS = 0.10  # fal-ai/minimax/speech-02-hd
@@ -173,7 +178,7 @@ def report_cost():
 def tripo_balance():
     """Tripo task payloads carry no cost field, so the charge is only
     observable as a balance delta around the task."""
-    return tripo_json(sh(["python3", "tripo.py", "balance"], timeout=60))["balance"]
+    return tripo_json(sh(["python3", pipeline_script("tripo.py"), "balance"], timeout=60))["balance"]
 
 
 def stage_needed(path, force, name):
@@ -208,7 +213,7 @@ def main():
     # 1. expand ----------------------------------------------------------
     if stage_needed(F("character.json"), force, "expand"):
         log("expand: describing character")
-        cmd = ["python3", "expand_character.py", a.name]
+        cmd = ["python3", pipeline_script("expand_character.py"), a.name]
         if a.photo:
             cmd += ["--photo", a.photo]
         if a.emblem:
@@ -231,7 +236,7 @@ def main():
     if stage_needed(F("tpose.png"), force, "tpose"):
         log("tpose: generating source image")
         prompt = N64_TEMPLATE.format(desc=cdef["desc"], display=cdef["display"])
-        cmd = ["python3", "gen.py", "image", "--api", "openai", "--model", "gpt-image-2",
+        cmd = ["python3", pipeline_script("gen.py"), "image", "--api", "openai", "--model", "gpt-image-2",
                "--ref", os.path.join(HERE, "artifacts", "experiments", "vg7-tpose.png")]
         if a.photo:
             cmd += ["--ref", a.photo]
@@ -242,26 +247,26 @@ def main():
     if stage_needed(F("rigged.glb"), force, "mesh"):
         log("mesh: uploading to Tripo")
         credits_before = tripo_balance()
-        tok = tripo_json(sh(["python3", "tripo.py", "upload", F("tpose.png")], timeout=300))["image_token"]
-        task = tripo_json(sh(["python3", "tripo.py", "img3d", tok], timeout=120))["task_id"]
+        tok = tripo_json(sh(["python3", pipeline_script("tripo.py"), "upload", F("tpose.png")], timeout=300))["image_token"]
+        task = tripo_json(sh(["python3", pipeline_script("tripo.py"), "img3d", tok], timeout=120))["task_id"]
         log(f"mesh: img3d task {task}")
         for _ in range(90):
-            st = tripo_json(sh(["python3", "tripo.py", "status", task], timeout=60))
+            st = tripo_json(sh(["python3", pipeline_script("tripo.py"), "status", task], timeout=60))
             if st["status"] in ("success", "failed", "banned"):
                 break
             time.sleep(10)
         if st["status"] != "success":
             raise RuntimeError(f"img3d {st['status']}")
-        rig = tripo_json(sh(["python3", "tripo.py", "rig", task], timeout=120))["task_id"]
+        rig = tripo_json(sh(["python3", pipeline_script("tripo.py"), "rig", task], timeout=120))["task_id"]
         log(f"mesh: rig task {rig}")
         for _ in range(90):
-            st = tripo_json(sh(["python3", "tripo.py", "status", rig], timeout=60))
+            st = tripo_json(sh(["python3", pipeline_script("tripo.py"), "status", rig], timeout=60))
             if st["status"] in ("success", "failed", "banned"):
                 break
             time.sleep(10)
         if st["status"] != "success":
             raise RuntimeError(f"rig {st['status']}")
-        sh(["python3", "tripo.py", "download", rig, F("rigged.glb")], timeout=600)
+        sh(["python3", pipeline_script("tripo.py"), "download", rig, F("rigged.glb")], timeout=600)
         credits = credits_before - tripo_balance()
         log(f"mesh: {credits} Tripo credits (img3d + rig)")
         bill("mesh", credits * TRIPO_USD_PER_CREDIT)
@@ -270,12 +275,12 @@ def main():
     osb = os.path.join(HERE, "play", f"{slug}.osb")
     if stage_needed(osb, force, "convert"):
         log("convert: retargeting onto the game skeleton")
-        outtxt = sh(["python3", "convert_rigged.py", "--mild-color", "--no-profile", "--flatten",
+        outtxt = sh(["python3", pipeline_script("convert_rigged.py"), "--mild-color", "--no-profile", "--flatten",
                      F("rigged.glb"), "skels/mario-frames.skel", F("bundle.json")], timeout=900)
         torn = re.search(r"torn-tri cut: (\d+)", outtxt)
         if torn and int(torn.group(1)) > 80:
             raise RuntimeError(f"torn-tri gate: {torn.group(1)} > 80 — bad mesh, re-roll tpose/mesh")
-        sh(["python3", "convert_rigged.py", "--binary5", F("bundle.json"), osb], timeout=300)
+        sh(["python3", pipeline_script("convert_rigged.py"), "--binary5", F("bundle.json"), osb], timeout=300)
 
     # 4b. variants -------------------------------------------------------
     # Conversion is pure deterministic geometry (no model calls), so cut
@@ -291,11 +296,11 @@ def main():
         log(f"variants: retargeting onto {tgt}")
         vjson = F(f"bundle-{tgt}.json")
         try:
-            sh(["python3", "convert_rigged.py", "--mild-color", "--flatten",
+            sh(["python3", pipeline_script("convert_rigged.py"), "--mild-color", "--flatten",
                 "--target", os.path.join(HERE, "skels", f"{tgt}.profile.json"),
                 F("rigged.glb"), os.path.join(HERE, "skels", f"{tgt}.skel"), vjson],
                timeout=900)
-            sh(["python3", "convert_rigged.py", "--binary5", vjson, vosb], timeout=300)
+            sh(["python3", pipeline_script("convert_rigged.py"), "--binary5", vjson, vosb], timeout=300)
         except Exception as e:
             log(f"variants: {tgt} FAILED ({e}) — continuing")
 
@@ -309,13 +314,13 @@ def main():
                 f"from PIL import Image; im=Image.open('website/assets/ui_refs/{r}.png').convert('RGB');"
                 f"im.resize((im.width*8,im.height*8),Image.LANCZOS).save('{up}')"])
             refs += ["--ref", up]
-        bill("portrait", gen_cost(sh(["python3", "gen.py", "image"] + refs
+        bill("portrait", gen_cost(sh(["python3", pipeline_script("gen.py"), "image"] + refs
              + ["--ref", F("tpose.png"), PORTRAIT_TEMPLATE, F("portrait_raw.png")],
              timeout=600)))
     if stage_needed(F("stock_raw.png"), force, "stock"):
         log("stock: generating icon art")
         bill("stock", gen_cost(sh(
-            ["python3", "gen.py", "image", "--ref", os.path.join(HERE, "website", "assets", "ui_refs", "stockicon_ref.png"),
+            ["python3", pipeline_script("gen.py"), "image", "--ref", os.path.join(HERE, "website", "assets", "ui_refs", "stockicon_ref.png"),
              "--ref", F("tpose.png"), STOCK_TEMPLATE, F("stock_raw.png")], timeout=600)))
     if stage_needed(F("emblem_raw.png"), force, "emblem"):
         # --emblem beats whatever the expander inferred, so the object can be
@@ -328,10 +333,10 @@ def main():
         # the stencil, not on the art: a gorgeous solid object is still a blob.
         for _ in range(2):
             bill("emblem", gen_cost(sh(
-                ["python3", "gen.py", "image",
+                ["python3", pipeline_script("gen.py"), "image",
                  "--ref", os.path.join(HERE, "website", "assets", "ui_refs", "emblem_ref.png"),
                  prompt, F("emblem_raw.png")], timeout=600)))
-            st = json.loads(sh(["python3", "emblem_stencil.py", F("emblem_raw.png")],
+            st = json.loads(sh(["python3", pipeline_script("emblem_stencil.py"), F("emblem_raw.png")],
                                timeout=120))
             log(f"emblem: stencil cut {st['cut_frac']:.0%} in {st['cuts']} holes")
             if not st.get("blobby"):
@@ -343,7 +348,7 @@ def main():
     osbui = F(f"{slug}.osbui")
     if stage_needed(osbui, force, "ui"):
         log("ui: packing .osbui")
-        sh(["python3", "gen_ui_assets.py", osbui, "--art", F("portrait_raw.png"),
+        sh(["python3", pipeline_script("gen_ui_assets.py"), osbui, "--art", F("portrait_raw.png"),
             "--stock-art", F("stock_raw.png"), "--emblem", F("emblem_raw.png"),
             "--name", short], timeout=300)
 
@@ -351,7 +356,7 @@ def main():
     wav = F("announcer.wav")
     if stage_needed(wav, force, "voice"):
         log("voice: generating announcer clip")
-        sh(["python3", "announcer_voice.py", cdef["display"], "--slug", slug,
+        sh(["python3", pipeline_script("announcer_voice.py"), cdef["display"], "--slug", slug,
             "--out", wav, "--no-stage"], timeout=300)
         # generate_announcer speaks the display name plus a terminal "!"
         spoken = cdef["display"].strip()

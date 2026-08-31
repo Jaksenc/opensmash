@@ -23,9 +23,10 @@ import os
 import re
 import sys
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, HERE)
-from gen import http, ENV, token_cost  # noqa: E402
+try:
+    from .gen import http, ENV, token_cost
+except ImportError:  # direct execution: python3 pipeline/expand_character.py
+    from gen import http, ENV, token_cost
 
 FORBIDDEN = ["handbag", "purse", "bag", "cane", "walking stick", "sword", "umbrella", "staff",
              "scepter", "sceptre", "rifle", "gun", "pistol", "phone", "cup", "mug", "briefcase",

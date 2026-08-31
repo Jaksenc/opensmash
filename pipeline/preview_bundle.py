@@ -305,7 +305,7 @@ def main():
     if args.tpose:
         jmap = None
         if args.target and args.target != "mario":
-            prof = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+            prof = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                                 "skels", f"{args.target}.profile.json")
             if not os.path.exists(prof):
                 sys.exit(f"unknown target {args.target!r}: no {prof}")

@@ -46,7 +46,8 @@ def crop_band(im):
 
 
 def capture(out_dir, bundle, frames, fkind=0, replay=None, pose=False):
-    cmd = ["python3", "run_eval.py", out_dir, "--frames-list", ",".join(map(str, frames)),
+    cmd = ["python3", os.path.join(PIPE, "pipeline", "run_eval.py"),
+           out_dir, "--frames-list", ",".join(map(str, frames)),
            "--fkind", str(fkind)]
     if replay:
         cmd += ["--replay", replay]
@@ -81,7 +82,7 @@ def main():
                           "eval-tour.rpl" if a.fkind == 0 else f"eval-tour-fk{a.fkind}.rpl")
     # ALWAYS regenerate: SHEET/CLIP frames above are keyed to the current
     # make_replay.py tour; a stale .rpl on disk would silently desync them.
-    subprocess.run(["python3", "make_replay.py", replay,
+    subprocess.run(["python3", os.path.join(PIPE, "pipeline", "make_replay.py"), replay,
                     "--p1", str(a.fkind), "--p2", str(a.fkind)], cwd=PIPE, check=True)
     os.makedirs(a.out, exist_ok=True)
     is_vanilla = a.bundle in ("vanilla", "none", "")

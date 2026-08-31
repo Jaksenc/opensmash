@@ -79,7 +79,9 @@ def main():
     osb = os.path.join(SCRATCH, f"{args.char}-{args.tag}.osb")
     out_png = args.out or os.path.join(SCRATCH, f"{args.char}-{args.tag}.png")
 
-    cmd = ["python3", "convert_rigged.py", "--mild-color", "--flatten",
+    converter = os.path.join(PIPE, "pipeline", "convert_rigged.py")
+    evaluator = os.path.join(PIPE, "pipeline", "run_eval.py")
+    cmd = ["python3", converter, "--mild-color", "--flatten",
            "--guidedflat"] + args.flags.split() + \
           ["--target", "skels/samus.profile.json",
            os.path.join("play/ui", args.char, "rigged.glb"),
@@ -109,10 +111,10 @@ def main():
 
     if args.no_game:
         return
-    subprocess.run(["python3", "convert_rigged.py", "--binary5", bundle, osb],
+    subprocess.run(["python3", converter, "--binary5", bundle, osb],
                    cwd=PIPE, check=True, capture_output=True)
     shots = os.path.join(SCRATCH, f"shots-{args.char}-{args.tag}")
-    r = subprocess.run(["python3", "run_eval.py", shots, "--bundle", osb,
+    r = subprocess.run(["python3", evaluator, shots, "--bundle", osb,
                         "--fkind", "3", "--replay", "eval/fixtures/replays/eval-tour-fk3.rpl",
                         "--frames-list", "459,605,812,1116",
                         "--pose", "--width", "1280"],

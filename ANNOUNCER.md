@@ -1,37 +1,36 @@
 # Character announcer generation
 
-The accepted implementation is `generate_announcer.py`. It uses the persistent
+The accepted implementation is `pipeline/generate_announcer.py`. It uses the persistent
 MiniMax clone made from the corrected, game-rate SSB64 announcer reference.
 (The earlier OpenAI/WORLD experiment and the time-compression pass were
 discarded.)
 
-`announcer_voice.py` is the standalone path: it imports
-`generate_announcer.generate_announcer()` (same library, no duplicated
+`pipeline/announcer_voice.py` is the standalone path: it imports
+`pipeline.generate_announcer.generate_announcer()` (same library, no duplicated
 generation code), writes `play/ui/<slug>/announcer.wav`, and stages the clip
 into `../BattleShip/web-dist/bundles/<slug>.wav`:
 
 ```sh
-python announcer_voice.py "Queen Elizabeth the Second" --slug queen
+python3 pipeline/announcer_voice.py "Queen Elizabeth the Second" --slug queen
 ```
 
-`run_character.py`'s voice stage runs the same wrapper with `--no-stage`
+`pipeline/run_character.py`'s voice stage runs the same wrapper with `--no-stage`
 (its own stage step does the copy).
 
 ## Setup
 
 ```sh
-cd pipeline
 python -m pip install -r requirements-announcer.txt
 ```
 
-`pipeline/.env` must contain `FAL_KEY` and
+`.env` must contain `FAL_KEY` and
 `MINIMAX_ANNOUNCER_VOICE_ID`. The file is ignored by git; `.env.example` lists
 the required variable names without secrets.
 
 ## Command line
 
 ```sh
-python generate_announcer.py "Queen Elizabeth the Second" \
+python3 pipeline/generate_announcer.py "Queen Elizabeth the Second" \
   --out build/queen-announcer.wav
 ```
 
@@ -40,7 +39,7 @@ The output is mono, 32 kHz, 16-bit PCM WAV. Native MiniMax timing is used.
 ## Python integration
 
 ```python
-from generate_announcer import generate_announcer
+from pipeline.generate_announcer import generate_announcer
 
 generate_announcer(character_name, output_wav)
 ```
@@ -50,7 +49,7 @@ exclamation mark unless `append_exclamation=False` is passed.
 
 ## In-game injection
 
-`run_character.py` runs this as its `voice` stage (output
+`pipeline/run_character.py` runs this as its `voice` stage (output
 `play/ui/<slug>/announcer.wav`), stages the clip into
 `web-dist/bundles/<slug>.wav`, and adds `&inject_voice=bundles/<slug>.wav`
 to the play URL.
@@ -80,7 +79,7 @@ flags) for A/B work.
 Better but not adopted: respelling the name phonetically ("Bo-Yang Nyoo")
 sounded clearly best of everything tried. It needs a per-character
 pronunciation that does not exist yet — the natural home is a `phonetic`
-field from `expand_character.py`, generated in the same Gemini call as
+field from `pipeline/expand_character.py`, generated in the same Gemini call as
 `short`/`emblem`. Deferred because a wrong respelling yields a confidently
 mispronounced name with nothing to catch it.
 

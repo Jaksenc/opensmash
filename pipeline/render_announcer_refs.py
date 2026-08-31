@@ -21,7 +21,10 @@ import struct
 import sys
 import wave
 
-from dump_fgm_bank import Ctl, SEGMENTS, clamp16, decode_raw16, decode_vadpcm
+try:
+    from .dump_fgm_bank import Ctl, SEGMENTS, clamp16, decode_raw16, decode_vadpcm
+except ImportError:  # direct execution: python3 pipeline/render_announcer_refs.py
+    from dump_fgm_bank import Ctl, SEGMENTS, clamp16, decode_raw16, decode_vadpcm
 
 
 OUTPUT_RATE = 32000
@@ -225,7 +228,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("outdir")
     parser.add_argument("--rom", default=os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "..", "BattleShip",
+        os.path.dirname(os.path.abspath(__file__)), "..", "..", "BattleShip",
         "baserom.us.z64"))
     args = parser.parse_args()
 

@@ -17,7 +17,7 @@ import numpy as np
 from scipy.spatial import cKDTree
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from preview_bundle import tpose_frames  # noqa: E402
+from pipeline.preview_bundle import tpose_frames  # noqa: E402
 
 ARM = (8, 9, 10, 14, 15, 16)
 LEG = (19, 20, 22, 24, 25, 27)

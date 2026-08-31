@@ -548,7 +548,7 @@ def _load_patches():
     if _PATCHES is not None:
         return _PATCHES
     import os
-    here = os.path.dirname(os.path.abspath(__file__))
+    here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     _PATCHES = {}
     for ch, (src, x0, x1) in PATCH_CUTS.items():
         im = Image.open(os.path.join(here, "website", "assets", "ui_refs", f"name_{src}.png")).convert("RGBA")
