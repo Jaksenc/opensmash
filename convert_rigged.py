@@ -3954,7 +3954,22 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
                     t_ = max(0.0, min(1.0, (x_ - lo_) / max(1e-6, hi_ - lo_)))
                     return t_ * t_ * (3.0 - 2.0 * t_)
 
+                # UV donor for the plug: a definitely-shoe vertex. The
+                # ball->shoe bridge triangles are the only place the
+                # collapsed torso is ever seen, and with shirt/jean UVs
+                # they glow against the dark shoes; retexturing the plug
+                # verts to the shoe's UV makes the bridge render as shoe-
+                # colored shadow between the feet.
+                duv_ = None
+                dbest_ = 0.0
+                for v in sk["verts"]:
+                    tot0 = sum(w for (ji, w) in v[8]) or 1.0
+                    wf0 = sum(w for (ji, w) in v[8] if ji in (22, 27)) / tot0
+                    if wf0 > dbest_:
+                        dbest_ = wf0
+                        duv_ = (v[3], v[4])
                 hn_, hsupp_, ncollar_, nchin_ = 0, 0.0, 0, 0
+                plugset_ = set()
                 for v in sk["verts"]:
                     tot = sum(w for (ji, w) in v[8]) or 1.0
                     w12_raw = sum(w for (ji, w) in v[8] if ji == 12) / tot
@@ -4017,8 +4032,23 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
                     # visible band after the vertical squash.
                     nr_ = float(prof.get("ball_neck_radius", 0.25))
                     br_ = nr_
+                    # ball_plug_lift raises the plug's resting band from the
+                    # floor (0, the classic torso column visible between the
+                    # shoes) up toward the inflated ball's underside (1):
+                    # the body disappears inside the head, and the shoe
+                    # stubs' weight blend flares straight off the ball —
+                    # a floating head with attached feet. Topology (and the
+                    # no-holes guarantee) is untouched.
+                    pl_ = float(prof.get("ball_plug_lift", 0.0))
+                    # target the inflated ball's CENTER, not its underside:
+                    # parking the plug at the underside leaves the
+                    # mixed-weight blend band bridging outside the surface
+                    # as a skin/cloth fin at the back. At the center the
+                    # whole bridge lives inside the volume.
+                    hu_ = (no[12][1] - dy_*hdrop_) if 12 in no else ymin0_
+                    py_ = max(ymin0_, ymin0_ + pl_*(hu_ - ymin0_))
                     vb = [cx_ + br_*(v[0]-cx_),
-                          ymin0_ + k_*(v[1]-ymin0_),
+                          py_ + k_*(v[1]-ymin0_),
                           cz_ + br_*(v[2]-cz_)]
                     # Flatten and center the source leg tubes into a tiny,
                     # rigid bridge. Unlike deleting their faces, this keeps
@@ -4026,21 +4056,151 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
                     lk_ = float(prof.get("ball_leg_squash", 0.03))
                     lr_ = float(prof.get("ball_leg_radius", 0.06))
                     vl = [cx_ + lr_*(v[0]-cx_),
-                          ymin0_ + lk_*(v[1]-ymin0_),
+                          py_ + lk_*(v[1]-ymin0_),
                           cz_ + lr_*(v[2]-cz_)]
                     # arm segments: body squash PLUS radial compression
                     # toward the torso column so they hug the body
                     ak_ = float(prof.get("arm_hug", 0.45))
                     ad_ = float(prof.get("arm_drop", 0.0))
                     va = [cx_ + ak_*(vb[0]-cx_), vb[1] - ad_, cz_ + ak_*(vb[2]-cz_)]
+                    # With a lifted plug, sharpen the shoe blend: verts that
+                    # are mostly-foot go fully to the shoe and mostly-body
+                    # verts fully into the ball, so the ball->shoe bridge is
+                    # a few edge-on triangles spanning the gap instead of a
+                    # band of shirt/jean verts hanging in the open (the fin
+                    # visible from the rear-under angle).
+                    if pl_ > 0.0:
+                        wfs_ = smoothstep_(0.45, 0.75, wf)
+                        rest_ = w12 + wh + wa + wl + wb
+                        if rest_ > 1e-6:
+                            rs_ = (1.0 - wfs_) / rest_
+                            w12, wh, wa, wl, wb = (w12*rs_, wh*rs_,
+                                                   wa*rs_, wl*rs_, wb*rs_)
+                        wf = wfs_
                     for i in range(3):
                         v[i] = (w12*vh[i] + wf*vf[i] + wh*vn[i]
                                 + wa*va[i] + wl*vl[i] + wb*vb[i])
+                    # body/leg/arm-dominated verts vanish into the plug —
+                    # retexture them to the shoe donor UV so their bridge
+                    # triangles shade dark instead of flashing shirt/jeans
+                    if pl_ > 0.0 and duv_ is not None and (wb + wl + wa) > 0.5:
+                        v[3], v[4] = duv_
+                        plugset_.add(id(v))
+                # ball_hide_plug: drop every triangle that touches a plug
+                # vertex — the collapsed torso AND its ball->shoe bridge fan
+                # (the visible "cylinder"). This opens two small holes (the
+                # ball's neck opening, the shoe tops) but both live inside
+                # the ball/shoe overlap, while the fan was visibly ugly at
+                # the rear-under angle.
+                if prof.get("ball_hide_plug") and plugset_:
+                    ntb_ = len(sk["tris"])
+                    vid_ = {id(v): i for i, v in enumerate(sk["verts"])}
+                    plugidx_ = {vid_[k] for k in plugset_ if k in vid_}
+                    # positions of every vert of every deleted triangle
+                    # (rounded grid): boundary loops qualify for capping by
+                    # coinciding with these — index identity fails across
+                    # UV-seam duplicates (the neck ring shares POSITIONS
+                    # with the deleted shirt, not indices)
+                    dpos_ = set()
+                    for t in sk["tris"]:
+                        if t[0] in plugidx_ or t[1] in plugidx_ or t[2] in plugidx_:
+                            for i_ in t[:3]:
+                                v_ = sk["verts"][i_]
+                                dpos_.add((round(v_[0], 1), round(v_[1], 1),
+                                           round(v_[2], 1)))
+                    sk["tris"] = [t for t in sk["tris"]
+                                  if not (t[0] in plugidx_ or t[1] in plugidx_
+                                          or t[2] in plugidx_)]
+                    # Cap every boundary loop the deletion opened (the
+                    # ball's neck ring, shoe tops, fist wrists) with a
+                    # centroid fan: each piece becomes its own CLOSED
+                    # surface — "disconnected but closed", no see-through
+                    # into the ball interior. Cap verts take the ring's
+                    # dominant joint at full weight so they ride rigidly.
+                    from collections import defaultdict, Counter
+                    ec_ = defaultdict(int)
+                    for t in sk["tris"]:
+                        for a_, b_ in ((t[0], t[1]), (t[1], t[2]), (t[2], t[0])):
+                            ec_[(min(a_, b_), max(a_, b_))] += 1
+                    # qualifying boundary edges: bordering the deleted
+                    # region by POSITION (index identity fails across
+                    # UV-seam duplicates). Group them into connected
+                    # components in position-welded space — seam-split
+                    # arcs of one ring merge back together — and fan
+                    # every edge to its component centroid. No ordering
+                    # or winding needed (the renderer is double-sided).
+                    wk_ = lambda i_: (round(sk["verts"][i_][0], 1),
+                                      round(sk["verts"][i_][1], 1),
+                                      round(sk["verts"][i_][2], 1))
+                    bedges_ = []
+                    for (a_, b_), c_ in ec_.items():
+                        if c_ == 1 and wk_(a_) in dpos_ and wk_(b_) in dpos_:
+                            bedges_.append((a_, b_))
+                    parent_ = {}
+                    def find_(x_):
+                        while parent_.get(x_, x_) != x_:
+                            parent_[x_] = parent_.get(parent_[x_], parent_[x_])
+                            x_ = parent_[x_]
+                        return x_
+                    for a_, b_ in bedges_:
+                        ka_, kb_ = wk_(a_), wk_(b_)
+                        parent_.setdefault(ka_, ka_)
+                        parent_.setdefault(kb_, kb_)
+                        parent_[find_(ka_)] = find_(kb_)
+                    comps_ = defaultdict(list)
+                    for a_, b_ in bedges_:
+                        comps_[find_(wk_(a_))].append((a_, b_))
+                    ncaps_ = 0
+                    for edges_ in comps_.values():
+                        if len(edges_) < 3:
+                            continue
+                        vidx_ = sorted({i_ for e_ in edges_ for i_ in e_})
+                        vs_ = [sk["verts"][i_] for i_ in vidx_]
+                        ctr_ = [sum(v_[k_] for v_ in vs_) / len(vs_) for k_ in range(3)]
+                        # a cap's ring spans several atlas islands (jean
+                        # cuff, sandal, skin) — any interpolation across
+                        # them renders as mottled smears. Give the WHOLE
+                        # cap one texel: the darkest one sampled at the
+                        # ring's own UVs, so caps read as interior shadow.
+                        apx_ = atlas.load()  # `px` is shadowed by the yaw pivot above
+                        duvd_, dlum_ = (vs_[0][3], vs_[0][4]), 1e9
+                        for v_ in vs_:
+                            sx_ = max(0, min(TW - 1, int(v_[3] * TW)))
+                            sy_ = max(0, min(TH - 1, int(v_[4] * TH)))
+                            r_, g_, b2_, a2_ = apx_[sx_, sy_]
+                            lum_ = 0.3*r_ + 0.6*g_ + 0.1*b2_
+                            if a2_ > 128 and lum_ < dlum_:
+                                dlum_ = lum_
+                                duvd_ = (v_[3], v_[4])
+                        dc_ = Counter()
+                        for v_ in vs_:
+                            dc_[max(v_[8], key=lambda jw: jw[1])[0]] += 1
+                        dj_ = dc_.most_common(1)[0][0]
+                        ni_ = len(sk["verts"])
+                        sk["verts"].append([ctr_[0], ctr_[1], ctr_[2],
+                                            duvd_[0], duvd_[1],
+                                            0.0, -1.0, 0.0, [(dj_, 1.0)]])
+                        # duplicate ring corners with the donor UV so cap
+                        # triangles sample a single texel throughout
+                        dup_ = {}
+                        for i_ in vidx_:
+                            v_ = sk["verts"][i_]
+                            dup_[i_] = len(sk["verts"])
+                            sk["verts"].append([v_[0], v_[1], v_[2],
+                                                duvd_[0], duvd_[1],
+                                                v_[5], v_[6], v_[7],
+                                                list(v_[8])])
+                        for a_, b_ in edges_:
+                            sk["tris"].append([dup_[a_], dup_[b_], ni_])
+                        ncaps_ += 1
+                    print(f"ball hide-plug: {ntb_} -> {len(sk['tris'])} tris "
+                          f"({len(plugidx_)} plug verts, {ncaps_} holes capped)")
                 # The narrow plug must remain rigid at runtime: a collapsed
                 # bind-pose leg/arm tube explodes back across its separate
                 # joints as soon as the fighter walks. Move all segment
                 # weights to the chest while terminal hand/foot weights keep
                 # their animation and provide the blended stub connection.
+                pl2_ = float(prof.get("ball_plug_lift", 0.0))
                 for v in sk["verts"]:
                     neww = []
                     for (ji, w) in v[8]:
@@ -4049,6 +4209,20 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
                     merged = {}
                     for (ji, w) in neww:
                         merged[ji] = merged.get(ji, 0.0) + w
+                    # runtime counterpart of the sharpened shoe blend:
+                    # mostly-foot verts ride the foot rigidly, mostly-body
+                    # verts ride the chest rigidly — no mixed band to
+                    # stretch across the gap during walks.
+                    if pl2_ > 0.0:
+                        tot2 = sum(merged.values()) or 1.0
+                        ffrac = (merged.get(22, 0.0) + merged.get(27, 0.0)) / tot2
+                        if ffrac >= 0.70:
+                            fj2 = 22 if merged.get(22, 0.0) >= merged.get(27, 0.0) else 27
+                            merged = {fj2: 1.0}
+                        elif ffrac <= 0.45 and ffrac > 0.0:
+                            for fj2 in (22, 27):
+                                if fj2 in merged:
+                                    merged[6] = merged.get(6, 0.0) + merged.pop(fj2)
                     v[8] = sorted(merged.items(), key=lambda kv: -kv[1])
                 print(f"ball squash k={k_} head x{hs} "
                       f"head-floor={hf_:.1f} kept={hn_} suppressed={hsupp_:.1f} "
