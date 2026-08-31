@@ -3901,7 +3901,8 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
                     # spaghetti arms/legs. Widen by sqrt(stretch), capped,
                     # while hands, feet, head, and non-lengthened segments
                     # naturally remain unchanged because st == 1 (or < 1).
-                    if not torso_ and ji != 12:
+                    if (prof.get("canonical_widen", False)
+                            and not torso_ and ji != 12):
                         widen = min(float(prof.get("widen_cap", 1.55)),
                                     max(1.0, st)
                                     ** float(prof.get("widen_pow", 0.5)))
