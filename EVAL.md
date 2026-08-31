@@ -1,5 +1,10 @@
 # Mesh generation strategy eval — Napoleon Bonaparte test (2026-08-07)
 
+Historical model, texture, atlas, bundle, and report filenames mentioned below
+live in `artifacts/experiments/`. Production roster bundles live in `play/`,
+canonical skeleton inputs in `skels/`, and deterministic replay fixtures in
+`eval/fixtures/replays/`.
+
 | Strategy | Result | Verdict |
 |---|---|---|
 | A: text → Meshy text-to-3D | Good likeness, **ignored T-pose** (hands clasped), untextured preview | ✗ pose control unreliable |

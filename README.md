@@ -1,10 +1,28 @@
 # Smash Weights
 
+## Repository layout
+
+- `website/` — the standalone project website and all of its browser assets
+- `play/` — production character bundles consumed by BattleShip
+- `skels/` — canonical skeletons, profiles, and extracted part data
+- `eval/` — evaluation code, fixtures, and generated results
+- `artifacts/experiments/` — historical generated models, atlases, bundles, and reports
+- `tools/` — maintenance, generation, and verification utilities
+
+Run the website from its own directory so it stays independent of the game
+pipeline:
+
+```bash
+python3 -m http.server 4173 --directory website
+```
+
+Then open `http://localhost:4173/`.
+
 ## Retro cartridge
 
-`assets/n64-cartridge-tripo.glb` is a Tripo P1 multiview model generated from
+`website/assets/n64-cartridge-tripo.glb` is a Tripo P1 multiview model generated from
 front, side, and back references. It is used by the centered cartridge
-control in `index.html` and rendered inside
+control in `website/index.html` and rendered inside
 the same low-resolution Three.js post-process as the glove, including the
 posterized palette, dithered alpha edge, and dark one-texel outline.
 
@@ -16,7 +34,7 @@ blender --background --python tools/build_cartridge_model.py
 
 ## Tripo console + fitted cartridge interaction
 
-`assets/hybrid-four-port-console-fitted.glb` preserves the original textured
+`website/assets/hybrid-four-port-console-fitted.glb` preserves the original textured
 Tripo console shell, its four ports, top switches, and cartridge slot. A small
 flush cover replaces the original front indicator with `FUN` light pipes, and a
 `CartridgeSnapAnchor` node drives the site interaction. Rebuild the derived
@@ -120,7 +138,7 @@ python3 tools/generate_mesh.py generate \
   --target-polycount 12000
 ```
 
-Finished models are downloaded to `assets/generated/` by default. This folder
+Finished models are downloaded to `website/assets/generated/` by default. This folder
 is git-ignored because generated GLBs can be large. Use `--output-dir` or
 `--name` to change the destination. Run the CLI with `--help` for all options.
 

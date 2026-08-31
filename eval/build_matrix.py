@@ -186,7 +186,7 @@ def stage_convert(ch, cf, cdef_cfg, img, rigged, st):
         cmd.append(x)
         if x == "--project-source":
             cmd.append(img)
-    cmd += [rigged, "mario-frames.skel", bundle]
+    cmd += [rigged, "skels/mario-frames.skel", bundle]
     log(f"[{ch}-{cf}] convert")
     rc, out = run(cmd, timeout=1200)
     if rc != 0:

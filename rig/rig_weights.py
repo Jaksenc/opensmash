@@ -1,9 +1,10 @@
 """Normalize bone rolls, auto-weight (bone heat), test-pose render, export GLB."""
 import bpy, math
+from pathlib import Path
 from mathutils import Vector
 
 OUT = "/private/tmp/claude-501/-Users-joey-Claude-Code-smash-weights/f08c86ec-b792-43d7-81d5-37ec45a424ce/scratchpad"
-DEST = "/Users/joey/Claude Code/smash-weights/assets/hand-rigged.glb"
+DEST = str(Path(__file__).resolve().parents[1] / "website" / "assets" / "hand-rigged.glb")
 
 bpy.ops.wm.open_mainfile(filepath=f"{OUT}/hand_rig.blend")
 mesh_obj = bpy.data.objects['hand']

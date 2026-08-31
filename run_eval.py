@@ -6,8 +6,8 @@ the scripted eval-tour replay, captures screenshots at the given frames,
 downsizes them, and (optionally) injects an .osb bundle into P1.
 
 Usage:
-  run_eval.py out_dir [--bundle plumber.osb] [--frames 380:1900:12]
-              [--replay eval-tour.rpl] [--dump] [--keep-full]
+  run_eval.py out_dir [--bundle artifacts/experiments/plumber.osb] [--frames 380:1900:12]
+              [--replay eval/fixtures/replays/eval-tour.rpl] [--dump] [--keep-full]
 """
 import argparse
 import json
@@ -32,7 +32,8 @@ def main():
     ap.add_argument("--bundle", default=None, help=".osb to inject into P1")
     ap.add_argument("--frames", default="380:1900:12", help="start:stop:step")
     ap.add_argument("--frames-list", default=None, help="explicit comma list")
-    ap.add_argument("--replay", default=os.path.join(ROOT, "eval-tour.rpl"))
+    ap.add_argument("--replay", default=os.path.join(
+        ROOT, "eval", "fixtures", "replays", "eval-tour.rpl"))
     ap.add_argument("--fkind", type=int, default=0, help="fighter kind for BOTH players (self-mirror tour)")
     ap.add_argument("--pose", action="store_true", help="clean capture: draw only P1's fighter (no stage/HUD/P2)")
     ap.add_argument("--dump", action="store_true", help="also dump FRM joint frames")

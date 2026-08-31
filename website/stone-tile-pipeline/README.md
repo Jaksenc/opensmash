@@ -13,7 +13,7 @@ ledge crossing one edge continues from the opposite edge.
 ## Run
 
 ```sh
-python3 stone-tile-pipeline/generate_stone_tile.py \
+python3 website/stone-tile-pipeline/generate_stone_tile.py \
   --seed 64 \
   --candidates 128 \
   --name procedural-stone
@@ -43,5 +43,5 @@ of transitions inside the tile. It also verifies all four quadrants of the
 ## Verify
 
 ```sh
-python3 stone-tile-pipeline/test_pipeline.py
+python3 website/stone-tile-pipeline/test_pipeline.py
 ```

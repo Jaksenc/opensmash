@@ -23,7 +23,7 @@
   "26": 29,
   "27": 29
  },
- "parts": "vanilla-kirby-parts.canonical.json",
+ "parts": "skels/parts/vanilla-kirby-parts.canonical.json",
  "conform": "uniform",
  "tune": {
   "head_boost": 2.1,

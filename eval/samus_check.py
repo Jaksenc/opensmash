@@ -113,7 +113,7 @@ def main():
                    cwd=PIPE, check=True, capture_output=True)
     shots = os.path.join(SCRATCH, f"shots-{args.char}-{args.tag}")
     r = subprocess.run(["python3", "run_eval.py", shots, "--bundle", osb,
-                        "--fkind", "3", "--replay", "eval-tour-fk3.rpl",
+                        "--fkind", "3", "--replay", "eval/fixtures/replays/eval-tour-fk3.rpl",
                         "--frames-list", "459,605,812,1116",
                         "--pose", "--width", "1280"],
                        cwd=PIPE, capture_output=True, text=True)

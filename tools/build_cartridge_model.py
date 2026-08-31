@@ -11,7 +11,7 @@ import bpy
 
 
 ROOT = Path(__file__).resolve().parents[1]
-OUTPUT = ROOT / "assets" / "n64-cartridge-original.glb"
+OUTPUT = ROOT / "website" / "assets" / "n64-cartridge-original.glb"
 
 
 def material(name, color, roughness=0.78, metallic=0.0):

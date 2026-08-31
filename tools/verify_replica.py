@@ -20,11 +20,11 @@ from PIL import Image
 
 
 ROOT = Path(__file__).resolve().parents[1]
-JS = (ROOT / "grid-replica.js").read_text()
-HTML = (ROOT / "index.html").read_text()
-ASSETS = ROOT / "assets" / "charselect"
-sys.path.insert(0, str(ROOT / "opensmash"))
-from build_glyph_atlas import validate_tile_glyphs  # noqa: E402
+WEBSITE = ROOT / "website"
+JS = (WEBSITE / "grid-replica.js").read_text()
+HTML = (WEBSITE / "index.html").read_text()
+ASSETS = WEBSITE / "assets" / "charselect"
+sys.path.insert(0, str(ROOT))
 from pixel_font import CAP, FACE, GLYPHS, OUTLINE  # noqa: E402
 
 
@@ -69,14 +69,17 @@ glyph_count = len(expected_glyphs)
 fallback_diff = sum(browser_glyphs.get(char) != rows for char, rows in expected_glyphs.items())
 atlas = {}
 for char in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
-    path = ROOT / "opensmash" / "ui_refs" / f"tileglyph_{ord(char)}.png"
+    path = WEBSITE / "assets" / "ui_refs" / f"tileglyph_{ord(char)}.png"
     if path.exists():
         atlas[char] = Image.open(path).convert("RGBA")
 atlas_diff = glyph_count - len(atlas)
-try:
-    validate_tile_glyphs(atlas)
-except (KeyError, RuntimeError):
-    atlas_diff += 1
+atlas_diff += sum(
+    image.mode != "RGBA"
+    or image.height != 10
+    or not 3 <= image.width <= 8
+    or image.getbbox() is None
+    for image in atlas.values()
+)
 glyph_diff = fallback_diff + atlas_diff
 glyph_pixels = sum(im.width * im.height for im in atlas.values())
 
@@ -86,7 +89,7 @@ glyph_pipeline_ok = glyph_diff == 0 and all(token in JS for token in (
     f"const CAPTION_FACE = Object.freeze([{FACE[0]}, {FACE[1]}, {FACE[2]}, {FACE[3]}]);",
     "const CAPTION_OUTLINE = Object.freeze([42, 40, 33, 255]);",
     "const CAPTION_EDGE = Object.freeze([94, 90, 74, 255]);",
-    "const CAPTION_GLYPH_ASSET_BASE = 'opensmash/ui_refs/tileglyph_';",
+    "const CAPTION_GLYPH_ASSET_BASE = 'assets/ui_refs/tileglyph_';",
     "const CAPTION_PATCH_CUTS = Object.freeze({",
     "const CAPTION_KERNING = Object.freeze({ KI: -1 });",
     "Y: ['yoshi', 4, 10]",
@@ -112,7 +115,7 @@ glyph_pipeline_ok = glyph_diff == 0 and all(token in JS for token in (
     "function renderCaption(value, maxWidth = CELL_W - 5) {",
     "function strictPixelGrade(expected, actual) {",
     "const FONT_GRADE = buildFontBench();",
-)) and 'src="./grid-replica.js?v=20260829g"' in HTML
+)) and 'src="./grid-replica.js?v=20260830e"' in HTML
 
 repaired_glyphs_ok = all(token not in JS for token in (
     "GLYPH_BASE",

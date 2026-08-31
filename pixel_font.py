@@ -551,7 +551,7 @@ def _load_patches():
     here = os.path.dirname(os.path.abspath(__file__))
     _PATCHES = {}
     for ch, (src, x0, x1) in PATCH_CUTS.items():
-        im = Image.open(os.path.join(here, "ui_refs", f"name_{src}.png")).convert("RGBA")
+        im = Image.open(os.path.join(here, "website", "assets", "ui_refs", f"name_{src}.png")).convert("RGBA")
         px = im.load()
         w = min(x1, im.width) - x0
         p = Image.new("RGBA", (w, BOLD_CAP), (0, 0, 0, 0))

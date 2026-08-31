@@ -1,7 +1,8 @@
 """Render calibrated ortho views of the GLB for joint placement."""
 import bpy, math, sys
+from pathlib import Path
 
-GLB = "/Users/joey/Claude Code/smash-weights/assets/hand-cursor-meshy.glb"
+GLB = str(Path(__file__).resolve().parents[1] / "website" / "assets" / "hand-cursor-meshy.glb")
 OUT = "/private/tmp/claude-501/-Users-joey-Claude-Code-smash-weights/f08c86ec-b792-43d7-81d5-37ec45a424ce/scratchpad"
 
 bpy.ops.wm.read_factory_settings(use_empty=True)

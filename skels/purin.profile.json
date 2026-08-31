@@ -23,7 +23,7 @@
   "26": 27,
   "27": 28
  },
- "parts": "vanilla-purin-parts.canonical.json",
+ "parts": "skels/parts/vanilla-purin-parts.canonical.json",
  "conform": "uniform",
  "ball_squash": 0.25,
  "head_scale": 2.5,
