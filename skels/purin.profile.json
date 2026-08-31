@@ -46,5 +46,6 @@
  "ball_proxy_legs": true,
  "ball_proxy_foot_spread": 0.32,
  "ball_proxy_leg_radius": 0.022,
- "ball_proxy_leg_embed": 0.018
+ "ball_proxy_leg_embed": 0.018,
+ "ball_proxy_leg_shell_overlap": 0.85
 }
