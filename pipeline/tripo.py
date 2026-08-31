@@ -15,6 +15,7 @@ import json
 import os
 import subprocess
 import sys
+import urllib.error
 import urllib.request
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -30,8 +31,12 @@ def http(url, body=None):
     if body is not None:
         req.add_header("Content-Type", "application/json")
         data = json.dumps(body).encode()
-    with urllib.request.urlopen(req, data, timeout=180) as r:
-        return json.loads(r.read().decode())
+    try:
+        with urllib.request.urlopen(req, data, timeout=180) as r:
+            return json.loads(r.read().decode())
+    except urllib.error.HTTPError as e:
+        detail = e.read().decode(errors="replace")
+        raise RuntimeError(f"HTTP {e.code} from {url}: {detail}") from e
 
 
 def cmd_upload(a):
@@ -65,7 +70,8 @@ def cmd_balance(a):
 def cmd_status(a):
     d = http(f"{BASE}/task/{a.task_id}")["data"]
     print(json.dumps({k: d.get(k) for k in
-                      ("task_id", "type", "status", "progress", "output")})[:600])
+                      ("task_id", "type", "status", "progress",
+                       "consumed_credit", "output")})[:700])
 
 
 def cmd_download(a):

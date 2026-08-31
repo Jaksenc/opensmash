@@ -79,7 +79,7 @@ flags) for A/B work.
 Better but not adopted: respelling the name phonetically ("Bo-Yang Nyoo")
 sounded clearly best of everything tried. It needs a per-character
 pronunciation that does not exist yet — the natural home is a `phonetic`
-field from `pipeline/expand_character.py`, generated in the same Gemini call as
+field from `pipeline/expand_character.py`, generated in the same OpenAI call as
 `short`/`emblem`. Deferred because a wrong respelling yields a confidently
 mispronounced name with nothing to catch it.
 

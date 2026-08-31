@@ -406,7 +406,8 @@ def main():
         TARGET_MAP = {int(k): int(v) for k, v in _prof["map"].items()}
         TARGET_PARTS_JSON = _prof.get("parts")
         TARGET_BLANK_EXTRA = [int(j) for j in _prof.get("blank_extra", [])]
-        TARGET_SNAP_ACCS = [int(j) for j in _prof.get("snap_accessories", [])]
+        TARGET_SNAP_ACCS = [int(j.get("joint") if isinstance(j, dict) else j)
+                            for j in _prof.get("snap_accessories", [])]
         TARGET_KEEP_VANILLA = [int(j) for j in _prof.get("keep_vanilla", [])]
         TARGET_SWAP_SIDES = bool(_prof.get("swap_sides", False))
         TARGET_CONFORM = _prof.get("conform")

@@ -19,9 +19,7 @@ Prints JSON: {"display": ..., "short": ..., "desc": ..., "emblem": ..., "refs": 
 import argparse
 import base64
 import json
-import os
 import re
-import sys
 
 try:
     from .gen import http, ENV, token_cost
@@ -46,20 +44,58 @@ HARD RULES:
 "emblem" names ONE concrete object for the character's series emblem — a short noun phrase ("a jewelled crown", "a red accordion"), the object that instantly signals this character: something they are famous for, wear, use, or are inseparable from. Never the character, their face or their body. It is drawn as a bold one-colour stencil, so prefer an object with a distinctive outline AND large internal structure (crown, accordion, pocket watch, open book, lighthouse) over a plain disc, ball, shield, generic badge or logo roundel. If the subject is not a public figure, infer the object from what the photo and notes show — clothing, gear, setting, a distinctive accessory or hobby.
 """
 
+CHARACTER_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "display": {"type": "string"},
+        "short": {"type": "string"},
+        "desc": {"type": "string"},
+        "emblem": {"type": "string"},
+    },
+    "required": ["display", "short", "desc", "emblem"],
+    "additionalProperties": False,
+}
 
-def expand(name, photo=None, notes=None, model="gemini-flash-latest", emblem=None):
-    parts = [{"text": SYSTEM + f"\nCharacter: {name}"
+
+def response_text(response):
+    """Extract assistant text from a raw Responses API response."""
+    if response.get("output_text"):
+        return response["output_text"]
+    return "".join(
+        part.get("text", "")
+        for item in response.get("output", [])
+        if item.get("type") == "message"
+        for part in item.get("content", [])
+        if part.get("type") == "output_text"
+    )
+
+
+def expand(name, photo=None, notes=None, model="gpt-5.6-luna", emblem=None):
+    prompt = (f"Character: {name}"
               + (f"\nNotes: {notes}" if notes else "")
-              + (f"\nEmblem context (use this for \"emblem\"): {emblem}" if emblem else "")}]
+              + (f"\nEmblem context (use this for \"emblem\"): {emblem}" if emblem else ""))
+    content = [{"type": "input_text", "text": prompt}]
     if photo:
         mime = "image/jpeg" if photo.lower().endswith((".jpg", ".jpeg")) else "image/png"
-        parts.append({"inlineData": {"mimeType": mime, "data": base64.b64encode(open(photo, "rb").read()).decode()}})
-        parts.append({"text": "Describe the person in the attached photo so the likeness is preserved (hair, beard, glasses, skin tone, face shape, expression, clothing)."})
-    out = http(f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
-               "POST", {"x-goog-api-key": ENV["GEMINI_API_KEY"]},
-               {"contents": [{"parts": parts}], "generationConfig": {"temperature": 0.4}})
-    text = out["candidates"][0]["content"]["parts"][0]["text"]
-    cost = token_cost(model, out.get("usageMetadata"))
+        data = base64.b64encode(open(photo, "rb").read()).decode()
+        content += [
+            {"type": "input_image", "image_url": f"data:{mime};base64,{data}"},
+            {"type": "input_text", "text": "Describe the person in the attached photo so the likeness is preserved (hair, beard, glasses, skin tone, face shape, expression, clothing)."},
+        ]
+    out = http("https://api.openai.com/v1/responses", "POST",
+               {"Authorization": f"Bearer {ENV['OPENAI_API_KEY']}"},
+               {"model": model,
+                "instructions": SYSTEM,
+                "input": [{"role": "user", "content": content}],
+                "reasoning": {"effort": "none"},
+                "text": {"format": {"type": "json_schema",
+                                      "name": "character_description",
+                                      "strict": True,
+                                      "schema": CHARACTER_SCHEMA}},
+                "max_output_tokens": 1000,
+                "store": False})
+    text = response_text(out)
+    cost = token_cost(model, out.get("usage"))
     m = re.search(r"\{.*\}", text, re.S)
     obj = json.loads(m.group(0)) if m else {"display": name, "desc": text.strip()}
     obj.setdefault("display", name)
@@ -79,7 +115,7 @@ def main():
     ap.add_argument("name")
     ap.add_argument("--photo", default=None)
     ap.add_argument("--notes", default=None)
-    ap.add_argument("--model", default="gemini-flash-latest")
+    ap.add_argument("--model", default="gpt-5.6-luna")
     ap.add_argument("--emblem", default=None,
                     help="context for the series emblem, or the object itself "
                          "(default: inferred from the name/photo)")
