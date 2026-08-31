@@ -4177,6 +4177,14 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
                     comps_ = defaultdict(list)
                     for a_, b_ in bedges_:
                         comps_[find_(wk_(a_))].append((a_, b_))
+                    # each cap takes its ring's REPRESENTATIVE texel: the
+                    # median-luminance sample among the ring verts. The
+                    # neck ring is skin/hair so its cap reads as skin (a
+                    # chin/neck underside); ankle rings are mostly shoe so
+                    # those caps stay dark; wrists come out fist-skin.
+                    # (Darkest-of-ring gave a tan queen neck beside purple;
+                    # global-darkest made the neck an unnatural black.)
+                    apx_ = atlas.load()  # `px` is shadowed by the yaw pivot above
                     ncaps_ = 0
                     for edges_ in comps_.values():
                         if len(edges_) < 3:
@@ -4184,21 +4192,17 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
                         vidx_ = sorted({i_ for e_ in edges_ for i_ in e_})
                         vs_ = [sk["verts"][i_] for i_ in vidx_]
                         ctr_ = [sum(v_[k_] for v_ in vs_) / len(vs_) for k_ in range(3)]
-                        # a cap's ring spans several atlas islands (jean
-                        # cuff, sandal, skin) — any interpolation across
-                        # them renders as mottled smears. Give the WHOLE
-                        # cap one texel: the darkest one sampled at the
-                        # ring's own UVs, so caps read as interior shadow.
-                        apx_ = atlas.load()  # `px` is shadowed by the yaw pivot above
-                        duvd_, dlum_ = (vs_[0][3], vs_[0][4]), 1e9
+                        samp_ = []
                         for v_ in vs_:
                             sx_ = max(0, min(TW - 1, int(v_[3] * TW)))
                             sy_ = max(0, min(TH - 1, int(v_[4] * TH)))
                             r_, g_, b2_, a2_ = apx_[sx_, sy_]
-                            lum_ = 0.3*r_ + 0.6*g_ + 0.1*b2_
-                            if a2_ > 128 and lum_ < dlum_:
-                                dlum_ = lum_
-                                duvd_ = (v_[3], v_[4])
+                            if a2_ > 128:
+                                samp_.append((0.3*r_ + 0.6*g_ + 0.1*b2_,
+                                              (v_[3], v_[4])))
+                        samp_.sort(key=lambda s_: s_[0])
+                        duvd_ = (samp_[len(samp_)//2][1] if samp_
+                                 else (vs_[0][3], vs_[0][4]))
                         dc_ = Counter()
                         for v_ in vs_:
                             dc_[max(v_[8], key=lambda jw: jw[1])[0]] += 1
