@@ -1,0 +1,287 @@
+import { useEffect, useRef, useState } from "react";
+
+const RANDOM_FIGHTER_COUNT = 12;
+const RANDOM_STAGE_COUNT = 9;
+
+function randomInt(max) {
+  return Math.floor(Math.random() * max);
+}
+
+function engineUrl(action) {
+  const params = new URLSearchParams({ cb: String(Date.now()) });
+  if (action.type === "character") {
+    params.set("inject", `bundles/${action.character.bundle}`);
+    params.set("fkind", String(action.character.fkind));
+    params.set("player", "0");
+    params.set(
+      "SSB64_BOOT_BATTLE",
+      [
+        action.character.fkind,
+        randomInt(RANDOM_FIGHTER_COUNT),
+        randomInt(RANDOM_STAGE_COUNT),
+        1,
+        randomInt(RANDOM_FIGHTER_COUNT),
+        randomInt(RANDOM_FIGHTER_COUNT),
+      ].join(","),
+    );
+  } else {
+    params.set("SSB64_START_SCENE", "16");
+    params.set("roster", "1");
+  }
+  return `/engine/?${params}`;
+}
+
+async function getSession() {
+  const response = await fetch("/api/session", { cache: "no-store" });
+  if (!response.ok) return false;
+  return Boolean((await response.json()).authorized);
+}
+
+function RomModal({ action, onCancel, onValidated }) {
+  const [file, setFile] = useState(null);
+  const [status, setStatus] = useState("idle");
+  const [error, setError] = useState("");
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    inputRef.current?.focus();
+    const closeOnEscape = (event) => {
+      if (event.key === "Escape" && status === "idle") onCancel();
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [onCancel, status]);
+
+  async function validate(event) {
+    event.preventDefault();
+    if (!file) return;
+    setError("");
+    try {
+      setStatus("hashing");
+      const buffer = await file.arrayBuffer();
+      const digest = await crypto.subtle.digest("SHA-256", buffer);
+      const hash = [...new Uint8Array(digest)]
+        .map((byte) => byte.toString(16).padStart(2, "0"))
+        .join("");
+
+      setStatus("validating");
+      const response = await fetch("/api/validate-rom", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ algorithm: "SHA-256", hash, size: file.size }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "ROM validation failed");
+      onValidated(result.rom);
+    } catch (validationError) {
+      setStatus("idle");
+      setError(validationError.message || "Could not validate that file");
+    }
+  }
+
+  const target = action?.type === "character" ? action.character.name : "character select";
+
+  return (
+    <div className="modal-backdrop" role="presentation" onMouseDown={onCancel}>
+      <section
+        className="modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="rom-title"
+        onMouseDown={(event) => event.stopPropagation()}
+      >
+        <button className="modal-close" type="button" onClick={onCancel} aria-label="Close">
+          ×
+        </button>
+        <p className="eyebrow">One-time check</p>
+        <h2 id="rom-title">Upload a ROM to continue</h2>
+        <p className="modal-copy">Choose your legally obtained Smash 64 ROM to launch {target}.</p>
+        <form onSubmit={validate}>
+          <label className={`file-picker ${file ? "has-file" : ""}`}>
+            <input
+              ref={inputRef}
+              type="file"
+              accept=".zip,.z64,.n64,.v64,application/zip,application/octet-stream"
+              onChange={(event) => {
+                setFile(event.target.files?.[0] || null);
+                setError("");
+              }}
+              disabled={status !== "idle"}
+            />
+            <span>{file ? file.name : "Choose ROM file"}</span>
+            <small>{file ? `${(file.size / 1024 / 1024).toFixed(1)} MB` : ".zip, .z64, .n64, or .v64"}</small>
+          </label>
+          {error && <p className="form-error">{error}</p>}
+          <button className="validate-button" type="submit" disabled={!file || status !== "idle"}>
+            {status === "hashing" && "Hashing locally…"}
+            {status === "validating" && "Checking ROM…"}
+            {status === "idle" && "Validate & play"}
+          </button>
+        </form>
+      </section>
+    </div>
+  );
+}
+
+export default function App() {
+  const [characters, setCharacters] = useState([]);
+  const [loadingCharacters, setLoadingCharacters] = useState(true);
+  const [authorized, setAuthorized] = useState(false);
+  const [pendingAction, setPendingAction] = useState(null);
+  const [engine, setEngine] = useState(null);
+  const [pageError, setPageError] = useState("");
+  const gameRef = useRef(null);
+  const devMenuRef = useRef(null);
+
+  useEffect(() => {
+    Promise.all([
+      fetch("/api/characters").then(async (response) => {
+        if (!response.ok) throw new Error("Could not load the configured characters");
+        return (await response.json()).characters;
+      }),
+      getSession(),
+    ])
+      .then(([loadedCharacters, hasSession]) => {
+        setCharacters(loadedCharacters);
+        setAuthorized(hasSession);
+      })
+      .catch((error) => setPageError(error.message))
+      .finally(() => setLoadingCharacters(false));
+  }, []);
+
+  function launch(action) {
+    setEngine({ src: engineUrl(action), action });
+    setPendingAction(null);
+    requestAnimationFrame(() => gameRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  }
+
+  async function requestLaunch(action) {
+    setPageError("");
+    if (authorized || (await getSession())) {
+      setAuthorized(true);
+      launch(action);
+    } else {
+      setPendingAction(action);
+    }
+  }
+
+  function validated() {
+    setAuthorized(true);
+    if (pendingAction) launch(pendingAction);
+  }
+
+  async function clearVerification() {
+    setPageError("");
+    const response = await fetch("/api/dev/clear-rom", { method: "POST" });
+    if (!response.ok) {
+      setPageError("Could not clear ROM verification");
+      return;
+    }
+    setAuthorized(false);
+    setPendingAction(null);
+    setEngine(null);
+    if (devMenuRef.current) devMenuRef.current.open = false;
+  }
+
+  return (
+    <main>
+      <header className="site-header">
+        <a className="wordmark" href="#top" aria-label="OpenSmash home">
+          OPEN<span>SMASH</span>
+        </a>
+        <div className="header-tools">
+          <span className={`rom-status ${authorized ? "is-ready" : ""}`}>
+            <i /> {authorized ? "ROM verified" : "Browser build"}
+          </span>
+          <details className="dev-menu" ref={devMenuRef}>
+            <summary>Dev</summary>
+            <div className="dev-menu-panel">
+              <button type="button" onClick={clearVerification}>
+                Clear ROM verification
+              </button>
+            </div>
+          </details>
+        </div>
+      </header>
+
+      <section className="hero" id="top" ref={gameRef}>
+        <div className={`game-frame ${engine ? "is-running" : ""}`}>
+          {engine ? (
+            <iframe
+              src={engine.src}
+              title="OpenSmash game engine"
+              allow="autoplay; gamepad; fullscreen"
+            />
+          ) : (
+            <div className="engine-placeholder">
+              <img
+                src="/site-assets/branding/super-weights-bros-stacked-white.png"
+                alt="Super Weights Bros"
+              />
+              <div>
+                <p className="eyebrow">WASM game viewport</p>
+                <h1>Pick a fighter.<br />Start a match.</h1>
+                <p>The engine stays unloaded until you choose how to play.</p>
+              </div>
+            </div>
+          )}
+          {engine && (
+            <button className="stop-game" type="button" onClick={() => setEngine(null)}>
+              Close game
+            </button>
+          )}
+        </div>
+      </section>
+
+      <section className="select-section" aria-labelledby="select-title">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">Choose your fighter</p>
+            <h2 id="select-title">Character select</h2>
+          </div>
+          <button className="play-button" type="button" onClick={() => requestLaunch({ type: "select" })}>
+            <span>Play now</span>
+            <small>Open character select →</small>
+          </button>
+        </div>
+
+        {pageError && <p className="page-error">{pageError}</p>}
+        <div className="character-grid" aria-busy={loadingCharacters}>
+          {loadingCharacters && <p className="loading-message">Loading fighters…</p>}
+          {!loadingCharacters && characters.length === 0 && (
+            <p className="loading-message">No valid characters are enabled in config/characters.json.</p>
+          )}
+          {characters.map((character, index) => (
+            <button
+              className="character-card"
+              type="button"
+              key={character.slug}
+              style={{ "--index": index }}
+              onClick={() => requestLaunch({ type: "character", character })}
+            >
+              <span className="portrait-wrap">
+                <img src={character.portrait} alt="" />
+              </span>
+              <span className="character-number">{String(index + 1).padStart(2, "0")}</span>
+              <span className="character-name">{character.name}</span>
+              <span className="quick-match">Quick match ↗</span>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <footer>
+        <span>OpenSmash prototype</span>
+        <span>React · Node · WASM on demand</span>
+      </footer>
+
+      {pendingAction && (
+        <RomModal
+          action={pendingAction}
+          onCancel={() => setPendingAction(null)}
+          onValidated={validated}
+        />
+      )}
+    </main>
+  );
+}
