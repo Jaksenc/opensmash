@@ -45,7 +45,7 @@ const px = c => c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
 
 // ── 1. cell interior ──────────────────────────────────────────────────────
 out.append(el('h3', null, '1 — cell interior (fiery background)'));
-const srcCell = await loadRef('assets/charselect/fire_bg.png');
+const srcCell = await loadRef('../assets/charselect/fire_bg.png');
 const ourCell = (() => { const c = blank(IW, IH); const x = c.getContext('2d');
   x.imageSmoothingEnabled = false;
   x.drawImage(bufToCanvas(renderTile(FIRE_SEED, null, false)), 0, 0, IW, IH, 0, 0, IW, IH);
@@ -71,7 +71,7 @@ out.append(el('div', 'stats', `mean per-pixel Δ ${(sum/n).toFixed(1)} / 255   w
 out.append(el('h3', null, '2 — alphabet: source glyphs vs our authored font'));
 const LET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 const srcG = {};
-for (const ch of LET) srcG[ch] = await loadRef(`assets/charselect/font_${ch.toLowerCase()}.png`);
+for (const ch of LET) srcG[ch] = await loadRef(`../assets/charselect/font_${ch.toLowerCase()}.png`);
 const cellW = 6, sheetW = cellW * LET.length, sheetH = 5;
 const srcSheet = blank(sheetW, sheetH), ourSheet = blank(sheetW, sheetH), dSheet = blank(sheetW, sheetH);
 const sc = srcSheet.getContext('2d'), oc = ourSheet.getContext('2d'), dc = dSheet.getContext('2d');

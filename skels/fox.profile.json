@@ -23,7 +23,7 @@
   "26": 26,
   "27": 27
  },
- "parts": "vanilla-fox-parts.canonical.json",
+ "parts": "skels/parts/vanilla-fox-parts.canonical.json",
  "blank_extra": [
   5
  ],

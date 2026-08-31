@@ -66,7 +66,7 @@ const CAPTION_FALLBACK_ROWS = Object.freeze({
   "Y": ["#...#", ".#.#.", "..#..", "..#..", "..#..", "..#..", "..#.."],
   "Z": ["####", "...#", "..#.", "..#.", ".#..", "#...", "####"]
 });
-const CAPTION_GLYPH_ASSET_BASE = 'opensmash/ui_refs/tileglyph_';
+const CAPTION_GLYPH_ASSET_BASE = 'assets/ui_refs/tileglyph_';
 const CAPTION_PATCH_CUTS = Object.freeze({
   A: ['mario', 11, 17], B: ['kirby', 18, 23], C: ['captain', 3, 8],
   D: ['dk', 5, 12], E: ['ness', 10, 16], F: ['fox', 4, 9],
@@ -232,7 +232,7 @@ async function loadExtractedGlyph(char) {
   if (patch) {
     const [sourceName, x0, x1] = patch;
     const source = await loadCaptionImage(
-      `opensmash/ui_refs/tile_${sourceName}.png?v=20260828dq`
+      `assets/ui_refs/tile_${sourceName}.png?v=20260828dq`
     );
     return Object.freeze({
       char,

@@ -58,7 +58,7 @@ def convert_cell(char, target, variant):
         return tag, True
     cmd = ["python3", "convert_rigged.py", "--mild-color", "--flatten"] + VARIANTS[variant]
     if target == "mario":
-        cmd += ["--no-profile", rigged, "mario-frames.skel", bundle]
+        cmd += ["--no-profile", rigged, "skels/mario-frames.skel", bundle]
     else:
         cmd += ["--target", os.path.join("skels", f"{target}.profile.json"),
                 rigged, os.path.join("skels", f"{target}.skel"), bundle]

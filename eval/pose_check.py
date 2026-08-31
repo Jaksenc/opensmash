@@ -88,7 +88,7 @@ def main():
            "--guidedflat"] + args.flags.split()
     if args.target == "mario":
         cmd += ["--no-profile", os.path.join("play/ui", args.char, "rigged.glb"),
-                "mario-frames.skel", bundle]
+                "skels/mario-frames.skel", bundle]
     else:
         cmd += ["--target", f"skels/{args.target}.profile.json",
                 os.path.join("play/ui", args.char, "rigged.glb"),
@@ -122,7 +122,8 @@ def main():
     subprocess.run(["python3", "convert_rigged.py", "--binary5", bundle, osb],
                    cwd=PIPE, check=True, capture_output=True)
     shots = os.path.join(SCRATCH, f"shots-{args.char}-{tag}")
-    rpl = "eval-tour.rpl" if fk == 0 else f"eval-tour-fk{fk}.rpl"
+    rpl = os.path.join("eval", "fixtures", "replays",
+                       "eval-tour.rpl" if fk == 0 else f"eval-tour-fk{fk}.rpl")
     r = subprocess.run(["python3", "run_eval.py", shots, "--bundle", osb,
                         "--fkind", str(fk), "--replay", rpl,
                         "--frames-list", "459,605,729,812,976,1116",

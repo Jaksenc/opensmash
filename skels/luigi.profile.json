@@ -23,7 +23,7 @@
   "26": 26,
   "27": 27
  },
- "parts": "vanilla-luigi-parts.canonical.json",
+ "parts": "skels/parts/vanilla-luigi-parts.canonical.json",
  "tune": {
   "head_recenter": 0.85
  },

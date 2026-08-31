@@ -71,11 +71,11 @@ def vanilla_ghost(yaw, pitch, size, target="mario"):
     # the blob layout below is target-independent; only the origins move
     # (pulled from the target skeleton through the profile's joint map).
     if target == "mario":
-        parts_path = os.path.join(HERE, "vanilla-mario-parts.json")
-        skel_path = os.path.join(HERE, "mario.skel")
+        parts_path = os.path.join(HERE, "skels", "parts", "vanilla-mario-parts.json")
+        skel_path = os.path.join(HERE, "skels", "reference", "mario.skel")
         jmap = None
     else:
-        parts_path = os.path.join(HERE, f"vanilla-{target}-parts.canonical.json")
+        parts_path = os.path.join(HERE, "skels", "parts", f"vanilla-{target}-parts.canonical.json")
         skel_path = os.path.join(HERE, "skels", f"{target}.skel")
         jmap = {int(k): int(v) for k, v in json.load(open(os.path.join(
             HERE, "skels", f"{target}.profile.json")))["map"].items()}
@@ -300,7 +300,7 @@ def engine_tpose(bundle_json, osb, tmp, fkind=0, target="mario"):
                "--pose", "--width", "1280"]
         # fighter kinds are baked into the replay (capture_clip.py
         # convention) — a mario tour on another fkind never boots
-        rpl = os.path.join(HERE, f"eval-tour-fk{fkind}.rpl")
+        rpl = os.path.join(HERE, "eval", "fixtures", "replays", f"eval-tour-fk{fkind}.rpl")
         if fkind and os.path.exists(rpl):
             cmd += ["--replay", rpl]
         subprocess.run(cmd,
@@ -371,7 +371,7 @@ def main():
     # ownership-hardness heat at the true bind pose (reference column):
     # what the engine binds against, no synthesized-pose exaggeration
     heat_bind = os.path.join(tmp, "heat-bind.png")
-    skel = os.path.join(HERE, "mario.skel") if target == "mario" else \
+    skel = os.path.join(HERE, "skels", "reference", "mario.skel") if target == "mario" else \
         os.path.join(HERE, "skels", f"{target}.skel")
     subprocess.run([sys.executable, os.path.join(HERE, "preview_bundle.py"),
                     bundle, skel, heat_bind, "--heat", "--yaw", "-90"],

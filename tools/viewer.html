@@ -40,8 +40,8 @@
 "use strict";
 let DATA=null, BUNDLE=null, dupGroups=[], triDup=null;
 
-const BUNDLE_URL=new URLSearchParams(location.search).get("bundle")||"napoleon-bundle-v9.json";
-Promise.all([fetch("frames.json").then(r=>r.json()),
+const BUNDLE_URL=new URLSearchParams(location.search).get("bundle")||"../artifacts/experiments/napoleon-bundle-v9.json";
+Promise.all([fetch("../eval/fixtures/frames/frames.json").then(r=>r.json()),
              fetch(BUNDLE_URL).then(r=>r.json())])
 .then(([d,b])=>{ DATA=d; BUNDLE=b; init(); });
 

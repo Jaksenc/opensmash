@@ -2,7 +2,7 @@
 """Rig debug: render a rigged GLB textured with its skeleton overlaid, and
 print bone-length / conform-scale diagnostics against the Mario skeleton.
 
-Usage: debug_rig.py rigged.glb mario-frames.skel out.png
+Usage: debug_rig.py rigged.glb skels/mario-frames.skel out.png
 """
 import math
 import sys

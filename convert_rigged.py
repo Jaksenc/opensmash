@@ -14,7 +14,7 @@ cut. Weight boundaries also give natural creases for part splits, and feet
 get their own parts (joints 22/27) so ankles articulate.
 
 Usage:
-  convert_rigged.py napoleon-rigged.glb mario-frames.skel out-bundle.json
+  convert_rigged.py artifacts/experiments/napoleon-rigged.glb skels/mario-frames.skel out-bundle.json
   convert_rigged.py --binary out-bundle.json out.osb   (same OSB2 writer)
 """
 import io
@@ -1018,7 +1018,7 @@ def main():
         # target top = highest head-part vertex of the vanilla fighter
         # (local -> world via the head joint's spawn frame), else neck
         _mtop = frames[11][0][1]
-        _vp_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), TARGET_PARTS_JSON or "vanilla-mario-parts.json")
+        _vp_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), TARGET_PARTS_JSON or "skels/parts/vanilla-mario-parts.json")
         if os.path.exists(_vp_path):
             _vp = json.load(open(_vp_path))
             if "12" in _vp and 12 in frames:
@@ -1190,7 +1190,7 @@ def main():
     s_head = s_perp
     _mhead_h = 1.0
     try:
-        _vp_path2 = os.path.join(os.path.dirname(os.path.abspath(__file__)), TARGET_PARTS_JSON or "vanilla-mario-parts.json")
+        _vp_path2 = os.path.join(os.path.dirname(os.path.abspath(__file__)), TARGET_PARTS_JSON or "skels/parts/vanilla-mario-parts.json")
         if os.path.exists(_vp_path2) and 12 in frames and "Head" in name_idx:
             _vp2 = json.load(open(_vp_path2))
             _o12, _R12 = frames[12]
@@ -1566,7 +1566,7 @@ def main():
         R_u = [[sum(Tg_u[t][r] * Tm[t][c] for t in range(3)) for c in range(3)]
                for r in range(3)]
         _pj_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                TARGET_PARTS_JSON or "vanilla-mario-parts.json")
+                                TARGET_PARTS_JSON or "skels/parts/vanilla-mario-parts.json")
         _pj = json.load(open(_pj_path))
         _tys = [frames[int(pid)][0][1] + v[0] * frames[int(pid)][1][0][1]
                 + v[1] * frames[int(pid)][1][1][1] + v[2] * frames[int(pid)][1][2][1]
@@ -1680,7 +1680,7 @@ def main():
     # LBS still blends smoothly across part seams.
     import os as _os
     _vanilla_path = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)),
-                                  "vanilla-mario-parts.json")
+                                  "skels/parts/vanilla-mario-parts.json")
     # --no-profile: skip the Mario-part-bounds fit (per-part thickness
     # scales disagree at part boundaries and tear non-chibi meshes);
     # keep only the bone retarget + uniform global scale.
@@ -2556,7 +2556,7 @@ def main():
             partmap[sl][m] = pt
         # palette from the in-game vanilla crop (lit) with V compensation
         try:
-            ref = _npv.asarray(Image.open("vanilla-ref-crop.png").convert("HSV"), _npv.int16)
+            ref = _npv.asarray(Image.open("artifacts/experiments/vanilla-ref-crop.png").convert("HSV"), _npv.int16)
             rh, rs, rvv = ref[...,0], ref[...,1], ref[...,2]
             bm = (rh>=120)&(rh<=185)&(rs>=80)&(rvv>=50)
             rm = ((rh<=12)|(rh>=243))&(rs>=100)&(rvv>=80)
@@ -3391,7 +3391,7 @@ def main():
     fit_scale = 1.0
     try:
         _fs_vp = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                              TARGET_PARTS_JSON or "vanilla-mario-parts.json")
+                              TARGET_PARTS_JSON or "skels/parts/vanilla-mario-parts.json")
         if os.path.exists(_fs_vp) and 12 in frames:
             _fs_parts = json.load(open(_fs_vp))
             if "12" in _fs_parts:

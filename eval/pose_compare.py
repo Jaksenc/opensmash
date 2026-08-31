@@ -91,7 +91,8 @@ def main():
 
     name = os.path.basename(os.path.normpath(a.out))
 
-    replay = os.path.join(PIPE, f"eval-tour-fk{a.fkind}.rpl")
+    replay = os.path.join(PIPE, "eval", "fixtures", "replays",
+                          f"eval-tour-fk{a.fkind}.rpl")
     subprocess.run(["python3", "make_replay.py", replay,
                     "--p1", str(a.fkind), "--p2", str(a.fkind)], cwd=PIPE, check=True)
     import hashlib

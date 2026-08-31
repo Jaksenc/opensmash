@@ -77,7 +77,8 @@ def main():
         a.vanilla_dir = os.path.join(HERE, "cells", base + ("-pose" if a.pose else ""))
     # per-fighter tour replay (fighter kinds are baked into the replay
     # metadata and must agree with BOOT_BATTLE)
-    replay = os.path.join(PIPE, "eval-tour.rpl" if a.fkind == 0 else f"eval-tour-fk{a.fkind}.rpl")
+    replay = os.path.join(PIPE, "eval", "fixtures", "replays",
+                          "eval-tour.rpl" if a.fkind == 0 else f"eval-tour-fk{a.fkind}.rpl")
     # ALWAYS regenerate: SHEET/CLIP frames above are keyed to the current
     # make_replay.py tour; a stale .rpl on disk would silently desync them.
     subprocess.run(["python3", "make_replay.py", replay,

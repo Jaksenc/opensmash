@@ -18,8 +18,8 @@ import numpy as np
 from PIL import Image, ImageDraw
 
 
-ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_REFERENCE = ROOT / "stone-tile-investigation/source-stone-tile.png"
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+DEFAULT_REFERENCE = PROJECT_ROOT / "stone-tile-investigation/source-stone-tile.png"
 DEFAULT_OUTPUT = Path(__file__).resolve().parent / "generated"
 DEFAULT_PALETTE = np.array([0, 8, 16, 24, 33, 41, 49, 57], dtype=np.uint8)
 

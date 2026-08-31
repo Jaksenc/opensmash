@@ -460,8 +460,8 @@ const gloveMat = new THREE.ShaderMaterial({
     }`,
 });
 gloveMat.blending = THREE.NoBlending;  // write raw RGBA into the RT, no premultiply
-loadSpriteExact('assets/hand_point.png', t => { gloveMat.uniforms.texP.value = t; });
-loadSpriteExact('assets/hand_grab.png', t => { gloveMat.uniforms.texG.value = t; });
+loadSpriteExact('../assets/hand_point.png', t => { gloveMat.uniforms.texP.value = t; });
+loadSpriteExact('../assets/hand_grab.png', t => { gloveMat.uniforms.texG.value = t; });
 
 // Debug switches: #static = unskinned lit mesh, #normals, #raw = skip post
 const DBG = location.hash;

@@ -23,7 +23,7 @@
   "26": 29,
   "27": 30
  },
- "parts": "vanilla-yoshi-parts.canonical.json",
+ "parts": "skels/parts/vanilla-yoshi-parts.canonical.json",
  "blank_extra": [
   5,
   19,

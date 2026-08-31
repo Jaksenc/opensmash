@@ -232,7 +232,7 @@ def main():
         log("tpose: generating source image")
         prompt = N64_TEMPLATE.format(desc=cdef["desc"], display=cdef["display"])
         cmd = ["python3", "gen.py", "image", "--api", "openai", "--model", "gpt-image-2",
-               "--ref", os.path.join(HERE, "vg7-tpose.png")]
+               "--ref", os.path.join(HERE, "artifacts", "experiments", "vg7-tpose.png")]
         if a.photo:
             cmd += ["--ref", a.photo]
             prompt += PHOTO_NOTE
@@ -271,7 +271,7 @@ def main():
     if stage_needed(osb, force, "convert"):
         log("convert: retargeting onto the game skeleton")
         outtxt = sh(["python3", "convert_rigged.py", "--mild-color", "--no-profile", "--flatten",
-                     F("rigged.glb"), "mario-frames.skel", F("bundle.json")], timeout=900)
+                     F("rigged.glb"), "skels/mario-frames.skel", F("bundle.json")], timeout=900)
         torn = re.search(r"torn-tri cut: (\d+)", outtxt)
         if torn and int(torn.group(1)) > 80:
             raise RuntimeError(f"torn-tri gate: {torn.group(1)} > 80 — bad mesh, re-roll tpose/mesh")
@@ -306,7 +306,7 @@ def main():
         for r in ("tile_mario", "tile_samus", "tile_link"):
             up = F(f"_styleref_{r}.png")
             sh(["python3", "-c",
-                f"from PIL import Image; im=Image.open('ui_refs/{r}.png').convert('RGB');"
+                f"from PIL import Image; im=Image.open('website/assets/ui_refs/{r}.png').convert('RGB');"
                 f"im.resize((im.width*8,im.height*8),Image.LANCZOS).save('{up}')"])
             refs += ["--ref", up]
         bill("portrait", gen_cost(sh(["python3", "gen.py", "image"] + refs
@@ -315,7 +315,7 @@ def main():
     if stage_needed(F("stock_raw.png"), force, "stock"):
         log("stock: generating icon art")
         bill("stock", gen_cost(sh(
-            ["python3", "gen.py", "image", "--ref", os.path.join(HERE, "ui_refs", "stockicon_ref.png"),
+            ["python3", "gen.py", "image", "--ref", os.path.join(HERE, "website", "assets", "ui_refs", "stockicon_ref.png"),
              "--ref", F("tpose.png"), STOCK_TEMPLATE, F("stock_raw.png")], timeout=600)))
     if stage_needed(F("emblem_raw.png"), force, "emblem"):
         # --emblem beats whatever the expander inferred, so the object can be
@@ -329,7 +329,7 @@ def main():
         for _ in range(2):
             bill("emblem", gen_cost(sh(
                 ["python3", "gen.py", "image",
-                 "--ref", os.path.join(HERE, "ui_refs", "emblem_ref.png"),
+                 "--ref", os.path.join(HERE, "website", "assets", "ui_refs", "emblem_ref.png"),
                  prompt, F("emblem_raw.png")], timeout=600)))
             st = json.loads(sh(["python3", "emblem_stencil.py", F("emblem_raw.png")],
                                timeout=120))
