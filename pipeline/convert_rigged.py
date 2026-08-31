@@ -4323,6 +4323,29 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
                     print(f"ball hide-plug: {ntb_} -> {len(sk['tris'])} tris "
                           f"({len(plugidx_)} plug verts, {ncaps_} holes capped, "
                           f"{nfootcaps_} foot rims flattened)")
+                # Feet are useful ball-mode silhouette cues, but detached
+                # source fists read as floating ears and cannot inherit the
+                # full attack animation without stretching a connector across
+                # the enlarged head.  The feet-only baseline removes every
+                # face touching a hand-dominant vertex after plug capping, so
+                # wrist caps and isolated hand shells disappear together.
+                if prof.get("ball_hide_hands"):
+                    _hand_cutoff_ = float(prof.get(
+                        "ball_hide_hand_weight", 0.30))
+                    _hand_touch_ = set()
+                    for i_, v_ in enumerate(sk["verts"]):
+                        tot_ = sum(w_ for (_ji_, w_) in v_[8]) or 1.0
+                        wh_ = sum(w_ for (_ji_, w_) in v_[8]
+                                  if _ji_ in (10, 16)) / tot_
+                        if wh_ >= _hand_cutoff_:
+                            _hand_touch_.add(i_)
+                    _before_hands_ = len(sk["tris"])
+                    sk["tris"] = [t_ for t_ in sk["tris"]
+                                  if not any(i_ in _hand_touch_
+                                             for i_ in t_[:3])]
+                    print(f"ball hide-hands: {_before_hands_} -> "
+                          f"{len(sk['tris'])} tris "
+                          f"({len(_hand_touch_)} hand verts)")
                 # Snapshot the actual surviving balloon shell before adding
                 # any proxy limbs. Later attachment probes must not mistake a
                 # generated head-weighted bridge endpoint for head geometry.
