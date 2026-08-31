@@ -4060,6 +4060,7 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
                 # `clearance` units above the shoe tops — purin's chin was
                 # clipping through her shoes at any fixed drop that also
                 # looked right on kirby.
+                _ball_bottom_y_ = None
                 if prof.get("ball_clearance") is not None and 12 in no and dy_ > 1e-6:
                     clr_ = float(prof.get("ball_clearance", 8.0))
                     bb0_, st0_ = 1e9, -1e9
@@ -4078,6 +4079,7 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
                                            * (v[1] - no[fj0_][1]))
                     if bb0_ < 1e8 and st0_ > -1e8:
                         hdrop_ = max(0.0, (bb0_ - (st0_ + clr_)) / dy_)
+                        _ball_bottom_y_ = bb0_ - dy_ * hdrop_
                         print(f"ball clearance: bottom={bb0_:.1f} shoetop={st0_:.1f} "
                               f"-> drop {hdrop_:.3f}")
 
@@ -4321,6 +4323,12 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
                     print(f"ball hide-plug: {ntb_} -> {len(sk['tris'])} tris "
                           f"({len(plugidx_)} plug verts, {ncaps_} holes capped, "
                           f"{nfootcaps_} foot rims flattened)")
+                # Snapshot the actual surviving balloon shell before adding
+                # any proxy limbs. Later attachment probes must not mistake a
+                # generated head-weighted bridge endpoint for head geometry.
+                _ball_live_ = {i_ for t_ in sk["tris"] for i_ in t_[:3]}
+                _ball_head_shell_pts_ = [sk["verts"][i_] for i_ in _ball_live_
+                                         if head_weight_(sk["verts"][i_]) >= 0.7]
                 # Source shoes are especially unstable after the 2.4x ball
                 # enlargement: ankle-weight cuts turn pumps/high heels into
                 # open sawtooth shells, and capping the noisy boundary cannot
@@ -4341,6 +4349,7 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
                     sk["tris"] = [t_ for t_ in sk["tris"]
                                   if not any(i_ in _foot_touch_ for i_ in t_[:3])]
                     _nproxy_ = 0
+                    _shoe_proxy_ = {}
                     for fj_ in (22, 27):
                         src_ = [v_ for v_ in sk["verts"]
                                 if foot_frac_(v_, fj_) >= 0.45]
@@ -4387,6 +4396,7 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
                         uv_ = samp_[len(samp_)//2][1] if samp_ else duv_
                         if uv_ is None:
                             continue
+                        _proxy_v0_ = len(sk["verts"])
                         segs_ = 12
                         rings_ = ((hy_, 0.74), (0.0, 1.0), (-0.62*hy_, 0.86))
                         ridx_ = []
@@ -4422,9 +4432,274 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
                                 c_, d_ = ridx_[ri_+1][si_], ridx_[ri_+1][sj_]
                                 sk["tris"].extend(([a_, c_, b_], [b_, c_, d_]))
                             sk["tris"].append([ridx_[-1][si_], bot_, ridx_[-1][sj_]])
+                        _shoe_proxy_[fj_] = {"c": (cx2_, cy2_, cz2_),
+                                               "half": (hu_, hy_, hv_),
+                                               "uv": uv_,
+                                               "verts": (_proxy_v0_, len(sk["verts"]))}
                         _nproxy_ += 1
+                    # Optional experimental stance correction. Some source
+                    # rigs collapse both ball-mode feet onto the same spot;
+                    # spreading each complete proxy also gives the attached
+                    # legs distinct lower anchors without opening the shoes.
+                    _foot_spread_ = float(prof.get("ball_proxy_foot_spread", 0.0)) * bh_
+                    if (_foot_spread_ > 0.0 and 22 in _shoe_proxy_
+                            and 27 in _shoe_proxy_):
+                        c22_ = _shoe_proxy_[22]["c"]
+                        c27_ = _shoe_proxy_[27]["c"]
+                        # Measure only across the character's left/right axis.
+                        # Euclidean separation is misleading here: a source
+                        # T-pose can put the feet far apart in depth while they
+                        # still overlap completely in the gameplay camera.
+                        ldx_, ldz_ = -Dax[2], Dax[0]
+                        llen_ = math.sqrt(ldx_*ldx_ + ldz_*ldz_) or 1.0
+                        ldx_, ldz_ = ldx_/llen_, ldz_/llen_
+                        lsep_signed_ = ((c22_[0]-c27_[0])*ldx_
+                                        + (c22_[2]-c27_[2])*ldz_)
+                        side_ = 1.0 if lsep_signed_ >= 0.0 else -1.0
+                        lsep_ = abs(lsep_signed_)
+                        extra_ = max(0.0, (_foot_spread_-lsep_)/2.0)
+                        for fj_, sign_ in ((22, 1.0), (27, -1.0)):
+                            shoe_ = _shoe_proxy_[fj_]
+                            sx_, sy_, sz_ = shoe_["c"]
+                            ox_ = sign_*side_*extra_*ldx_
+                            oz_ = sign_*side_*extra_*ldz_
+                            v0_, v1_ = shoe_["verts"]
+                            for vi_ in range(v0_, v1_):
+                                sk["verts"][vi_][0] += ox_
+                                sk["verts"][vi_][2] += oz_
+                            shoe_["c"] = (sx_+ox_, sy_, sz_+oz_)
+                        print(f"ball proxy-foot spread: {lsep_:.1f} -> "
+                              f"{max(lsep_, _foot_spread_):.1f}")
                     print(f"ball proxy-feet: {_old_tris_} -> {len(sk['tris'])} tris "
                           f"({_nproxy_} closed shoes)")
+                    if prof.get("ball_proxy_legs") and _shoe_proxy_:
+                        # Experimental attached-leg bridge. The upper ring is
+                        # embedded in the balloon and follows the head; the
+                        # lower ring is embedded in the shoe and follows the
+                        # foot. A blended middle ring keeps the short tube
+                        # connected through animation instead of floating like
+                        # the old collapsed source legs.
+                        _hpts_ = _ball_head_shell_pts_
+                        if _ball_bottom_y_ is None:
+                            _ball_bottom_y_ = (min(v_[1] for v_ in _hpts_)
+                                               if _hpts_ else no[12][1])
+                        _leg_radius_ = float(prof.get("ball_proxy_leg_radius", 0.018)) * bh_
+                        _leg_embed_ = float(prof.get("ball_proxy_leg_embed", 0.025)) * bh_
+                        _shell_embed_ = (_leg_embed_ + float(prof.get(
+                            "ball_proxy_leg_shell_overlap", 0.45))*_leg_radius_)
+                        _leg_segs_ = max(6, int(prof.get("ball_proxy_leg_segments", 8)))
+                        _nlegs_ = 0
+                        _leg_top_lifts_ = []
+                        for fj_, _legids_ in ((22, (19, 20)), (27, (24, 25))):
+                            shoe_ = _shoe_proxy_.get(fj_)
+                            if shoe_ is None:
+                                continue
+                            scx_, scy_, scz_ = shoe_["c"]
+                            shy_ = shoe_["half"][1]
+                            # Keep the lower end centered on the shoe; pull the
+                            # upper end slightly toward the balloon axis so the
+                            # two legs read as a stance rather than antennae.
+                            topx_ = 0.85 * scx_ + 0.15 * cx_
+                            topz_ = 0.85 * scz_ + 0.15 * cz_
+                            # Probe the shell at this leg's own horizontal
+                            # anchor. A global head minimum is often a hair or
+                            # beard tip elsewhere on the model; using it for
+                            # both legs leaves visible gaps under asymmetric
+                            # characters. The low local quantile estimates the
+                            # underside while rejecting a stray dangling vert.
+                            probe_r_ = max(2.5*_leg_radius_, 0.07*bh_)
+                            local_y_ = [v_[1] for v_ in _hpts_
+                                        if ((v_[0]-topx_)**2 + (v_[2]-topz_)**2
+                                            <= probe_r_*probe_r_)]
+                            if len(local_y_) < 8:
+                                nearest_ = sorted(
+                                    (((v_[0]-topx_)**2 + (v_[2]-topz_)**2, v_[1])
+                                     for v_ in _hpts_), key=lambda p_: p_[0])
+                                local_y_ = [p_[1] for p_ in nearest_[:48]]
+                            local_y_.sort()
+                            base_top_ = _ball_bottom_y_ + _shell_embed_
+                            topy_ = base_top_
+                            if local_y_:
+                                qi_ = max(0, int(0.12*(len(local_y_)-1)))
+                                # Limit a sparse-probe fallback from tunneling
+                                # implausibly far into a cheek or hairstyle.
+                                topy_ = max(base_top_, min(local_y_[qi_] + _shell_embed_,
+                                                          _ball_bottom_y_ + 0.20*bh_))
+                            _leg_top_lifts_.append(topy_ - base_top_)
+                            boty_ = scy_ + 0.55 * shy_
+                            if topy_ <= boty_ + 0.5 * _leg_radius_:
+                                topy_ = boty_ + max(_leg_radius_, 0.02 * bh_)
+                            legsrc_ = []
+                            for v_ in sk["verts"]:
+                                tot_ = sum(w_ for (_ji_, w_) in v_[8]) or 1.0
+                                lf_ = sum(w_ for (_ji_, w_) in v_[8]
+                                          if _ji_ in _legids_) / tot_
+                                if lf_ >= 0.45:
+                                    sx_ = max(0, min(TW-1, int(v_[3]*TW)))
+                                    sy_ = max(0, min(TH-1, int(v_[4]*TH)))
+                                    r_, g_, b_, a_ = apx_[sx_, sy_]
+                                    if a_ > 128:
+                                        legsrc_.append((0.3*r_+0.6*g_+0.1*b_,
+                                                        (v_[3], v_[4])))
+                            legsrc_.sort(key=lambda x_: x_[0])
+                            luv_ = (legsrc_[len(legsrc_)//2][1] if legsrc_
+                                    else shoe_["uv"])
+                            lrings_ = []
+                            for ri_, (yy_, rr_, wh_) in enumerate((
+                                    (topy_, 0.78*_leg_radius_, 1.0),
+                                    ((topy_+boty_)/2.0, _leg_radius_, 0.5),
+                                    (boty_, 0.84*_leg_radius_, 0.0))):
+                                tt_ = ri_ / 2.0
+                                ccx_ = topx_*(1.0-tt_) + scx_*tt_
+                                ccz_ = topz_*(1.0-tt_) + scz_*tt_
+                                ring_ = []
+                                for si_ in range(_leg_segs_):
+                                    aa_ = 2.0*math.pi*si_/_leg_segs_
+                                    ca_, sa_ = math.cos(aa_), math.sin(aa_)
+                                    ring_.append(len(sk["verts"]))
+                                    wl_ = ([(12, wh_), (fj_, 1.0-wh_)]
+                                           if 0.0 < wh_ < 1.0 else
+                                           ([(12, 1.0)] if wh_ >= 1.0 else [(fj_, 1.0)]))
+                                    sk["verts"].append([
+                                        ccx_ + rr_*ca_, yy_, ccz_ + rr_*sa_,
+                                        luv_[0], luv_[1], ca_, 0.0, sa_, wl_])
+                                lrings_.append(ring_)
+                            ltop_ = len(sk["verts"])
+                            sk["verts"].append([topx_, topy_, topz_, luv_[0], luv_[1],
+                                                0.0, 1.0, 0.0, [(12, 1.0)]])
+                            lbot_ = len(sk["verts"])
+                            sk["verts"].append([scx_, boty_, scz_, luv_[0], luv_[1],
+                                                0.0, -1.0, 0.0, [(fj_, 1.0)]])
+                            for si_ in range(_leg_segs_):
+                                sj_ = (si_+1) % _leg_segs_
+                                sk["tris"].append([ltop_, lrings_[0][si_],
+                                                   lrings_[0][sj_]])
+                                for ri_ in range(2):
+                                    a_, b_ = lrings_[ri_][si_], lrings_[ri_][sj_]
+                                    c_, d_ = lrings_[ri_+1][si_], lrings_[ri_+1][sj_]
+                                    sk["tris"].extend(([a_, c_, b_], [b_, c_, d_]))
+                                sk["tris"].append([lrings_[-1][si_], lbot_,
+                                                   lrings_[-1][sj_]])
+                            _nlegs_ += 1
+                        print(f"ball proxy-legs: {_nlegs_} attached bridges "
+                              f"(radius={_leg_radius_:.1f}, embed={_leg_embed_:.1f}, "
+                              f"local-lift={[round(v_, 1) for v_ in _leg_top_lifts_]})")
+                    if prof.get("ball_proxy_arms") and _ball_head_shell_pts_:
+                        # Experimental hand attachment. Preserve the original
+                        # enlarged hand nubs, then bridge each hand center to
+                        # the nearest point on the surviving balloon shell.
+                        # The shell ring follows the head, the hand ring follows
+                        # the terminal hand joint, and the middle ring blends
+                        # them so the tiny arm stays connected in motion.
+                        def hand_frac_(v_, hj_):
+                            tot_ = sum(w_ for (_ji_, w_) in v_[8]) or 1.0
+                            return sum(w_ for (_ji_, w_) in v_[8]
+                                       if _ji_ == hj_) / tot_
+
+                        _live_now_ = {i_ for t_ in sk["tris"] for i_ in t_[:3]}
+                        _arm_radius_ = float(prof.get(
+                            "ball_proxy_arm_radius", 0.014)) * bh_
+                        _arm_embed_ = float(prof.get(
+                            "ball_proxy_arm_embed", 0.75)) * _arm_radius_
+                        _arm_segs_ = max(6, int(prof.get(
+                            "ball_proxy_arm_segments", 8)))
+                        _narms_, _arm_lengths_ = 0, []
+                        for hj_ in (10, 16):
+                            hand_ = [sk["verts"][i_] for i_ in _live_now_
+                                     if hand_frac_(sk["verts"][i_], hj_) >= 0.55]
+                            if len(hand_) < 6:
+                                continue
+                            # Trimmed bounds are steadier than a mean when a
+                            # wrist cap or fingertip contributes a few outliers.
+                            haxes_ = [sorted(v_[k_] for v_ in hand_) for k_ in range(3)]
+                            hc_ = []
+                            for vals_ in haxes_:
+                                q0_ = vals_[max(0, int(0.10*(len(vals_)-1)))]
+                                q1_ = vals_[max(0, int(0.90*(len(vals_)-1)))]
+                                hc_.append((q0_+q1_)/2.0)
+                            surf_ = min(_ball_head_shell_pts_, key=lambda v_:
+                                        ((v_[0]-hc_[0])**2 + (v_[1]-hc_[1])**2
+                                         + (v_[2]-hc_[2])**2))
+                            axis_ = [surf_[k_]-hc_[k_] for k_ in range(3)]
+                            alen_ = math.sqrt(sum(c_*c_ for c_ in axis_))
+                            if alen_ <= 0.5*_arm_radius_:
+                                continue
+                            axis_ = [c_/alen_ for c_ in axis_]
+                            headc_ = [surf_[k_] + _arm_embed_*axis_[k_]
+                                      for k_ in range(3)]
+                            handc_ = hc_
+                            bridge_ = [handc_[k_]-headc_[k_] for k_ in range(3)]
+                            blen_ = math.sqrt(sum(c_*c_ for c_ in bridge_))
+                            if blen_ <= 0.5*_arm_radius_:
+                                continue
+                            bax_ = [c_/blen_ for c_ in bridge_]
+                            ref_ = ([0.0, 1.0, 0.0]
+                                    if abs(bax_[1]) < 0.90 else [1.0, 0.0, 0.0])
+                            bu_ = [bax_[1]*ref_[2]-bax_[2]*ref_[1],
+                                   bax_[2]*ref_[0]-bax_[0]*ref_[2],
+                                   bax_[0]*ref_[1]-bax_[1]*ref_[0]]
+                            bul_ = math.sqrt(sum(c_*c_ for c_ in bu_)) or 1.0
+                            bu_ = [c_/bul_ for c_ in bu_]
+                            bv_ = [bax_[1]*bu_[2]-bax_[2]*bu_[1],
+                                   bax_[2]*bu_[0]-bax_[0]*bu_[2],
+                                   bax_[0]*bu_[1]-bax_[1]*bu_[0]]
+                            hsamp_ = []
+                            for v_ in hand_:
+                                sx_ = max(0, min(TW-1, int(v_[3]*TW)))
+                                sy_ = max(0, min(TH-1, int(v_[4]*TH)))
+                                r_, g_, b_, a_ = apx_[sx_, sy_]
+                                if a_ > 128:
+                                    hsamp_.append((0.3*r_+0.6*g_+0.1*b_,
+                                                   (v_[3], v_[4])))
+                            hsamp_.sort(key=lambda x_: x_[0])
+                            auv_ = (hsamp_[len(hsamp_)//2][1] if hsamp_ else duv_)
+                            if auv_ is None:
+                                continue
+                            arings_ = []
+                            for ri_, (tt_, rr_, wh_) in enumerate((
+                                    (0.0, 0.72*_arm_radius_, 1.0),
+                                    (0.5, _arm_radius_, 0.5),
+                                    (1.0, 0.78*_arm_radius_, 0.0))):
+                                cc_ = [headc_[k_]*(1.0-tt_) + handc_[k_]*tt_
+                                       for k_ in range(3)]
+                                ring_ = []
+                                for si_ in range(_arm_segs_):
+                                    aa_ = 2.0*math.pi*si_/_arm_segs_
+                                    ca_, sa_ = math.cos(aa_), math.sin(aa_)
+                                    nr_ = [ca_*bu_[k_] + sa_*bv_[k_] for k_ in range(3)]
+                                    wl_ = ([(12, wh_), (hj_, 1.0-wh_)]
+                                           if 0.0 < wh_ < 1.0 else
+                                           ([(12, 1.0)] if wh_ >= 1.0
+                                            else [(hj_, 1.0)]))
+                                    ring_.append(len(sk["verts"]))
+                                    sk["verts"].append([
+                                        cc_[0]+rr_*nr_[0], cc_[1]+rr_*nr_[1],
+                                        cc_[2]+rr_*nr_[2], auv_[0], auv_[1],
+                                        nr_[0], nr_[1], nr_[2], wl_])
+                                arings_.append(ring_)
+                            ahead_ = len(sk["verts"])
+                            sk["verts"].append([*headc_, auv_[0], auv_[1],
+                                                -bax_[0], -bax_[1], -bax_[2],
+                                                [(12, 1.0)]])
+                            ahand_ = len(sk["verts"])
+                            sk["verts"].append([*handc_, auv_[0], auv_[1],
+                                                bax_[0], bax_[1], bax_[2],
+                                                [(hj_, 1.0)]])
+                            for si_ in range(_arm_segs_):
+                                sj_ = (si_+1) % _arm_segs_
+                                sk["tris"].append([ahead_, arings_[0][sj_],
+                                                   arings_[0][si_]])
+                                for ri_ in range(2):
+                                    a_, b_ = arings_[ri_][si_], arings_[ri_][sj_]
+                                    c_, d_ = arings_[ri_+1][si_], arings_[ri_+1][sj_]
+                                    sk["tris"].extend(([a_, b_, c_], [b_, d_, c_]))
+                                sk["tris"].append([arings_[-1][sj_], ahand_,
+                                                   arings_[-1][si_]])
+                            _narms_ += 1
+                            _arm_lengths_.append(blen_)
+                        print(f"ball proxy-arms: {_narms_} attached bridges "
+                              f"(radius={_arm_radius_:.1f}, "
+                              f"lengths={[round(v_, 1) for v_ in _arm_lengths_]})")
                 # The narrow plug must remain rigid at runtime: a collapsed
                 # bind-pose leg/arm tube explodes back across its separate
                 # joints as soon as the fighter walks. Move all segment
