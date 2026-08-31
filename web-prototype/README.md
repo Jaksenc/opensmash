@@ -50,3 +50,31 @@ contains the project's extracted engine assets.
 
 Use the `Dev: clear ROM` button in the header to expire the validation cookie
 and exercise the first-run flow again.
+
+## Generate a fighter
+
+Open `/create` and submit a name, JPEG/PNG/WebP reference photo, and optional
+emblem direction. The server stores each upload and JSON job record in
+`data/fighter-jobs`, then a single worker runs the existing
+`pipeline/run_character.py` command. No pipeline source changes are required.
+Before invoking the pipeline, the worker flattens multi-frame phone photos,
+applies EXIF orientation, converts to plain sRGB RGB, and writes a normalized
+PNG capped at 2048px so image providers receive a predictable input.
+
+The page polls the record for progress inferred from the pipeline's current log
+messages. Jobs survive server restarts, interrupted jobs are requeued, and
+failed jobs can be resumed using the pipeline's existing output-based resume
+behavior. Only one fighter runs at a time to avoid collisions in the shared
+pipeline output directories.
+
+The worker automatically rerolls provider-generated art up to two times when
+output moderation blocks a random result. Temporary rate-limit, timeout, and
+5xx failures receive up to three short backoff retries outside the expensive
+mesh stages. Invalid inputs and mesh failures stop for manual review.
+
+For UI or API testing without invoking paid providers, disable the worker and
+optionally use a temporary job directory:
+
+```bash
+FIGHTER_WORKER_DISABLED=1 FIGHTER_JOBS_ROOT=/tmp/opensmash-fighter-jobs pnpm start
+```

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import FighterCreator from "./FighterCreator.jsx";
 
 const RANDOM_FIGHTER_COUNT = 12;
 const RANDOM_STAGE_COUNT = 9;
@@ -129,12 +130,14 @@ function RomModal({ action, onCancel, onValidated }) {
 }
 
 export default function App() {
+  const isCreatePage = window.location.pathname.replace(/\/+$/, "") === "/create";
   const [characters, setCharacters] = useState([]);
   const [loadingCharacters, setLoadingCharacters] = useState(true);
   const [authorized, setAuthorized] = useState(false);
   const [pendingAction, setPendingAction] = useState(null);
   const [engine, setEngine] = useState(null);
   const [pageError, setPageError] = useState("");
+  const [fighterSearch, setFighterSearch] = useState("");
   const [soundOn, setSoundOn] = useState(() => localStorage.getItem("opensmash-sound") !== "off");
   const gameRef = useRef(null);
   const engineRef = useRef(null);
@@ -252,13 +255,26 @@ export default function App() {
     });
   }
 
+  const normalizedSearch = fighterSearch.trim().toLocaleLowerCase();
+  const visibleCharacters = characters
+    .map((character, index) => ({ character, index }))
+    .filter(({ character }) => {
+      if (!normalizedSearch) return true;
+      return [character.name, character.short, character.slug]
+        .filter(Boolean)
+        .some((value) => value.toLocaleLowerCase().includes(normalizedSearch));
+    });
+
   return (
-    <main>
+    <main className={isCreatePage ? "create-page" : undefined}>
       <header className="site-header">
-        <a className="wordmark" href="#top" aria-label="OpenSmash home">
+        <a className="wordmark" href="/" aria-label="OpenSmash home">
           OPEN<span>SMASH</span>
         </a>
         <div className="header-tools">
+          <a className="create-link" href={isCreatePage ? "/" : "/create"}>
+            {isCreatePage ? "Browse fighters" : "Create fighter"}
+          </a>
           <button
             className={`sound-button ${soundOn ? "is-on" : ""}`}
             type="button"
@@ -281,7 +297,7 @@ export default function App() {
         </div>
       </header>
 
-      <section className="hero" id="top" ref={gameRef}>
+      {(!isCreatePage || engine) && <section className="hero" id="top" ref={gameRef}>
         <div className={`game-frame ${engine ? "is-running" : ""}`}>
           {engine ? (
             <iframe
@@ -309,27 +325,43 @@ export default function App() {
             </button>
           )}
         </div>
-      </section>
+      </section>}
 
-      <section className="select-section" aria-labelledby="select-title">
+      {isCreatePage && <FighterCreator
+        onPlay={selectCharacter}
+      />}
+
+      {!isCreatePage && <section className="select-section" aria-labelledby="select-title">
         <div className="section-heading">
           <div>
             <p className="eyebrow">Choose your fighter</p>
             <h2 id="select-title">Character select</h2>
           </div>
-          <div className="play-actions">
-            <button
-              className="start-button"
-              type="button"
-              onClick={() => requestLaunch({ type: "start" })}
-            >
-              <span>Play from start</span>
-              <small>Watch the intro</small>
-            </button>
-            <button className="play-button" type="button" onClick={() => requestLaunch({ type: "select" })}>
-              <span>Play now</span>
-              <small>Open character select →</small>
-            </button>
+          <div className="select-controls">
+            <label className="fighter-search">
+              <span>Search roster</span>
+              <input
+                type="search"
+                value={fighterSearch}
+                onChange={(event) => setFighterSearch(event.target.value)}
+                placeholder="Find a fighter…"
+                autoComplete="off"
+              />
+            </label>
+            <div className="play-actions">
+              <button
+                className="start-button"
+                type="button"
+                onClick={() => requestLaunch({ type: "start" })}
+              >
+                <span>Play from start</span>
+                <small>Watch the intro</small>
+              </button>
+              <button className="play-button" type="button" onClick={() => requestLaunch({ type: "select" })}>
+                <span>Play now</span>
+                <small>Open character select →</small>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -339,7 +371,10 @@ export default function App() {
           {!loadingCharacters && characters.length === 0 && (
             <p className="loading-message">No valid characters are enabled in config/characters.json.</p>
           )}
-          {characters.map((character, index) => (
+          {!loadingCharacters && characters.length > 0 && visibleCharacters.length === 0 && (
+            <p className="loading-message">No portraits match “{fighterSearch.trim()}”.</p>
+          )}
+          {visibleCharacters.map(({ character, index }) => (
             <button
               className="character-card"
               type="button"
@@ -351,12 +386,13 @@ export default function App() {
                 <img src={character.portrait} alt="" />
               </span>
               <span className="character-number">{String(index + 1).padStart(2, "0")}</span>
+              {character.generated && <span className="generated-label">Fighter Lab</span>}
               <span className="character-name">{character.name}</span>
               <span className="quick-match">Quick match ↗</span>
             </button>
           ))}
         </div>
-      </section>
+      </section>}
 
       <footer>
         <span>OpenSmash prototype</span>

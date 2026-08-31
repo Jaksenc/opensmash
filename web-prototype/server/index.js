@@ -4,6 +4,7 @@ import { access, readdir, readFile, stat } from "node:fs/promises";
 import http from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { createFighterJobs } from "./fighter-jobs.js";
 
 const APP_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 // The app lives beside pipeline/website inside the opensmash repo, while the
@@ -14,6 +15,12 @@ const ENGINE_ROOT = path.join(REPO_ROOT, "BattleShip", "web-dist");
 const PIPELINE_UI_ROOT = path.join(REPO_ROOT, "pipeline", "play", "ui");
 const SITE_ASSETS_ROOT = path.join(REPO_ROOT, "pipeline", "website", "assets");
 const CHARACTERS_CONFIG = path.join(APP_ROOT, "config", "characters.json");
+const fighterJobs = createFighterJobs({
+  appRoot: APP_ROOT,
+  repoRoot: REPO_ROOT,
+  engineRoot: ENGINE_ROOT,
+  pipelineUiRoot: PIPELINE_UI_ROOT,
+});
 
 const PORT = Number(process.env.PORT || 4174);
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
@@ -49,6 +56,8 @@ const FIGHTERS = [
 const MIME_TYPES = {
   ".css": "text/css; charset=utf-8",
   ".html": "text/html; charset=utf-8",
+  ".jpeg": "image/jpeg",
+  ".jpg": "image/jpeg",
   ".js": "text/javascript; charset=utf-8",
   ".json": "application/json; charset=utf-8",
   ".png": "image/png",
@@ -56,6 +65,7 @@ const MIME_TYPES = {
   ".ttf": "font/ttf",
   ".wasm": "application/wasm",
   ".wav": "audio/wav",
+  ".webp": "image/webp",
 };
 
 function json(res, status, data, headers = {}) {
@@ -195,6 +205,12 @@ async function configuredCharacters() {
     }
   }
 
+  const configuredSlugs = new Set(result.map((character) => character.slug));
+  for (const job of fighterJobs.list()) {
+    if (job.status !== "complete" || !job.character || configuredSlugs.has(job.slug)) continue;
+    result.push({ ...job.character, generated: true });
+  }
+
   return result;
 }
 
@@ -255,6 +271,49 @@ async function handleRequest(req, res, vite) {
 
   if (req.method === "GET" && pathname === "/api/characters") {
     return json(res, 200, { characters: await configuredCharacters() });
+  }
+
+  if (req.method === "GET" && pathname === "/api/fighters") {
+    return json(res, 200, { jobs: fighterJobs.list() });
+  }
+
+  if (req.method === "POST" && pathname === "/api/fighters") {
+    try {
+      return json(res, 202, { job: await fighterJobs.create(req) });
+    } catch (error) {
+      return json(res, error.status || 400, { error: error.message || "Could not create fighter." });
+    }
+  }
+
+  const fighterMatch = pathname.match(/^\/api\/fighters\/([a-f0-9-]+)$/);
+  if (req.method === "GET" && fighterMatch) {
+    const job = fighterJobs.get(fighterMatch[1]);
+    return job
+      ? json(res, 200, { job })
+      : json(res, 404, { error: "Fighter job not found." });
+  }
+
+  const fighterRetryMatch = pathname.match(/^\/api\/fighters\/([a-f0-9-]+)\/retry$/);
+  if (req.method === "POST" && fighterRetryMatch) {
+    try {
+      return json(res, 202, { job: await fighterJobs.retry(fighterRetryMatch[1]) });
+    } catch (error) {
+      return json(res, error.status || 400, { error: error.message || "Could not retry fighter." });
+    }
+  }
+
+  const fighterPortraitMatch = pathname.match(/^\/api\/fighters\/([a-f0-9-]+)\/portrait$/);
+  if ((req.method === "GET" || req.method === "HEAD") && fighterPortraitMatch) {
+    const filePath = fighterJobs.portraitPath(fighterPortraitMatch[1]);
+    if (filePath && (await serveFile(req, res, filePath, "public, max-age=60"))) return;
+    return json(res, 404, { error: "Fighter portrait is not ready." });
+  }
+
+  const fighterAnnouncerMatch = pathname.match(/^\/api\/fighters\/([a-f0-9-]+)\/announcer$/);
+  if ((req.method === "GET" || req.method === "HEAD") && fighterAnnouncerMatch) {
+    const filePath = fighterJobs.announcerPath(fighterAnnouncerMatch[1]);
+    if (filePath && (await serveFile(req, res, filePath, "public, max-age=60"))) return;
+    return json(res, 404, { error: "Fighter announcer clip is not ready." });
   }
 
   if (req.method === "POST" && pathname === "/api/validate-rom") {
@@ -361,6 +420,7 @@ const server = http.createServer((req, res) => {
   });
 });
 
+await fighterJobs.init();
 server.listen(PORT, "127.0.0.1", () => {
   console.log(`OpenSmash prototype: http://127.0.0.1:${PORT}`);
 });
