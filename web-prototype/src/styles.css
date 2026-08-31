@@ -74,6 +74,7 @@ main { width: min(1600px, calc(100% - 40px)); margin: 0 auto; }
 }
 .game-frame::after { content: ""; position: absolute; inset: 0; pointer-events: none; box-shadow: inset 0 0 0 7px rgba(0,0,0,.28); }
 .game-frame iframe { display: block; width: 100%; height: 100%; border: 0; background: #000; }
+.game-frame:fullscreen, .game-frame:-webkit-full-screen { width: 100vw; height: 100vh; min-height: 0; border: 0; }
 .engine-placeholder { position: absolute; inset: 0; display: grid; grid-template-columns: minmax(180px, 34%) 1fr; align-items: center; padding: clamp(28px, 6vw, 78px); isolation: isolate; }
 .engine-placeholder::before {
   content: "";
@@ -91,7 +92,10 @@ main { width: min(1600px, calc(100% - 40px)); margin: 0 auto; }
 .eyebrow { margin: 0 0 10px; color: #ed5a34; font-size: 10px; font-weight: 500; letter-spacing: .17em; text-transform: uppercase; }
 .engine-placeholder h1 { margin: 0; font: 900 italic clamp(46px, 7vw, 112px)/.82 "Barlow Condensed", sans-serif; letter-spacing: -.045em; text-transform: uppercase; text-shadow: 0 6px 0 rgba(0,0,0,.35); }
 .engine-placeholder > div > p:last-child { max-width: 39ch; margin: 24px 0 0; color: #a8a097; font-size: 12px; line-height: 1.7; }
-.stop-game { position: absolute; z-index: 3; top: 12px; right: 12px; border: 1px solid #555; border-radius: 2px; background: rgba(8,8,8,.72); padding: 8px 12px; font-size: 10px; text-transform: uppercase; cursor: pointer; }
+.game-frame-tools { position: absolute; z-index: 4; top: 12px; right: 12px; display: flex; gap: 7px; }
+.frame-button { display: flex; align-items: center; gap: 7px; border: 1px solid #555; border-radius: 2px; background: rgba(8,8,8,.78); padding: 8px 11px; color: #c7beb5; font-size: 9px; letter-spacing: .06em; text-transform: uppercase; cursor: pointer; backdrop-filter: blur(6px); }
+.frame-button:hover { border-color: #a55d45; background: rgba(30,18,14,.9); color: #f0e6dc; }
+.fullscreen-button span { font: 16px/0.7 sans-serif; }
 
 .creator-section { width: min(1180px, 100%); display: grid; grid-template-columns: minmax(250px, .72fr) minmax(540px, 1.28fr); gap: clamp(40px, 7vw, 96px); margin: 0 auto; padding: 92px 0 96px; border-bottom: 1px solid #2b2723; scroll-margin-top: 20px; }
 .creator-intro { align-self: start; position: sticky; top: 30px; }

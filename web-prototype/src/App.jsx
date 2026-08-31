@@ -138,8 +138,10 @@ export default function App() {
   const [engine, setEngine] = useState(null);
   const [pageError, setPageError] = useState("");
   const [fighterSearch, setFighterSearch] = useState("");
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [soundOn, setSoundOn] = useState(() => localStorage.getItem("opensmash-sound") !== "off");
   const gameRef = useRef(null);
+  const gameFrameRef = useRef(null);
   const engineRef = useRef(null);
   const devMenuRef = useRef(null);
   const announcerRef = useRef(null);
@@ -184,6 +186,20 @@ export default function App() {
       window.clearTimeout(retry);
     };
   }, [engine, soundOn]);
+
+  useEffect(() => {
+    function syncFullscreenState() {
+      const fullscreenElement = document.fullscreenElement || document.webkitFullscreenElement;
+      setIsFullscreen(fullscreenElement === gameFrameRef.current);
+    }
+
+    document.addEventListener("fullscreenchange", syncFullscreenState);
+    document.addEventListener("webkitfullscreenchange", syncFullscreenState);
+    return () => {
+      document.removeEventListener("fullscreenchange", syncFullscreenState);
+      document.removeEventListener("webkitfullscreenchange", syncFullscreenState);
+    };
+  }, []);
 
   function launch(action) {
     setEngine({ src: engineUrl(action), action });
@@ -255,6 +271,25 @@ export default function App() {
     });
   }
 
+  async function toggleFullscreen() {
+    const frame = gameFrameRef.current;
+    if (!frame) return;
+
+    try {
+      const fullscreenElement = document.fullscreenElement || document.webkitFullscreenElement;
+      if (fullscreenElement) {
+        const exitFullscreen = document.exitFullscreen || document.webkitExitFullscreen;
+        await exitFullscreen.call(document);
+      } else {
+        const requestFullscreen = frame.requestFullscreen || frame.webkitRequestFullscreen;
+        if (!requestFullscreen) throw new Error("Fullscreen API unavailable");
+        await requestFullscreen.call(frame);
+      }
+    } catch {
+      setPageError("Fullscreen is not available in this browser.");
+    }
+  }
+
   const normalizedSearch = fighterSearch.trim().toLocaleLowerCase();
   const visibleCharacters = characters
     .map((character, index) => ({ character, index }))
@@ -298,7 +333,7 @@ export default function App() {
       </header>
 
       {(!isCreatePage || engine) && <section className="hero" id="top" ref={gameRef}>
-        <div className={`game-frame ${engine ? "is-running" : ""}`}>
+        <div className={`game-frame ${engine ? "is-running" : ""}`} ref={gameFrameRef}>
           {engine ? (
             <iframe
               ref={engineRef}
@@ -319,11 +354,22 @@ export default function App() {
               </div>
             </div>
           )}
-          {engine && (
-            <button className="stop-game" type="button" onClick={() => setEngine(null)}>
-              Close game
+          <div className="game-frame-tools">
+            {engine && (
+              <button className="frame-button" type="button" onClick={() => setEngine(null)}>
+                Close game
+              </button>
+            )}
+            <button
+              className="frame-button fullscreen-button"
+              type="button"
+              aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+              onClick={toggleFullscreen}
+            >
+              <span aria-hidden="true">⛶</span>
+              {isFullscreen ? "Exit fullscreen" : "Fullscreen"}
             </button>
-          )}
+          </div>
         </div>
       </section>}
 
