@@ -24,7 +24,7 @@ function engineUrl(action) {
         randomInt(RANDOM_FIGHTER_COUNT),
       ].join(","),
     );
-  } else {
+  } else if (action.type === "select") {
     params.set("SSB64_START_SCENE", "16");
     params.set("roster", "1");
   }
@@ -79,7 +79,12 @@ function RomModal({ action, onCancel, onValidated }) {
     }
   }
 
-  const target = action?.type === "character" ? action.character.name : "character select";
+  const target =
+    action?.type === "character"
+      ? action.character.name
+      : action?.type === "start"
+        ? "the full game"
+        : "character select";
 
   return (
     <div className="modal-backdrop" role="presentation" onMouseDown={onCancel}>
@@ -130,7 +135,9 @@ export default function App() {
   const [pendingAction, setPendingAction] = useState(null);
   const [engine, setEngine] = useState(null);
   const [pageError, setPageError] = useState("");
+  const [soundOn, setSoundOn] = useState(() => localStorage.getItem("opensmash-sound") !== "off");
   const gameRef = useRef(null);
+  const engineRef = useRef(null);
   const devMenuRef = useRef(null);
 
   useEffect(() => {
@@ -148,6 +155,31 @@ export default function App() {
       .catch((error) => setPageError(error.message))
       .finally(() => setLoadingCharacters(false));
   }, []);
+
+  useEffect(() => {
+    if (!engine) return undefined;
+    let cancelled = false;
+    let attempts = 0;
+    let retry;
+
+    function applySoundPreference() {
+      if (cancelled) return;
+      const audioContext = engineRef.current?.contentWindow?.Module?.SDL2?.audioContext;
+      if (audioContext) {
+        const update = soundOn ? audioContext.resume() : audioContext.suspend();
+        update?.catch(() => {});
+        return;
+      }
+      attempts += 1;
+      if (attempts < 40) retry = window.setTimeout(applySoundPreference, 250);
+    }
+
+    applySoundPreference();
+    return () => {
+      cancelled = true;
+      window.clearTimeout(retry);
+    };
+  }, [engine, soundOn]);
 
   function launch(action) {
     setEngine({ src: engineUrl(action), action });
@@ -183,6 +215,14 @@ export default function App() {
     if (devMenuRef.current) devMenuRef.current.open = false;
   }
 
+  function toggleSound() {
+    setSoundOn((current) => {
+      const next = !current;
+      localStorage.setItem("opensmash-sound", next ? "on" : "off");
+      return next;
+    });
+  }
+
   return (
     <main>
       <header className="site-header">
@@ -190,6 +230,14 @@ export default function App() {
           OPEN<span>SMASH</span>
         </a>
         <div className="header-tools">
+          <button
+            className={`sound-button ${soundOn ? "is-on" : ""}`}
+            type="button"
+            aria-pressed={soundOn}
+            onClick={toggleSound}
+          >
+            <i /> Sound {soundOn ? "on" : "off"}
+          </button>
           <span className={`rom-status ${authorized ? "is-ready" : ""}`}>
             <i /> {authorized ? "ROM verified" : "Browser build"}
           </span>
@@ -208,6 +256,7 @@ export default function App() {
         <div className={`game-frame ${engine ? "is-running" : ""}`}>
           {engine ? (
             <iframe
+              ref={engineRef}
               src={engine.src}
               title="OpenSmash game engine"
               allow="autoplay; gamepad; fullscreen"
@@ -239,10 +288,20 @@ export default function App() {
             <p className="eyebrow">Choose your fighter</p>
             <h2 id="select-title">Character select</h2>
           </div>
-          <button className="play-button" type="button" onClick={() => requestLaunch({ type: "select" })}>
-            <span>Play now</span>
-            <small>Open character select →</small>
-          </button>
+          <div className="play-actions">
+            <button
+              className="start-button"
+              type="button"
+              onClick={() => requestLaunch({ type: "start" })}
+            >
+              <span>Play from start</span>
+              <small>Watch the intro</small>
+            </button>
+            <button className="play-button" type="button" onClick={() => requestLaunch({ type: "select" })}>
+              <span>Play now</span>
+              <small>Open character select →</small>
+            </button>
+          </div>
         </div>
 
         {pageError && <p className="page-error">{pageError}</p>}

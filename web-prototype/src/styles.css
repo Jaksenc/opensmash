@@ -36,6 +36,13 @@ main { width: min(1180px, calc(100% - 40px)); margin: 0 auto; }
 }
 .wordmark span { color: #ed4b25; }
 .header-tools { display: flex; align-items: center; gap: 15px; }
+.sound-button { display: flex; align-items: center; gap: 7px; padding: 7px 9px; border: 1px solid transparent; background: transparent; color: #6f6963; font-size: 8px; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; }
+.sound-button:hover { color: #c0b6ad; }
+.sound-button i { position: relative; width: 11px; height: 8px; border-left: 5px solid #68625c; border-top: 4px solid transparent; border-bottom: 4px solid transparent; }
+.sound-button i::after { content: ""; position: absolute; top: -6px; left: 2px; width: 6px; height: 10px; border: 1px solid #68625c; border-left: 0; border-radius: 0 9px 9px 0; opacity: 0; }
+.sound-button.is-on { color: #aaa096; }
+.sound-button.is-on i { border-left-color: #aaa096; }
+.sound-button.is-on i::after { border-color: #aaa096; opacity: 1; }
 .rom-status { display: flex; gap: 8px; align-items: center; color: #807b73; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
 .rom-status i { width: 7px; height: 7px; border-radius: 50%; background: #5c5954; }
 .rom-status.is-ready { color: #9aa981; }
@@ -84,6 +91,11 @@ main { width: min(1180px, calc(100% - 40px)); margin: 0 auto; }
 .select-section { padding: 88px 0 72px; }
 .section-heading { display: flex; align-items: end; justify-content: space-between; gap: 30px; margin-bottom: 28px; }
 .section-heading h2 { margin: 0; font: 900 italic clamp(46px, 7vw, 80px)/.82 "Barlow Condensed", sans-serif; letter-spacing: -.035em; text-transform: uppercase; }
+.play-actions { display: flex; align-items: stretch; gap: 10px; }
+.start-button { min-width: 170px; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 5px; padding: 14px 16px; border: 1px solid #4b443e; background: #171411; cursor: pointer; text-align: left; transition: border-color 100ms ease, background 100ms ease; }
+.start-button:hover { border-color: #a55d45; background: #211713; }
+.start-button span { font: 800 italic 18px/1 "Barlow Condensed", sans-serif; text-transform: uppercase; }
+.start-button small { color: #8b8178; font-size: 8px; letter-spacing: .07em; text-transform: uppercase; }
 .play-button { min-width: 245px; display: flex; justify-content: space-between; align-items: end; gap: 25px; padding: 17px 18px; border: 1px solid #f16a47; background: #df3f1d; box-shadow: 5px 5px 0 #761c0d; cursor: pointer; text-align: left; transition: transform 100ms ease, box-shadow 100ms ease; }
 .play-button:hover { transform: translate(2px, 2px); box-shadow: 3px 3px 0 #761c0d; }
 .play-button span { font: 800 italic 24px/1 "Barlow Condensed", sans-serif; text-transform: uppercase; }
@@ -131,6 +143,8 @@ footer { display: flex; justify-content: space-between; border-top: 1px solid #2
 @media (max-width: 560px) {
   .rom-status { display: none; }
   .section-heading { align-items: stretch; flex-direction: column; }
+  .play-actions { flex-direction: column; }
+  .start-button { width: 100%; }
   .play-button { width: 100%; }
   .engine-placeholder h1 { font-size: 48px; }
   .select-section { padding-top: 60px; }
