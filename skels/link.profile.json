@@ -30,6 +30,13 @@
   5,
   24
  ],
+ "snap_accessories": [
+  {
+   "joint": 21,
+   "at": "chest-back",
+   "embed": 3.0
+  }
+ ],
  "tune": {
   "head_recenter": 0.85
  }
