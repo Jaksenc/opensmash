@@ -319,3 +319,176 @@ footer { display: flex; justify-content: space-between; border-top: 1px solid #2
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; }
 }
+
+/* React-owned controls layered into the shared N64/CRT visual runtime. */
+body.retro-home {
+  min-width: 320px;
+  background: #000;
+  color: #e9dfcf;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  cursor: none;
+}
+body.retro-home::before {
+  z-index: 0;
+  background-color: #000;
+  background-image: var(--stone-background-image);
+  background-repeat: repeat;
+  background-position: 0 0;
+  background-size: 256px 128px;
+  image-rendering: pixelated;
+  opacity: 1;
+}
+.retro-game-tools {
+  position: absolute;
+  z-index: 7;
+  top: 10px;
+  right: 10px;
+  display: none;
+  gap: 7px;
+}
+.intro-video-frame.is-game-running .retro-game-tools { display: flex; }
+.retro-game-tools .game-close-button {
+  position: static;
+  display: block;
+  cursor: none;
+}
+.retro-page-error {
+  position: fixed;
+  z-index: 2200;
+  top: 14px;
+  left: 50%;
+  max-width: min(720px, calc(100vw - 32px));
+  margin: 0;
+  padding: 9px 13px;
+  transform: translateX(-50%);
+  border: 1px solid #b0452d;
+  background: rgba(30, 7, 3, .94);
+  color: #ffd3c5;
+  font: 600 11px/1.45 "Kanit", sans-serif;
+  letter-spacing: .04em;
+  text-align: center;
+}
+.retro-roster-loading {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  color: #c7a985;
+  font: 600 14px/1 "Kanit", sans-serif;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.site-menu-button.is-active { color: #fff0b5; text-shadow: 0 0 12px rgba(255, 148, 47, .65), 0 2px 0 #260500; }
+.retro-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2100;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, .84);
+}
+.retro-menu-modal {
+  position: relative;
+  width: min(570px, 100%);
+  padding: clamp(26px, 5vw, 46px);
+  border: 2px solid #5b3828;
+  background:
+    linear-gradient(rgba(10, 3, 1, .82), rgba(8, 3, 1, .92)),
+    url("/assets/charselect/fire_bg.png") center / 192px 184px;
+  box-shadow: 0 0 0 2px #160b08, 0 24px 80px #000;
+  color: #fff2d6;
+  font-family: "Kanit", sans-serif;
+}
+.retro-menu-modal::after {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border: 1px solid rgba(255, 235, 198, .12);
+  pointer-events: none;
+}
+.retro-menu-modal h2 {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  font: 800 clamp(36px, 8vw, 66px)/.85 "Kanit", sans-serif;
+  letter-spacing: -.045em;
+  text-transform: uppercase;
+  text-shadow: 0 4px 0 #260500, 2px 0 0 #260500;
+}
+.retro-menu-modal > p:not(.retro-menu-kicker):not(.retro-rom-status) {
+  position: relative;
+  z-index: 1;
+  max-width: 47ch;
+  margin: 20px 0;
+  color: #c7ae91;
+  font-size: 12px;
+  line-height: 1.55;
+}
+.retro-menu-kicker,
+.retro-rom-status {
+  position: relative;
+  z-index: 1;
+  margin: 0 0 10px;
+  color: #ef7f45;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+.retro-rom-status { margin: 18px 0 0; color: #8f7966; }
+.retro-menu-actions {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+.retro-menu-actions button,
+.retro-menu-actions a {
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 13px;
+  border: 1px solid #6a412e;
+  background: rgba(18, 6, 2, .76);
+  color: #fff2d6;
+  font: 700 14px/1.1 "Kanit", sans-serif;
+  letter-spacing: .035em;
+  text-decoration: none;
+  text-transform: uppercase;
+  cursor: none;
+}
+.retro-menu-actions button:hover,
+.retro-menu-actions button:focus-visible,
+.retro-menu-actions a:hover,
+.retro-menu-actions a:focus-visible {
+  outline: 0;
+  border-color: #ffb05f;
+  background: rgba(92, 30, 10, .84);
+}
+.retro-menu-close {
+  position: absolute;
+  z-index: 2;
+  top: 12px;
+  right: 15px;
+  border: 0;
+  background: transparent;
+  color: #c8aa8c;
+  font: 28px/1 sans-serif;
+  cursor: none;
+}
+.retro-home .modal-backdrop { z-index: 2100; cursor: none; }
+.retro-home .modal,
+.retro-home .modal button,
+.retro-home .modal input,
+.retro-home .modal select,
+.retro-home .modal label { cursor: none; }
+
+@media (max-width: 560px) {
+  .retro-menu-actions { grid-template-columns: 1fr; }
+  .retro-game-tools { top: 6px; right: 6px; }
+  .retro-game-tools .game-close-button { padding: 6px 7px; font-size: 7px; }
+}

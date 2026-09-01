@@ -5,9 +5,6 @@
 pipeline/web-prototype/node_modules/
 pipeline/web-prototype/data/
 pipeline/web-prototype/dist/
-!pipeline/website/
-!pipeline/website/assets/
-!pipeline/website/assets/**
 !pipeline/play/
 !pipeline/play/ui/
 !pipeline/play/ui/joeyflynn/

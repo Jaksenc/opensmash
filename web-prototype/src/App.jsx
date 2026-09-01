@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import AuthGate from "./AuthGate.jsx";
 import FighterCreator from "./FighterCreator.jsx";
+import RetroHome from "./RetroHome.jsx";
 import { matchesCharacterSearch } from "../shared/character-search.js";
 import { identifyRomFile } from "./rom-validation.js";
 import {
@@ -245,6 +246,7 @@ export default function App() {
   const engineRef = useRef(null);
   const devMenuRef = useRef(null);
   const announcerRef = useRef(null);
+  const visualBridgeRef = useRef({});
 
   async function loadCharacters() {
     const response = await fetch("/api/characters", { cache: "no-store" });
@@ -364,6 +366,11 @@ export default function App() {
   }
 
   function selectCharacter(character) {
+    announceCharacter(character);
+    requestLaunch({ type: "character", character });
+  }
+
+  function announceCharacter(character) {
     const previous = announcerRef.current;
     if (previous) {
       previous.pause();
@@ -383,7 +390,42 @@ export default function App() {
       announcerRef.current = null;
     }
 
-    requestLaunch({ type: "character", character });
+  }
+
+  async function validateVisualRom(file, onStatus) {
+    const rom = await identifyRomFile(file, { onStatus });
+    onStatus?.("validating");
+    const response = await fetch("/api/validate-rom", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ algorithm: "SHA-1", hash: rom.sha1, size: rom.size }),
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "ROM validation failed");
+    setAuthorized(true);
+    const session = await getSession();
+    setUser(session.user || null);
+    return result;
+  }
+
+  function launchVisualAction({ type, slug }) {
+    const action = type === "character"
+      ? { type, character: characters.find((character) => character.slug === slug) }
+      : { type };
+    if (type === "character" && !action.character) {
+      setPageError("That fighter is no longer available.");
+      return "about:blank";
+    }
+    try {
+      const src = engineUrl(action, advancedOptions);
+      setEngine({ src, action });
+      setPendingAction(null);
+      setPageError("");
+      return src;
+    } catch (error) {
+      setPageError(error.message || "Could not apply those advanced options.");
+      return "about:blank";
+    }
   }
 
   async function clearVerification() {
@@ -434,6 +476,52 @@ export default function App() {
   const visibleCharacters = characters
     .map((character, index) => ({ character, index }))
     .filter(({ character }) => matchesCharacterSearch(character, fighterSearch));
+
+  if (!isCreatePage) {
+    Object.assign(visualBridgeRef.current, {
+      characters,
+      announceCharacter(slug) {
+        const character = characters.find((candidate) => candidate.slug === slug);
+        if (character) announceCharacter(character);
+      },
+      clearVerification,
+      closeGame() { setEngine(null); },
+      isAuthorized() { return authorized; },
+      launch: launchVisualAction,
+      navigate(pathname) { window.location.assign(pathname); },
+      reportError(error) { setPageError(error.message || "Could not load the visual experience."); },
+      validateRom: validateVisualRom,
+    });
+    window.openSmashReactBridge = visualBridgeRef.current;
+
+    return (
+      <>
+        <RetroHome
+          advancedActive={hasAdvancedOverrides(advancedOptions)}
+          authorized={authorized}
+          engine={engine}
+          engineRef={engineRef}
+          gameFrameRef={gameFrameRef}
+          onAdvanced={() => setAdvancedOpen(true)}
+          onClearVerification={clearVerification}
+          onFullscreen={toggleFullscreen}
+          onSignOut={signOutUser}
+          onSound={toggleSound}
+          pageError={pageError}
+          ready={!loadingCharacters}
+          soundOn={soundOn}
+          user={user}
+        />
+        {advancedOpen && (
+          <AdvancedModal
+            options={advancedOptions}
+            onCancel={() => setAdvancedOpen(false)}
+            onSave={saveAdvancedOptions}
+          />
+        )}
+      </>
+    );
+  }
 
   return (
     <main className={isCreatePage ? "create-page" : undefined}>
@@ -592,7 +680,7 @@ export default function App() {
       </section>}
 
       <footer>
-        <span>OpenSmash prototype</span>
+        <span>OpenSmash web</span>
         <span>React · Node · WASM on demand</span>
       </footer>
 

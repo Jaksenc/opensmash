@@ -17,7 +17,7 @@ COPY --from=build /workspace/pipeline/web-prototype/dist ./dist
 COPY pipeline/web-prototype/server ./server
 COPY pipeline/web-prototype/shared ./shared
 COPY pipeline/web-prototype/config ./config
-COPY pipeline/website/assets /workspace/pipeline/website/assets
+COPY pipeline/web-prototype/visual ./visual
 COPY pipeline/play/ui/joeyflynn /workspace/pipeline/play/ui/joeyflynn
 COPY pipeline/play/ui/barackobama /workspace/pipeline/play/ui/barackobama
 COPY pipeline/play/ui/queen /workspace/pipeline/play/ui/queen
