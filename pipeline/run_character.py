@@ -24,7 +24,14 @@ import time
 
 PIPELINE_DIR = os.path.dirname(os.path.abspath(__file__))
 HERE = os.path.dirname(PIPELINE_DIR)
-WEBDIST = os.path.join(HERE, "..", "BattleShip", "web-dist", "bundles")
+_WEBDIST_CANDIDATES = [
+    os.path.join(HERE, "BattleShip", "web-dist", "bundles"),
+    os.path.join(HERE, "..", "BattleShip", "web-dist", "bundles"),
+]
+WEBDIST = os.environ.get("OPENSMASH_WEBDIST") or next(
+    (candidate for candidate in _WEBDIST_CANDIDATES if os.path.isdir(candidate)),
+    _WEBDIST_CANDIDATES[0],
+)
 
 # These profiles remain available for deliberate experiments, but are not
 # production-quality enough to generate/assign to every new character yet.

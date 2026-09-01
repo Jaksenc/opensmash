@@ -222,7 +222,7 @@ export function createFighterJobs({
 }) {
   const jobsRoot = path.resolve(process.env.FIGHTER_JOBS_ROOT || path.join(appRoot, "data", "fighter-jobs"));
   const pipelineRoot = path.join(repoRoot, "pipeline");
-  const pipelineScript = path.join(pipelineRoot, "pipeline", "run_character.py");
+  const pipelineScript = path.join(pipelineRoot, "run_character.py");
   const normalizeImageScript = path.join(appRoot, "server", "normalize-image.py");
   const jobs = new Map();
   const queue = [];

@@ -70,7 +70,7 @@ and exercise the first-run flow again.
 
 ## Generate a fighter
 
-Open `/create`, validate a supported ROM, sign in, and submit a name,
+Open `/create`, sign in, validate a supported ROM, and submit a name,
 JPEG/PNG/WebP reference photo, optional emblem direction, and public/private
 visibility. Public is the default. The uploader must attest that they own or
 have permission to use the character and photo. The server safety-screens the
@@ -79,6 +79,11 @@ paid generation job. In local mode the server stores
 uploads and job records under `data/`; the production adapters use Firestore
 and Cloud Storage. A single local worker runs the existing
 `pipeline/run_character.py` command.
+
+ROM verification completed through `/create` leaves the mandatory controller
+check pending. The next launch from the main roster opens the completion-only
+controller screen; the separate Controls menu remains a dismissible preview and
+does not satisfy that check.
 Before invoking the pipeline, the worker flattens multi-frame phone photos,
 applies EXIF orientation, converts to plain sRGB RGB, and writes a normalized
 PNG capped at 2048px so image providers receive a predictable input.

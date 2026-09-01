@@ -132,6 +132,7 @@ const LIVE_ROSTER = Object.freeze((APP_BRIDGE?.characters || []).map(character =
   fkind: character.fkind,
   bundle: character.bundle,
 })));
+const INITIAL_FIGHTER_JOBS = APP_BRIDGE?.fighterJobs || [];
 const BAKED_CAPTION_PORTRAITS = new Set(
   VANILLA_ROSTER.map(character => character.portrait)
 );
@@ -942,6 +943,7 @@ const flameBridgeCells = [...document.querySelectorAll('.flame-bridge-cell')];
 const flameBridgeRuleImage = document.querySelector('.flame-bridge-rule-layer');
 const cells = new Map();
 const cellFrames = new Map();
+const jobCells = new Map();
 
 const gridRasterImage = document.createElement('img');
 gridRasterImage.className = 'replica-raster-layer';
@@ -1150,8 +1152,18 @@ function paintGridRaster(layout, visibleCells) {
   gridRasterImage.src = pixelsDataUrl(pixels, width, height);
 }
 
+function visibleCellsInDisplayOrder() {
+  const visible = [...cells.values()].filter(button => !button.hidden);
+  return [
+    ...visible.filter(button => button.dataset.kind === 'create'),
+    ...visible.filter(button => button.dataset.kind === 'job'),
+    ...visible.filter(button => button.dataset.kind === 'creation'),
+    ...visible.filter(button => button.dataset.kind === 'fighter'),
+  ];
+}
+
 function applyGridLayout(columns = columnsForContainer()) {
-  const visibleCells = [...cells.values()].filter(button => !button.hidden);
+  const visibleCells = visibleCellsInDisplayOrder();
   const visibleSignature = visibleCells.map(button => button.dataset.character).join(',');
   if (currentGridLayout?.columns === columns &&
       currentGridLayout.visibleSignature === visibleSignature) {
@@ -1261,8 +1273,147 @@ function filterRoster(query = '') {
 fighterSearch?.addEventListener('input', event => filterRoster(event.currentTarget.value));
 
 function getCell(name) {
-  const key = String(name).toUpperCase();
-  return cells.get(key) || [...cells.values()].find(cell => cell.dataset.label === key) || null;
+  const value = String(name);
+  const key = value.toUpperCase();
+  return cells.get(key) || [...cells.values()].find(cell =>
+    cell.dataset.label === key || cell.dataset.rosterCharacter === value
+  ) || null;
+}
+
+function jobCellId(jobId) {
+  return `JOB-${jobId}`;
+}
+
+function createJobCell(job) {
+  const id = jobCellId(job.id);
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'replica-cell fighter-job-cell';
+  button.dataset.character = id;
+  button.dataset.kind = 'job';
+  button.dataset.label = fitCaption(job.name).text;
+  button.dataset.rosterCharacter = job.slug;
+  button.dataset.portrait = '';
+  button.dataset.displayName = job.name;
+  button.dataset.fkind = '0';
+  button.setAttribute('role', 'gridcell');
+  button.setAttribute('aria-pressed', 'false');
+  button.setAttribute('aria-disabled', 'true');
+
+  cellFrames.set(button, renderCellFramebuffer(job.name));
+
+  const spinner = document.createElement('span');
+  spinner.className = 'fighter-job-spinner';
+  spinner.setAttribute('aria-hidden', 'true');
+  button.append(spinner);
+
+  const progress = document.createElement('span');
+  progress.className = 'fighter-job-progress';
+  progress.setAttribute('role', 'progressbar');
+  progress.setAttribute('aria-valuemin', '0');
+  progress.setAttribute('aria-valuemax', '100');
+  const fill = document.createElement('i');
+  progress.append(fill);
+  button.append(progress);
+
+  button.addEventListener('click', () => {
+    if (button.dataset.kind === 'fighter' || button.dataset.kind === 'creation') {
+      requestSelection(button.dataset.rosterCharacter);
+    }
+  });
+  grid.append(button);
+  cells.set(id, button);
+  jobCells.set(job.id, button);
+  return button;
+}
+
+async function updateJobCell(job) {
+  if (!job?.id) return null;
+  const button = jobCells.get(job.id) || createJobCell(job);
+  const revision = Number(button.dataset.revision || -1);
+  if (revision >= (job.revision || 0)) return button;
+
+  const active = ['queued', 'running', 'retrying'].includes(job.status);
+  const complete = job.status === 'complete' && job.character;
+  const progress = Math.max(0, Math.min(100, Number(job.progress) || 0));
+  button.dataset.revision = String(job.revision || 0);
+  button.dataset.status = job.status;
+  button.dataset.displayName = job.character?.name || job.name;
+  button.dataset.label = fitCaption(job.character?.short || job.name).text;
+  button.dataset.rosterCharacter = job.character?.slug || job.slug;
+  button.classList.toggle('is-generating', active);
+  button.classList.toggle('is-failed', job.status === 'failed');
+  button.querySelector('.fighter-job-spinner').hidden = !active;
+  const progressElement = button.querySelector('.fighter-job-progress');
+  progressElement.hidden = complete;
+  progressElement.setAttribute('aria-valuenow', String(progress));
+  progressElement.setAttribute('aria-label', `${job.name} generation ${progress}% complete`);
+  progressElement.querySelector('i').style.width = `${progress}%`;
+  button.setAttribute('aria-label', complete
+    ? `${job.character.name}, ready to fight`
+    : `${job.name}, ${job.stageLabel || job.status}, ${progress}% complete`);
+  button.setAttribute('aria-disabled', String(!complete));
+
+  if (complete) {
+    button.dataset.kind = 'creation';
+    button.dataset.character = job.character.slug;
+    button.dataset.portrait = `job:${job.id}`;
+    button.dataset.fkind = String(job.character.fkind || 0);
+    if (job.character.bundle) button.dataset.bundle = job.character.bundle;
+    try {
+      CHARACTER_PORTRAITS.set(
+        button.dataset.portrait,
+        await loadFeaturedPortrait(button.dataset.portrait, job.character.portrait)
+      );
+      cellFrames.set(
+        button,
+        renderCellFramebuffer(
+          job.character.short || job.character.name,
+          button.dataset.portrait
+        )
+      );
+    } catch (error) {
+      console.warn(`Could not load generated portrait for ${job.name}:`, error);
+    }
+  } else {
+    button.dataset.kind = 'job';
+    cellFrames.set(
+      button,
+      renderCellFramebuffer(job.character?.short || job.name)
+    );
+  }
+  return button;
+}
+
+async function syncJobs(jobs = []) {
+  const staticCells = [...cells.values()].filter(
+    button => !button.classList.contains('fighter-job-cell')
+  );
+  staticCells.forEach(button => {
+    if (button.dataset.kind === 'creation') button.dataset.kind = 'fighter';
+  });
+
+  const renderedJobs = jobs.filter(job => {
+    if (job.status !== 'complete' || !job.character) return true;
+    const existing = staticCells.find(
+      button => button.dataset.rosterCharacter === job.character.slug
+    );
+    if (!existing) return true;
+    existing.dataset.kind = 'creation';
+    return false;
+  });
+
+  const nextIds = new Set(renderedJobs.map(job => job.id));
+  for (const [jobId, button] of jobCells) {
+    if (nextIds.has(jobId)) continue;
+    cells.delete(jobCellId(jobId));
+    jobCells.delete(jobId);
+    cellFrames.delete(button);
+    button.remove();
+  }
+  await Promise.all(renderedJobs.map(updateJobCell));
+  filterRoster(fighterSearch?.value || '');
+  return jobCells;
 }
 
 function setLabel(character, label) {
@@ -1273,10 +1424,7 @@ function setLabel(character, label) {
   cell.setAttribute('aria-label', fitted || cell.dataset.character);
   cellFrames.set(cell, renderCellFramebuffer(fitted, cell.dataset.portrait));
   if (currentGridLayout) {
-    paintGridRaster(
-      currentGridLayout,
-      [...cells.values()].filter(button => !button.hidden)
-    );
+    paintGridRaster(currentGridLayout, visibleCellsInDisplayOrder());
   }
   return cell;
 }
@@ -1302,6 +1450,11 @@ function highlight(name, active = true) {
 function select(name) {
   const selected = name == null ? null : getCell(name);
   cells.forEach(cell => cell.setAttribute('aria-pressed', String(cell === selected)));
+  return selected;
+}
+
+function requestSelection(name) {
+  const selected = name == null ? null : getCell(name);
   if (selected) {
     grid.dispatchEvent(new CustomEvent('characterselect', {
       bubbles: true,
@@ -1325,7 +1478,7 @@ cells.forEach(cell => cell.addEventListener('click', () => {
     else window.location.assign('/create');
     return;
   }
-  select(cell.dataset.character);
+  requestSelection(cell.dataset.character);
 }));
 
 const BENCH_W = 24;
@@ -1426,9 +1579,12 @@ window.characterGrid = Object.freeze({
   highlight,
   clearHighlights,
   select,
+  syncJobs,
   filter: filterRoster,
   randomize
 });
+
+await syncJobs(INITIAL_FIGHTER_JOBS);
 
 window.__replicaMetrics = Object.freeze({
   get nativeGrid() { return currentGridLayout.width + 'x' + currentGridLayout.height; },

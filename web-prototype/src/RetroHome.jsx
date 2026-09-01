@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import FlameAction from "./FlameAction.jsx";
 import MobileControls from "./MobileControls.jsx";
 
 let visualRuntimePromise;
@@ -19,7 +20,7 @@ function loadVisualStyles() {
     const link = document.createElement("link");
     link.id = "site-shell-styles";
     link.rel = "stylesheet";
-    link.href = "/visual/site-shell.css";
+    link.href = "/visual/site-shell.css?v=20260901-fighter-progress4";
     link.addEventListener("load", resolve, { once: true });
     link.addEventListener("error", () => reject(new Error("Could not load the site visual system")), { once: true });
     document.head.append(link);
@@ -39,10 +40,10 @@ function loadModule(src) {
 
 function startVisualRuntime() {
   visualRuntimePromise ||= loadVisualStyles().then(() => [
-    "/visual/grid-replica.js?v=20260901-react6",
+    "/visual/grid-replica.js?v=20260901-fighter-progress4",
     "/visual/logo-stage.js?v=20260901-react5",
     "/visual/crt-viewport.js?v=20260901-react7",
-    "/visual/game-launcher.js?v=20260901-react8",
+    "/visual/game-launcher.js?v=20260901-react9",
     "/visual/site-hardware.js?v=20260901-react6",
   ].reduce((ready, src) => ready.then(() => loadModule(src)), Promise.resolve()));
   return visualRuntimePromise;
@@ -78,7 +79,7 @@ function ControllerCallouts() {
   );
 }
 
-function LaunchFlow() {
+export function LaunchFlow() {
   return (
     <div id="launch-flow-overlay" className="launch-flow-overlay" data-step="upload" data-mode="launch" hidden>
       <canvas id="launch-flow-canvas" className="launch-flow-canvas" aria-hidden="true" />
@@ -88,9 +89,7 @@ function LaunchFlow() {
           To play Smash the Weights upload your legally obtained Super Smash Bros 64 ROM. It is normalized and hashed locally and never uploaded.
         </p>
         <input id="rom-file-input" className="launch-flow-file-input" type="file" hidden accept=".zip,.z64,.n64,.v64,.rom,application/zip,application/octet-stream" />
-        <div className="launch-flow-fire-cell flame-bridge-cell">
-          <button id="rom-upload-button" className="launch-flow-action" type="button">Upload ROM</button>
-        </div>
+        <FlameAction id="rom-upload-button" type="button">Upload ROM</FlameAction>
         <button id="launch-cancel-button" className="launch-flow-action launch-flow-cancel" type="button">Cancel</button>
         <p id="rom-form-error" className="launch-flow-error" role="alert" hidden />
       </section>
@@ -100,9 +99,7 @@ function LaunchFlow() {
           <p id="launch-control-prompt" className="launch-flow-control-prompt" aria-live="polite">Press each key on your keyboard to continue</p>
         </div>
         <ControllerCallouts />
-        <div className="launch-flow-fire-cell flame-bridge-cell launch-flow-controls-close">
-          <button id="controls-close-button" className="launch-flow-action" type="button">Close</button>
-        </div>
+        <FlameAction cellClassName="launch-flow-controls-close" id="controls-close-button" type="button">Close</FlameAction>
       </section>
     </div>
   );
@@ -158,6 +155,7 @@ export default function RetroHome({
   isFullscreen,
   onAdvanced,
   onCloseGame,
+  onCreate,
   onFullscreen,
   onSignOut,
   onSound,
@@ -398,7 +396,7 @@ export default function RetroHome({
             <div className="retro-menu-actions">
               <button type="button" onClick={() => requestGame('select')}>Character select</button>
               <button type="button" onClick={() => requestGame('start')}>Play from start</button>
-              <a href="/create">Create fighter</a>
+              <button type="button" onClick={onCreate}>Create fighter</button>
               <button id="sound-toggle" type="button" aria-pressed={soundOn} onClick={onSound}>Sound <span id="sound-toggle-state">{soundOn ? 'On' : 'Off'}</span></button>
               {engine && <button type="button" onClick={onFullscreen}>Fullscreen game</button>}
               {user && <button type="button" onClick={onSignOut}>{user.displayName || user.email || 'Account'} · Sign out</button>}

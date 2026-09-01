@@ -6,6 +6,10 @@ import {
   saveControllerTutorialCompletion,
   shouldRequireControllerTutorial,
 } from './control-tutorial.js?v=20260901-reset1';
+import {
+  completeControlsRoadblock,
+  controlsRoadblockRequired,
+} from './controls-roadblock.js';
 
 const APP_BRIDGE = window.openSmashReactBridge;
 const ROM_SHA256 = '15592e79d3c5295cef4371d4992f0bd25bec2102fc29644c93e682f7ea99ef3d';
@@ -88,6 +92,7 @@ let controllerTutorialCompletedThisSession = false;
 let controlCheckComplete = false;
 let controlExitPending = false;
 let controlsPreviewMode = false;
+let createUploadMode = false;
 const completedControlKeys = new Set();
 const heldControlKeys = new Set();
 
@@ -137,7 +142,7 @@ function resetControllerTutorial() {
 }
 
 function requiresControllerTutorial() {
-  return shouldRequireControllerTutorial({
+  return controlsRoadblockRequired() || shouldRequireControllerTutorial({
     completed: hasCompletedControllerTutorial(),
     mobileControls: usesMobileControls(),
   });
@@ -162,6 +167,7 @@ function fighterFromSelection(detail) {
     actionType: 'character',
     fkind,
     bundle: detail.bundle || null,
+    selectionName: detail.name || detail.slug || null,
   });
 }
 
@@ -224,14 +230,21 @@ function launch(fighter) {
   pendingFighter = null;
   introVideo?.pause();
   gameFrame.title = `${fighter.displayName} — Super Weights Bros`;
-  gameFrame.src = APP_BRIDGE?.launch
+  const source = APP_BRIDGE?.launch
     ? APP_BRIDGE.launch({ type: fighter.actionType || 'character', slug: fighter.slug })
     : engineUrl(fighter);
+  if (!source || source === 'about:blank') {
+    window.characterGrid?.select(null);
+    return;
+  }
+  gameFrame.src = source;
   videoFrame.classList.add('is-game-running');
+  window.characterGrid?.select(fighter.selectionName || fighter.slug || null);
   scrollToPageTop();
 }
 
 function closeGame() {
+  window.characterGrid?.select(null);
   if (!gameFrame || !videoFrame) return;
   APP_BRIDGE?.closeGame?.();
   gameFrame.src = 'about:blank';
@@ -1779,21 +1792,25 @@ function showRequiredControls(fighter) {
   });
 }
 
-function showLaunchFlow(fighter) {
-  if (!overlay) return;
+function showLaunchFlow(fighter, { create = false } = {}) {
+  if (!overlay || !overlay.hidden) return;
   flowSequence += 1;
   clearTimeout(flowTimer);
   pendingFighter = fighter;
   previousFocus = document.activeElement;
   controlsPreviewMode = false;
+  createUploadMode = create;
   resetRomPrompt();
   resetControlCheck();
-  if (flowTitle) flowTitle.textContent = 'Play Smash the Weights';
+  if (flowTitle) flowTitle.textContent = create ? 'Create a fighter' : 'Play Smash the Weights';
   if (flowCopy) {
-    flowCopy.textContent = 'To play Smash the Weights upload your legally obtained ' +
-      'Super Smash Bros 64 ROM. It is normalized and hashed locally and never uploaded.';
+    flowCopy.textContent = create
+      ? 'To create a fighter upload your legally obtained Super Smash Bros 64 ROM. ' +
+        'It is normalized and hashed locally and never uploaded.'
+      : 'To play Smash the Weights upload your legally obtained Super Smash Bros 64 ROM. ' +
+        'It is normalized and hashed locally and never uploaded.';
   }
-  overlay.dataset.mode = 'launch';
+  overlay.dataset.mode = create ? 'create' : 'launch';
   overlay.dataset.step = 'upload';
   modelRestedAt = 0;
   overlay.classList.remove('is-leaving', 'is-model-settled');
@@ -1823,6 +1840,7 @@ function finishClosingFlow(sequence, restoreFocus) {
   resetCartridgeInteraction();
   resetRomPrompt();
   controlsPreviewMode = false;
+  createUploadMode = false;
   resetControlCheck();
   if (restoreFocus && previousFocus instanceof HTMLElement) previousFocus.focus();
   previousFocus = null;
@@ -1853,6 +1871,16 @@ function closeLaunchFlow(immediate = false) {
       () => finishClosingFlow(sequence, true), FLOW_FADE_MS
     );
   });
+}
+
+function cancelLaunchFlow() {
+  if (createUploadMode && APP_BRIDGE?.cancelCreateRom) {
+    createUploadMode = false;
+    closeLaunchFlow();
+    APP_BRIDGE.cancelCreateRom();
+    return;
+  }
+  closeLaunchFlow();
 }
 
 function transitionToController() {
@@ -1887,8 +1915,11 @@ async function validateRom(file) {
   }
 
   try {
-    if (APP_BRIDGE?.validateRom) {
-      await APP_BRIDGE.validateRom(file, status => {
+    const bridgeValidator = createUploadMode
+      ? APP_BRIDGE?.validateCreateRom
+      : APP_BRIDGE?.validateRom;
+    if (bridgeValidator) {
+      await bridgeValidator(file, status => {
         if (!uploadButton) return;
         uploadButton.textContent = ({
           reading: 'Reading locally…',
@@ -1906,7 +1937,11 @@ async function validateRom(file) {
       }
     }
     rememberVerifiedRom();
-    if (!requiresControllerTutorial()) {
+    if (createUploadMode) {
+      APP_BRIDGE?.completeCreateRom?.();
+      createUploadMode = false;
+      closeLaunchFlow();
+    } else if (!requiresControllerTutorial()) {
       const fighter = pendingFighter;
       launch(fighter);
       closeLaunchFlow(true);
@@ -1939,6 +1974,7 @@ function continueToGame() {
   const sequence = flowSequence;
   clearTimeout(flowTimer);
   overlay.dataset.step = 'closing';
+  completeControlsRoadblock();
   launch(fighter);
   beginModelExit(() => {
     if (sequence !== flowSequence || overlay.hidden) return;
@@ -1964,7 +2000,7 @@ uploadButton?.addEventListener('click', () => {
 });
 fileInput?.addEventListener('change', () => validateRom(fileInput.files?.[0]));
 cancelButton?.addEventListener('click', () => {
-  if (!validationBusy) closeLaunchFlow();
+  if (!validationBusy) cancelLaunchFlow();
 });
 controlsMenuButton?.addEventListener('click', () => {
   if (!usesMobileControls()) showControlsPreview();
@@ -2035,7 +2071,7 @@ window.addEventListener('keydown', event => {
   const dismissibleControls = controlsPreviewMode && overlay?.dataset.step === 'controller';
   if (event.key === 'Escape' && overlay && !overlay.hidden &&
       (dismissibleUpload || dismissibleControls)) {
-    closeLaunchFlow();
+    cancelLaunchFlow();
   }
 });
 window.addEventListener('keyup', event => {
@@ -2056,6 +2092,27 @@ window.gameLauncher = Object.freeze({
   get mobileControls() { return usesMobileControls(); },
   get controlsCompleted() { return hasCompletedControllerTutorial(); },
   showControls: showControlsPreview,
+  requestCreate() {
+    showLaunchFlow({
+      displayName: 'the fighter lab',
+      slug: null,
+      actionType: 'create',
+      fkind: 0,
+      bundle: null,
+    }, { create: true });
+  },
+  requestCharacter(slug) {
+    const character = APP_BRIDGE?.characters?.find(candidate => candidate.slug === slug);
+    if (!character) return;
+    requestLaunch({
+      displayName: character.name,
+      slug: character.slug,
+      actionType: 'character',
+      fkind: Number(character.fkind),
+      bundle: character.bundle || null,
+      selectionName: character.slug,
+    });
+  },
   request(actionType = 'select') {
     requestLaunch({
       displayName: actionType === 'start' ? 'the full game' : 'character select',

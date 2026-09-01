@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "NODE_ENV=development node --watch-path=server --watch-path=shared server/index.js",
+    "dev": "NODE_ENV=development node server/index.js",
     "dev:safe": "NODE_ENV=development FIGHTER_WORKER_DISABLED=1 node --watch-path=server --watch-path=shared server/index.js",
     "sync:visuals": "node scripts/import-website-visuals.mjs",
     "build": "vite build",
