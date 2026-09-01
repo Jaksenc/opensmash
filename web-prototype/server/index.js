@@ -5,6 +5,7 @@ import http from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createFighterJobs } from "./fighter-jobs.js";
+import { ROMS_BY_SHA1 } from "../shared/rom-catalog.js";
 
 const APP_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 // The app lives beside pipeline/website inside the opensmash repo, while the
@@ -26,17 +27,12 @@ const PORT = Number(process.env.PORT || 4174);
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
 // Bump the cookie name whenever the validation contract changes. This also
 // invalidates cookies created while the prototype was being exercised.
-const COOKIE_NAME = "opensmash_rom_v2";
+const COOKIE_NAME = "opensmash_rom_v4";
 const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
 const COOKIE_SECRET = process.env.COOKIE_SECRET || "opensmash-local-development-only";
 const MAX_JSON_BODY = 4096;
 
-const ROMS = new Map([
-  [
-    "15592e79d3c5295cef4371d4992f0bd25bec2102fc29644c93e682f7ea99ef3d",
-    { name: "Super Smash Bros. (USA)", size: 16 * 1024 * 1024 },
-  ],
-]);
+const ROMS = ROMS_BY_SHA1;
 
 const FIGHTERS = [
   "mario",
@@ -320,7 +316,7 @@ async function handleRequest(req, res, vite) {
     try {
       const body = await readJsonBody(req);
       const hash = String(body.hash || "").toLowerCase();
-      if (body.algorithm !== "SHA-256" || !/^[a-f0-9]{64}$/.test(hash) || !ROMS.has(hash)) {
+      if (body.algorithm !== "SHA-1" || !/^[a-f0-9]{40}$/.test(hash) || !ROMS.has(hash)) {
         return json(res, 422, { error: "That file is not a supported Super Smash Bros. 64 ROM." });
       }
       const rom = ROMS.get(hash);
