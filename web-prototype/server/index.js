@@ -18,7 +18,9 @@ const REPO_ROOT = path.resolve(APP_ROOT, "..");
 const DIST_ROOT = path.join(APP_ROOT, "dist");
 const ENGINE_ROOT = path.join(REPO_ROOT, "BattleShip", "web-dist");
 const PIPELINE_UI_ROOT = path.join(REPO_ROOT, "play", "ui");
-const SITE_ASSETS_ROOT = path.join(REPO_ROOT, "website", "assets");
+const VISUAL_ROOT = path.join(APP_ROOT, "visual");
+const SITE_ASSETS_ROOT = path.join(VISUAL_ROOT, "assets");
+const THREE_ROOT = path.join(APP_ROOT, "node_modules", "three");
 const CHARACTERS_CONFIG = path.join(APP_ROOT, "config", "characters.json");
 const objectStore = createObjectStore({ appRoot: APP_ROOT });
 const dispatcher = createJobDispatcher();
@@ -58,6 +60,8 @@ const MIME_TYPES = {
   ".jpg": "image/jpeg",
   ".js": "text/javascript; charset=utf-8",
   ".json": "application/json; charset=utf-8",
+  ".glb": "model/gltf-binary",
+  ".mp4": "video/mp4",
   ".png": "image/png",
   ".svg": "image/svg+xml",
   ".ttf": "font/ttf",
@@ -571,6 +575,30 @@ async function handleRequest(req, res, vite) {
     return json(res, 404, { error: "Site asset not found" });
   }
 
+  // The checked-in visual runtime is part of this app. React owns application
+  // state while these self-contained modules own the CRT, 3D, and pixel-grid
+  // presentation layers.
+  if (pathname.startsWith("/visual/")) {
+    const filePath = safeFile(VISUAL_ROOT, pathname.slice("/visual/".length));
+    if (filePath && (await serveFile(req, res, filePath, "public, max-age=300"))) return;
+    return json(res, 404, { error: "Visual runtime asset not found" });
+  }
+
+  // The original visual modules resolve assets relative to the document. Vite
+  // emits the React bundle under /app-assets, leaving /assets as the stable
+  // production path for the shared models, video, sprites, and textures.
+  if (pathname.startsWith("/assets/")) {
+    const filePath = safeFile(SITE_ASSETS_ROOT, pathname.slice("/assets/".length));
+    if (filePath && (await serveFile(req, res, filePath, "public, max-age=300"))) return;
+    return json(res, 404, { error: "Site asset not found" });
+  }
+
+  if (pathname.startsWith("/three/")) {
+    const filePath = safeFile(THREE_ROOT, pathname.slice("/three/".length));
+    if (filePath && (await serveFile(req, res, filePath, "public, max-age=31536000, immutable"))) return;
+    return json(res, 404, { error: "Three.js module not found" });
+  }
+
   if (pathname.startsWith("/objects/") && objectStore.driver === "local") {
     const objectKey = pathname.slice("/objects/".length);
     const objectMatch = objectKey.match(/^characters\/([a-z0-9]+)\/(?:versions\/[a-f0-9-]+-\d+\/|latest\.json$)/);
@@ -629,5 +657,5 @@ await dispatcher.init();
 await authService.init();
 await fighterJobs.init();
 server.listen(PORT, HOST, () => {
-  console.log(`OpenSmash prototype: http://${HOST}:${PORT}`);
+  console.log(`OpenSmash web: http://${HOST}:${PORT}`);
 });

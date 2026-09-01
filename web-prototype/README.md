@@ -1,9 +1,14 @@
-# OpenSmash web prototype
+# OpenSmash website
 
-A deliberately small React site and Node server that lives beside the existing
-`website` work. It reads character portraits and metadata from
-`play/ui` and serves the existing browser engine from
-`BattleShip/web-dist`; those outputs are not copied into this app.
+The production React site and Node server. It combines the live character,
+authentication, ROM-validation, launch, and fighter-generation flows with the
+CRT, pixel-grid, 3D logo, hand cursor, cartridge, console, and controller visual
+system under `visual/`. It reads character portraits and metadata from `play/ui`
+and serves the browser engine from `BattleShip/web-dist`.
+
+The deployed app is self-contained. When intentionally importing newer visual
+work from the standalone `website` reference, run `pnpm sync:visuals`, review
+the resulting changes under `visual/`, and commit them with the app.
 
 ## Run it
 
