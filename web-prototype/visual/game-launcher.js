@@ -1,5 +1,10 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import {
+  readControllerTutorialCompletion,
+  saveControllerTutorialCompletion,
+  shouldRequireControllerTutorial,
+} from './control-tutorial.js';
 
 const APP_BRIDGE = window.openSmashReactBridge;
 const ROM_SHA256 = '15592e79d3c5295cef4371d4992f0bd25bec2102fc29644c93e682f7ea99ef3d';
@@ -79,6 +84,7 @@ let validationBusy = false;
 let previousFocus = null;
 let flowSequence = 0;
 let flowTimer = 0;
+let controllerTutorialCompletedThisSession = false;
 let controlCheckComplete = false;
 let controlExitPending = false;
 let controlsPreviewMode = false;
@@ -106,6 +112,29 @@ function rememberVerifiedRom() {
   try { localStorage.setItem(ROM_STORAGE_KEY, ROM_SHA256); }
   catch { /* The current launch still works if storage is unavailable. */ }
   syncRomResetButton();
+}
+
+function usesMobileControls() {
+  return document.body.classList.contains('uses-mobile-controls');
+}
+
+function hasCompletedControllerTutorial() {
+  if (controllerTutorialCompletedThisSession) return true;
+  try { return readControllerTutorialCompletion(localStorage); }
+  catch { return false; }
+}
+
+function rememberCompletedControllerTutorial() {
+  controllerTutorialCompletedThisSession = true;
+  try { saveControllerTutorialCompletion(localStorage); }
+  catch { /* Completion still applies to this launch if storage is unavailable. */ }
+}
+
+function requiresControllerTutorial() {
+  return shouldRequireControllerTutorial({
+    completed: hasCompletedControllerTutorial(),
+    mobileControls: usesMobileControls(),
+  });
 }
 
 function forgetVerifiedRom() {
@@ -1687,6 +1716,7 @@ function registerControlKey(event) {
       return true;
     }
     controlCheckComplete = true;
+    rememberCompletedControllerTutorial();
     controlPrompt?.classList.add('is-complete');
     clearTimeout(flowTimer);
     const flipInProgress = controllerZRevealUntil > performance.now() ||
@@ -1707,6 +1737,29 @@ function showControlsPreview() {
   resetRomPrompt();
   resetControlCheck();
   overlay.dataset.mode = 'controls-preview';
+  overlay.dataset.step = 'controller';
+  modelRestedAt = 0;
+  overlay.classList.remove('is-leaving', 'is-model-settled');
+  overlay.hidden = false;
+  document.body.classList.add('is-launch-flow-open');
+  ensureFlowRenderer();
+  showFlowModel('controller');
+  requestAnimationFrame(() => {
+    overlay.classList.add('is-visible');
+    flowTimer = window.setTimeout(() => controllerStep?.focus(), 1150);
+  });
+}
+
+function showRequiredControls(fighter) {
+  if (!overlay || !overlay.hidden) return;
+  flowSequence += 1;
+  clearTimeout(flowTimer);
+  pendingFighter = fighter;
+  previousFocus = document.activeElement;
+  controlsPreviewMode = false;
+  resetRomPrompt();
+  resetControlCheck();
+  overlay.dataset.mode = 'launch';
   overlay.dataset.step = 'controller';
   modelRestedAt = 0;
   overlay.classList.remove('is-leaving', 'is-model-settled');
@@ -1847,7 +1900,13 @@ async function validateRom(file) {
       }
     }
     rememberVerifiedRom();
-    transitionToController();
+    if (!requiresControllerTutorial()) {
+      const fighter = pendingFighter;
+      launch(fighter);
+      closeLaunchFlow(true);
+    } else {
+      transitionToController();
+    }
   } catch (error) {
     validationBusy = false;
     if (fileInput) {
@@ -1885,8 +1944,13 @@ function continueToGame() {
 }
 
 function requestLaunch(fighter) {
-  if (hasVerifiedRom()) launch(fighter);
-  else showLaunchFlow(fighter);
+  if (!hasVerifiedRom()) {
+    showLaunchFlow(fighter);
+  } else if (requiresControllerTutorial()) {
+    showRequiredControls(fighter);
+  } else {
+    launch(fighter);
+  }
 }
 
 uploadButton?.addEventListener('click', () => {
@@ -1896,7 +1960,9 @@ fileInput?.addEventListener('change', () => validateRom(fileInput.files?.[0]));
 cancelButton?.addEventListener('click', () => {
   if (!validationBusy) closeLaunchFlow();
 });
-controlsMenuButton?.addEventListener('click', showControlsPreview);
+controlsMenuButton?.addEventListener('click', () => {
+  if (!usesMobileControls()) showControlsPreview();
+});
 controlsCloseButton?.addEventListener('click', () => closeLaunchFlow());
 
 overlay?.addEventListener('pointerdown', event => {
@@ -1982,6 +2048,8 @@ gameFrame?.addEventListener('load', () => {
 window.gameLauncher = Object.freeze({
   get running() { return Boolean(videoFrame?.classList.contains('is-game-running')); },
   get verified() { return hasVerifiedRom(); },
+  get mobileControls() { return usesMobileControls(); },
+  get controlsCompleted() { return hasCompletedControllerTutorial(); },
   showControls: showControlsPreview,
   request(actionType = 'select') {
     requestLaunch({
