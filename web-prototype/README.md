@@ -6,9 +6,8 @@ CRT, pixel-grid, 3D logo, hand cursor, cartridge, console, and controller visual
 system under `visual/`. It reads character portraits and metadata from `play/ui`
 and serves the browser engine from `BattleShip/web-dist`.
 
-The deployed app is self-contained. When intentionally importing newer visual
-work from the standalone `website` reference, run `pnpm sync:visuals`, review
-the resulting changes under `visual/`, and commit them with the app.
+The deployed app is self-contained. `visual/` is the canonical visual runtime
+and asset tree; edit and review those files directly with the React app.
 
 ## Run it
 

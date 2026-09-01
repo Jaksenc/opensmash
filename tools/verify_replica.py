@@ -20,10 +20,11 @@ from PIL import Image
 
 
 ROOT = Path(__file__).resolve().parents[1]
-WEBSITE = ROOT / "website"
-JS = (WEBSITE / "grid-replica.js").read_text()
-HTML = (WEBSITE / "index.html").read_text()
-ASSETS = WEBSITE / "assets" / "charselect"
+WEB_APP = ROOT / "web-prototype"
+VISUAL = WEB_APP / "visual"
+JS = (VISUAL / "grid-replica.js").read_text()
+PAGE = (VISUAL / "site-shell.css").read_text() + (WEB_APP / "src" / "RetroHome.jsx").read_text()
+ASSETS = VISUAL / "assets" / "charselect"
 sys.path.insert(0, str(ROOT))
 from pipeline.pixel_font import CAP, FACE, GLYPHS, OUTLINE  # noqa: E402
 
@@ -69,7 +70,7 @@ glyph_count = len(expected_glyphs)
 fallback_diff = sum(browser_glyphs.get(char) != rows for char, rows in expected_glyphs.items())
 atlas = {}
 for char in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
-    path = WEBSITE / "assets" / "ui_refs" / f"tileglyph_{ord(char)}.png"
+    path = VISUAL / "assets" / "ui_refs" / f"tileglyph_{ord(char)}.png"
     if path.exists():
         atlas[char] = Image.open(path).convert("RGBA")
 atlas_diff = glyph_count - len(atlas)
@@ -115,7 +116,7 @@ glyph_pipeline_ok = glyph_diff == 0 and all(token in JS for token in (
     "function renderCaption(value, maxWidth = CELL_W - 5) {",
     "function strictPixelGrade(expected, actual) {",
     "const FONT_GRADE = buildFontBench();",
-)) and 'src="./grid-replica.js?v=20260830e"' in HTML
+)) and "/visual/grid-replica.js" in PAGE
 
 repaired_glyphs_ok = all(token not in JS for token in (
     "GLYPH_BASE",
@@ -155,7 +156,7 @@ context_raster_ok = all(token in JS for token in (
     "function decodeReferenceRules() {",
     "function mapRuleSample(position, extent, cellSize, sourceExtent) {",
     "grid.append(canvasFromPixels(renderRules(), GRID_W, GRID_H, 'replica-rule-layer'));",
-)) and all(token not in JS + HTML for token in (
+)) and all(token not in JS + PAGE for token in (
     "LABEL_RASTER_SCALE",
     "LABEL_STEP_MIX",
     "LABEL_BLUR_PX",
@@ -165,7 +166,7 @@ context_raster_ok = all(token in JS for token in (
 ))
 
 
-reference_layers_ok = all(token in HTML for token in (
+reference_layers_ok = all(token in PAGE for token in (
     'class="arena-shell"',
     'class="arena-surface"',
     "width: 100vw;",
@@ -177,7 +178,7 @@ reference_layers_ok = all(token in HTML for token in (
 
 # Rendering must never special-case a whole roster word. The same A-Z face,
 # 8-neighbor outline, tracking, and capture path serves every label.
-shared_caption_ok = all(token not in JS + HTML for token in (
+shared_caption_ok = all(token not in JS + PAGE for token in (
     "ROSTER_WORD_SOURCES",
     "ROSTER_WORDS",
     "replica-reference-label-layer",

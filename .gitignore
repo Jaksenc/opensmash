@@ -2,7 +2,7 @@ BattleShip/
 opensmash/
 .DS_Store
 .env
-website/assets/generated/
+web-prototype/visual/assets/generated/
 __pycache__/
 *.pyc
 eval/cells/

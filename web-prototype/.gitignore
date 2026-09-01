@@ -1,4 +1,5 @@
 node_modules/
 dist/
 data/
+visual/assets/generated/
 .DS_Store
