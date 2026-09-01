@@ -33,11 +33,11 @@ function loadModule(src) {
 
 function startVisualRuntime() {
   visualRuntimePromise ||= loadVisualStyles().then(() => [
-    "/visual/grid-replica.js?v=20260901-react2",
-    "/visual/logo-stage.js?v=20260901-react2",
-    "/visual/crt-viewport.js?v=20260901-react2",
-    "/visual/game-launcher.js?v=20260901-react2",
-    "/visual/site-hardware.js?v=20260901-react2",
+    "/visual/grid-replica.js?v=20260901-react4",
+    "/visual/logo-stage.js?v=20260901-react4",
+    "/visual/crt-viewport.js?v=20260901-react4",
+    "/visual/game-launcher.js?v=20260901-react4",
+    "/visual/site-hardware.js?v=20260901-react4",
   ].reduce((ready, src) => ready.then(() => loadModule(src)), Promise.resolve()));
   return visualRuntimePromise;
 }
