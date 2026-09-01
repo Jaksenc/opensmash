@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import FighterCreator from "./FighterCreator.jsx";
+import { matchesCharacterSearch } from "../shared/character-search.js";
 import { identifyRomFile } from "./rom-validation.js";
 import {
   BOOT_MODES,
@@ -69,7 +70,9 @@ function RomModal({ action, onCancel, onValidated }) {
       ? action.character.name
       : action?.type === "start"
         ? "the full game"
-        : "character select";
+        : action?.type === "create"
+          ? "the fighter lab"
+          : "character select";
 
   return (
     <div className="modal-backdrop" role="presentation" onMouseDown={onCancel}>
@@ -252,6 +255,7 @@ export default function App() {
       .then(([loadedCharacters, hasSession]) => {
         setCharacters(loadedCharacters);
         setAuthorized(hasSession);
+        if (isCreatePage && !hasSession) setPendingAction({ type: "create" });
       })
       .catch((error) => setPageError(error.message))
       .finally(() => setLoadingCharacters(false));
@@ -329,7 +333,8 @@ export default function App() {
 
   function validated() {
     setAuthorized(true);
-    if (pendingAction) launch(pendingAction);
+    if (pendingAction && pendingAction.type !== "create") launch(pendingAction);
+    else setPendingAction(null);
   }
 
   function selectCharacter(character) {
@@ -400,15 +405,9 @@ export default function App() {
     }
   }
 
-  const normalizedSearch = fighterSearch.trim().toLocaleLowerCase();
   const visibleCharacters = characters
     .map((character, index) => ({ character, index }))
-    .filter(({ character }) => {
-      if (!normalizedSearch) return true;
-      return [character.name, character.short, character.slug]
-        .filter(Boolean)
-        .some((value) => value.toLocaleLowerCase().includes(normalizedSearch));
-    });
+    .filter(({ character }) => matchesCharacterSearch(character, fighterSearch));
 
   return (
     <main className={isCreatePage ? "create-page" : undefined}>
@@ -491,7 +490,7 @@ export default function App() {
         </div>
       </section>}
 
-      {isCreatePage && <FighterCreator
+      {isCreatePage && authorized && <FighterCreator
         onPlay={selectCharacter}
       />}
 
@@ -574,7 +573,10 @@ export default function App() {
       {pendingAction && (
         <RomModal
           action={pendingAction}
-          onCancel={() => setPendingAction(null)}
+          onCancel={() => {
+            if (pendingAction.type === "create") window.location.assign("/");
+            else setPendingAction(null);
+          }}
           onValidated={validated}
         />
       )}

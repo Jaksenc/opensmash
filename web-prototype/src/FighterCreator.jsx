@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
-const ACTIVE_STATUSES = new Set(["queued", "running"]);
+const ACTIVE_STATUSES = new Set(["queued", "running", "retrying"]);
 const ACTIVE_JOB_KEY = "opensmash-active-fighter-job";
 
 function formatTime(value) {
@@ -61,9 +61,27 @@ export default function FighterCreator({ onPlay }) {
     if (!hasActiveJob) return undefined;
     const timer = window.setInterval(() => {
       loadJobs().catch((loadError) => setError(loadError.message));
-    }, 2000);
+    }, 15_000);
     return () => window.clearInterval(timer);
   }, [hasActiveJob]);
+
+  useEffect(() => {
+    if (!selectedJob || !ACTIVE_STATUSES.has(selectedJob.status)) return undefined;
+    const stream = new EventSource(`/api/fighters/${selectedJob.id}/events`);
+    stream.addEventListener("job", (event) => {
+      const snapshot = JSON.parse(event.data);
+      setJobs((current) => current.map((job) => (
+        job.id === snapshot.job.id && snapshot.job.revision >= (job.revision || 0)
+          ? snapshot.job
+          : job
+      )));
+      if (!ACTIVE_STATUSES.has(snapshot.job.status)) {
+        stream.close();
+        loadJobs().catch((loadError) => setError(loadError.message));
+      }
+    });
+    return () => stream.close();
+  }, [selectedJob?.id, selectedJob?.status]);
 
   useEffect(() => () => {
     if (photoPreview) URL.revokeObjectURL(photoPreview);
@@ -124,7 +142,7 @@ export default function FighterCreator({ onPlay }) {
         <div className="creator-facts">
           <span><b>~$2</b> per fighter</span>
           <span><b>Several minutes</b> to build</span>
-          <span><b>Local queue</b> saved on this machine</span>
+          <span><b>Server queue</b> survives refreshes</span>
         </div>
       </div>
 
@@ -219,7 +237,7 @@ export default function FighterCreator({ onPlay }) {
               )}
               {selectedJob.status === "failed" && (
                 <button className="retry-button" type="button" onClick={() => retry(selectedJob)}>
-                  {selectedJob.retryLabel || "Resume generation"}
+                  {selectedJob.retry?.label || "Resume generation"}
                 </button>
               )}
               {selectedJob.logTail?.length > 0 && selectedJob.status !== "complete" && (
