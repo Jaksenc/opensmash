@@ -1817,10 +1817,8 @@ function showLaunchFlow(fighter, { create = false } = {}) {
   if (flowTitle) flowTitle.textContent = create ? 'Create a fighter' : 'Play Smash the Weights';
   if (flowCopy) {
     flowCopy.textContent = create
-      ? 'To create a fighter upload your legally obtained Super Smash Bros 64 ROM. ' +
-        'It is normalized and hashed locally and never uploaded.'
-      : 'To play Smash the Weights upload your legally obtained Super Smash Bros 64 ROM. ' +
-        'It is normalized and hashed locally and never uploaded.';
+      ? 'To create a fighter, upload your legally obtained Super Smash Bros. 64 ROM.'
+      : 'To play Smash the Weights, upload your legally obtained Super Smash Bros. 64 ROM.';
   }
   overlay.dataset.mode = create ? 'create' : 'launch';
   overlay.dataset.step = 'upload';
@@ -1924,7 +1922,7 @@ async function validateRom(file) {
   if (cancelButton) cancelButton.disabled = true;
   if (uploadButton) {
     uploadButton.disabled = true;
-    uploadButton.textContent = 'Validating locally…';
+    uploadButton.textContent = 'Checking ROM…';
   }
 
   try {
@@ -1935,11 +1933,11 @@ async function validateRom(file) {
       await bridgeValidator(file, status => {
         if (!uploadButton) return;
         uploadButton.textContent = ({
-          reading: 'Reading locally…',
-          extracting: 'Extracting locally…',
-          hashing: 'Normalizing & hashing…',
+          reading: 'Reading ROM…',
+          extracting: 'Opening archive…',
+          hashing: 'Checking ROM…',
           validating: 'Checking ROM…',
-        })[status] || 'Validating locally…';
+        })[status] || 'Checking ROM…';
       });
     } else {
       const buffer = await file.arrayBuffer();

@@ -63,7 +63,7 @@ export function normalizeN64(input) {
 }
 
 export async function digestHex(algorithm, bytes, subtle = globalThis.crypto?.subtle) {
-  if (!subtle) throw new Error("This browser does not support local cryptographic hashing.");
+  if (!subtle) throw new Error("This browser cannot validate ROM files.");
   const digest = await subtle.digest(algorithm, bytes);
   return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }

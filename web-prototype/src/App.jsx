@@ -215,9 +215,9 @@ function RomModal({ action, onCancel, onValidated }) {
           </label>
           {error && <p className="form-error">{error}</p>}
           <button className="validate-button" type="submit" disabled={!file || status !== "idle"}>
-            {status === "reading" && "Reading locally…"}
-            {status === "extracting" && "Extracting locally…"}
-            {status === "hashing" && "Normalizing & hashing locally…"}
+            {status === "reading" && "Reading ROM…"}
+            {status === "extracting" && "Opening archive…"}
+            {status === "hashing" && "Checking ROM…"}
             {status === "validating" && "Checking ROM…"}
             {status === "idle" && (action?.type === "create" ? "Validate & create" : "Validate & play")}
           </button>
