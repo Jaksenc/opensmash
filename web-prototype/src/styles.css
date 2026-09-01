@@ -815,14 +815,8 @@ body.is-advanced-open #glove-canvas { z-index: 1800; }
       0 5px 18px rgba(0, 0, 0, .4);
   }
 
-  body.uses-mobile-controls.is-game-running #hero-logo-stage,
   body.uses-mobile-controls.is-game-running #glove-canvas {
     display: none;
-  }
-
-  body.uses-mobile-controls.is-game-running #crt-viewport-canvas {
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
   }
 
   .mobile-joystick::before,
@@ -911,6 +905,14 @@ body.is-advanced-open #glove-canvas { z-index: 1800; }
     top: max(56px, calc(env(safe-area-inset-top) + 50px));
     right: max(6px, env(safe-area-inset-right));
   }
+}
+
+body.is-game-running #hero-logo-canvas { display: none; }
+body.is-game-running #hero-logo-stage .hero-logo-fallback { opacity: 1; }
+
+body.is-game-running #crt-viewport-canvas {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 @media (max-width: 480px) and (orientation: portrait) {

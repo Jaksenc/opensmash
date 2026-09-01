@@ -115,16 +115,21 @@
     appearance: none;
     padding: 0;
     border: 0;
-    background: #080504;
+    z-index: 1;
+    background: transparent;
     color: inherit;
     cursor: none;
     overflow: hidden;
   }
-  .replica-cell canvas {
-    display: block;
+  .replica-raster-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
     width: 100%;
     height: 100%;
+    pointer-events: none;
     image-rendering: auto;
+    transform: translateX(var(--capture-phase-x));
   }
   .replica-cell::after {
     content: "";
@@ -163,16 +168,6 @@
     transform: translate(-50%, -50%);
     pointer-events: none;
   }
-  .replica-rule-layer {
-    position: absolute;
-    inset: 0;
-    z-index: 2;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    image-rendering: auto;
-    transform: translateX(var(--capture-phase-x));
-  }
   .comparison-footer {
     display: flex;
     justify-content: space-between;
@@ -182,105 +177,12 @@
     line-height: 1.5;
   }
   .comparison-footer strong { color: #bfad9a; font-weight: 600; }
-  .font-bench {
-    display: grid;
-    gap: 14px;
-    padding: clamp(12px, 1.5vw, 18px);
-    border: 1px solid #3b2922;
-    background: linear-gradient(180deg, rgba(34, 20, 17, .96), rgba(11, 7, 7, .98));
-    box-shadow: 0 18px 50px rgba(0, 0, 0, .38), inset 0 1px rgba(255, 217, 178, .05);
-  }
-  .font-bench-heading,
-  .font-bench-footer {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 18px;
-  }
-  .font-bench-heading h2 {
-    color: #c7b5a3;
-    font-size: clamp(11px, 1.1vw, 14px);
-    font-weight: 600;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-  }
-  .font-bench-heading p,
-  .font-bench-footer {
-    color: #826f62;
-    font-size: clamp(8px, .8vw, 11px);
-    line-height: 1.45;
-  }
-  .font-bench-score {
-    color: #e8d6a8;
-    font-weight: 700;
-    letter-spacing: .05em;
-  }
-  .font-glyph-grid {
-    display: grid;
-    grid-template-columns: repeat(13, minmax(0, 1fr));
-    gap: 6px;
-  }
-  .glyph-pair {
-    min-width: 0;
-    padding: 6px;
-    border: 1px solid #352720;
-    background: #090605;
-  }
-  .glyph-pair figcaption {
-    display: flex;
-    justify-content: space-between;
-    gap: 4px;
-    margin-bottom: 5px;
-    color: #8f7b6d;
-    font-size: 8px;
-    line-height: 1;
-  }
-  .glyph-pair figcaption strong {
-    color: #c9b7a3;
-    font-size: 9px;
-  }
-  .glyph-pair.is-exact figcaption output { color: #b8c89e; }
-  .glyph-row {
-    display: grid;
-    grid-template-columns: 27px minmax(0, 1fr);
-    align-items: center;
-    gap: 4px;
-  }
-  .glyph-row + .glyph-row { margin-top: 3px; }
-  .glyph-row-label {
-    color: #67584f;
-    font-size: 6px;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-  }
-  .glyph-stage {
-    display: grid;
-    place-items: center;
-    height: 34px;
-    overflow: hidden;
-    background:
-      linear-gradient(45deg, #100b09 25%, transparent 25%) 0 0 / 8px 8px,
-      linear-gradient(45deg, transparent 75%, #100b09 75%) 0 0 / 8px 8px,
-      #070504;
-  }
-  .glyph-stage canvas {
-    display: block;
-    image-rendering: pixelated;
-    image-rendering: crisp-edges;
-  }
-  .glyph-stage canvas { width: 51px; height: 30px; }
   @media (max-width: 760px) {
     .comparison-shell { width: min(94vw, 620px); align-content: start; }
     .comparison-heading { align-items: start; flex-direction: column; }
     .comparison-heading p { text-align: left; }
     .comparison-grid { grid-template-columns: 1fr; }
     .comparison-footer { flex-direction: column; gap: 4px; }
-    .font-bench-heading,
-    .font-bench-footer { align-items: start; flex-direction: column; gap: 4px; }
-    .font-glyph-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
-  }
-  @media (min-width: 761px) and (max-width: 1120px) {
-    .font-glyph-grid { grid-template-columns: repeat(9, minmax(0, 1fr)); }
   }
   [hidden] { display: none !important; }
   html, body {
@@ -837,7 +739,7 @@
     min-width: 0;
     min-height: 0;
     overflow: hidden;
-    background: #080504;
+    background: #080504 var(--flame-bridge-texture) center / 100% 100% no-repeat;
   }
   .flame-bridge-cell::after {
     content: "";
@@ -850,15 +752,6 @@
   }
   .flame-bridge-cell:focus-within::after,
   .flame-bridge-cell:hover::after { background: rgba(255, 128, 44, .08); }
-  .flame-bridge-cell canvas {
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    display: block;
-    width: 100%;
-    height: 100%;
-    image-rendering: auto;
-  }
   #flame-bridge .flame-bridge-cell {
     container-type: size;
   }

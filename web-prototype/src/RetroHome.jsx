@@ -39,11 +39,11 @@ function loadModule(src) {
 
 function startVisualRuntime() {
   visualRuntimePromise ||= loadVisualStyles().then(() => [
-    "/visual/grid-replica.js?v=20260901-react4",
-    "/visual/logo-stage.js?v=20260901-react4",
-    "/visual/crt-viewport.js?v=20260901-react4",
+    "/visual/grid-replica.js?v=20260901-react6",
+    "/visual/logo-stage.js?v=20260901-react5",
+    "/visual/crt-viewport.js?v=20260901-react7",
     "/visual/game-launcher.js?v=20260901-react6",
-    "/visual/site-hardware.js?v=20260901-react4",
+    "/visual/site-hardware.js?v=20260901-react5",
   ].reduce((ready, src) => ready.then(() => loadModule(src)), Promise.resolve()));
   return visualRuntimePromise;
 }
@@ -246,7 +246,7 @@ export default function RetroHome({
           <div className={`game-surface-shell ${mobileControlsVisible ? "has-mobile-control-deck" : ""}`}>
             <div className={`intro-video-frame ${engine ? "is-game-running" : ""}`} ref={gameFrameRef}>
               <video id="intro-video" className="intro-video" src="/assets/intro-crt.mp4" muted={!soundOn} autoPlay loop playsInline preload="auto" aria-label="Super Weights Bros intro video" />
-              <canvas className="intro-video-rule-layer" aria-hidden="true" />
+              <img className="intro-video-rule-layer" alt="" aria-hidden="true" />
               <div id="hero-logo-stage" className="intro-video-logo" aria-label="Animated Smash the Weights logo">
                 <img className="hero-logo-fallback" src="/assets/smash-the-weights-logo.png" alt="" aria-hidden="true" draggable="false" />
                 <canvas id="hero-logo-canvas" className="hero-logo-canvas" aria-hidden="true" />
@@ -281,15 +281,14 @@ export default function RetroHome({
             </button>
           </div>
           <div className="flame-bridge-cell"><button className={`flame-bridge-action site-menu-button ${advancedActive ? "is-active" : ""}`} type="button" aria-haspopup="dialog" onClick={onAdvanced}>Advanced</button></div>
-          <canvas className="site-menu-rule-layer" aria-hidden="true" />
+          <img className="site-menu-rule-layer" alt="" aria-hidden="true" />
         </section>
         <div id="flame-bridge" className="flame-bridge" aria-label="Fighter search">
           <div className="flame-bridge-cell"><input id="fighter-search" className="flame-bridge-search" type="search" placeholder="Search Fighters…" aria-label="Search fighters" autoComplete="off" spellCheck="false" /></div>
-          <canvas className="flame-bridge-rule-layer" aria-hidden="true" />
+          <img className="flame-bridge-rule-layer" alt="" aria-hidden="true" />
         </div>
         <div className="arena-surface"><div id="replica-grid" className="replica-grid" role="grid" aria-label="Create fighter and character roster" />{!ready && <p className="retro-roster-loading">Loading fighters…</p>}<p id="fighter-empty-state" className="fighter-empty-state" role="status" aria-live="polite" hidden /></div>
         <span id="replica-metrics" hidden>Building 200-cell grid…</span>
-        <section className="font-bench" hidden aria-labelledby="font-bench-title"><h2 id="font-bench-title">Tile-caption font · A–Z</h2><div id="font-glyph-grid" className="font-glyph-grid" /><footer className="font-bench-footer"><span id="font-bench-detail">Loading…</span><output id="font-bench-score">Grading…</output></footer></section>
       </main>
 
       {menuOpen && (

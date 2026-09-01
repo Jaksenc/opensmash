@@ -627,6 +627,8 @@ function decodeReferenceRules() {
   return dst;
 }
 
+const REFERENCE_RULES = decodeReferenceRules();
+
 function mapRuleSample(position, extent, cellSize, sourceExtent) {
   const stride = cellSize + RULE;
   if (position < RULE) return position;
@@ -645,7 +647,7 @@ function mapRuleSample(position, extent, cellSize, sourceExtent) {
 function renderRules(gridWidth, gridHeight, columns, cellCount) {
   const sourceWidth = 96;
   const sourceHeight = 92;
-  const reference = decodeReferenceRules();
+  const reference = REFERENCE_RULES;
   const dst = new Uint8ClampedArray(gridWidth * gridHeight * 4);
   const xStride = CELL_W + RULE;
   const yStride = CELL_H + RULE;
@@ -684,7 +686,7 @@ function renderRules(gridWidth, gridHeight, columns, cellCount) {
 function renderOuterRules(frameWidth, frameHeight) {
   const sourceWidth = 96;
   const sourceHeight = 92;
-  const reference = decodeReferenceRules();
+  const reference = REFERENCE_RULES;
   const dst = new Uint8ClampedArray(frameWidth * frameHeight * 4);
   for (let y = 0; y < frameHeight; y++) for (let x = 0; x < frameWidth; x++) {
     const xr = x < RULE || x >= frameWidth - RULE;
@@ -721,7 +723,7 @@ function sharedPanelRuleSample(position, extent, segments, internalStart, source
 function renderSharedPanelRules(frameWidth, frameHeight, columns, rows) {
   const sourceWidth = 96;
   const sourceHeight = 92;
-  const reference = decodeReferenceRules();
+  const reference = REFERENCE_RULES;
   const dst = new Uint8ClampedArray(frameWidth * frameHeight * 4);
   for (let y = 0; y < frameHeight; y++) for (let x = 0; x < frameWidth; x++) {
     const sourceRuleX = sharedPanelRuleSample(
@@ -748,6 +750,8 @@ function renderCellBackground() {
   drawFire(dst);
   return dst;
 }
+
+const CELL_BACKGROUND_PIXELS = renderCellBackground();
 
 function scalePixels2x(pixels, width, height, smooth) {
   const scaledWidth = width * 2;
@@ -824,7 +828,7 @@ function compositePortrait(dst, portraitName) {
 }
 
 function renderCellFramebuffer(name, portraitName = null) {
-  const native = renderCellBackground();
+  const native = new Uint8ClampedArray(CELL_BACKGROUND_PIXELS);
   compositePortrait(native, portraitName);
   const background = scalePixels2x(native, CELL_W, CELL_H, false);
   if (!name || (portraitName && USE_SOURCE_PORTRAIT_CAPTIONS &&
@@ -849,11 +853,23 @@ function paintPixels(
   canvas, pixels, width, height, displayScale = 1,
   pixelStep = 1, stepMix = 1, captureRect = null
 ) {
+  const scaleX = typeof displayScale === 'number' ? displayScale : displayScale.x;
+  const scaleY = typeof displayScale === 'number' ? displayScale : displayScale.y;
+  canvas.width = Math.round(width * scaleX);
+  canvas.height = Math.round(height * scaleY);
+  const ctx = canvas.getContext('2d', {
+    willReadFrequently: scaleX === 1 && scaleY === 1
+  });
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (displayScale === 1 && !captureRect) {
+    ctx.putImageData(new ImageData(pixels, width, height), 0, 0);
+    return;
+  }
+
   const source = document.createElement('canvas');
   source.width = width;
   source.height = height;
   source.getContext('2d').putImageData(new ImageData(pixels, width, height), 0, 0);
-
   let renderSource = source;
   if (pixelStep > 1) {
     const stepped = document.createElement('canvas');
@@ -865,35 +881,23 @@ function paintPixels(
     renderSource = stepped;
   }
 
-  const scaleX = typeof displayScale === 'number' ? displayScale : displayScale.x;
-  const scaleY = typeof displayScale === 'number' ? displayScale : displayScale.y;
-  canvas.width = Math.round(width * scaleX);
-  canvas.height = Math.round(height * scaleY);
-  const ctx = canvas.getContext('2d', {
-    willReadFrequently: scaleX === 1 && scaleY === 1
-  });
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  if (displayScale === 1 && !captureRect) {
-    ctx.putImageData(new ImageData(pixels, width, height), 0, 0);
-  } else {
-    const target = captureRect || { x: 0, y: 0, width: 1, height: 1 };
-    const dx = target.x * canvas.width;
-    const dy = target.y * canvas.height;
-    const dw = target.width * canvas.width;
-    const dh = target.height * canvas.height;
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'low';
-    if (pixelStep > 1 && stepMix < 1) {
-      ctx.drawImage(source, dx, dy, dw, dh);
-      ctx.globalAlpha = stepMix;
-    }
-    // Match the captured game texture path: magnify the 2x texture lattice
-    // without interpolation, then let the browser's final CSS reduction
-    // supply the single antialiasing pass visible in the screenshot.
-    if (pixelStep > 1) ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(renderSource, dx, dy, dw, dh);
-    ctx.globalAlpha = 1;
+  const target = captureRect || { x: 0, y: 0, width: 1, height: 1 };
+  const dx = target.x * canvas.width;
+  const dy = target.y * canvas.height;
+  const dw = target.width * canvas.width;
+  const dh = target.height * canvas.height;
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'low';
+  if (pixelStep > 1 && stepMix < 1) {
+    ctx.drawImage(source, dx, dy, dw, dh);
+    ctx.globalAlpha = stepMix;
   }
+  // Match the captured game texture path: magnify the 2x texture lattice
+  // without interpolation, then let the browser's final CSS reduction
+  // supply the single antialiasing pass visible in the screenshot.
+  if (pixelStep > 1) ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(renderSource, dx, dy, dw, dh);
+  ctx.globalAlpha = 1;
 }
 
 function canvasFromPixels(
@@ -907,10 +911,22 @@ function canvasFromPixels(
   return canvas;
 }
 
-function paintCellCanvas(canvas, label, portraitName) {
-  const framebuffer = renderCellFramebuffer(label, portraitName);
-  paintPixels(
-    canvas, framebuffer.pixels, framebuffer.width, framebuffer.height
+function pixelsDataUrl(
+  pixels, width, height, displayScale = 1,
+  pixelStep = 1, stepMix = 1, captureRect = null
+) {
+  const canvas = canvasFromPixels(
+    pixels, width, height, '', displayScale, pixelStep, stepMix, captureRect
+  );
+  return canvas.toDataURL('image/png');
+}
+
+function paintRasterImage(
+  image, pixels, width, height, displayScale = 1,
+  pixelStep = 1, stepMix = 1, captureRect = null
+) {
+  image.src = pixelsDataUrl(
+    pixels, width, height, displayScale, pixelStep, stepMix, captureRect
   );
 }
 
@@ -918,40 +934,51 @@ const grid = document.getElementById('replica-grid');
 const arenaShell = document.querySelector('.arena-shell');
 const arenaSurface = grid.closest('.arena-surface');
 const introVideoFrame = document.querySelector('.intro-video-frame');
-const introVideoRuleCanvas = document.querySelector('.intro-video-rule-layer');
+const introVideoRuleImage = document.querySelector('.intro-video-rule-layer');
 const siteMenuBridge = document.getElementById('site-menu-bridge');
-const siteMenuRuleCanvas = document.querySelector('.site-menu-rule-layer');
+const siteMenuRuleImage = document.querySelector('.site-menu-rule-layer');
 const flameBridge = document.getElementById('flame-bridge');
 const flameBridgeCells = [...document.querySelectorAll('.flame-bridge-cell')];
-const flameBridgeRuleCanvas = document.querySelector('.flame-bridge-rule-layer');
+const flameBridgeRuleImage = document.querySelector('.flame-bridge-rule-layer');
 const cells = new Map();
+const cellFrames = new Map();
+
+const gridRasterImage = document.createElement('img');
+gridRasterImage.className = 'replica-raster-layer';
+gridRasterImage.alt = '';
+gridRasterImage.setAttribute('aria-hidden', 'true');
+grid.append(gridRasterImage);
 
 const flameOnlyFramebuffer = renderCellFramebuffer();
-flameBridgeCells.forEach(cell => cell.append(canvasFromPixels(
+const flameTextureUrl = pixelsDataUrl(
   flameOnlyFramebuffer.pixels,
   flameOnlyFramebuffer.width,
-  flameOnlyFramebuffer.height,
-  'flame-bridge-texture-layer'
-)));
+  flameOnlyFramebuffer.height
+);
+arenaShell.style.setProperty(
+  '--flame-bridge-texture',
+  `url("${flameTextureUrl}")`
+);
 
 const advancedFrameCells = [...document.querySelectorAll('.advanced-cell-frame')];
-const advancedFrameCanvases = new Map(advancedFrameCells.map(cell => {
-  const canvas = document.createElement('canvas');
-  canvas.className = 'advanced-cell-rule-layer';
-  canvas.setAttribute('aria-hidden', 'true');
-  cell.append(canvas);
-  return [cell, canvas];
+const advancedFrameImages = new Map(advancedFrameCells.map(cell => {
+  const image = document.createElement('img');
+  image.className = 'advanced-cell-rule-layer';
+  image.alt = '';
+  image.setAttribute('aria-hidden', 'true');
+  cell.append(image);
+  return [cell, image];
 }));
 
 function paintAdvancedFrame(cell) {
-  const canvas = advancedFrameCanvases.get(cell);
+  const image = advancedFrameImages.get(cell);
   const width = Math.round(cell.getBoundingClientRect().width);
   const height = Math.round(cell.getBoundingClientRect().height);
-  if (!canvas || width < RULE * 2 + 1 || height < RULE * 2 + 1) return;
+  if (!image || width < RULE * 2 + 1 || height < RULE * 2 + 1) return;
   const signature = `${width}x${height}`;
-  if (canvas.dataset.signature === signature) return;
-  canvas.dataset.signature = signature;
-  paintPixels(canvas, renderOuterRules(width, height), width, height);
+  if (image.dataset.signature === signature) return;
+  image.dataset.signature = signature;
+  paintRasterImage(image, renderOuterRules(width, height), width, height);
 }
 
 if ('ResizeObserver' in window) {
@@ -986,17 +1013,10 @@ CELL_IDS.forEach((id, index) => {
   button.setAttribute('aria-label', character.name);
   button.setAttribute('aria-pressed', 'false');
   const framebuffer = renderCellFramebuffer(label, character.portrait);
-  button.append(canvasFromPixels(
-    framebuffer.pixels, framebuffer.width, framebuffer.height, 'replica-texture-layer'
-  ));
+  cellFrames.set(button, framebuffer);
   grid.append(button);
   cells.set(id, button);
 });
-
-const ruleCanvas = document.createElement('canvas');
-ruleCanvas.className = 'replica-rule-layer';
-ruleCanvas.setAttribute('aria-hidden', 'true');
-grid.append(ruleCanvas);
 
 let currentGridLayout;
 let introVideoRuleSignature = '';
@@ -1004,7 +1024,7 @@ let siteMenuRuleSignature = '';
 let flameBridgeRuleSignature = '';
 
 function paintIntroVideoRule() {
-  if (!currentGridLayout || !introVideoFrame || !introVideoRuleCanvas) return;
+  if (!currentGridLayout || !introVideoFrame || !introVideoRuleImage) return;
   const frameRect = introVideoFrame.getBoundingClientRect();
   const gridWidth = grid.getBoundingClientRect().width || window.innerWidth;
   const rosterScale = gridWidth / currentGridLayout.width;
@@ -1013,8 +1033,8 @@ function paintIntroVideoRule() {
   const signature = `${width}x${height}`;
   if (signature === introVideoRuleSignature) return;
   introVideoRuleSignature = signature;
-  paintPixels(
-    introVideoRuleCanvas, renderOuterRules(width, height), width, height
+  paintRasterImage(
+    introVideoRuleImage, renderOuterRules(width, height), width, height
   );
 }
 
@@ -1032,7 +1052,7 @@ function sharedControlStripHeight(width) {
 }
 
 function paintSiteMenuRule() {
-  if (!currentGridLayout || !siteMenuBridge || !siteMenuRuleCanvas) return;
+  if (!currentGridLayout || !siteMenuBridge || !siteMenuRuleImage) return;
   const columns = 3;
   const rows = 1;
   const logicalWidth = RULE + CELL_W + RULE;
@@ -1047,8 +1067,8 @@ function paintSiteMenuRule() {
     `${logicalWidth} / ${logicalHeight * FLAME_BRIDGE_HEIGHT_SCALE}`;
   if (signature === siteMenuRuleSignature) return;
   siteMenuRuleSignature = signature;
-  paintPixels(
-    siteMenuRuleCanvas,
+  paintRasterImage(
+    siteMenuRuleImage,
     renderSharedPanelRules(width, height, columns, rows),
     width,
     height
@@ -1056,7 +1076,7 @@ function paintSiteMenuRule() {
 }
 
 function paintFlameBridgeRule() {
-  if (!currentGridLayout || !flameBridge || !flameBridgeRuleCanvas) return;
+  if (!currentGridLayout || !flameBridge || !flameBridgeRuleImage) return;
   const columns = columnsForFlameBridge();
   const rows = Math.ceil(FLAME_BRIDGE_CELL_COUNT / columns);
   const logicalWidth = RULE + columns * (CELL_W + RULE);
@@ -1071,8 +1091,8 @@ function paintFlameBridgeRule() {
     `${logicalWidth} / ${logicalHeight * FLAME_BRIDGE_HEIGHT_SCALE}`;
   if (signature === flameBridgeRuleSignature) return;
   flameBridgeRuleSignature = signature;
-  paintPixels(
-    flameBridgeRuleCanvas,
+  paintRasterImage(
+    flameBridgeRuleImage,
     renderSharedPanelRules(width, height, columns, rows),
     width,
     height
@@ -1093,6 +1113,41 @@ function reserveRosterFootprint(layout) {
     (layout.reservedHeight - layout.height) * renderedWidth / layout.width
   );
   arenaShell.style.setProperty('--roster-layout-reserve', `${reserveHeight}px`);
+}
+
+function paintGridRaster(layout, visibleCells) {
+  const width = layout.width * RASTER_SCALE;
+  const height = layout.height * RASTER_SCALE;
+  const pixels = new Uint8ClampedArray(width * height * 4);
+
+  visibleCells.forEach((button, index) => {
+    const framebuffer = cellFrames.get(button);
+    if (!framebuffer) return;
+    const col = index % layout.columns;
+    const row = Math.floor(index / layout.columns);
+    const x = (RULE + col * (CELL_W + RULE)) * RASTER_SCALE;
+    const y = (RULE + row * (CELL_H + RULE)) * RASTER_SCALE;
+    for (let sourceY = 0; sourceY < framebuffer.height; sourceY++) {
+      const source = sourceY * framebuffer.width * 4;
+      const target = ((y + sourceY) * width + x) * 4;
+      pixels.set(
+        framebuffer.pixels.subarray(source, source + framebuffer.width * 4),
+        target
+      );
+    }
+  });
+
+  const rules = scalePixels2x(
+    renderRules(layout.width, layout.height, layout.columns, visibleCells.length),
+    layout.width,
+    layout.height,
+    false
+  );
+  for (let source = 0; source < rules.pixels.length; source += 4) {
+    if (!rules.pixels[source + 3]) continue;
+    pixels.set(rules.pixels.subarray(source, source + 4), source);
+  }
+  gridRasterImage.src = pixelsDataUrl(pixels, width, height);
 }
 
 function applyGridLayout(columns = columnsForContainer()) {
@@ -1141,12 +1196,7 @@ function applyGridLayout(columns = columnsForContainer()) {
     );
   });
 
-  paintPixels(
-    ruleCanvas,
-    renderRules(width, height, columns, visibleCells.length),
-    width,
-    height
-  );
+  paintGridRaster(currentGridLayout, visibleCells);
   paintIntroVideoRule();
   paintSiteMenuRule();
   paintFlameBridgeRule();
@@ -1221,9 +1271,13 @@ function setLabel(character, label) {
   const fitted = fitCaption(label).text;
   cell.dataset.label = fitted;
   cell.setAttribute('aria-label', fitted || cell.dataset.character);
-  paintCellCanvas(
-    cell.querySelector('.replica-texture-layer'), fitted, cell.dataset.portrait
-  );
+  cellFrames.set(cell, renderCellFramebuffer(fitted, cell.dataset.portrait));
+  if (currentGridLayout) {
+    paintGridRaster(
+      currentGridLayout,
+      [...cells.values()].filter(button => !button.hidden)
+    );
+  }
   return cell;
 }
 
@@ -1336,75 +1390,29 @@ function glyphIntegrityIssue(char, glyph) {
   return '';
 }
 
-function buildFontBench() {
-  const bench = document.getElementById('font-glyph-grid');
+function gradeCaptionFont() {
   let mismatchedPixels = 0;
   let totalPixels = 0;
   let validGlyphs = 0;
+  let exactGlyphs = 0;
 
   for (const char of ALPHABET) {
     const glyph = CAPTION_GLYPHS.get(char);
     const expected = stageCaption(glyph);
-    const sourceCanvas = canvasFromPixels(expected, BENCH_W, BENCH_H);
-    const sourcePixels = sourceCanvas.getContext('2d')
-      .getImageData(0, 0, BENCH_W, BENCH_H).data;
-    const canvas = canvasFromPixels(stageCaption(renderCaption(char, BENCH_W)), BENCH_W, BENCH_H);
-    const actual = canvas.getContext('2d').getImageData(0, 0, BENCH_W, BENCH_H).data;
-    const grade = strictPixelGrade(sourcePixels, actual);
+    const actual = stageCaption(renderCaption(char, BENCH_W));
+    const grade = strictPixelGrade(expected, actual);
     const integrityIssue = glyphIntegrityIssue(char, glyph);
     if (!integrityIssue) validGlyphs++;
+    if (!grade.mismatchedPixels) exactGlyphs++;
     mismatchedPixels += grade.mismatchedPixels;
     totalPixels += grade.totalPixels;
-
-    const figure = document.createElement('figure');
-    figure.className = `glyph-pair${grade.mismatchedPixels || integrityIssue ? '' : ' is-exact'}`;
-    figure.dataset.character = char;
-    figure.dataset.mismatchedPixels = String(grade.mismatchedPixels);
-    figure.dataset.integrityIssue = integrityIssue;
-
-    const caption = document.createElement('figcaption');
-    const character = document.createElement('strong');
-    const score = document.createElement('output');
-    character.textContent = char;
-    score.textContent = integrityIssue ? 'FAIL' : 'PASS';
-    if (integrityIssue) score.title = integrityIssue;
-    caption.append(character, score);
-
-    const gameRow = document.createElement('div');
-    gameRow.className = 'glyph-row';
-    const gameLabel = document.createElement('span');
-    gameLabel.className = 'glyph-row-label';
-    gameLabel.textContent = 'Font';
-    const gameStage = document.createElement('span');
-    gameStage.className = 'glyph-stage';
-    sourceCanvas.setAttribute('role', 'img');
-    sourceCanvas.setAttribute('aria-label', `${char} from the extracted OpenSmash tile-caption font`);
-    gameStage.append(sourceCanvas);
-    gameRow.append(gameLabel, gameStage);
-
-    const codeRow = document.createElement('div');
-    codeRow.className = 'glyph-row';
-    const codeLabel = document.createElement('span');
-    codeLabel.className = 'glyph-row-label';
-    codeLabel.textContent = 'Code';
-    const codeStage = document.createElement('span');
-    codeStage.className = 'glyph-stage';
-    codeStage.append(canvas);
-    codeRow.append(codeLabel, codeStage);
-
-    figure.append(caption, gameRow, codeRow);
-    bench.append(figure);
   }
 
-  const exactGlyphs = [...bench.children].filter(node => node.dataset.mismatchedPixels === '0').length;
   const score = 100 * (totalPixels - mismatchedPixels) / totalPixels;
-  document.getElementById('font-bench-detail').textContent =
-    `${validGlyphs}/26 topology checks · ${exactGlyphs}/26 compositor matches · ${mismatchedPixels.toLocaleString()} RGBA mismatches`;
-  document.getElementById('font-bench-score').textContent = `${validGlyphs}/26 valid`;
   return Object.freeze({ validGlyphs, exactGlyphs, mismatchedPixels, totalPixels, score });
 }
 
-const FONT_GRADE = buildFontBench();
+const FONT_GRADE = gradeCaptionFont();
 
 // Public, DOM-first hooks for future game/UI work. Example:
 // characterGrid.setLabel('CELL-001', 'CUSTOM'); characterGrid.highlight('CELL-042');

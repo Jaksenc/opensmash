@@ -313,10 +313,10 @@ if (!canvas) {
     );
     const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
     let animationFrame = 0;
-    let previousRenderTime = 0;
+    let renderedFocusedGame = false;
 
-    function applyCompositeFilter() {
-      const filter = [
+    function applyCompositeFilter(focusedGame = false) {
+      const filter = focusedGame ? 'none' : [
         `blur(${settings.compositeBlur.toFixed(3)}px)`,
         `saturate(${settings.saturation.toFixed(3)})`,
         `contrast(${settings.contrast.toFixed(3)})`,
@@ -343,14 +343,15 @@ if (!canvas) {
     function render(milliseconds) {
       animationFrame = 0;
       if (!settings.enabled) return;
-      const focusedMobileGame =
-        document.body.classList.contains('uses-mobile-controls') &&
-        document.body.classList.contains('is-game-running');
-      if (focusedMobileGame && milliseconds - previousRenderTime < 1000 / 30) {
+      const focusedGame = document.body.classList.contains('is-game-running');
+      const matchesViewport = canvas.width === Math.max(1, Math.round(innerWidth)) &&
+        canvas.height === Math.max(1, Math.round(innerHeight));
+      if (focusedGame && renderedFocusedGame && matchesViewport) {
         animationFrame = requestAnimationFrame(render);
         return;
       }
-      previousRenderTime = milliseconds;
+      renderedFocusedGame = focusedGame;
+      applyCompositeFilter(focusedGame);
       resize();
       gl.clearColor(0, 0, 0, 0);
       gl.clear(gl.COLOR_BUFFER_BIT);
@@ -367,7 +368,7 @@ if (!canvas) {
       gl.uniform1f(uniforms.rollingStrength, settings.rollingStrength);
       gl.uniform1f(
         uniforms.motionSpeed,
-        reducedMotion ? 0 : settings.motionSpeed,
+        reducedMotion || focusedGame ? 0 : settings.motionSpeed,
       );
       gl.drawArrays(gl.TRIANGLES, 0, 6);
       animationFrame = requestAnimationFrame(render);
@@ -387,6 +388,7 @@ if (!canvas) {
 
     function applySettings(nextSettings, options = {}) {
       settings = { ...settings, ...sanitizeSettings(nextSettings) };
+      renderedFocusedGame = false;
       if (options.preset) activePreset = options.preset;
       else activePreset = 'custom';
       canvas.dataset.crtPreset = activePreset;
@@ -447,7 +449,9 @@ if (!canvas) {
       set enabled(value) { applySettings({ enabled: value }); },
     };
 
-    addEventListener('resize', resize);
+    // The animation loop owns drawing-buffer resizes. Resizing it directly in
+    // the DOM resize event clears WebGL before the focused-game frame can be
+    // redrawn, and can make the frozen CRT treatment disappear permanently.
     applyCompositeFilter();
     setEnabled(settings.enabled);
     syncTuner();
