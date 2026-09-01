@@ -32,7 +32,12 @@ function ensureStoneBackground() {
 // Renderer / scene — transparent overlay canvas above the page.
 // ---------------------------------------------------------------------------
 const canvas = document.getElementById('glove-canvas');
+const customCursorQuery = window.matchMedia('(hover: hover) and (pointer: fine)');
+let customCursorMeshReady = false;
+let customCursorHasPosition = false;
+let webglContextAvailable = false;
 const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: false });
+webglContextAvailable = true;
 renderer.setPixelRatio(1);
 
 const godRayLayer = document.getElementById('hardware-god-ray');
@@ -675,6 +680,7 @@ const gloveMat = new THREE.MeshStandardMaterial({
 const glove = new THREE.Group();
 const wrist = new THREE.Group();
 const hand = new THREE.Group();
+glove.visible = false;
 glove.add(wrist);
 wrist.add(hand);
 hand.scale.setScalar(0.62);
@@ -690,6 +696,24 @@ const keyLight = new THREE.PointLight(0xffffff, 18, 0, 2);
 keyLight.position.set(-1.6, -0.4, 2.6);
 glove.add(keyLight);
 scene.add(glove);
+
+function syncCustomCursorAvailability() {
+  const available = customCursorQuery.matches && customCursorMeshReady &&
+    customCursorHasPosition && webglContextAvailable;
+  document.documentElement.classList.toggle('is-custom-cursor-ready', available);
+  glove.visible = available;
+}
+
+customCursorQuery.addEventListener('change', syncCustomCursorAvailability);
+canvas.addEventListener('webglcontextlost', event => {
+  event.preventDefault();
+  webglContextAvailable = false;
+  syncCustomCursorAvailability();
+});
+canvas.addEventListener('webglcontextrestored', () => {
+  webglContextAvailable = true;
+  syncCustomCursorAvailability();
+});
 
 // ---------------------------------------------------------------------------
 // Original retro cartridge: loaded as a real GLB and kept in this same scene,
@@ -1877,8 +1901,14 @@ new GLTFLoader().load('assets/hand-cursor-meshy.glb', (gltf) => {
       pinPointerTip();
     }
     resize();
+    customCursorMeshReady = true;
+    syncCustomCursorAvailability();
   };
   window.__applyGlb();
+}, undefined, error => {
+  console.error('Could not load hand cursor GLB', error);
+  customCursorMeshReady = false;
+  syncCustomCursorAvailability();
 });
 
 window.__dbg = { scene, camera, rt, renderer, bones, rigs, hand, wrist, glove,
@@ -2142,6 +2172,8 @@ function updateTargetFromEvent(e) {
   raycaster.setFromCamera(ndc, camera);
   raycaster.ray.intersectPlane(rayPlane, worldPt);
   mouse.set(worldPt.x, worldPt.y);
+  customCursorHasPosition = true;
+  syncCustomCursorAvailability();
 }
 
 function updateTargetFromEmbeddedGame(event) {
