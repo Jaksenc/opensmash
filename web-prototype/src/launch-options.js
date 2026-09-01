@@ -111,8 +111,12 @@ export function engineUrl(action, advancedOptions, now = Date.now()) {
 
   if (character) {
     params.set("inject", character.bundleUrl || `bundles/${character.bundle}`);
-    params.set("inject_ui", character.uiUrl || `bundles/${character.slug}.osbui`);
-    params.set("inject_voice", character.voiceUrl || `bundles/${character.slug}.wav`);
+    if (character.uiUrl || character.ui) {
+      params.set("inject_ui", character.uiUrl || `bundles/${character.slug}.osbui`);
+    }
+    if (character.voiceUrl || character.voice) {
+      params.set("inject_voice", character.voiceUrl || `bundles/${character.slug}.wav`);
+    }
     params.set("fkind", String(character.fkind));
     params.set("player", "0");
     if (options.characterMesh !== "auto") {

@@ -25,6 +25,8 @@ function queryFor(action, options = DEFAULT_ADVANCED_OPTIONS) {
 test("default launches start a free-for-all", () => {
   const characterQuery = queryFor({ type: "character", character: CHARACTER });
   assert.equal(characterQuery.get("inject"), "bundles/testfighter.osb");
+  assert.equal(characterQuery.get("inject_ui"), null);
+  assert.equal(characterQuery.get("inject_voice"), null);
   assert.match(characterQuery.get("SSB64_BOOT_BATTLE"), /^0,\d+,\d+,1,\d+,\d+$/);
 
   const selectQuery = queryFor({ type: "select" });
@@ -32,6 +34,15 @@ test("default launches start a free-for-all", () => {
 
   const startQuery = queryFor({ type: "start" });
   assert.match(startQuery.get("SSB64_BOOT_BATTLE"), /^0,\d+,\d+,1,\d+,\d+$/);
+});
+
+test("launches request only character extras that actually exist", () => {
+  const query = queryFor({
+    type: "character",
+    character: { ...CHARACTER, ui: true, voiceUrl: "/character-assets/testfighter/announcer.wav" },
+  });
+  assert.equal(query.get("inject_ui"), "bundles/testfighter.osbui");
+  assert.equal(query.get("inject_voice"), "/character-assets/testfighter/announcer.wav");
 });
 
 test("mesh and stage overrides select the matching injection variant", () => {
