@@ -11,3 +11,7 @@ export function readControllerTutorialCompletion(storage) {
 export function saveControllerTutorialCompletion(storage) {
   storage?.setItem(CONTROL_TUTORIAL_STORAGE_KEY, "complete");
 }
+
+export function clearControllerTutorialCompletion(storage) {
+  storage?.removeItem(CONTROL_TUTORIAL_STORAGE_KEY);
+}

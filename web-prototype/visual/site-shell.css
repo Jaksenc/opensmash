@@ -304,34 +304,6 @@
     text-transform: uppercase;
     cursor: none;
   }
-  .rom-reset-button {
-    position: fixed;
-    top: clamp(8px, 1vw, 14px);
-    left: clamp(8px, 1vw, 14px);
-    z-index: 999;
-    display: block;
-    padding: 6px 8px;
-    border: 1px solid rgba(231, 221, 210, .38);
-    border-radius: 2px;
-    background: rgba(8, 8, 8, .72);
-    color: rgba(231, 221, 210, .78);
-    font: 8px/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    letter-spacing: .09em;
-    text-transform: uppercase;
-    cursor: none;
-    transition: border-color 120ms, color 120ms, background 120ms;
-  }
-  .rom-reset-button:hover,
-  .rom-reset-button:focus-visible {
-    border-color: rgba(240, 87, 49, .9);
-    background: rgba(24, 10, 7, .9);
-    color: #fff2e4;
-    outline: none;
-  }
-  .rom-reset-button[hidden] { display: none; }
-  @media (max-width: 1100px) {
-    .rom-reset-button { top: 48px; }
-  }
   .intro-video-rule-layer {
     position: absolute;
     inset: 0;

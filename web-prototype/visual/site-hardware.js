@@ -2278,7 +2278,6 @@ function restartStarterVideoPlayback() {
 }
 
 startStarterVideoPlayback();
-window.addEventListener('pointerdown', startStarterVideoPlayback, { once: true });
 
 function startCartridgeBoot(now) {
   setCartridgeState(CARTRIDGE_STATE.BOOTING);
