@@ -47,8 +47,7 @@ const RASTER_DEBUG = new URLSearchParams(window.location.search);
 const CELL_W = 45;
 const CELL_H = 43;
 const RULE = 2;
-const FLAME_BRIDGE_CELL_COUNT = 1;
-// The single search cell is two-thirds the former control-strip height.
+// Shared menu cells use the same compressed height as the former control strip.
 const FLAME_BRIDGE_HEIGHT_SCALE = 47 / 552;
 const GRID_COLUMN_BREAKPOINTS = Object.freeze([
   { minWidth: 640, columns: 6 },
@@ -66,6 +65,7 @@ const LABEL_SMOOTH_MIX = Math.max(0, Math.min(
     ? requestedSmoothMix : 0.5
 ));
 const GEOMETRY_PIXEL_STEP = 4;
+const STONE_BACKGROUND_SEED = 3075641479;
 const FIRE_RGBA5551 = 'eIeRh5mFqkXDQ9QBzIXcydTJ1IfUQcvBw8HLgcNBw0HCwbsBw0HLwdRB1IPUydSH1MnUydRBzAHDAbLDqcWJRWgHQIVgh1hHWIVIhzCHOEVIhXBHiUeZh7rBcMeJBaIHskXLg8wB1IfUyd0L1MfMQ8vBw4HDgcMBy0G6wbLBw0HUAdRB1IXdC9TJ1QvUydRBzAHDQbKDqgeRR2BFUEdgRWBHaEdYR0iHQIVgR3jFiUWiBbrBCEMIQwhDCEMIQwhDGEMghShFGEMQQyBFIIUwhUCFSEdQh1iHYEdYR1CFSEdYh2BFaAdgR3hHWEVIhyhFIEUoRShFMIUwhTBFKIUoRSBFKEUohSBDEEUQQwhDCEMIQwhDCEMIQwhDGEMgRShFIIMYQxhFKEUwhUBHSIdQh2BHYEVgR1BHWEdYR2iFaEdgR3BHYEVAhShHMEUwhTCFMIU4hzBFMIUwhShFMEUoRSiFEEUQQwhDCEMIQwhDCEMIQwhDEEMoRSBFIEUYgyBFKIU4RUiHSIdYR2BHYIVgR2BFYEdgR2hFWIdoB3gHYIVARzCFMEU4hTCFOEUwhTiHMIUwhTBFOIUwRSCFEEMQQwhDCEMIQwhDCEMIQwhDEEMoRSiFIEUYQyBFMIU4R1BHQIVYR2iHYEVwR2hFYEdgR2BHWEVwB3AHYIc4RTiFOIU4hziFOEU4hzCFOIUwRTCFOEU4hSBFEEUIQQhDCEMIQwhDCEMIQwhDEEMgRSiFKEUYQyBFMIdAhVBFSIdgRWhHaAd4B3BFaAdgh2BFYEd4R2gHUIVAhzhFQIc4hzhFOIU4hziFOIcwRTCFOIUwhyBDEEUIQQhDCEMIQwhDCEMIQwhDCEMgRSiFKEMgRSiFMIVIhUiHUEdgR3hFeAd4SXhHaAVoR1hHcAdwR3AHSIU4hUBFQEdAhzhFQIc4hTiFOIc4hTiFOEUwRRiFEEMIQwhDCEMIQwhDCEMIQwhDCEMgQyiFKEcogyhHOIVIR1CFSEdwR3hFeAeAh3gFcEdoR2BHcAd4R2hFQEdAhUBHQIVAh0hFQIc4RTiHMIU4hTiHOEUohSBDEEUIQQhDCEMIAwhDCEMIAwhDCEMYgyhFKIUoRTCFOIdQh1BHWEVwBYCHeEWAh4BHcAdoB2hFeEVwB2CFQIdAhUCHSIVARUiFSIdARTiHOIU4RUCHMIUohRhFEEMIQwhDCEMIQwhDCEMIQwhDCEMYQyiFMEUwhShFQIdQh1hFaEd4RYBHgIWAh4CHcAdwBXBHgIVwB1iHQEVAh0CFQEdIhVCHSEdAh0BFOIc4RUCHOIUgRRhFEIMIAQhDCEMIQwhDCEMIQQhDCEMYRSiFMEUwRzCFQIdYR2BHaEWASYCFgMWIxYCFeEdwR4CHgMVwB1CFQEdAh0CFSIdIh1BHUEdIR0CFOEVAh0CHMIUoRRhDEEMIQwhDCEMIQwhDCEMIQwhDCEMQQzCHMEUwhTiFSIdgR2BHaEWAyYiHiMeIxYjHgMd4R4jFgMdwR1BHQIVAhUiHQEdQhVhHSIdQR0CFQIdIRUiHOIUgRRhDGEMIQwhDCEMIQwhDCEMIQwhDCEMQQyhFOIUwRUCHWIdYRWBHaEWIx4iHiMeRB4kFiMeAxYkHiMdoRVCFQEdIhUCFUEdIRVhFUEdQh0iHSEdQh0iHOIUoRRhDEEMIQwhDCEMIQwgDCEMIQwhDCEMYQzBFMIVAhUhHWIdgR2hFaAeAx5EFiMeRBZFHiQWRR5FHgIdoRVBHSIdAhUhHUIdYRVhHUIVQR0iFSIdQR1BHOIUohRBDGEUIQQhDCEMQQwhDCEMQQwhDCEMoRTCFQEVIhVCHYEdgh2CHaAeAx5EHiMeZRZlHkUeZhZFFgQVwB1iFSEdAh1CFUEdoRViHWEdQR1BHSIdYRUiFQIcohRhDEIUIAwhDCEMQQxBDGEUYQxBDGEUwhTiFSEdQh1BHYIdgR2BFcEeAhZlHkUWZRaHHmUWZhZGFiQd4B1iFUEdQh1iFUIdoB2hFUIdQR1CHUEdYRUiHQIcohRhDEEUQQwhBCEEgRSBFKIUoRRhFKIVAh0BHUIdYh1iFWIdgR2BFeAeJB5lFmUWhx6HFoYehh5mFiQd4R2BHWIVYR2BHYEdwRWhFUEdIRVCHUEdQhUiHQIUwRSCFIIUQQwhDEEMwhThHOIUwhShFQIVIR0iHWIVgR1hHYIdoR2AFgEeJB5mFmUWpxaIFqcWhxaHFkQeAx3AHYIVgR2hFcAd4R2BFUEdQh1BHWEVYh0hHQIcwhSBFKIUgRRBDIIU4RUiHSEdARTiFSIdYh1BFWEdoR2BHYEdoR3hHgIeRR6FFoYWiBaIFqgWiBanFmYWJB3hHaAdoB3BFgIdwBWCHUEVQR1BFWIdYRUiHQEU4hRBDOIUwRxhF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';
 // Exact port of opensmash/pixel_font.py's portrait-caption alphabet. The rows
 // were transcribed from the vanilla tile dumps; every label is composed from
@@ -179,7 +179,7 @@ const ROSTER = Object.freeze([...new Map(
   (LIVE_ROSTER.length ? LIVE_ROSTER : [...FEATURED_ROSTER, ...VANILLA_ROSTER])
     .map(character => [character.asset, character])
 ).values()]);
-const CELL_COUNT = ROSTER.length + 1;
+const CELL_COUNT = ROSTER.length + 2;
 const CELL_IDS = Object.freeze(Array.from(
   { length: CELL_COUNT }, (_, index) => `CELL-${String(index + 1).padStart(3, '0')}`
 ));
@@ -634,7 +634,7 @@ function renderCaption(value, maxWidth = CELL_W - 5) {
   return Object.freeze({ ...layout, height, pixels });
 }
 
-function drawLabel(dst, value) {
+function drawLabel(dst, value, opacity = 1) {
   const caption = renderCaption(value);
   if (!caption.text) return;
   // These source cuts retain the character-select tile's native top margin
@@ -646,7 +646,7 @@ function drawLabel(dst, value) {
     put(
       dst, CELL_W, originX + x, originY + y,
       caption.pixels[source], caption.pixels[source + 1],
-      caption.pixels[source + 2], caption.pixels[source + 3]
+      caption.pixels[source + 2], Math.round(caption.pixels[source + 3] * opacity)
     );
   }
 }
@@ -788,6 +788,43 @@ function renderCellBackground() {
   return dst;
 }
 
+function seededRandom(seed) {
+  let state = seed >>> 0;
+  return () => {
+    state += 0x6D2B79F5;
+    let value = state;
+    value = Math.imul(value ^ value >>> 15, value | 1);
+    value ^= value + Math.imul(value ^ value >>> 7, value | 61);
+    return ((value ^ value >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+function renderActionCellBackground(seed) {
+  const random = seededRandom(seed);
+  const dst = new Uint8ClampedArray(CELL_W * CELL_H * 4);
+
+  for (let y = 0; y < CELL_H; y++) for (let x = 0; x < CELL_W; x++) {
+    const grain = random();
+    const tone = grain < 0.08
+      ? 3 + Math.floor(random() * 2)
+      : grain > 0.92
+        ? 14 + Math.floor(random() * 10)
+        : 6 + Math.floor(random() * 5);
+    const target = (y * CELL_W + x) * 4;
+    dst[target] = tone;
+    dst[target + 1] = Math.max(0, tone - 1);
+    dst[target + 2] = Math.max(0, tone - 2);
+    dst[target + 3] = 255;
+  }
+
+  return dst;
+}
+
+const ACTION_CELL_BACKGROUND_PIXELS = Object.freeze({
+  search: renderActionCellBackground(STONE_BACKGROUND_SEED),
+  create: renderActionCellBackground(STONE_BACKGROUND_SEED ^ 0x9E3779B9)
+});
+
 function scalePixels2x(pixels, width, height, smooth) {
   const scaledWidth = width * 2;
   const scaledHeight = height * 2;
@@ -862,14 +899,21 @@ function compositePortrait(dst, portraitName) {
   }
 }
 
-function renderCellFramebuffer(name, portraitName = null) {
-  const native = renderCellBackground();
+function renderCellFramebuffer(
+  name,
+  portraitName = null,
+  labelOpacity = 1,
+  backgroundPixels = null
+) {
+  const native = backgroundPixels
+    ? new Uint8ClampedArray(backgroundPixels)
+    : renderCellBackground();
   compositePortrait(native, portraitName);
   const background = scalePixels2x(native, CELL_W, CELL_H, false);
   if (!name || (portraitName && USE_SOURCE_PORTRAIT_CAPTIONS &&
     BAKED_CAPTION_PORTRAITS.has(portraitName))) return background;
   const nativeLabel = new Uint8ClampedArray(CELL_W * CELL_H * 4);
-  drawLabel(nativeLabel, name);
+  drawLabel(nativeLabel, name, labelOpacity);
   const nearestLabel = scalePixels2x(nativeLabel, CELL_W, CELL_H, false);
   const smoothLabel = scalePixels2x(nativeLabel, CELL_W, CELL_H, true);
   const label = blendPixelFrames(nearestLabel, smoothLabel, LABEL_SMOOTH_MIX);
@@ -950,8 +994,16 @@ function canvasFromPixels(
   return canvas;
 }
 
-function paintCellCanvas(canvas, label, portraitName) {
-  const framebuffer = renderCellFramebuffer(label, portraitName);
+function paintCellCanvas(
+  canvas,
+  label,
+  portraitName,
+  labelOpacity = 1,
+  backgroundPixels = null
+) {
+  const framebuffer = renderCellFramebuffer(
+    label, portraitName, labelOpacity, backgroundPixels
+  );
   paintPixels(
     canvas, framebuffer.pixels, framebuffer.width, framebuffer.height
   );
@@ -964,19 +1016,8 @@ const introVideoFrame = document.querySelector('.intro-video-frame');
 const introVideoRuleCanvas = document.querySelector('.intro-video-rule-layer');
 const siteMenuBridge = document.getElementById('site-menu-bridge');
 const siteMenuRuleCanvas = document.querySelector('.site-menu-rule-layer');
-const flameBridge = document.getElementById('flame-bridge');
-const flameBridgeCells = [...document.querySelectorAll('.flame-bridge-cell')];
-const flameBridgeRuleCanvas = document.querySelector('.flame-bridge-rule-layer');
 const cells = new Map();
 const jobCells = new Map();
-
-const flameOnlyFramebuffer = renderCellFramebuffer();
-flameBridgeCells.forEach(cell => cell.append(canvasFromPixels(
-  flameOnlyFramebuffer.pixels,
-  flameOnlyFramebuffer.width,
-  flameOnlyFramebuffer.height,
-  'flame-bridge-texture-layer'
-)));
 
 const advancedFrameCells = [...document.querySelectorAll('.advanced-cell-frame')];
 const advancedFrameCanvases = new Map(advancedFrameCells.map(cell => {
@@ -1009,17 +1050,20 @@ if ('ResizeObserver' in window) {
 }
 
 CELL_IDS.forEach((id, index) => {
-  const isCreate = index === 0;
-  const character = isCreate
-    ? { asset: 'create', portrait: '', label: 'CREATE', name: 'Create fighter' }
-    : rosterCharacterForIndex(index - 1);
+  const isSearch = index === 0;
+  const isCreate = index === 1;
+  const character = isSearch
+    ? { asset: 'search', portrait: '', label: 'SEARCH', name: 'Search fighters' }
+    : isCreate
+      ? { asset: 'create', portrait: '', label: 'CREATE', name: 'Create fighter' }
+      : rosterCharacterForIndex(index - 2);
   const fkind = character.fkind ?? VANILLA_ROSTER.indexOf(character);
   const label = character.label;
-  const button = document.createElement('button');
-  button.type = 'button';
-  button.className = `replica-cell${isCreate ? ' is-create' : ''}`;
+  const button = document.createElement(isSearch ? 'label' : 'button');
+  if (!isSearch) button.type = 'button';
+  button.className = `replica-cell${isSearch ? ' is-search' : isCreate ? ' is-create' : ''}`;
   button.dataset.character = id;
-  button.dataset.kind = isCreate ? 'create' : 'fighter';
+  button.dataset.kind = isSearch ? 'search' : isCreate ? 'create' : 'fighter';
   button.dataset.label = label;
   button.dataset.rosterCharacter = character.asset;
   button.dataset.portrait = character.portrait;
@@ -1028,8 +1072,34 @@ CELL_IDS.forEach((id, index) => {
   if (character.bundle) button.dataset.bundle = character.bundle;
   button.setAttribute('role', 'gridcell');
   button.setAttribute('aria-label', character.name);
-  button.setAttribute('aria-pressed', 'false');
-  const framebuffer = renderCellFramebuffer(label, character.portrait);
+  // Create is a momentary action, not a toggle or selection-holding cell.
+  if (!isSearch && !isCreate) button.setAttribute('aria-pressed', 'false');
+  if (isSearch) {
+    const caret = document.createElement('span');
+    caret.className = 'replica-search-caret';
+    caret.setAttribute('aria-hidden', 'true');
+    button.append(caret);
+
+    const input = document.createElement('input');
+    input.id = 'fighter-search';
+    input.className = 'replica-search-input';
+    input.type = 'search';
+    input.autocomplete = 'off';
+    input.spellcheck = false;
+    input.setAttribute('autocapitalize', 'characters');
+    input.setAttribute('aria-label', 'Search fighters');
+    button.append(input);
+  }
+  const framebuffer = renderCellFramebuffer(
+    label,
+    character.portrait,
+    1,
+    isSearch
+      ? ACTION_CELL_BACKGROUND_PIXELS.search
+      : isCreate
+        ? ACTION_CELL_BACKGROUND_PIXELS.create
+        : null
+  );
   button.append(canvasFromPixels(
     framebuffer.pixels, framebuffer.width, framebuffer.height, 'replica-texture-layer'
   ));
@@ -1045,7 +1115,6 @@ grid.append(ruleCanvas);
 let currentGridLayout;
 let introVideoRuleSignature = '';
 let siteMenuRuleSignature = '';
-let flameBridgeRuleSignature = '';
 
 function paintIntroVideoRule() {
   if (!currentGridLayout || !introVideoFrame || !introVideoRuleCanvas) return;
@@ -1060,10 +1129,6 @@ function paintIntroVideoRule() {
   paintPixels(
     introVideoRuleCanvas, renderOuterRules(width, height), width, height
   );
-}
-
-function columnsForFlameBridge() {
-  return 1;
 }
 
 function sharedControlStripHeight(width) {
@@ -1099,30 +1164,6 @@ function paintSiteMenuRule() {
   );
 }
 
-function paintFlameBridgeRule() {
-  if (!currentGridLayout || !flameBridge || !flameBridgeRuleCanvas) return;
-  const columns = columnsForFlameBridge();
-  const rows = Math.ceil(FLAME_BRIDGE_CELL_COUNT / columns);
-  const logicalWidth = RULE + columns * (CELL_W + RULE);
-  const logicalHeight = RULE + rows * (CELL_H + RULE);
-  const width = currentGridLayout.width;
-  const height = sharedControlStripHeight(width);
-  const signature = `${width}x${height}:${columns}x${rows}`;
-
-  flameBridge.style.setProperty('--flame-bridge-columns', String(columns));
-  flameBridge.style.setProperty('--flame-bridge-rows', String(rows));
-  flameBridge.style.aspectRatio =
-    `${logicalWidth} / ${logicalHeight * FLAME_BRIDGE_HEIGHT_SCALE}`;
-  if (signature === flameBridgeRuleSignature) return;
-  flameBridgeRuleSignature = signature;
-  paintPixels(
-    flameBridgeRuleCanvas,
-    renderSharedPanelRules(width, height, columns, rows),
-    width,
-    height
-  );
-}
-
 function columnsForContainer() {
   const containerWidth = introVideoFrame?.clientWidth
     || arenaSurface?.clientWidth
@@ -1142,6 +1183,7 @@ function reserveRosterFootprint(layout) {
 function visibleCellsInDisplayOrder() {
   const visible = [...cells.values()].filter(button => !button.hidden);
   return [
+    ...visible.filter(button => button.dataset.kind === 'search'),
     ...visible.filter(button => button.dataset.kind === 'create'),
     ...visible.filter(button => button.dataset.kind === 'job'),
     ...visible.filter(button => button.dataset.kind === 'creation'),
@@ -1203,7 +1245,6 @@ function applyGridLayout(columns = columnsForContainer()) {
   );
   paintIntroVideoRule();
   paintSiteMenuRule();
-  paintFlameBridgeRule();
 
   const metrics = document.getElementById('replica-metrics');
   metrics.textContent =
@@ -1218,7 +1259,6 @@ function syncLayoutToVideoWidth() {
   applyGridLayout(columnsForContainer());
   paintIntroVideoRule();
   paintSiteMenuRule();
-  paintFlameBridgeRule();
 }
 
 if (introVideoFrame && 'ResizeObserver' in window) {
@@ -1229,14 +1269,40 @@ window.addEventListener('resize', syncLayoutToVideoWidth);
 
 const fighterSearch = document.getElementById('fighter-search');
 const fighterEmptyState = document.getElementById('fighter-empty-state');
+const searchCell = [...cells.values()].find(button => button.dataset.kind === 'search');
+
+function updateSearchTile(query = '') {
+  if (!searchCell) return;
+  const value = String(query).trim();
+  const active = document.activeElement === fighterSearch;
+  const displayLabel = value || 'SEARCH';
+  const caption = renderCaption(displayLabel);
+  const caretX = value
+    ? Math.min(CELL_W - 2, 4 + caption.width + 1)
+    : 3;
+
+  searchCell.classList.toggle('is-searching', active);
+  searchCell.style.setProperty('--search-caret-left', `${100 * caretX / CELL_W}%`);
+  paintCellCanvas(
+    searchCell.querySelector('.replica-texture-layer'),
+    displayLabel,
+    null,
+    active && !value ? 0.5 : 1,
+    ACTION_CELL_BACKGROUND_PIXELS.search
+  );
+}
 
 function filterRoster(query = '') {
   const normalized = String(query).trim().toLocaleLowerCase();
   let visibleCount = 0;
 
   cells.forEach(button => {
-    if (button.dataset.kind === 'create') {
+    if (button.dataset.kind === 'search') {
       button.hidden = false;
+      return;
+    }
+    if (button.dataset.kind === 'create') {
+      button.hidden = Boolean(normalized);
       return;
     }
     const matches = !normalized || [
@@ -1249,6 +1315,7 @@ function filterRoster(query = '') {
     if (matches) visibleCount++;
   });
 
+  updateSearchTile(query);
   applyGridLayout(columnsForContainer());
   if (fighterEmptyState) {
     fighterEmptyState.hidden = visibleCount > 0;
@@ -1258,11 +1325,40 @@ function filterRoster(query = '') {
   }
   grid.setAttribute('aria-label', normalized
     ? `${visibleCount} fighters matching ${String(query).trim()}`
-    : 'Create fighter and character roster');
+    : 'Search, create, and character roster');
   return visibleCount;
 }
 
 fighterSearch?.addEventListener('input', event => filterRoster(event.currentTarget.value));
+searchCell?.addEventListener('pointerdown', event => {
+  // Focus the embedded input before the browser's pointer default runs. The
+  // later click handler is too late to prevent focus-driven page scrolling.
+  if (!event.isPrimary || event.button !== 0) return;
+  fighterSearch?.focus({ preventScroll: true });
+});
+fighterSearch?.addEventListener('focus', event => filterRoster(event.currentTarget.value));
+fighterSearch?.addEventListener('blur', () => {
+  // Wait until the pending click has landed before restoring the full grid, so
+  // a filtered fighter cannot move out from under the pointer mid-selection.
+  window.setTimeout(() => {
+    if (document.activeElement !== fighterSearch) clearFighterSearch();
+  }, 0);
+});
+fighterSearch?.addEventListener('keydown', event => {
+  if (event.key !== 'Escape') return;
+  event.preventDefault();
+  fighterSearch.value = '';
+  filterRoster('');
+  fighterSearch.blur();
+});
+
+function clearFighterSearch() {
+  if (!fighterSearch) return;
+  if (!fighterSearch.value && document.activeElement !== fighterSearch) return;
+  fighterSearch.value = '';
+  filterRoster('');
+  fighterSearch.blur();
+}
 
 function getCell(name) {
   const value = String(name);
@@ -1435,14 +1531,20 @@ function highlight(name, active = true) {
 }
 
 function select(name) {
-  const selected = name == null ? null : getCell(name);
-  cells.forEach(cell => cell.setAttribute('aria-pressed', String(cell === selected)));
+  const candidate = name == null ? null : getCell(name);
+  const selected = candidate?.hasAttribute('aria-pressed') ? candidate : null;
+  cells.forEach(cell => {
+    if (cell.hasAttribute('aria-pressed')) {
+      cell.setAttribute('aria-pressed', String(cell === selected));
+    }
+  });
   return selected;
 }
 
 function requestSelection(name) {
   const selected = name == null ? null : getCell(name);
   if (selected) {
+    clearFighterSearch();
     grid.dispatchEvent(new CustomEvent('characterselect', {
       bubbles: true,
       detail: {
@@ -1460,6 +1562,10 @@ function requestSelection(name) {
 }
 
 cells.forEach(cell => cell.addEventListener('click', () => {
+  if (cell.dataset.kind === 'search') {
+    fighterSearch?.focus({ preventScroll: true });
+    return;
+  }
   if (cell.dataset.kind === 'create') {
     if (APP_BRIDGE?.navigate) APP_BRIDGE.navigate('/create');
     else window.location.assign('/create');
