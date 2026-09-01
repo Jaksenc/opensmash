@@ -267,6 +267,8 @@ async function configuredCharacters(query = "", user = null) {
         base: fighterName,
         fkind,
         bundle,
+        ui: character.ui,
+        voice: character.voice,
       });
     } catch (error) {
       console.warn(`Skipping staged character '${slug}': ${error.message}`);
