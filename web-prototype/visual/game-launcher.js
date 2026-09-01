@@ -185,7 +185,6 @@ function fighterFromSelection(detail) {
 function engineUrl(fighter) {
   const url = new URL('./engine/', location.href);
   const params = url.searchParams;
-  params.set('cb', String(Date.now()));
   if (fighter.bundle) {
     params.set('inject', `bundles/${fighter.bundle}`);
     params.set('fkind', String(fighter.fkind));
@@ -248,7 +247,10 @@ function launch(fighter) {
     window.characterGrid?.select(null);
     return;
   }
-  gameFrame.src = source;
+  // React owns the iframe URL when the bridge is present. Assigning the same
+  // source here as well can start a second navigation and download the engine
+  // twice before React commits its state update.
+  if (!APP_BRIDGE) gameFrame.src = source;
   videoFrame.classList.add('is-game-running');
   window.characterGrid?.select(fighter.selectionName || fighter.slug || null);
   scrollToPageTop();

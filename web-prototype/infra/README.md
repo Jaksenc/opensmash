@@ -79,6 +79,26 @@ certificate to become active before creating or changing the HTTPS proxy. It
 also provisions an HTTP-to-HTTPS redirect. Override the 30-minute certificate
 wait with `CERT_WAIT_SECONDS` if needed.
 
+## Cloudflare edge cache
+
+Deploy the engine worker after the Google load balancer exists. It validates
+the existing ROM-session cookie before looking up `/engine/*` in Cloudflare's
+shared cache, then enables proxying for the apex and `www` records. Public
+content-hashed Vite assets use Cloudflare's normal static cache.
+
+```bash
+CLOUDFLARE_API_TOKEN=... \
+CLOUDFLARE_ACCOUNT_ID=... \
+COOKIE_SECRET=... \
+./infra/deploy-edge.sh
+```
+
+The worker stores engine responses at the edge for 24 hours. Browsers receive
+short private TTLs for stable bundle/file paths and a one-year immutable TTL
+only for the already hash-versioned JavaScript and WASM URLs. Each application
+deploy should rerun this command, which purges the previous edge objects after
+the new worker version is active.
+
 ## Rollback
 
 Every deploy uses timestamped API and worker image tags. Repoint the API or job

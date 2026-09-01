@@ -20,8 +20,12 @@ const CHARACTER = {
 };
 
 function queryFor(action, options = DEFAULT_ADVANCED_OPTIONS) {
-  return new URL(engineUrl(action, options, 123), "https://example.test").searchParams;
+  return new URL(engineUrl(action, options), "https://example.test").searchParams;
 }
+
+test("launch URLs do not contain per-launch cache busters", () => {
+  assert.equal(queryFor({ type: "start" }).has("cb"), false);
+});
 
 test("default launches start a free-for-all", () => {
   const characterQuery = queryFor({ type: "character", character: CHARACTER });
