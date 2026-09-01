@@ -7,13 +7,11 @@ import { fileURLToPath } from "node:url";
 import { createFighterJobs } from "./fighter-jobs.js";
 
 const APP_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-// The app lives beside pipeline/website inside the opensmash repo, while the
-// WASM build is a sibling checkout of that repo.
-const REPO_ROOT = path.resolve(APP_ROOT, "..", "..");
+const REPO_ROOT = path.resolve(APP_ROOT, "..");
 const DIST_ROOT = path.join(APP_ROOT, "dist");
 const ENGINE_ROOT = path.join(REPO_ROOT, "BattleShip", "web-dist");
-const PIPELINE_UI_ROOT = path.join(REPO_ROOT, "pipeline", "play", "ui");
-const SITE_ASSETS_ROOT = path.join(REPO_ROOT, "pipeline", "website", "assets");
+const PIPELINE_UI_ROOT = path.join(REPO_ROOT, "play", "ui");
+const SITE_ASSETS_ROOT = path.join(REPO_ROOT, "website", "assets");
 const CHARACTERS_CONFIG = path.join(APP_ROOT, "config", "characters.json");
 const fighterJobs = createFighterJobs({
   appRoot: APP_ROOT,

@@ -1,10 +1,10 @@
-"""Add FUN light pipes and a cartridge snap anchor to the Tripo console.
+"""Add FUN light pipes and a cartridge snap anchor to the recovered console.
 
 Run with Blender:
 
     blender --background --python tools/build_console_cartridge_system.py
 
-The source GLBs are left untouched. The generated console preserves the Tripo
+The source GLBs are left untouched. The generated console preserves the N64
 shell, ports, switches, and authored cartridge slot. Only the small front
 indicator is covered by three light-pipe letters, and a named snap anchor is
 added for the Three.js interaction.
@@ -26,9 +26,17 @@ CONSOLE_OUTPUT = ROOT / "website" / "assets" / "hybrid-four-port-console-fitted.
 
 CARTRIDGE_FIT_SCALE = 0.44
 SLOT_CLEARANCE = 0.012
-SLOT_CENTER_X = -0.15
-SLOT_TOP_Z = 0.137
-SLOT_INSERT_DEPTH = 0.055
+# The recovered N64 has raised switches above its molded roof, so its absolute
+# Z maximum is not the cartridge-slot surface.  These proportions are measured
+# from the recovered shell. The light-grey cartridge opening sits only slightly
+# behind the shell's center; targeting the darker rear seam makes a seated
+# cartridge appear to stop behind the opening. Keeping both a mouth and seated
+# anchor lets the web interaction use the visible opening for collision while
+# retaining a deeper physical seat.
+SLOT_CENTER_DEPTH_FRACTION = -0.15
+SLOT_SURFACE_HEIGHT_FRACTION = 0.34
+SLOT_INSERT_DEPTH_HEIGHT_FRACTION = 0.30
+INDICATOR_Z_HEIGHT_FRACTION = 0.427
 
 
 def material(name: str, color: tuple[float, float, float], roughness: float = 0.82):
@@ -91,12 +99,11 @@ def measure_cartridge() -> Vector:
     return high - low
 
 
-def add_fun_indicator(front_x: float) -> None:
+def add_fun_indicator(front_x: float, indicator_z: float) -> None:
     """Cover only the source indicator and add three tiny light pipes."""
 
     cover_mat = material("Original indicator cover", (0.038, 0.042, 0.050), 0.82)
     letter_mat = material("FUN dark light pipe", (0.055, 0.062, 0.075), 0.6)
-    indicator_z = 0.058
     cover_depth = 0.004
     cover_x = front_x + cover_depth * 0.45
     bevelled_box(
@@ -160,22 +167,48 @@ def build_fitted_console(cartridge_size: Vector) -> None:
     bpy.ops.wm.read_factory_settings(use_empty=True)
     bpy.ops.import_scene.gltf(filepath=str(CONSOLE_SOURCE))
     source_meshes = [obj for obj in bpy.context.scene.objects if obj.type == "MESH"]
-    _, console_high = bounds(source_meshes)
+    console_low, console_high = bounds(source_meshes)
+    console_size = console_high - console_low
+    console_center = (console_low + console_high) * 0.5
     aperture_x = cartridge_size.x * CARTRIDGE_FIT_SCALE + SLOT_CLEARANCE
     aperture_y = cartridge_size.y * CARTRIDGE_FIT_SCALE + SLOT_CLEARANCE
-    add_fun_indicator(console_high.x)
+    add_fun_indicator(
+        console_high.x,
+        console_center.z + console_size.z * INDICATOR_Z_HEIGHT_FRACTION,
+    )
+
+    slot_center_x = (
+        console_center.x + console_size.x * SLOT_CENTER_DEPTH_FRACTION
+    )
+    slot_surface_z = (
+        console_center.z + console_size.z * SLOT_SURFACE_HEIGHT_FRACTION
+    )
+    slot_insert_depth = console_size.z * SLOT_INSERT_DEPTH_HEIGHT_FRACTION
+    cartridge_half_height = cartridge_size.z * CARTRIDGE_FIT_SCALE * 0.5
 
     cartridge_center_z = (
-        SLOT_TOP_Z - SLOT_INSERT_DEPTH - cartridge_size.z * CARTRIDGE_FIT_SCALE * -0.5
+        slot_surface_z
+        - slot_insert_depth
+        + cartridge_half_height
     )
     anchor = bpy.data.objects.new("CartridgeSnapAnchor", None)
     anchor.empty_display_type = "PLAIN_AXES"
-    anchor.location = (SLOT_CENTER_X, 0, cartridge_center_z)
+    anchor.location = (slot_center_x, console_center.y, cartridge_center_z)
     anchor["cartridge_fit_scale"] = CARTRIDGE_FIT_SCALE
     anchor["slot_clearance"] = SLOT_CLEARANCE
     anchor["slot_aperture_x"] = aperture_x
     anchor["slot_aperture_y"] = aperture_y
     bpy.context.collection.objects.link(anchor)
+
+    mouth_anchor = bpy.data.objects.new("CartridgeMouthAnchor", None)
+    mouth_anchor.empty_display_type = "PLAIN_AXES"
+    mouth_anchor.location = (
+        slot_center_x,
+        console_center.y,
+        slot_surface_z + cartridge_half_height + SLOT_CLEARANCE * 0.5,
+    )
+    mouth_anchor["slot_surface_z"] = slot_surface_z
+    bpy.context.collection.objects.link(mouth_anchor)
 
     bpy.ops.object.select_all(action="SELECT")
     bpy.ops.export_scene.gltf(

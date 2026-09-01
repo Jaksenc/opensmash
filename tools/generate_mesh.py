@@ -267,8 +267,9 @@ def create_tripo_multiview_task(args: argparse.Namespace, tokens: list[str]) -> 
         "files": [{"type": "png", "file_token": token} for token in tokens],
         "texture": args.textured,
         "pbr": args.textured,
-        "export_uv": args.textured,
     }
+    if not (args.model_version or "").startswith("P1-"):
+        body["export_uv"] = args.textured
     if args.target_polycount is not None:
         body["face_limit"] = args.target_polycount
         if not (args.model_version or "").startswith("P1-"):
@@ -298,8 +299,9 @@ def create_tripo_image_task(args: argparse.Namespace, token: str) -> str:
         "file": {"type": file_type, "file_token": token},
         "texture": args.textured,
         "pbr": args.textured,
-        "export_uv": args.textured,
     }
+    if not (args.model_version or "").startswith("P1-"):
+        body["export_uv"] = args.textured
     if args.target_polycount is not None:
         body["face_limit"] = args.target_polycount
         if not (args.model_version or "").startswith("P1-"):

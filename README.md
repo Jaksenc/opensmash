@@ -34,13 +34,22 @@ The original procedural fallback can be rebuilt with:
 blender --background --python tools/build_cartridge_model.py
 ```
 
-## Tripo console + fitted cartridge interaction
+## Recovered N64 console + fitted cartridge interaction
 
-`website/assets/hybrid-four-port-console-fitted.glb` preserves the original textured
-Tripo console shell, its four ports, top switches, and cartridge slot. A small
-flush cover replaces the original front indicator with `FUN` light pipes, and a
-`CartridgeSnapAnchor` node drives the site interaction. Rebuild the derived
-console without changing either source GLB with:
+`assets/n64-console-sketchfab-recovered.glb` is the recovered 718-triangle
+viewer model with embedded diffuse, normal, and AO maps from NeoZeroo's
+original Sketchfab upload.
+The archival recovery remains untouched. Normalize its axes, scale, and texture
+size for the site with:
+
+```bash
+blender --background --python tools/prepare_sketchfab_console.py
+```
+
+`website/assets/hybrid-four-port-console-fitted.glb` preserves the recovered shell,
+four ports, top switches, badge, and cartridge slot. A small flush cover adds
+`FUN` light pipes, and a `CartridgeSnapAnchor` node drives the site interaction.
+Rebuild that derived interaction asset with:
 
 ```bash
 blender --background --python tools/build_console_cartridge_system.py
@@ -78,6 +87,32 @@ above both pieces of hardware.
 The default runtime shader uses 2× pixels, 12 color steps, 50% posterization,
 full edge dither, a 70%-strength 1px `#383838` outline, and display gamma 2.50.
 The tuning controls remain part of the page but are hidden from the final UI.
+
+## Tripo CRT intro screen
+
+`assets/tripo-crt-tv.glb` is a 10k-face-target, geometry-only Tripo v3.0
+image-to-model result generated from the supplied Trinitron reference. The
+optional cartridge intro gives the cabinet an authored charcoal material and
+places the local `assets/intro-crt.mp4` clip on a segmented, physically curved
+screen. The default route loads the character-grid site directly and plays the
+same clip in the 4:3 video container at the top of the page.
+Its dedicated Three.js shader adds barrel distortion, scanlines, an RGB
+phosphor mask, chromatic separation, a rolling brightness band, vignette,
+flicker, and fine analog noise. The optimized 1280×960 H.264 clip preserves the
+original 4:3 framing while reducing the browser payload from 108 MB to about
+7.4 MB.
+
+Append `?intro=cartridge` to the local URL to preview the preserved cartridge
+insertion experience. The default URL opens the running main screen directly.
+`#skipboot` can still be added to the cartridge URL to bypass its interaction.
+
+The full browser viewport uses a 199X-inspired two-stage treatment: a backdrop
+pass adds the slight composite softness, color density, and pixel blending of
+the original preset's color/NTSC stages, then `crt-viewport.js` adds the tube
+edge, vignette, visible raster lines, RGB aperture grille, rolling luminance,
+flicker, and analog noise above every page layer. Add `?crt=off` to compare the
+page without the viewport effect, or `?crt=soft` for a restrained version of
+the default exaggerated preset.
 
 ## Mesh generation
 

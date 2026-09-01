@@ -8,9 +8,9 @@ const CELL_W = 45;
 const CELL_H = 43;
 const RULE = 2;
 const CELL_COUNT = 200;
-const FLAME_BRIDGE_CELL_COUNT = 4;
-const FLAME_BRIDGE_BREAKPOINT = 640;
-const FLAME_BRIDGE_HEIGHT_SCALE = 0.25;
+const FLAME_BRIDGE_CELL_COUNT = 1;
+// The single search cell is two-thirds the former control-strip height.
+const FLAME_BRIDGE_HEIGHT_SCALE = 47 / 552;
 const GRID_COLUMN_BREAKPOINTS = Object.freeze([
   { minWidth: 1024, columns: 8 },
   { minWidth: 640, columns: 6 },
@@ -104,6 +104,36 @@ const VANILLA_ROSTER = Object.freeze([
   { asset: 'purin', portrait: 'jigglypuff', label: 'JIGGLYPUFF', name: 'Jigglypuff' },
   { asset: 'ness', portrait: 'ness', label: 'NESS', name: 'Ness' }
 ]);
+const FEATURED_ROSTER = Object.freeze([
+  {
+    asset: 'joeyflynn', portrait: 'joey-flynn', label: 'JFLYNN',
+    name: 'Joey Flynn', source: 'featured', fkind: 7,
+    bundle: 'joeyflynn-captain.osb'
+  },
+  {
+    asset: 'barackobama', portrait: 'barack-obama', label: 'OBAMA',
+    name: 'Barack Obama', source: 'featured', fkind: 1,
+    bundle: 'barackobama-fox.osb'
+  },
+  {
+    asset: 'queen', portrait: 'queen-elizabeth-ii', label: 'QUEEN',
+    name: 'Queen Elizabeth II', source: 'featured', fkind: 8,
+    bundle: 'queen-kirby.osb'
+  },
+  {
+    asset: 'rohansahai', portrait: 'rohan-sahai', label: 'ROHAN',
+    name: 'Rohan Sahai', source: 'featured', fkind: 5,
+    bundle: 'rohansahai-link.osb'
+  }
+]);
+const BAKED_CAPTION_PORTRAITS = new Set(
+  VANILLA_ROSTER.map(character => character.portrait)
+);
+
+function rosterCharacterForIndex(index) {
+  return FEATURED_ROSTER[index] ||
+    VANILLA_ROSTER[(index - FEATURED_ROSTER.length) % VANILLA_ROSTER.length];
+}
 // RGB samples from the supplied screenshot after resolving it to the native
 // 96x92 grid. Only the six vertical and six horizontal 2px rule lanes are
 // stored; portrait and fire pixels are not present in this border program.
@@ -305,6 +335,52 @@ const CHARACTER_PORTRAITS = new Map(await Promise.all(VANILLA_ROSTER.map(async c
     `assets/charselect/${character.portrait}.png?v=20260829c`
   ), character.label)
 ])));
+
+async function loadFeaturedPortrait(portraitName) {
+  const image = new Image();
+  image.decoding = 'async';
+  image.src = `assets/featured-fighters/${portraitName}.png?v=20260831a`;
+  await image.decode();
+
+  const canvas = document.createElement('canvas');
+  canvas.width = CELL_W;
+  canvas.height = CELL_H;
+  const context = canvas.getContext('2d', { willReadFrequently: true });
+  const sourceAspect = image.naturalWidth / image.naturalHeight;
+  const targetAspect = CELL_W / CELL_H;
+  let sourceX = 0;
+  let sourceY = 0;
+  let sourceWidth = image.naturalWidth;
+  let sourceHeight = image.naturalHeight;
+
+  if (sourceAspect > targetAspect) {
+    sourceWidth = image.naturalHeight * targetAspect;
+    sourceX = (image.naturalWidth - sourceWidth) / 2;
+  } else {
+    sourceHeight = image.naturalWidth / targetAspect;
+    sourceY = (image.naturalHeight - sourceHeight) / 2;
+  }
+
+  context.imageSmoothingEnabled = true;
+  context.imageSmoothingQuality = 'high';
+  context.drawImage(
+    image,
+    sourceX, sourceY, sourceWidth, sourceHeight,
+    0, 0, CELL_W, CELL_H
+  );
+  return Object.freeze({
+    width: CELL_W,
+    height: CELL_H,
+    pixels: context.getImageData(0, 0, CELL_W, CELL_H).data
+  });
+}
+
+await Promise.all(FEATURED_ROSTER.map(async character => {
+  CHARACTER_PORTRAITS.set(
+    character.portrait,
+    await loadFeaturedPortrait(character.portrait)
+  );
+}));
 
 function padExtractedGlyph(char, glyph, left = 0, right = 0) {
   const width = glyph.width + left + right;
@@ -714,7 +790,8 @@ function renderCellFramebuffer(name, portraitName = null) {
   const native = renderCellBackground();
   compositePortrait(native, portraitName);
   const background = scalePixels2x(native, CELL_W, CELL_H, false);
-  if (!name || (portraitName && USE_SOURCE_PORTRAIT_CAPTIONS)) return background;
+  if (!name || (portraitName && USE_SOURCE_PORTRAIT_CAPTIONS &&
+    BAKED_CAPTION_PORTRAITS.has(portraitName))) return background;
   const nativeLabel = new Uint8ClampedArray(CELL_W * CELL_H * 4);
   drawLabel(nativeLabel, name);
   const nearestLabel = scalePixels2x(nativeLabel, CELL_W, CELL_H, false);
@@ -801,6 +878,8 @@ function paintCellCanvas(canvas, label, portraitName) {
 }
 
 const grid = document.getElementById('replica-grid');
+const arenaShell = document.querySelector('.arena-shell');
+const arenaSurface = grid.closest('.arena-surface');
 const introVideoFrame = document.querySelector('.intro-video-frame');
 const introVideoRuleCanvas = document.querySelector('.intro-video-rule-layer');
 const flameBridge = document.getElementById('flame-bridge');
@@ -817,15 +896,23 @@ flameBridgeCells.forEach(cell => cell.append(canvasFromPixels(
 )));
 
 CELL_IDS.forEach((id, index) => {
-  const character = VANILLA_ROSTER[index % VANILLA_ROSTER.length];
+  const isCreate = index === 0;
+  const character = isCreate
+    ? { asset: 'create', portrait: '', label: 'CREATE', name: 'Create fighter' }
+    : rosterCharacterForIndex(index - 1);
+  const fkind = character.fkind ?? VANILLA_ROSTER.indexOf(character);
   const label = character.label;
   const button = document.createElement('button');
   button.type = 'button';
-  button.className = 'replica-cell';
+  button.className = `replica-cell${isCreate ? ' is-create' : ''}`;
   button.dataset.character = id;
+  button.dataset.kind = isCreate ? 'create' : 'fighter';
   button.dataset.label = label;
   button.dataset.rosterCharacter = character.asset;
   button.dataset.portrait = character.portrait;
+  button.dataset.displayName = character.name;
+  button.dataset.fkind = String(fkind);
+  if (character.bundle) button.dataset.bundle = character.bundle;
   button.setAttribute('role', 'gridcell');
   button.setAttribute('aria-label', character.name);
   button.setAttribute('aria-pressed', 'false');
@@ -862,8 +949,7 @@ function paintIntroVideoRule() {
 }
 
 function columnsForFlameBridge() {
-  const containerWidth = flameBridge?.clientWidth || window.innerWidth;
-  return containerWidth >= FLAME_BRIDGE_BREAKPOINT ? 2 : 1;
+  return 1;
 }
 
 function paintFlameBridgeRule() {
@@ -880,6 +966,7 @@ function paintFlameBridgeRule() {
   const signature = `${width}x${height}:${columns}x${rows}`;
 
   flameBridge.style.setProperty('--flame-bridge-columns', String(columns));
+  flameBridge.style.setProperty('--flame-bridge-rows', String(rows));
   flameBridge.style.aspectRatio =
     `${logicalWidth} / ${logicalHeight * FLAME_BRIDGE_HEIGHT_SCALE}`;
   if (signature === flameBridgeRuleSignature) return;
@@ -894,27 +981,52 @@ function paintFlameBridgeRule() {
 
 function columnsForContainer() {
   const containerWidth = introVideoFrame?.clientWidth
-    || grid.closest('.arena-surface')?.clientWidth
+    || arenaSurface?.clientWidth
     || window.innerWidth;
   return GRID_COLUMN_BREAKPOINTS.find(({ minWidth }) => containerWidth >= minWidth).columns;
 }
 
-function applyGridLayout(columns = columnsForContainer()) {
-  if (currentGridLayout?.columns === columns) return currentGridLayout;
+function reserveRosterFootprint(layout) {
+  const renderedWidth = arenaSurface.clientWidth || window.innerWidth;
+  const reserveHeight = Math.max(
+    0,
+    (layout.reservedHeight - layout.height) * renderedWidth / layout.width
+  );
+  arenaShell.style.setProperty('--roster-layout-reserve', `${reserveHeight}px`);
+}
 
-  const rows = Math.ceil(CELL_COUNT / columns);
+function applyGridLayout(columns = columnsForContainer()) {
+  const visibleCells = [...cells.values()].filter(button => !button.hidden);
+  const visibleSignature = visibleCells.map(button => button.dataset.character).join(',');
+  if (currentGridLayout?.columns === columns &&
+      currentGridLayout.visibleSignature === visibleSignature) {
+    reserveRosterFootprint(currentGridLayout);
+    return currentGridLayout;
+  }
+
+  const rows = Math.max(1, Math.ceil(visibleCells.length / columns));
   const width = RULE + columns * (CELL_W + RULE);
   const height = RULE + rows * (CELL_H + RULE);
-  currentGridLayout = Object.freeze({ columns, rows, width, height });
+  const reservedRows = Math.ceil(CELL_COUNT / columns);
+  const reservedHeight = RULE + reservedRows * (CELL_H + RULE);
+  currentGridLayout = Object.freeze({
+    columns, rows, width, height,
+    reservedRows, reservedHeight,
+    visibleCount: visibleCells.length,
+    visibleSignature
+  });
 
-  document.querySelector('.arena-shell').style.setProperty(
+  arenaShell.style.setProperty(
     '--shared-rule-overlap', `${100 * RULE / width}%`
   );
-  grid.closest('.arena-surface').style.aspectRatio = `${width} / ${height}`;
+  arenaSurface.style.aspectRatio = `${width} / ${height}`;
+  // Filtering compacts the visible tiles, but keep the roster's original page
+  // footprint so a focused search field does not trigger scroll anchoring.
+  reserveRosterFootprint(currentGridLayout);
   grid.setAttribute('aria-colcount', String(columns));
   grid.setAttribute('aria-rowcount', String(rows));
 
-  [...cells.values()].forEach((button, index) => {
+  visibleCells.forEach((button, index) => {
     const col = index % columns;
     const row = Math.floor(index / columns);
     button.dataset.column = String(col + 1);
@@ -925,7 +1037,7 @@ function applyGridLayout(columns = columnsForContainer()) {
     button.style.setProperty('--cell-height', `${100 * CELL_H / height}%`);
     button.setAttribute(
       'aria-label',
-      `${VANILLA_ROSTER[index % VANILLA_ROSTER.length].name}, row ${row + 1}, column ${col + 1}`
+      `${button.dataset.displayName}, row ${row + 1}, column ${col + 1}`
     );
   });
 
@@ -935,7 +1047,7 @@ function applyGridLayout(columns = columnsForContainer()) {
 
   const metrics = document.getElementById('replica-metrics');
   metrics.textContent =
-    `${CELL_COUNT} targetable cells · ${columns}×${rows} · ${width}×${height} native`;
+    `${visibleCells.length}/${CELL_COUNT} targetable cells · ${columns}×${rows} · ${width}×${height} native`;
 
   return currentGridLayout;
 }
@@ -953,6 +1065,43 @@ if (introVideoFrame && 'ResizeObserver' in window) {
   videoWidthObserver.observe(introVideoFrame);
 }
 window.addEventListener('resize', syncLayoutToVideoWidth);
+
+const fighterSearch = document.getElementById('fighter-search');
+const fighterEmptyState = document.getElementById('fighter-empty-state');
+
+function filterRoster(query = '') {
+  const normalized = String(query).trim().toLocaleLowerCase();
+  let visibleCount = 0;
+
+  cells.forEach(button => {
+    if (button.dataset.kind === 'create') {
+      button.hidden = false;
+      return;
+    }
+    const matches = !normalized || [
+      button.dataset.displayName,
+      button.dataset.label,
+      button.dataset.rosterCharacter,
+      button.dataset.portrait
+    ].filter(Boolean).some(value => value.toLocaleLowerCase().includes(normalized));
+    button.hidden = !matches;
+    if (matches) visibleCount++;
+  });
+
+  applyGridLayout(columnsForContainer());
+  if (fighterEmptyState) {
+    fighterEmptyState.hidden = visibleCount > 0;
+    fighterEmptyState.textContent = visibleCount
+      ? ''
+      : `No fighters match “${String(query).trim()}”`;
+  }
+  grid.setAttribute('aria-label', normalized
+    ? `${visibleCount} fighters matching ${String(query).trim()}`
+    : 'Create fighter and character roster');
+  return visibleCount;
+}
+
+fighterSearch?.addEventListener('input', event => filterRoster(event.currentTarget.value));
 
 function getCell(name) {
   const key = String(name).toUpperCase();
@@ -998,6 +1147,9 @@ function select(name) {
       detail: {
         name: selected.dataset.character,
         label: selected.dataset.label,
+        displayName: selected.dataset.displayName,
+        fkind: Number(selected.dataset.fkind),
+        bundle: selected.dataset.bundle || null,
         cell: selected
       }
     }));
@@ -1005,7 +1157,13 @@ function select(name) {
   return selected;
 }
 
-cells.forEach(cell => cell.addEventListener('click', () => select(cell.dataset.character)));
+cells.forEach(cell => cell.addEventListener('click', () => {
+  if (cell.dataset.kind === 'create') {
+    window.location.assign('/create');
+    return;
+  }
+  select(cell.dataset.character);
+}));
 
 const BENCH_W = 24;
 const BENCH_H = 14;
@@ -1151,6 +1309,7 @@ window.characterGrid = Object.freeze({
   highlight,
   clearHighlights,
   select,
+  filter: filterRoster,
   randomize
 });
 
