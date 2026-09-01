@@ -54,7 +54,14 @@ export default function AuthGate({ onAuthenticated }) {
         setConfig(loaded);
         if (!loaded.enabled) {
           const session = await readResult(await fetch("/api/session", { cache: "no-store" }));
-          if (!cancelled && session.user) onAuthenticated(session.user);
+          if (!cancelled) {
+            onAuthenticated(session.user || {
+              uid: "local-development",
+              displayName: "Local developer",
+              email: null,
+              provider: "local",
+            });
+          }
           return;
         }
         const auth = firebaseAuth(loaded.firebase);

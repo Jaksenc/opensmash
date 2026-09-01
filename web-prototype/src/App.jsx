@@ -1,8 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import AuthGate from "./AuthGate.jsx";
+import CreateVisualShell from "./CreateVisualShell.jsx";
 import FighterCreator from "./FighterCreator.jsx";
+import FlameAction from "./FlameAction.jsx";
 import RetroHome from "./RetroHome.jsx";
+import RetroChoiceGrid from "./RetroChoiceGrid.jsx";
 import { matchesCharacterSearch } from "../shared/character-search.js";
+import {
+  controlsRoadblockRequired,
+  requireControlsRoadblock,
+} from "../visual/controls-roadblock.js";
 import { identifyRomFile } from "./rom-validation.js";
 import { clearControllerTutorialCompletion } from "../visual/control-tutorial.js?v=20260901-reset1";
 import {
@@ -16,6 +23,7 @@ import {
 } from "./launch-options.js";
 
 const ADVANCED_OPTIONS_KEY = "opensmash-advanced-options";
+const ACTIVE_FIGHTER_JOB_STATUSES = new Set(["queued", "running", "retrying"]);
 
 function loadAdvancedOptions() {
   try {
@@ -113,7 +121,7 @@ function RomModal({ action, onCancel, onValidated }) {
             {status === "extracting" && "Extracting locally…"}
             {status === "hashing" && "Normalizing & hashing locally…"}
             {status === "validating" && "Checking ROM…"}
-            {status === "idle" && "Validate & play"}
+            {status === "idle" && (action?.type === "create" ? "Validate & create" : "Validate & play")}
           </button>
         </form>
       </section>
@@ -222,26 +230,12 @@ function AdvancedModal({ authorized, debugMode, open, options, onCancel, onReset
 
           <fieldset className="boot-mode-fieldset">
             <legend>Boot Destination</legend>
-            <div className="boot-mode-grid">
-              {BOOT_MODES.map((mode) => (
-                <label
-                  className={`advanced-cell-frame flame-bridge-cell ${draft.bootMode === mode.value ? "is-selected" : ""}`}
-                  key={mode.value}
-                >
-                  <input
-                    type="radio"
-                    name="boot-mode"
-                    value={mode.value}
-                    checked={draft.bootMode === mode.value}
-                    onChange={(event) => update("bootMode", event.target.value)}
-                  />
-                  <span className="boot-mode-copy">
-                    <strong>{mode.label}</strong>
-                    <small>{mode.description}</small>
-                  </span>
-                </label>
-              ))}
-            </div>
+            <RetroChoiceGrid
+              name="boot-mode"
+              value={draft.bootMode}
+              options={BOOT_MODES}
+              onChange={(value) => update("bootMode", value)}
+            />
           </fieldset>
 
           {debugMode && (
@@ -272,9 +266,9 @@ function AdvancedModal({ authorized, debugMode, open, options, onCancel, onReset
           )}
 
           <div className="advanced-actions">
-            <div className="advanced-save-cell launch-flow-fire-cell flame-bridge-cell">
-              <button className="launch-flow-action save-options-button" type="submit">Save Settings</button>
-            </div>
+            <FlameAction cellClassName="advanced-save-cell" className="save-options-button" type="submit">
+              Save Settings
+            </FlameAction>
             <button
               className="launch-flow-action reset-options-button"
               type="button"
@@ -296,9 +290,36 @@ function AdvancedModal({ authorized, debugMode, open, options, onCancel, onReset
   );
 }
 
+function CreateExperienceOverlay({ onAuthenticated, onClose, onCreated, onPlay, stage, user }) {
+  useEffect(() => {
+    if (stage !== "auth" && stage !== "creator") return undefined;
+    document.body.classList.add("is-create-experience-open");
+    return () => document.body.classList.remove("is-create-experience-open");
+  }, [stage]);
+
+  if (stage !== "auth" && stage !== "creator") return null;
+
+  return (
+    <div className="create-experience-backdrop">
+      <section className="create-experience create-page" aria-label="Create a fighter">
+        {stage === "auth" && (
+          <button className="create-experience-close" type="button" onClick={onClose} aria-label="Back to fighters">
+            ×
+          </button>
+        )}
+        {stage === "auth" && <AuthGate onAuthenticated={onAuthenticated} />}
+        {stage === "creator" && user && (
+          <FighterCreator onCancel={onClose} onCreated={onCreated} onPlay={onPlay} />
+        )}
+      </section>
+    </div>
+  );
+}
+
 export default function App() {
   const isCreatePage = window.location.pathname.replace(/\/+$/, "") === "/create";
   const [characters, setCharacters] = useState([]);
+  const [fighterJobs, setFighterJobs] = useState([]);
   const [loadingCharacters, setLoadingCharacters] = useState(true);
   const [authorized, setAuthorized] = useState(false);
   const [user, setUser] = useState(null);
@@ -310,12 +331,16 @@ export default function App() {
   const [soundOn, setSoundOn] = useState(() => localStorage.getItem("opensmash-sound") !== "off");
   const [advancedOptions, setAdvancedOptions] = useState(loadAdvancedOptions);
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [createStage, setCreateStage] = useState(null);
   const gameRef = useRef(null);
   const gameFrameRef = useRef(null);
   const engineRef = useRef(null);
   const devMenuRef = useRef(null);
   const announcerRef = useRef(null);
   const visualBridgeRef = useRef({});
+  const reportCreateVisualError = useCallback((error) => {
+    setPageError(error.message || "Could not load the ROM upload screen.");
+  }, []);
 
   async function loadCharacters() {
     const response = await fetch("/api/characters", { cache: "no-store" });
@@ -325,6 +350,23 @@ export default function App() {
     return loadedCharacters;
   }
 
+  const recordFighterJob = useCallback((job) => {
+    if (!job?.id) return;
+    setFighterJobs((current) => {
+      const existing = current.find((candidate) => candidate.id === job.id);
+      if (existing && (existing.revision || 0) > (job.revision || 0)) return current;
+      return [job, ...current.filter((candidate) => candidate.id !== job.id)];
+    });
+    if (job.status === "complete" && job.character) {
+      setCharacters((current) => {
+        const generated = { ...job.character, generated: true };
+        const existingIndex = current.findIndex((character) => character.slug === generated.slug);
+        if (existingIndex === -1) return [...current, generated];
+        return current.map((character, index) => (index === existingIndex ? generated : character));
+      });
+    }
+  }, []);
+
   useEffect(() => {
     Promise.all([
       loadCharacters(),
@@ -333,11 +375,113 @@ export default function App() {
       .then(([, session]) => {
         setAuthorized(Boolean(session.authorized));
         setUser(session.user || null);
-        if (isCreatePage && !session.authorized) setPendingAction({ type: "create" });
+        if (isCreatePage && session.user && !session.authorized) {
+          setPendingAction({ type: "create" });
+        }
       })
       .catch((error) => setPageError(error.message))
       .finally(() => setLoadingCharacters(false));
   }, []);
+
+  useEffect(() => {
+    if (!authorized || !user) {
+      setFighterJobs([]);
+      return undefined;
+    }
+    let cancelled = false;
+
+    async function refreshFighterJobs() {
+      const response = await fetch("/api/fighters", { cache: "no-store" });
+      if (!response.ok) return;
+      const result = await response.json();
+      if (cancelled) return;
+      setFighterJobs((current) => {
+        const tracked = new Map(current.map((job) => [job.id, job]));
+        return result.jobs
+          .map((job) => {
+            const existing = tracked.get(job.id);
+            return existing && (existing.revision || 0) > (job.revision || 0) ? existing : job;
+          })
+          .sort((left, right) => right.createdAt.localeCompare(left.createdAt));
+      });
+    }
+
+    refreshFighterJobs().catch(() => {});
+    const timer = window.setInterval(() => refreshFighterJobs().catch(() => {}), 15_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [authorized, user?.uid]);
+
+  const activeFighterJobKey = fighterJobs
+    .filter((job) => ACTIVE_FIGHTER_JOB_STATUSES.has(job.status))
+    .map((job) => job.id)
+    .sort()
+    .join(",");
+
+  useEffect(() => {
+    if (!activeFighterJobKey) return undefined;
+    const streams = activeFighterJobKey.split(",").map((id) => {
+      const stream = new EventSource(`/api/fighters/${id}/events`);
+      stream.addEventListener("job", (event) => {
+        try {
+          recordFighterJob(JSON.parse(event.data).job);
+        } catch {
+          // The polling fallback will reconcile malformed or interrupted events.
+        }
+      });
+      return stream;
+    });
+    return () => streams.forEach((stream) => stream.close());
+  }, [activeFighterJobKey, recordFighterJob]);
+
+  useEffect(() => {
+    let cancelled = false;
+    let timer;
+    let attempts = 0;
+    function syncGridJobs() {
+      if (cancelled) return;
+      if (window.characterGrid?.syncJobs) {
+        Promise.resolve(window.characterGrid.syncJobs(fighterJobs)).catch(() => {});
+        return;
+      }
+      attempts += 1;
+      if (attempts < 100) timer = window.setTimeout(syncGridJobs, 50);
+    }
+    syncGridJobs();
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [fighterJobs]);
+
+  useEffect(() => {
+    if (isCreatePage || createStage !== "rom") return undefined;
+    let cancelled = false;
+    let attempts = 0;
+    let timer;
+
+    function requestCreateRom() {
+      if (cancelled) return;
+      if (window.gameLauncher?.requestCreate) {
+        window.gameLauncher.requestCreate();
+        return;
+      }
+      attempts += 1;
+      if (attempts < 100) timer = window.setTimeout(requestCreateRom, 50);
+      else {
+        setCreateStage(null);
+        setPageError("Could not open the cartridge upload screen.");
+      }
+    }
+
+    requestCreateRom();
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [createStage, isCreatePage]);
 
   useEffect(() => {
     if (!engine) return undefined;
@@ -401,6 +545,10 @@ export default function App() {
 
   async function requestLaunch(action) {
     setPageError("");
+    if (isCreatePage && controlsRoadblockRequired()) {
+      window.location.assign("/");
+      return;
+    }
     const session = authorized ? null : await getSession();
     if (authorized || session?.authorized) {
       setAuthorized(true);
@@ -421,7 +569,39 @@ export default function App() {
 
   async function authenticated(nextUser) {
     setUser(nextUser);
+    if (isCreatePage && !authorized) setPendingAction({ type: "create" });
     await loadCharacters().catch((error) => setPageError(error.message));
+  }
+
+  async function openCreateExperience() {
+    setPageError("");
+    try {
+      const session = await getSession();
+      setAuthorized(Boolean(session.authorized));
+      setUser(session.user || null);
+      if (!session.user) setCreateStage("auth");
+      else setCreateStage(session.authorized ? "creator" : "rom");
+    } catch (error) {
+      setPageError(error.message || "Could not start character creation.");
+    }
+  }
+
+  async function authenticatedForCreate(nextUser) {
+    setUser(nextUser);
+    setCreateStage(authorized ? "creator" : "rom");
+    await loadCharacters().catch((error) => setPageError(error.message));
+  }
+
+  function playCreatedCharacter(character) {
+    setCreateStage(null);
+    announceCharacter(character);
+    window.setTimeout(() => window.gameLauncher?.requestCharacter?.(character.slug), 0);
+  }
+
+  function fighterCreated(job) {
+    recordFighterJob(job);
+    setCreateStage(null);
+    setPageError("");
   }
 
   async function signOutUser() {
@@ -431,6 +611,7 @@ export default function App() {
       return;
     }
     setUser(null);
+    setCreateStage(null);
     await loadCharacters().catch((error) => setPageError(error.message));
   }
 
@@ -477,6 +658,12 @@ export default function App() {
     return result;
   }
 
+  async function validateCreateVisualRom(file, onStatus) {
+    const result = await validateVisualRom(file, onStatus);
+    requireControlsRoadblock();
+    return result;
+  }
+
   function launchVisualAction({ type, slug }) {
     const action = type === "character"
       ? { type, character: characters.find((character) => character.slug === slug) }
@@ -508,6 +695,7 @@ export default function App() {
     setPendingAction(null);
     setEngine(null);
     setAdvancedOpen(false);
+    window.characterGrid?.select(null);
     if (devMenuRef.current) devMenuRef.current.open = false;
   }
 
@@ -559,19 +747,38 @@ export default function App() {
     .map((character, index) => ({ character, index }))
     .filter(({ character }) => matchesCharacterSearch(character, fighterSearch));
 
+  if (isCreatePage) {
+    Object.assign(visualBridgeRef.current, {
+      completeCreateRom() { setPendingAction(null); },
+      isAuthorized() { return authorized; },
+      cancelCreateRom() { window.location.assign("/"); },
+      reportError: reportCreateVisualError,
+      validateCreateRom: validateCreateVisualRom,
+      validateRom: validateCreateVisualRom,
+    });
+    window.openSmashReactBridge = visualBridgeRef.current;
+  }
+
   if (!isCreatePage) {
     Object.assign(visualBridgeRef.current, {
       characters,
+      fighterJobs,
       announceCharacter(slug) {
         const character = characters.find((candidate) => candidate.slug === slug);
         if (character) announceCharacter(character);
       },
       clearVerification,
       closeGame() { setEngine(null); },
+      completeCreateRom() { setCreateStage("creator"); },
       isAuthorized() { return authorized; },
       launch: launchVisualAction,
-      navigate(pathname) { window.location.assign(pathname); },
+      cancelCreateRom() { setCreateStage(null); },
+      navigate(pathname) {
+        if (pathname === "/create") openCreateExperience();
+        else window.location.assign(pathname);
+      },
       reportError(error) { setPageError(error.message || "Could not load the visual experience."); },
+      validateCreateRom: validateCreateVisualRom,
       validateRom: validateVisualRom,
     });
     window.openSmashReactBridge = visualBridgeRef.current;
@@ -587,12 +794,21 @@ export default function App() {
           isFullscreen={isFullscreen}
           onAdvanced={() => setAdvancedOpen(true)}
           onCloseGame={() => setEngine(null)}
+          onCreate={openCreateExperience}
           onFullscreen={toggleFullscreen}
           onSignOut={signOutUser}
           onSound={toggleSound}
           pageError={pageError}
           ready={!loadingCharacters}
           soundOn={soundOn}
+          user={user}
+        />
+        <CreateExperienceOverlay
+          onAuthenticated={authenticatedForCreate}
+          onClose={() => setCreateStage(null)}
+          onCreated={fighterCreated}
+          onPlay={playCreatedCharacter}
+          stage={createStage}
           user={user}
         />
         <AdvancedModal
@@ -611,6 +827,12 @@ export default function App() {
 
   return (
     <main className={isCreatePage ? "create-page" : undefined}>
+      {isCreatePage && (
+        <CreateVisualShell
+          onError={reportCreateVisualError}
+          romUploadRequired={!loadingCharacters && Boolean(user) && !authorized}
+        />
+      )}
       <header className="site-header">
         <a className="wordmark" href="/" aria-label="OpenSmash home">
           OPEN<span>SMASH</span>
@@ -695,11 +917,12 @@ export default function App() {
         </div>
       </section>}
 
-      {isCreatePage && authorized && !user && <AuthGate onAuthenticated={authenticated} />}
+      {isCreatePage && !loadingCharacters && !user && <AuthGate onAuthenticated={authenticated} />}
 
       {isCreatePage && authorized && user && <FighterCreator
+        onCancel={() => window.location.assign("/")}
+        onCreated={() => window.location.assign("/")}
         onPlay={selectCharacter}
-        user={user}
       />}
 
       {!isCreatePage && <section className="select-section" aria-labelledby="select-title">
@@ -781,7 +1004,7 @@ export default function App() {
         onSave={saveAdvancedOptions}
       />
 
-      {pendingAction && (
+      {pendingAction && pendingAction.type !== "create" && (
         <RomModal
           action={pendingAction}
           onCancel={() => {

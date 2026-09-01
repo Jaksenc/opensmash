@@ -1,4 +1,5 @@
 fal-client>=0.11,<1
 numpy>=2,<3
+opencv-python-headless>=4.12,<5
 Pillow>=11,<13
 scipy>=1.14,<2
