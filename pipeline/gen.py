@@ -17,13 +17,16 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 def load_env():
-    env = {}
-    with open(os.path.join(ROOT, ".env")) as f:
+    env = dict(os.environ)
+    env_path = os.path.join(ROOT, ".env")
+    if not os.path.isfile(env_path):
+        return env
+    with open(env_path) as f:
         for line in f:
             line = line.strip()
             if line and not line.startswith("#") and "=" in line:
                 k, v = line.split("=", 1)
-                env[k] = v
+                env.setdefault(k, v)
     return env
 
 

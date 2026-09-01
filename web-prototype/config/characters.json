@@ -1,6 +1,6 @@
 [
-  { "slug": "joeyflynn", "fighter": "captain" },
-  { "slug": "barackobama", "fighter": "fox" },
-  { "slug": "queen", "fighter": "kirby" },
-  { "slug": "rohansahai", "fighter": "link" }
+  { "slug": "joeyflynn" },
+  { "slug": "barackobama" },
+  { "slug": "queen" },
+  { "slug": "rohansahai" }
 ]

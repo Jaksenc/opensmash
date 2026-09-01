@@ -1,41 +1,32 @@
 import { useEffect, useRef, useState } from "react";
+import AuthGate from "./AuthGate.jsx";
 import FighterCreator from "./FighterCreator.jsx";
+import { matchesCharacterSearch } from "../shared/character-search.js";
+import { identifyRomFile } from "./rom-validation.js";
+import {
+  BOOT_MODES,
+  CHARACTER_MESHES,
+  DEFAULT_ADVANCED_OPTIONS,
+  STAGES,
+  engineUrl,
+  hasAdvancedOverrides,
+  normalizeAdvancedOptions,
+} from "./launch-options.js";
 
-const RANDOM_FIGHTER_COUNT = 12;
-const RANDOM_STAGE_COUNT = 9;
+const ADVANCED_OPTIONS_KEY = "opensmash-advanced-options";
 
-function randomInt(max) {
-  return Math.floor(Math.random() * max);
-}
-
-function engineUrl(action) {
-  const params = new URLSearchParams({ cb: String(Date.now()) });
-  if (action.type === "character") {
-    params.set("inject", `bundles/${action.character.bundle}`);
-    params.set("fkind", String(action.character.fkind));
-    params.set("player", "0");
-    params.set(
-      "SSB64_BOOT_BATTLE",
-      [
-        action.character.fkind,
-        randomInt(RANDOM_FIGHTER_COUNT),
-        randomInt(RANDOM_STAGE_COUNT),
-        1,
-        randomInt(RANDOM_FIGHTER_COUNT),
-        randomInt(RANDOM_FIGHTER_COUNT),
-      ].join(","),
-    );
-  } else if (action.type === "select") {
-    params.set("SSB64_START_SCENE", "16");
-    params.set("roster", "1");
+function loadAdvancedOptions() {
+  try {
+    return normalizeAdvancedOptions(JSON.parse(sessionStorage.getItem(ADVANCED_OPTIONS_KEY)));
+  } catch {
+    return { ...DEFAULT_ADVANCED_OPTIONS };
   }
-  return `/engine/?${params}`;
 }
 
 async function getSession() {
   const response = await fetch("/api/session", { cache: "no-store" });
-  if (!response.ok) return false;
-  return Boolean((await response.json()).authorized);
+  if (!response.ok) return { authorized: false, authenticated: false, user: null };
+  return response.json();
 }
 
 function RomModal({ action, onCancel, onValidated }) {
@@ -58,18 +49,13 @@ function RomModal({ action, onCancel, onValidated }) {
     if (!file) return;
     setError("");
     try {
-      setStatus("hashing");
-      const buffer = await file.arrayBuffer();
-      const digest = await crypto.subtle.digest("SHA-256", buffer);
-      const hash = [...new Uint8Array(digest)]
-        .map((byte) => byte.toString(16).padStart(2, "0"))
-        .join("");
+      const rom = await identifyRomFile(file, { onStatus: setStatus });
 
       setStatus("validating");
       const response = await fetch("/api/validate-rom", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ algorithm: "SHA-256", hash, size: file.size }),
+        body: JSON.stringify({ algorithm: "SHA-1", hash: rom.sha1, size: rom.size }),
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "ROM validation failed");
@@ -85,7 +71,9 @@ function RomModal({ action, onCancel, onValidated }) {
       ? action.character.name
       : action?.type === "start"
         ? "the full game"
-        : "character select";
+        : action?.type === "create"
+          ? "the fighter lab"
+          : "character select";
 
   return (
     <div className="modal-backdrop" role="presentation" onMouseDown={onCancel}>
@@ -107,7 +95,7 @@ function RomModal({ action, onCancel, onValidated }) {
             <input
               ref={inputRef}
               type="file"
-              accept=".zip,.z64,.n64,.v64,application/zip,application/octet-stream"
+              accept=".zip,.z64,.n64,.v64,.rom,application/zip,application/octet-stream"
               onChange={(event) => {
                 setFile(event.target.files?.[0] || null);
                 setError("");
@@ -115,14 +103,123 @@ function RomModal({ action, onCancel, onValidated }) {
               disabled={status !== "idle"}
             />
             <span>{file ? file.name : "Choose ROM file"}</span>
-            <small>{file ? `${(file.size / 1024 / 1024).toFixed(1)} MB` : ".zip, .z64, .n64, or .v64"}</small>
+            <small>{file ? `${(file.size / 1024 / 1024).toFixed(1)} MB` : ".zip, .z64, .n64, .v64, or .rom"}</small>
           </label>
           {error && <p className="form-error">{error}</p>}
           <button className="validate-button" type="submit" disabled={!file || status !== "idle"}>
-            {status === "hashing" && "Hashing locally…"}
+            {status === "reading" && "Reading locally…"}
+            {status === "extracting" && "Extracting locally…"}
+            {status === "hashing" && "Normalizing & hashing locally…"}
             {status === "validating" && "Checking ROM…"}
             {status === "idle" && "Validate & play"}
           </button>
+        </form>
+      </section>
+    </div>
+  );
+}
+
+function AdvancedModal({ options, onCancel, onSave }) {
+  const [draft, setDraft] = useState(options);
+  const firstFieldRef = useRef(null);
+
+  useEffect(() => {
+    firstFieldRef.current?.focus();
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const closeOnEscape = (event) => {
+      if (event.key === "Escape") onCancel();
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [onCancel]);
+
+  function update(key, value) {
+    setDraft((current) => ({ ...current, [key]: value }));
+  }
+
+  return (
+    <div className="modal-backdrop" role="presentation" onMouseDown={onCancel}>
+      <section
+        className="modal advanced-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="advanced-title"
+        onMouseDown={(event) => event.stopPropagation()}
+      >
+        <button className="modal-close" type="button" onClick={onCancel} aria-label="Close">
+          ×
+        </button>
+        <p className="eyebrow">Launch overrides</p>
+        <h2 id="advanced-title">Advanced options</h2>
+        <p className="modal-copy">
+          These choices apply to every launch in this tab and reset when the session ends.
+        </p>
+
+        <form
+          className="advanced-form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            onSave(draft);
+          }}
+        >
+          <div className="advanced-selects">
+            <label>
+              <span>Character mesh</span>
+              <select
+                ref={firstFieldRef}
+                value={draft.characterMesh}
+                onChange={(event) => update("characterMesh", event.target.value)}
+              >
+                {CHARACTER_MESHES.map((mesh) => (
+                  <option value={mesh.value} key={mesh.value}>{mesh.label}</option>
+                ))}
+              </select>
+              <small>Force the skeleton and moveset used by a chosen fighter.</small>
+            </label>
+            <label>
+              <span>Stage</span>
+              <select value={draft.stage} onChange={(event) => update("stage", event.target.value)}>
+                {STAGES.map((stage) => (
+                  <option value={stage.value} key={stage.value}>{stage.label}</option>
+                ))}
+              </select>
+              <small>Used for direct matches and preselected VS launches.</small>
+            </label>
+          </div>
+
+          <fieldset className="boot-mode-fieldset">
+            <legend>Boot destination</legend>
+            <div className="boot-mode-grid">
+              {BOOT_MODES.map((mode) => (
+                <label className={draft.bootMode === mode.value ? "is-selected" : ""} key={mode.value}>
+                  <input
+                    type="radio"
+                    name="boot-mode"
+                    value={mode.value}
+                    checked={draft.bootMode === mode.value}
+                    onChange={(event) => update("bootMode", event.target.value)}
+                  />
+                  <span>{mode.label}</span>
+                  <small>{mode.description}</small>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+
+          <div className="advanced-actions">
+            <button
+              className="reset-options-button"
+              type="button"
+              onClick={() => setDraft({ ...DEFAULT_ADVANCED_OPTIONS })}
+            >
+              Reset defaults
+            </button>
+            <button className="save-options-button" type="submit">Save for session</button>
+          </div>
         </form>
       </section>
     </div>
@@ -134,29 +231,38 @@ export default function App() {
   const [characters, setCharacters] = useState([]);
   const [loadingCharacters, setLoadingCharacters] = useState(true);
   const [authorized, setAuthorized] = useState(false);
+  const [user, setUser] = useState(null);
   const [pendingAction, setPendingAction] = useState(null);
   const [engine, setEngine] = useState(null);
   const [pageError, setPageError] = useState("");
   const [fighterSearch, setFighterSearch] = useState("");
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [soundOn, setSoundOn] = useState(() => localStorage.getItem("opensmash-sound") !== "off");
+  const [advancedOptions, setAdvancedOptions] = useState(loadAdvancedOptions);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
   const gameRef = useRef(null);
   const gameFrameRef = useRef(null);
   const engineRef = useRef(null);
   const devMenuRef = useRef(null);
   const announcerRef = useRef(null);
 
+  async function loadCharacters() {
+    const response = await fetch("/api/characters", { cache: "no-store" });
+    if (!response.ok) throw new Error("Could not load the configured characters");
+    const loadedCharacters = (await response.json()).characters;
+    setCharacters(loadedCharacters);
+    return loadedCharacters;
+  }
+
   useEffect(() => {
     Promise.all([
-      fetch("/api/characters").then(async (response) => {
-        if (!response.ok) throw new Error("Could not load the configured characters");
-        return (await response.json()).characters;
-      }),
+      loadCharacters(),
       getSession(),
     ])
-      .then(([loadedCharacters, hasSession]) => {
-        setCharacters(loadedCharacters);
-        setAuthorized(hasSession);
+      .then(([, session]) => {
+        setAuthorized(Boolean(session.authorized));
+        setUser(session.user || null);
+        if (isCreatePage && !session.authorized) setPendingAction({ type: "create" });
       })
       .catch((error) => setPageError(error.message))
       .finally(() => setLoadingCharacters(false));
@@ -202,24 +308,59 @@ export default function App() {
   }, []);
 
   function launch(action) {
-    setEngine({ src: engineUrl(action), action });
-    setPendingAction(null);
-    requestAnimationFrame(() => gameRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+    try {
+      setEngine({ src: engineUrl(action, advancedOptions), action });
+      setPendingAction(null);
+      requestAnimationFrame(() => gameRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+    } catch (error) {
+      setPageError(error.message || "Could not apply those advanced options.");
+    }
+  }
+
+  function saveAdvancedOptions(nextOptions) {
+    const normalized = normalizeAdvancedOptions(nextOptions);
+    setAdvancedOptions(normalized);
+    try {
+      sessionStorage.setItem(ADVANCED_OPTIONS_KEY, JSON.stringify(normalized));
+    } catch {
+      // The in-memory choice still applies when session storage is unavailable.
+    }
+    setAdvancedOpen(false);
   }
 
   async function requestLaunch(action) {
     setPageError("");
-    if (authorized || (await getSession())) {
+    const session = authorized ? null : await getSession();
+    if (authorized || session?.authorized) {
       setAuthorized(true);
+      if (session?.user) setUser(session.user);
       launch(action);
     } else {
       setPendingAction(action);
     }
   }
 
-  function validated() {
+  async function validated() {
     setAuthorized(true);
-    if (pendingAction) launch(pendingAction);
+    const session = await getSession();
+    setUser(session.user || null);
+    if (pendingAction && pendingAction.type !== "create") launch(pendingAction);
+    else setPendingAction(null);
+  }
+
+  async function authenticated(nextUser) {
+    setUser(nextUser);
+    await loadCharacters().catch((error) => setPageError(error.message));
+  }
+
+  async function signOutUser() {
+    const response = await fetch("/api/auth/logout", { method: "POST" });
+    if (!response.ok) {
+      setPageError("Could not sign out.");
+      return;
+    }
+    setUser(null);
+    await loadCharacters().catch((error) => setPageError(error.message));
   }
 
   function selectCharacter(character) {
@@ -290,15 +431,9 @@ export default function App() {
     }
   }
 
-  const normalizedSearch = fighterSearch.trim().toLocaleLowerCase();
   const visibleCharacters = characters
     .map((character, index) => ({ character, index }))
-    .filter(({ character }) => {
-      if (!normalizedSearch) return true;
-      return [character.name, character.short, character.slug]
-        .filter(Boolean)
-        .some((value) => value.toLocaleLowerCase().includes(normalizedSearch));
-    });
+    .filter(({ character }) => matchesCharacterSearch(character, fighterSearch));
 
   return (
     <main className={isCreatePage ? "create-page" : undefined}>
@@ -310,6 +445,11 @@ export default function App() {
           <a className="create-link" href={isCreatePage ? "/" : "/create"}>
             {isCreatePage ? "Browse fighters" : "Create fighter"}
           </a>
+          {user && (
+            <button className="account-button" type="button" onClick={signOutUser}>
+              {user.displayName || user.email || "Account"} · Sign out
+            </button>
+          )}
           <button
             className={`sound-button ${soundOn ? "is-on" : ""}`}
             type="button"
@@ -317,6 +457,14 @@ export default function App() {
             onClick={toggleSound}
           >
             <i /> Sound {soundOn ? "on" : "off"}
+          </button>
+          <button
+            className={`advanced-button ${hasAdvancedOverrides(advancedOptions) ? "is-active" : ""}`}
+            type="button"
+            aria-haspopup="dialog"
+            onClick={() => setAdvancedOpen(true)}
+          >
+            <i /> Advanced
           </button>
           <span className={`rom-status ${authorized ? "is-ready" : ""}`}>
             <i /> {authorized ? "ROM verified" : "Browser build"}
@@ -373,8 +521,11 @@ export default function App() {
         </div>
       </section>}
 
-      {isCreatePage && <FighterCreator
+      {isCreatePage && authorized && !user && <AuthGate onAuthenticated={authenticated} />}
+
+      {isCreatePage && authorized && user && <FighterCreator
         onPlay={selectCharacter}
+        user={user}
       />}
 
       {!isCreatePage && <section className="select-section" aria-labelledby="select-title">
@@ -445,10 +596,21 @@ export default function App() {
         <span>React · Node · WASM on demand</span>
       </footer>
 
+      {advancedOpen && (
+        <AdvancedModal
+          options={advancedOptions}
+          onCancel={() => setAdvancedOpen(false)}
+          onSave={saveAdvancedOptions}
+        />
+      )}
+
       {pendingAction && (
         <RomModal
           action={pendingAction}
-          onCancel={() => setPendingAction(null)}
+          onCancel={() => {
+            if (pendingAction.type === "create") window.location.assign("/");
+            else setPendingAction(null);
+          }}
           onValidated={validated}
         />
       )}

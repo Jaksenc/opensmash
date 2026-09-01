@@ -909,12 +909,20 @@ def main():
                     _W0, _H0 = img.size
                     _hj = jpos[name_idx["Head"]]; _ny = jpos[name_idx["neck"]][1]
                     _acc = [0.0, 0.0, 0.0]; _nsk = 0
+                    # Fixed "skin" thresholds miss dark complexions: the
+                    # face can be both more saturated and much lower-value
+                    # than this legacy band. Keep warm head texels for an
+                    # adaptive brightest-cluster fallback below.
+                    _warm = []
                     for vi in range(len(pos)):
                         if pos[vi][1] <= _ny:
                             continue
                         _u, _v = uv[vi]
                         _x = min(_W0-1, max(0, int(_u*_W0))); _y = min(_H0-1, max(0, int(_v*_H0)))
                         _h, _s_, _vv = _hsvF[_y, _x]
+                        if (_h <= 35 or _h >= 245) and _s_ >= 35 and _vv >= 20:
+                            _warm.append((int(_vv),
+                                          [pos[vi][k] - _hj[k] for k in range(3)]))
                         if 3 <= _h <= 30 and 35 <= _s_ <= 190 and _vv >= 110:
                             for k in range(3): _acc[k] += pos[vi][k] - _hj[k]
                             _nsk += 1
@@ -931,6 +939,33 @@ def main():
                             print(f"facing: face cue from {_nsk} skin verts (|offset| {_fm/_Hf*100:.1f}% H, votes {_fvote})")
                     else:
                         print(f"facing: face cue insufficient ({_nsk} skin verts above neck)")
+                    if _face_h is None and len(_warm) >= 120:
+                        # Use the brightest 35% *relative to this head*, not
+                        # an absolute value cutoff. This separates visible
+                        # facial planes from shadowed hair on dark textures
+                        # while producing the same vote as the legacy band
+                        # on the existing lighter roster.
+                        _vals = sorted(v for v, _ in _warm)
+                        _cut = _vals[int(0.65 * (len(_vals) - 1))]
+                        _sel = [p for v, p in _warm if v >= _cut]
+                        if len(_sel) >= 40:
+                            _acc = [sum(p[k] for p in _sel) / len(_sel)
+                                    for k in range(3)]
+                            _dv3 = sum(_acc[k]*_upn[k] for k in range(3))
+                            _cand = [_acc[k] - _dv3*_upn[k] for k in range(3)]
+                            _fm = math.sqrt(sum(c*c for c in _cand))
+                            _fvote = ('flip' if sum(_cand[k]*_fwd[k]
+                                                   for k in range(3)) < 0
+                                      else 'keep')
+                            if _fm >= 0.01 * _Hf:
+                                _face_h = _cand
+                                print(f"facing: adaptive face cue from {len(_sel)} "
+                                      f"warm highlight verts (cut V={_cut}, "
+                                      f"|offset| {_fm/_Hf*100:.1f}% H, votes {_fvote})")
+                            else:
+                                print(f"facing: adaptive face cue weak "
+                                      f"({len(_sel)} verts, |offset| "
+                                      f"{_fm/_Hf*100:.1f}% H) — ignored")
                 except Exception as _e:
                     print(f"facing: face cue errored ({_e!r})")
                     _face_h = None
@@ -3591,6 +3626,9 @@ def write_binary3(bundle_json_path, out_path):
 
 
 
+DEFAULT_MORPH_LAMBDA = 0.5
+
+
 def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lambda=None):
     """OSB5: single CPU-skinned mesh (true smooth skinning in game).
 
@@ -3647,10 +3685,13 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
         # undersized — then each vert re-emits from the new joints with
         # its bone-local coords stretched along the bone axis only
         # (length follows the skeleton, girth stays the mesh's own).
-        # An explicit CLI value is a real override, including zero. With no
-        # override, use the profile's production default.
+        # An explicit CLI value is a real override, including zero. Profiles
+        # can pin a target-specific production recipe; otherwise use the
+        # validated midpoint blend from the samus-morph work. Pure canonical
+        # chibi is now opt-in (`... profile.json 0`) rather than an accidental
+        # consequence of a missing profile key.
         lam = (float(morph_lambda) if morph_lambda is not None
-               else float(prof.get("morph_lambda", 0.0)))
+               else float(prof.get("morph_lambda", DEFAULT_MORPH_LAMBDA)))
 
         # TBND/CPM1 need the target reference frames even for a pure
         # canonical (lambda=0) bundle. Previously these were parsed only in
@@ -3959,20 +4000,75 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
                 hyb_ = max(1e-6, float(prof.get("ball_head_blend", 0.02)) * bh_)
                 hw0_ = float(prof.get("ball_head_weight", 0.5))
 
+                def smoothstep_(lo_, hi_, x_):
+                    t_ = max(0.0, min(1.0, (x_ - lo_) / max(1e-6, hi_ - lo_)))
+                    return t_ * t_ * (3.0 - 2.0 * t_)
+
+                def head_weight_(v_):
+                    tot_ = sum(w_ for (_ji_, w_) in v_[8]) or 1.0
+                    return sum(w_ for (_ji_, w_) in v_[8] if _ji_ == 12) / tot_
+
+                # Find the jaw underside from the mesh itself. A face-plane
+                # test is not enough: a broad jaw extends sideways, so one
+                # half can fail the "forward" test and fall into the hidden
+                # body plug. Confident Head-owned, non-upward-facing geometry
+                # around the anatomical joint gives us an orientation-neutral
+                # jaw floor and radius. Upward-facing collar/lapel surfaces do
+                # not participate, even when the auto-rigger gave them Head
+                # weight.
+                _jaw_verts_ = [
+                    v_ for v_ in sk["verts"]
+                    if head_weight_(v_) >= 0.8
+                    and v_[6] <= 0.10
+                    and v_[1] >= no[12][1] - 0.12 * bh_
+                    and v_[1] <= hf_
+                ] if 12 in no else []
+                if _jaw_verts_:
+                    _jrads_ = sorted(math.hypot(v_[0] - no[12][0],
+                                                v_[2] - no[12][2])
+                                     for v_ in _jaw_verts_)
+                    _jref_ = _jrads_[max(0, int(0.20 * len(_jrads_)))]
+                    _shell_in_ = max(1e-6, 0.55 * _jref_)
+                    _shell_out_ = max(_shell_in_ + 1e-6, _jref_)
+                    _shell_floor_ = min(v_[1] for v_ in _jaw_verts_)
+                    _shell_floor_ = max(no[12][1] - 0.10 * bh_,
+                                        min(hf_, _shell_floor_))
+                else:
+                    _shell_in_ = _shell_out_ = 1e9
+                    _shell_floor_ = hf_ - 0.06 * bh_
+
+                def head_support_(v_):
+                    """Effective ball-head ownership and shell membership."""
+                    wraw_ = head_weight_(v_)
+                    rd_ = math.hypot(v_[0] - no[12][0],
+                                     v_[2] - no[12][2]) if 12 in no else 0.0
+                    up_ = smoothstep_(0.25, 0.75, v_[6])
+                    shell_ = (smoothstep_(_shell_in_, _shell_out_, rd_)
+                              * (1.0 - up_))
+                    # Jaw geometry may extend down to the measured underside;
+                    # the narrow/upward-facing neck keeps the stricter floor.
+                    vhf_ = hf_ + shell_ * (_shell_floor_ - hf_)
+                    wy_ = smoothstep_(vhf_ - hyb_, vhf_, v_[1])
+                    ww_ = smoothstep_(hw0_, 0.9, wraw_)
+                    bz_ = 1.0 - smoothstep_(hf_, hf_ + 0.06 * bh_, v_[1])
+                    collar_ = bz_ * up_ * (1.0 - shell_)
+                    return wraw_ * wy_ * ww_ * (1.0 - collar_), shell_, collar_
+
                 # ball_clearance: solve the head drop instead of hand-tuning
                 # ball_head_drop per rig. In bind pose, the ball's bottom
                 # (confident head verts, inflated about joint 12) must sit
                 # `clearance` units above the shoe tops — purin's chin was
                 # clipping through her shoes at any fixed drop that also
                 # looked right on kirby.
+                _ball_bottom_y_ = None
                 if prof.get("ball_clearance") is not None and 12 in no and dy_ > 1e-6:
                     clr_ = float(prof.get("ball_clearance", 8.0))
                     bb0_, st0_ = 1e9, -1e9
                     for v in sk["verts"]:
                         tot0 = sum(w for (ji, w) in v[8]) or 1.0
-                        w12r_ = sum(w for (ji, w) in v[8] if ji == 12) / tot0
+                        w12r_, _, _ = head_support_(v)
                         wfr_ = sum(w for (ji, w) in v[8] if ji in (22, 27)) / tot0
-                        if w12r_ >= 0.6 and v[1] >= hf_:
+                        if w12r_ >= 0.5:
                             bb0_ = min(bb0_, no[12][1] + hs*(v[1] - no[12][1]))
                         if wfr_ >= 0.5:
                             fj0_ = 22 if 22 in no else 27
@@ -3983,12 +4079,9 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
                                            * (v[1] - no[fj0_][1]))
                     if bb0_ < 1e8 and st0_ > -1e8:
                         hdrop_ = max(0.0, (bb0_ - (st0_ + clr_)) / dy_)
+                        _ball_bottom_y_ = bb0_ - dy_ * hdrop_
                         print(f"ball clearance: bottom={bb0_:.1f} shoetop={st0_:.1f} "
                               f"-> drop {hdrop_:.3f}")
-
-                def smoothstep_(lo_, hi_, x_):
-                    t_ = max(0.0, min(1.0, (x_ - lo_) / max(1e-6, hi_ - lo_)))
-                    return t_ * t_ * (3.0 - 2.0 * t_)
 
                 # UV donor for the plug: a definitely-shoe vertex. The
                 # ball->shoe bridge triangles are the only place the
@@ -4009,31 +4102,12 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
                 for v in sk["verts"]:
                     tot = sum(w for (ji, w) in v[8]) or 1.0
                     w12_raw = sum(w for (ji, w) in v[8] if ji == 12) / tot
-                    # The chin shares the low/upward-facing cues of a
-                    # collar, but lies forward of the spine along the
-                    # already-established face axis. Extend the head floor
-                    # downward only there; centered/rear neck geometry keeps
-                    # the stricter floor and disappears into the plug.
-                    fd_ = ((v[0] - no[12][0]) * Dax[0]
-                           + (v[2] - no[12][2]) * Dax[2])
-                    front_ = smoothstep_(0.0, 0.10 * bh_, fd_)
-                    vhf_ = hf_ - 0.06 * bh_ * front_
-                    wy_ = smoothstep_(vhf_ - hyb_, vhf_, v[1])
-                    ww_ = smoothstep_(hw0_, 0.9, w12_raw)
-                    # Collars can still be rigidly head-weighted.  Near
-                    # the base of the head they are distinguished from a
-                    # jaw/beard shell by their upward-facing surface.
-                    # Fade that cue out quickly with height so cheeks,
-                    # glasses, hair, etc. are never orientation-clipped.
-                    bz_ = 1.0 - smoothstep_(hf_, hf_ + 0.06 * bh_, v[1])
-                    up_ = smoothstep_(0.25, 0.75, v[6])
-                    collar_ = bz_ * up_ * (1.0 - front_)
-                    w12 = w12_raw * wy_ * ww_ * (1.0 - collar_)
+                    w12, shell_, collar_ = head_support_(v)
                     if collar_ > 0.5 and w12_raw > 0.5:
                         ncollar_ += 1
                     if w12 >= 0.5:
                         hn_ += 1
-                        if front_ > 0.5 and v[1] < hf_:
+                        if shell_ > 0.5 and v[1] < hf_:
                             nchin_ += 1
                     hsupp_ += w12_raw - w12
                     wf = sum(w for (ji, w) in v[8] if ji in (22, 27)) / tot
@@ -4194,12 +4268,29 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
                     # (Darkest-of-ring gave a tan queen neck beside purple;
                     # global-darkest made the neck an unnatural black.)
                     apx_ = atlas.load()  # `px` is shadowed by the yaw pivot above
-                    ncaps_ = 0
+                    ncaps_, nfootcaps_ = 0, 0
                     for edges_ in comps_.values():
                         if len(edges_) < 3:
                             continue
                         vidx_ = sorted({i_ for e_ in edges_ for i_ in e_})
                         vs_ = [sk["verts"][i_] for i_ in vidx_]
+                        dc_ = Counter()
+                        for v_ in vs_:
+                            dc_[max(v_[8], key=lambda jw: jw[1])[0]] += 1
+                        dj_ = dc_.most_common(1)[0][0]
+                        if dj_ in (22, 27):
+                            # Weight-threshold deletion leaves a staircase
+                            # around shoe openings: adjacent boundary verts can
+                            # come from different rows of the ankle blend. A
+                            # centroid fan closes the hole but preserves those
+                            # sawteeth as sharp spikes. Flatten each foot-owned
+                            # rim before capping; it then behaves like a clean
+                            # low-poly shoe cuff and stays rigid with the foot.
+                            _rimys_ = sorted(v_[1] for v_ in vs_)
+                            _rimy_ = _rimys_[len(_rimys_) // 2]
+                            for v_ in vs_:
+                                v_[1] = _rimy_
+                            nfootcaps_ += 1
                         ctr_ = [sum(v_[k_] for v_ in vs_) / len(vs_) for k_ in range(3)]
                         samp_ = []
                         for v_ in vs_:
@@ -4212,10 +4303,6 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
                         samp_.sort(key=lambda s_: s_[0])
                         duvd_ = (samp_[len(samp_)//2][1] if samp_
                                  else (vs_[0][3], vs_[0][4]))
-                        dc_ = Counter()
-                        for v_ in vs_:
-                            dc_[max(v_[8], key=lambda jw: jw[1])[0]] += 1
-                        dj_ = dc_.most_common(1)[0][0]
                         ni_ = len(sk["verts"])
                         sk["verts"].append([ctr_[0], ctr_[1], ctr_[2],
                                             duvd_[0], duvd_[1],
@@ -4234,7 +4321,408 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
                             sk["tris"].append([dup_[a_], dup_[b_], ni_])
                         ncaps_ += 1
                     print(f"ball hide-plug: {ntb_} -> {len(sk['tris'])} tris "
-                          f"({len(plugidx_)} plug verts, {ncaps_} holes capped)")
+                          f"({len(plugidx_)} plug verts, {ncaps_} holes capped, "
+                          f"{nfootcaps_} foot rims flattened)")
+                # Feet are useful ball-mode silhouette cues, but detached
+                # source fists read as floating ears and cannot inherit the
+                # full attack animation without stretching a connector across
+                # the enlarged head.  The feet-only baseline removes every
+                # face touching a hand-dominant vertex after plug capping, so
+                # wrist caps and isolated hand shells disappear together.
+                if prof.get("ball_hide_hands"):
+                    _hand_cutoff_ = float(prof.get(
+                        "ball_hide_hand_weight", 0.30))
+                    _hand_touch_ = set()
+                    for i_, v_ in enumerate(sk["verts"]):
+                        tot_ = sum(w_ for (_ji_, w_) in v_[8]) or 1.0
+                        wh_ = sum(w_ for (_ji_, w_) in v_[8]
+                                  if _ji_ in (10, 16)) / tot_
+                        if wh_ >= _hand_cutoff_:
+                            _hand_touch_.add(i_)
+                    _before_hands_ = len(sk["tris"])
+                    sk["tris"] = [t_ for t_ in sk["tris"]
+                                  if not any(i_ in _hand_touch_
+                                             for i_ in t_[:3])]
+                    print(f"ball hide-hands: {_before_hands_} -> "
+                          f"{len(sk['tris'])} tris "
+                          f"({len(_hand_touch_)} hand verts)")
+                # Snapshot the actual surviving balloon shell before adding
+                # any proxy limbs. Later attachment probes must not mistake a
+                # generated head-weighted bridge endpoint for head geometry.
+                _ball_live_ = {i_ for t_ in sk["tris"] for i_ in t_[:3]}
+                _ball_head_shell_pts_ = [sk["verts"][i_] for i_ in _ball_live_
+                                         if head_weight_(sk["verts"][i_]) >= 0.7]
+                # Source shoes are especially unstable after the 2.4x ball
+                # enlargement: ankle-weight cuts turn pumps/high heels into
+                # open sawtooth shells, and capping the noisy boundary cannot
+                # repair their silhouette. Replace only the ball-mode feet
+                # with closed, low-poly shoe proxies. Their centers, horizontal
+                # heading, dimensions, and texel come from each transformed
+                # source shoe, so placement and color remain character-specific
+                # while topology is deterministic.
+                if prof.get("ball_proxy_feet", True):
+                    def foot_frac_(v_, fj_=None):
+                        tot_ = sum(w_ for (_ji_, w_) in v_[8]) or 1.0
+                        ids_ = (fj_,) if fj_ is not None else (22, 27)
+                        return sum(w_ for (_ji_, w_) in v_[8] if _ji_ in ids_) / tot_
+
+                    _old_tris_ = len(sk["tris"])
+                    _foot_touch_ = {i_ for i_, v_ in enumerate(sk["verts"])
+                                    if foot_frac_(v_) >= 0.30}
+                    sk["tris"] = [t_ for t_ in sk["tris"]
+                                  if not any(i_ in _foot_touch_ for i_ in t_[:3])]
+                    _nproxy_ = 0
+                    _shoe_proxy_ = {}
+                    for fj_ in (22, 27):
+                        src_ = [v_ for v_ in sk["verts"]
+                                if foot_frac_(v_, fj_) >= 0.45]
+                        if len(src_) < 8:
+                            continue
+                        cxp_ = sum(v_[0] for v_ in src_) / len(src_)
+                        czp_ = sum(v_[2] for v_ in src_) / len(src_)
+                        cxx_ = sum((v_[0]-cxp_)**2 for v_ in src_)
+                        czz_ = sum((v_[2]-czp_)**2 for v_ in src_)
+                        cxz_ = sum((v_[0]-cxp_)*(v_[2]-czp_) for v_ in src_)
+                        ang_ = 0.5 * math.atan2(2.0*cxz_, cxx_-czz_)
+                        ux_, uz_ = math.cos(ang_), math.sin(ang_)
+                        vx_, vz_ = -uz_, ux_
+                        pu_ = sorted((v_[0]-cxp_)*ux_ + (v_[2]-czp_)*uz_
+                                     for v_ in src_)
+                        pv_ = sorted((v_[0]-cxp_)*vx_ + (v_[2]-czp_)*vz_
+                                     for v_ in src_)
+                        pyv_ = sorted(v_[1] for v_ in src_)
+                        def q_(a_, f_):
+                            return a_[max(0, min(len(a_)-1,
+                                                int(f_*(len(a_)-1))))]
+                        u0_, u1_ = q_(pu_, 0.05), q_(pu_, 0.95)
+                        v0_, v1_ = q_(pv_, 0.05), q_(pv_, 0.95)
+                        y0_, y1_ = q_(pyv_, 0.05), q_(pyv_, 0.95)
+                        cu_, cv_ = (u0_+u1_)/2.0, (v0_+v1_)/2.0
+                        cx2_ = cxp_ + cu_*ux_ + cv_*vx_
+                        cz2_ = czp_ + cu_*uz_ + cv_*vz_
+                        cy2_ = (y0_+y1_)/2.0
+                        hu_ = max(0.045*bh_, min(0.14*bh_, (u1_-u0_)/2.0))
+                        hv_ = max(0.030*bh_, min(0.09*bh_, (v1_-v0_)/2.0))
+                        hy_ = max(0.025*bh_, min(0.06*bh_, (y1_-y0_)/2.0))
+                        # Median-luminance source-shoe texel: robust to a few
+                        # skin/sole weights at the ankle boundary.
+                        samp_ = []
+                        apx_ = atlas.load()
+                        for v_ in src_:
+                            sx_ = max(0, min(TW-1, int(v_[3]*TW)))
+                            sy_ = max(0, min(TH-1, int(v_[4]*TH)))
+                            r_, g_, b_, a_ = apx_[sx_, sy_]
+                            if a_ > 128:
+                                samp_.append((0.3*r_+0.6*g_+0.1*b_,
+                                              (v_[3], v_[4])))
+                        samp_.sort(key=lambda x_: x_[0])
+                        uv_ = samp_[len(samp_)//2][1] if samp_ else duv_
+                        if uv_ is None:
+                            continue
+                        _proxy_v0_ = len(sk["verts"])
+                        segs_ = 12
+                        rings_ = ((hy_, 0.74), (0.0, 1.0), (-0.62*hy_, 0.86))
+                        ridx_ = []
+                        for ry_, rs_ in rings_:
+                            ring_ = []
+                            for si_ in range(segs_):
+                                aa_ = 2.0*math.pi*si_/segs_
+                                ca_, sa_ = math.cos(aa_), math.sin(aa_)
+                                du_, dv_ = hu_*rs_*ca_, hv_*rs_*sa_
+                                px_ = cx2_ + du_*ux_ + dv_*vx_
+                                pz_ = cz2_ + du_*uz_ + dv_*vz_
+                                nx_ = ca_*ux_/max(hu_, 1e-6) + sa_*vx_/max(hv_, 1e-6)
+                                nz_ = ca_*uz_/max(hu_, 1e-6) + sa_*vz_/max(hv_, 1e-6)
+                                ny_ = (0.55 if ry_ > 0 else
+                                       (-0.55 if ry_ < 0 else 0.0)) / max(hy_, 1e-6)
+                                nl_ = math.sqrt(nx_*nx_+ny_*ny_+nz_*nz_) or 1.0
+                                ring_.append(len(sk["verts"]))
+                                sk["verts"].append([px_, cy2_+ry_, pz_, uv_[0], uv_[1],
+                                                    nx_/nl_, ny_/nl_, nz_/nl_,
+                                                    [(fj_, 1.0)]])
+                            ridx_.append(ring_)
+                        top_ = len(sk["verts"])
+                        sk["verts"].append([cx2_, cy2_+hy_, cz2_, uv_[0], uv_[1],
+                                            0.0, 1.0, 0.0, [(fj_, 1.0)]])
+                        bot_ = len(sk["verts"])
+                        sk["verts"].append([cx2_, cy2_-hy_, cz2_, uv_[0], uv_[1],
+                                            0.0, -1.0, 0.0, [(fj_, 1.0)]])
+                        for si_ in range(segs_):
+                            sj_ = (si_+1) % segs_
+                            sk["tris"].append([top_, ridx_[0][si_], ridx_[0][sj_]])
+                            for ri_ in range(len(ridx_)-1):
+                                a_, b_ = ridx_[ri_][si_], ridx_[ri_][sj_]
+                                c_, d_ = ridx_[ri_+1][si_], ridx_[ri_+1][sj_]
+                                sk["tris"].extend(([a_, c_, b_], [b_, c_, d_]))
+                            sk["tris"].append([ridx_[-1][si_], bot_, ridx_[-1][sj_]])
+                        _shoe_proxy_[fj_] = {"c": (cx2_, cy2_, cz2_),
+                                               "half": (hu_, hy_, hv_),
+                                               "uv": uv_,
+                                               "verts": (_proxy_v0_, len(sk["verts"]))}
+                        _nproxy_ += 1
+                    # Optional experimental stance correction. Some source
+                    # rigs collapse both ball-mode feet onto the same spot;
+                    # spreading each complete proxy also gives the attached
+                    # legs distinct lower anchors without opening the shoes.
+                    _foot_spread_ = float(prof.get("ball_proxy_foot_spread", 0.0)) * bh_
+                    if (_foot_spread_ > 0.0 and 22 in _shoe_proxy_
+                            and 27 in _shoe_proxy_):
+                        c22_ = _shoe_proxy_[22]["c"]
+                        c27_ = _shoe_proxy_[27]["c"]
+                        # Measure only across the character's left/right axis.
+                        # Euclidean separation is misleading here: a source
+                        # T-pose can put the feet far apart in depth while they
+                        # still overlap completely in the gameplay camera.
+                        ldx_, ldz_ = -Dax[2], Dax[0]
+                        llen_ = math.sqrt(ldx_*ldx_ + ldz_*ldz_) or 1.0
+                        ldx_, ldz_ = ldx_/llen_, ldz_/llen_
+                        lsep_signed_ = ((c22_[0]-c27_[0])*ldx_
+                                        + (c22_[2]-c27_[2])*ldz_)
+                        side_ = 1.0 if lsep_signed_ >= 0.0 else -1.0
+                        lsep_ = abs(lsep_signed_)
+                        extra_ = max(0.0, (_foot_spread_-lsep_)/2.0)
+                        for fj_, sign_ in ((22, 1.0), (27, -1.0)):
+                            shoe_ = _shoe_proxy_[fj_]
+                            sx_, sy_, sz_ = shoe_["c"]
+                            ox_ = sign_*side_*extra_*ldx_
+                            oz_ = sign_*side_*extra_*ldz_
+                            v0_, v1_ = shoe_["verts"]
+                            for vi_ in range(v0_, v1_):
+                                sk["verts"][vi_][0] += ox_
+                                sk["verts"][vi_][2] += oz_
+                            shoe_["c"] = (sx_+ox_, sy_, sz_+oz_)
+                        print(f"ball proxy-foot spread: {lsep_:.1f} -> "
+                              f"{max(lsep_, _foot_spread_):.1f}")
+                    print(f"ball proxy-feet: {_old_tris_} -> {len(sk['tris'])} tris "
+                          f"({_nproxy_} closed shoes)")
+                    if prof.get("ball_proxy_legs") and _shoe_proxy_:
+                        # Experimental attached-leg bridge. The upper ring is
+                        # embedded in the balloon and follows the head; the
+                        # lower ring is embedded in the shoe and follows the
+                        # foot. A blended middle ring keeps the short tube
+                        # connected through animation instead of floating like
+                        # the old collapsed source legs.
+                        _hpts_ = _ball_head_shell_pts_
+                        if _ball_bottom_y_ is None:
+                            _ball_bottom_y_ = (min(v_[1] for v_ in _hpts_)
+                                               if _hpts_ else no[12][1])
+                        _leg_radius_ = float(prof.get("ball_proxy_leg_radius", 0.018)) * bh_
+                        _leg_embed_ = float(prof.get("ball_proxy_leg_embed", 0.025)) * bh_
+                        _shell_embed_ = (_leg_embed_ + float(prof.get(
+                            "ball_proxy_leg_shell_overlap", 0.45))*_leg_radius_)
+                        _leg_segs_ = max(6, int(prof.get("ball_proxy_leg_segments", 8)))
+                        _nlegs_ = 0
+                        _leg_top_lifts_ = []
+                        for fj_, _legids_ in ((22, (19, 20)), (27, (24, 25))):
+                            shoe_ = _shoe_proxy_.get(fj_)
+                            if shoe_ is None:
+                                continue
+                            scx_, scy_, scz_ = shoe_["c"]
+                            shy_ = shoe_["half"][1]
+                            # Keep the lower end centered on the shoe; pull the
+                            # upper end slightly toward the balloon axis so the
+                            # two legs read as a stance rather than antennae.
+                            topx_ = 0.85 * scx_ + 0.15 * cx_
+                            topz_ = 0.85 * scz_ + 0.15 * cz_
+                            # Probe the shell at this leg's own horizontal
+                            # anchor. A global head minimum is often a hair or
+                            # beard tip elsewhere on the model; using it for
+                            # both legs leaves visible gaps under asymmetric
+                            # characters. The low local quantile estimates the
+                            # underside while rejecting a stray dangling vert.
+                            probe_r_ = max(2.5*_leg_radius_, 0.07*bh_)
+                            local_y_ = [v_[1] for v_ in _hpts_
+                                        if ((v_[0]-topx_)**2 + (v_[2]-topz_)**2
+                                            <= probe_r_*probe_r_)]
+                            if len(local_y_) < 8:
+                                nearest_ = sorted(
+                                    (((v_[0]-topx_)**2 + (v_[2]-topz_)**2, v_[1])
+                                     for v_ in _hpts_), key=lambda p_: p_[0])
+                                local_y_ = [p_[1] for p_ in nearest_[:48]]
+                            local_y_.sort()
+                            base_top_ = _ball_bottom_y_ + _shell_embed_
+                            topy_ = base_top_
+                            if local_y_:
+                                qi_ = max(0, int(0.12*(len(local_y_)-1)))
+                                # Limit a sparse-probe fallback from tunneling
+                                # implausibly far into a cheek or hairstyle.
+                                topy_ = max(base_top_, min(local_y_[qi_] + _shell_embed_,
+                                                          _ball_bottom_y_ + 0.20*bh_))
+                            _leg_top_lifts_.append(topy_ - base_top_)
+                            boty_ = scy_ + 0.55 * shy_
+                            if topy_ <= boty_ + 0.5 * _leg_radius_:
+                                topy_ = boty_ + max(_leg_radius_, 0.02 * bh_)
+                            legsrc_ = []
+                            for v_ in sk["verts"]:
+                                tot_ = sum(w_ for (_ji_, w_) in v_[8]) or 1.0
+                                lf_ = sum(w_ for (_ji_, w_) in v_[8]
+                                          if _ji_ in _legids_) / tot_
+                                if lf_ >= 0.45:
+                                    sx_ = max(0, min(TW-1, int(v_[3]*TW)))
+                                    sy_ = max(0, min(TH-1, int(v_[4]*TH)))
+                                    r_, g_, b_, a_ = apx_[sx_, sy_]
+                                    if a_ > 128:
+                                        legsrc_.append((0.3*r_+0.6*g_+0.1*b_,
+                                                        (v_[3], v_[4])))
+                            legsrc_.sort(key=lambda x_: x_[0])
+                            luv_ = (legsrc_[len(legsrc_)//2][1] if legsrc_
+                                    else shoe_["uv"])
+                            lrings_ = []
+                            for ri_, (yy_, rr_, wh_) in enumerate((
+                                    (topy_, 0.78*_leg_radius_, 1.0),
+                                    ((topy_+boty_)/2.0, _leg_radius_, 0.5),
+                                    (boty_, 0.84*_leg_radius_, 0.0))):
+                                tt_ = ri_ / 2.0
+                                ccx_ = topx_*(1.0-tt_) + scx_*tt_
+                                ccz_ = topz_*(1.0-tt_) + scz_*tt_
+                                ring_ = []
+                                for si_ in range(_leg_segs_):
+                                    aa_ = 2.0*math.pi*si_/_leg_segs_
+                                    ca_, sa_ = math.cos(aa_), math.sin(aa_)
+                                    ring_.append(len(sk["verts"]))
+                                    wl_ = ([(12, wh_), (fj_, 1.0-wh_)]
+                                           if 0.0 < wh_ < 1.0 else
+                                           ([(12, 1.0)] if wh_ >= 1.0 else [(fj_, 1.0)]))
+                                    sk["verts"].append([
+                                        ccx_ + rr_*ca_, yy_, ccz_ + rr_*sa_,
+                                        luv_[0], luv_[1], ca_, 0.0, sa_, wl_])
+                                lrings_.append(ring_)
+                            ltop_ = len(sk["verts"])
+                            sk["verts"].append([topx_, topy_, topz_, luv_[0], luv_[1],
+                                                0.0, 1.0, 0.0, [(12, 1.0)]])
+                            lbot_ = len(sk["verts"])
+                            sk["verts"].append([scx_, boty_, scz_, luv_[0], luv_[1],
+                                                0.0, -1.0, 0.0, [(fj_, 1.0)]])
+                            for si_ in range(_leg_segs_):
+                                sj_ = (si_+1) % _leg_segs_
+                                sk["tris"].append([ltop_, lrings_[0][si_],
+                                                   lrings_[0][sj_]])
+                                for ri_ in range(2):
+                                    a_, b_ = lrings_[ri_][si_], lrings_[ri_][sj_]
+                                    c_, d_ = lrings_[ri_+1][si_], lrings_[ri_+1][sj_]
+                                    sk["tris"].extend(([a_, c_, b_], [b_, c_, d_]))
+                                sk["tris"].append([lrings_[-1][si_], lbot_,
+                                                   lrings_[-1][sj_]])
+                            _nlegs_ += 1
+                        print(f"ball proxy-legs: {_nlegs_} attached bridges "
+                              f"(radius={_leg_radius_:.1f}, embed={_leg_embed_:.1f}, "
+                              f"local-lift={[round(v_, 1) for v_ in _leg_top_lifts_]})")
+                    if prof.get("ball_proxy_arms") and _ball_head_shell_pts_:
+                        # Experimental hand attachment. Preserve the original
+                        # enlarged hand nubs, then bridge each hand center to
+                        # the nearest point on the surviving balloon shell.
+                        # The shell ring follows the head, the hand ring follows
+                        # the terminal hand joint, and the middle ring blends
+                        # them so the tiny arm stays connected in motion.
+                        def hand_frac_(v_, hj_):
+                            tot_ = sum(w_ for (_ji_, w_) in v_[8]) or 1.0
+                            return sum(w_ for (_ji_, w_) in v_[8]
+                                       if _ji_ == hj_) / tot_
+
+                        _live_now_ = {i_ for t_ in sk["tris"] for i_ in t_[:3]}
+                        _arm_radius_ = float(prof.get(
+                            "ball_proxy_arm_radius", 0.014)) * bh_
+                        _arm_embed_ = float(prof.get(
+                            "ball_proxy_arm_embed", 0.75)) * _arm_radius_
+                        _arm_segs_ = max(6, int(prof.get(
+                            "ball_proxy_arm_segments", 8)))
+                        _narms_, _arm_lengths_ = 0, []
+                        for hj_ in (10, 16):
+                            hand_ = [sk["verts"][i_] for i_ in _live_now_
+                                     if hand_frac_(sk["verts"][i_], hj_) >= 0.55]
+                            if len(hand_) < 6:
+                                continue
+                            # Trimmed bounds are steadier than a mean when a
+                            # wrist cap or fingertip contributes a few outliers.
+                            haxes_ = [sorted(v_[k_] for v_ in hand_) for k_ in range(3)]
+                            hc_ = []
+                            for vals_ in haxes_:
+                                q0_ = vals_[max(0, int(0.10*(len(vals_)-1)))]
+                                q1_ = vals_[max(0, int(0.90*(len(vals_)-1)))]
+                                hc_.append((q0_+q1_)/2.0)
+                            surf_ = min(_ball_head_shell_pts_, key=lambda v_:
+                                        ((v_[0]-hc_[0])**2 + (v_[1]-hc_[1])**2
+                                         + (v_[2]-hc_[2])**2))
+                            axis_ = [surf_[k_]-hc_[k_] for k_ in range(3)]
+                            alen_ = math.sqrt(sum(c_*c_ for c_ in axis_))
+                            if alen_ <= 0.5*_arm_radius_:
+                                continue
+                            axis_ = [c_/alen_ for c_ in axis_]
+                            headc_ = [surf_[k_] + _arm_embed_*axis_[k_]
+                                      for k_ in range(3)]
+                            handc_ = hc_
+                            bridge_ = [handc_[k_]-headc_[k_] for k_ in range(3)]
+                            blen_ = math.sqrt(sum(c_*c_ for c_ in bridge_))
+                            if blen_ <= 0.5*_arm_radius_:
+                                continue
+                            bax_ = [c_/blen_ for c_ in bridge_]
+                            ref_ = ([0.0, 1.0, 0.0]
+                                    if abs(bax_[1]) < 0.90 else [1.0, 0.0, 0.0])
+                            bu_ = [bax_[1]*ref_[2]-bax_[2]*ref_[1],
+                                   bax_[2]*ref_[0]-bax_[0]*ref_[2],
+                                   bax_[0]*ref_[1]-bax_[1]*ref_[0]]
+                            bul_ = math.sqrt(sum(c_*c_ for c_ in bu_)) or 1.0
+                            bu_ = [c_/bul_ for c_ in bu_]
+                            bv_ = [bax_[1]*bu_[2]-bax_[2]*bu_[1],
+                                   bax_[2]*bu_[0]-bax_[0]*bu_[2],
+                                   bax_[0]*bu_[1]-bax_[1]*bu_[0]]
+                            hsamp_ = []
+                            for v_ in hand_:
+                                sx_ = max(0, min(TW-1, int(v_[3]*TW)))
+                                sy_ = max(0, min(TH-1, int(v_[4]*TH)))
+                                r_, g_, b_, a_ = apx_[sx_, sy_]
+                                if a_ > 128:
+                                    hsamp_.append((0.3*r_+0.6*g_+0.1*b_,
+                                                   (v_[3], v_[4])))
+                            hsamp_.sort(key=lambda x_: x_[0])
+                            auv_ = (hsamp_[len(hsamp_)//2][1] if hsamp_ else duv_)
+                            if auv_ is None:
+                                continue
+                            arings_ = []
+                            for ri_, (tt_, rr_, wh_) in enumerate((
+                                    (0.0, 0.72*_arm_radius_, 1.0),
+                                    (0.5, _arm_radius_, 0.5),
+                                    (1.0, 0.78*_arm_radius_, 0.0))):
+                                cc_ = [headc_[k_]*(1.0-tt_) + handc_[k_]*tt_
+                                       for k_ in range(3)]
+                                ring_ = []
+                                for si_ in range(_arm_segs_):
+                                    aa_ = 2.0*math.pi*si_/_arm_segs_
+                                    ca_, sa_ = math.cos(aa_), math.sin(aa_)
+                                    nr_ = [ca_*bu_[k_] + sa_*bv_[k_] for k_ in range(3)]
+                                    wl_ = ([(12, wh_), (hj_, 1.0-wh_)]
+                                           if 0.0 < wh_ < 1.0 else
+                                           ([(12, 1.0)] if wh_ >= 1.0
+                                            else [(hj_, 1.0)]))
+                                    ring_.append(len(sk["verts"]))
+                                    sk["verts"].append([
+                                        cc_[0]+rr_*nr_[0], cc_[1]+rr_*nr_[1],
+                                        cc_[2]+rr_*nr_[2], auv_[0], auv_[1],
+                                        nr_[0], nr_[1], nr_[2], wl_])
+                                arings_.append(ring_)
+                            ahead_ = len(sk["verts"])
+                            sk["verts"].append([*headc_, auv_[0], auv_[1],
+                                                -bax_[0], -bax_[1], -bax_[2],
+                                                [(12, 1.0)]])
+                            ahand_ = len(sk["verts"])
+                            sk["verts"].append([*handc_, auv_[0], auv_[1],
+                                                bax_[0], bax_[1], bax_[2],
+                                                [(hj_, 1.0)]])
+                            for si_ in range(_arm_segs_):
+                                sj_ = (si_+1) % _arm_segs_
+                                sk["tris"].append([ahead_, arings_[0][sj_],
+                                                   arings_[0][si_]])
+                                for ri_ in range(2):
+                                    a_, b_ = arings_[ri_][si_], arings_[ri_][sj_]
+                                    c_, d_ = arings_[ri_+1][si_], arings_[ri_+1][sj_]
+                                    sk["tris"].extend(([a_, b_, c_], [b_, d_, c_]))
+                                sk["tris"].append([arings_[-1][sj_], ahand_,
+                                                   arings_[-1][si_]])
+                            _narms_ += 1
+                            _arm_lengths_.append(blen_)
+                        print(f"ball proxy-arms: {_narms_} attached bridges "
+                              f"(radius={_arm_radius_:.1f}, "
+                              f"lengths={[round(v_, 1) for v_ in _arm_lengths_]})")
                 # The narrow plug must remain rigid at runtime: a collapsed
                 # bind-pose leg/arm tube explodes back across its separate
                 # joints as soon as the fighter walks. Move all segment
@@ -4646,6 +5134,8 @@ if __name__ == "__main__":
         write_binary5(sys.argv[2], sys.argv[3])
     elif len(sys.argv) >= 5 and sys.argv[1] == "--binary5-canonical":
         # --binary5-canonical mario-bundle.json out.osb skels/<t>.profile.json [morph_lambda]
+        # Default lambda: profile morph_lambda, otherwise 0.5. Pass 0 for a
+        # deliberate pure-canonical/chibi export.
         write_binary5(sys.argv[2], sys.argv[3], canonical_profile=sys.argv[4],
                       morph_lambda=float(sys.argv[5]) if len(sys.argv) > 5 else None)
     elif len(sys.argv) == 5 and sys.argv[1] == "--add-cpm1":

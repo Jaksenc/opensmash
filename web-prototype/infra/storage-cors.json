@@ -1,0 +1,8 @@
+[
+  {
+    "origin": ["https://example.com", "http://127.0.0.1:4174"],
+    "method": ["GET", "HEAD"],
+    "responseHeader": ["Content-Type", "Content-Length", "ETag"],
+    "maxAgeSeconds": 3600
+  }
+]
