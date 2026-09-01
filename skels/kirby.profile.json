@@ -44,5 +44,11 @@
  "dir_lambda": 0.0,
  "ball_plug_lift": 0.9,
  "ball_hide_plug": true,
- "ball_clearance": 16.0
+ "ball_hide_hands": true,
+ "ball_clearance": 38.0,
+ "ball_proxy_legs": true,
+ "ball_proxy_foot_spread": 0.32,
+ "ball_proxy_leg_radius": 0.022,
+ "ball_proxy_leg_embed": 0.018,
+ "ball_proxy_leg_shell_overlap": 0.85
 }

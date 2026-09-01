@@ -8,19 +8,19 @@ import {
   open,
   readFile,
   readdir,
-  rename,
   rm,
   stat,
-  writeFile,
 } from "node:fs/promises";
 import path from "node:path";
 import { execFile, spawn } from "node:child_process";
+import { EventEmitter } from "node:events";
 import { promisify } from "node:util";
+import { ACTIVE_JOB_STATUSES, jobSnapshot, publicJob } from "./job-protocol.js";
+import { moderateFighterSubmission } from "./submission-moderation.js";
 
 const execFileAsync = promisify(execFile);
 
 const MAX_PHOTO_BYTES = 12 * 1024 * 1024;
-const ACTIVE_STATUSES = new Set(["queued", "running"]);
 const PHOTO_TYPES = new Map([
   ["image/jpeg", { extension: ".jpg", magic: (bytes) => bytes[0] === 0xff && bytes[1] === 0xd8 }],
   ["image/png", { extension: ".png", magic: (bytes) => bytes.subarray(0, 8).equals(Buffer.from("89504e470d0a1a0a", "hex")) }],
@@ -57,6 +57,21 @@ function slugFor(name) {
   return name.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 16);
 }
 
+export function submissionSettings(fields = {}) {
+  const visibility = fields.visibility || "public";
+  if (visibility !== "public" && visibility !== "private") {
+    throw new HttpError(400, "Choose public or private visibility.");
+  }
+  if (fields.rightsAttested !== "true") {
+    throw new HttpError(400, "Confirm that you have the rights or permission to upload this character and photo.");
+  }
+  return { visibility };
+}
+
+export function isJobAccessible(job, ownerId = null) {
+  return Boolean(job && (job.visibility !== "private" || job.ownerId === ownerId));
+}
+
 export function automaticRetryPlan(log, stage, retryCounts = {}) {
   const moderationRetries = retryCounts.moderation || 0;
   const isOutputModeration =
@@ -87,38 +102,23 @@ export function automaticRetryPlan(log, stage, retryCounts = {}) {
   return null;
 }
 
-function publicJob(job) {
-  const result = {
-    id: job.id,
-    name: job.name,
-    slug: job.slug,
-    emblem: job.emblem,
-    status: job.status,
-    stage: job.stage,
-    stageLabel: job.stageLabel,
-    progress: job.progress,
-    createdAt: job.createdAt,
-    startedAt: job.startedAt || null,
-    completedAt: job.completedAt || null,
-    error: job.error || null,
-    retryLabel: job.retryLabel || null,
-    logTail: job.logTail || [],
-    photoName: job.photoName,
-  };
-
-  if (job.status === "complete") {
-    result.character = {
-      slug: job.slug,
-      name: job.displayName || job.name,
-      short: job.short || job.name,
-      portrait: `/api/fighters/${job.id}/portrait?v=${encodeURIComponent(job.completedAt || "")}`,
-      announcer: `/api/fighters/${job.id}/announcer?v=${encodeURIComponent(job.completedAt || "")}`,
-      fkind: 0,
-      bundle: `${job.slug}.osb`,
-    };
-    result.costUsd = job.costUsd ?? null;
+export function parseProgressEvent(line) {
+  if (!line.startsWith("@@opensmash ")) return null;
+  try {
+    const event = JSON.parse(line.slice("@@opensmash ".length));
+    if (
+      event.protocolVersion !== 1 ||
+      event.type !== "job.progress" ||
+      typeof event.stage !== "string" ||
+      typeof event.label !== "string" ||
+      !Number.isInteger(event.progress) ||
+      event.progress < 0 ||
+      event.progress > 100
+    ) return null;
+    return { key: event.stage, label: event.label, progress: event.progress };
+  } catch {
+    return null;
   }
-  return result;
 }
 
 async function readMagic(filePath) {
@@ -149,7 +149,7 @@ async function receiveForm(req, jobRoot) {
     try {
       parser = Busboy({
         headers: req.headers,
-        limits: { files: 1, fileSize: MAX_PHOTO_BYTES, fields: 3, fieldSize: 512, parts: 4 },
+        limits: { files: 1, fileSize: MAX_PHOTO_BYTES, fields: 5, fieldSize: 512, parts: 6 },
       });
     } catch (error) {
       reject(new HttpError(400, error.message || "Could not read that form."));
@@ -157,7 +157,7 @@ async function receiveForm(req, jobRoot) {
     }
 
     parser.on("field", (name, value) => {
-      if (name === "name" || name === "emblem") fields[name] = value;
+      if (["name", "emblem", "visibility", "rightsAttested"].includes(name)) fields[name] = value;
     });
     parser.on("file", (fieldName, stream, info) => {
       if (fieldName !== "photo" || photo) {
@@ -210,40 +210,85 @@ async function receiveForm(req, jobRoot) {
   return { fields, photo };
 }
 
-export function createFighterJobs({ appRoot, repoRoot, engineRoot, pipelineUiRoot }) {
+export function createFighterJobs({
+  appRoot,
+  repoRoot,
+  engineRoot,
+  pipelineUiRoot,
+  objectStore,
+  jobDatabase,
+  dispatcher,
+  submissionModerator = moderateFighterSubmission,
+}) {
   const jobsRoot = path.resolve(process.env.FIGHTER_JOBS_ROOT || path.join(appRoot, "data", "fighter-jobs"));
   const pipelineRoot = path.join(repoRoot, "pipeline");
   const pipelineScript = path.join(pipelineRoot, "pipeline", "run_character.py");
   const normalizeImageScript = path.join(appRoot, "server", "normalize-image.py");
   const jobs = new Map();
   const queue = [];
+  const events = new EventEmitter();
+  events.setMaxListeners(0);
+  const localExecution = dispatcher.driver === "local";
+  const leaseSeconds = Number(process.env.FIGHTER_LEASE_SECONDS || 15 * 60);
+  const maxActivePerOwner = Number(process.env.MAX_ACTIVE_JOBS_PER_OWNER || 1);
+  const maxDailyPerOwner = Number(process.env.MAX_DAILY_JOBS_PER_OWNER || 3);
+  const maxGlobalActive = Number(process.env.MAX_GLOBAL_ACTIVE_JOBS || 20);
+  let stopDatabaseWatch = null;
   let workerBusy = false;
 
   function jobRoot(id) {
     return path.join(jobsRoot, id);
   }
 
-  async function saveJob(job) {
-    const finalPath = path.join(jobRoot(job.id), "job.json");
-    const temporaryPath = `${finalPath}.${randomUUID()}.tmp`;
-    await writeFile(temporaryPath, `${JSON.stringify(job, null, 2)}\n`, { mode: 0o600 });
-    await rename(temporaryPath, finalPath);
+  async function saveJob(job, { bumpRevision = true } = {}) {
+    if (bumpRevision) {
+      job.revision = (job.revision || 0) + 1;
+      job.updatedAt = new Date().toISOString();
+    }
+    if (job.lease?.executionId) {
+      job.lease.expiresAt = new Date(Date.now() + leaseSeconds * 1000).toISOString();
+    }
+    await jobDatabase.save(job);
+    events.emit(job.id, jobSnapshot(job));
+  }
+
+  async function insertJob(job) {
+    job.revision = (job.revision || 0) + 1;
+    job.updatedAt = new Date().toISOString();
+    await jobDatabase.insert(job);
+    events.emit(job.id, jobSnapshot(job));
+  }
+
+  function normalizeStoredJob(job) {
+    job.revision ||= 0;
+    job.protocolVersion ||= 1;
+    job.updatedAt ||= job.createdAt;
+    job.attempt ||= 0;
+    job.retry ||= {
+      automaticCounts: job.automaticRetryCounts || { moderation: 0, transient: 0 },
+      nextAttemptAt: job.nextAttemptAt || null,
+      label: job.retryLabel || null,
+    };
+    delete job.automaticRetryCounts;
+    delete job.nextAttemptAt;
+    delete job.retryLabel;
+    return job;
   }
 
   async function loadJobs() {
     await mkdir(jobsRoot, { recursive: true });
-    const entries = await readdir(jobsRoot, { withFileTypes: true });
-    for (const entry of entries) {
-      if (!entry.isDirectory() || entry.name.startsWith(".")) continue;
+    const storedJobs = await jobDatabase.list();
+    for (const job of storedJobs) {
       try {
-        const job = JSON.parse(await readFile(path.join(jobsRoot, entry.name, "job.json"), "utf8"));
-        if (job.id !== entry.name) continue;
-        if (job.status === "running") {
+        if (!job.id) continue;
+        normalizeStoredJob(job);
+        if (localExecution && (job.status === "running" || job.status === "retrying")) {
           job.status = "queued";
           job.stage = "queued";
           job.stageLabel = "Recovered after server restart";
           job.progress = Math.min(job.progress || 0, 95);
           job.error = null;
+          job.retry.nextAttemptAt = null;
           await saveJob(job);
         }
         if (
@@ -260,21 +305,69 @@ export function createFighterJobs({ appRoot, repoRoot, engineRoot, pipelineUiRoo
           if ((job.progress || 0) >= 75) {
             job.stageLabel = "Generated portrait was blocked";
             job.error = "The image provider blocked its generated portrait. The model and moveset variants are saved; reroll only the portrait to continue.";
-            job.retryLabel = "Reroll portrait";
+            job.retry.label = "Reroll portrait";
           } else {
             job.stageLabel = "Generated art was blocked";
             job.error = "The image provider blocked generated art. Retry to reroll the missing stage.";
-            job.retryLabel = "Reroll art";
+            job.retry.label = "Reroll art";
           }
           await saveJob(job);
         }
         jobs.set(job.id, job);
-        if (job.status === "queued") queue.push(job.id);
+        if (localExecution && job.status === "queued") queue.push(job.id);
       } catch (error) {
-        console.warn(`Skipping fighter job '${entry.name}': ${error.message}`);
+        console.warn(`Skipping fighter job '${job.id || "unknown"}': ${error.message}`);
       }
     }
     queue.sort((left, right) => jobs.get(left).createdAt.localeCompare(jobs.get(right).createdAt));
+  }
+
+  async function restoreCheckpoint(job) {
+    for (const file of job.checkpoint?.files || []) {
+      const destination = file.scope === "play"
+        ? path.join(pipelineRoot, "play", file.name)
+        : path.join(pipelineUiRoot, job.slug, file.name);
+      await objectStore.getFile(file.key, destination);
+    }
+  }
+
+  async function saveFailureCheckpoint(job) {
+    const outputRoot = path.join(pipelineUiRoot, job.slug);
+    const checkpointRoot = `characters/${job.slug}/checkpoints/${job.id}`;
+    const candidates = [
+      "character.json", "cost.json", "tpose.png", "rigged.glb", "bundle.json",
+      "portrait_raw.png", "stock_raw.png", "emblem_raw.png", `${job.slug}.osbui`,
+      "announcer.wav",
+    ];
+    const files = [];
+    for (const name of candidates) {
+      const source = path.join(outputRoot, name);
+      try {
+        await access(source);
+        const artifact = await objectStore.putFile(
+          `${checkpointRoot}/output/${name}`, source, { public: false },
+        );
+        files.push({ ...artifact, scope: "output", name });
+      } catch {
+        // Missing files simply mean that stage had not completed yet.
+      }
+    }
+    const playRoot = path.join(pipelineRoot, "play");
+    try {
+      const bundles = (await readdir(playRoot))
+        .filter((name) => (name === `${job.slug}.osb` || name.startsWith(`${job.slug}-`)) && name.endsWith(".osb"));
+      for (const name of bundles) {
+        const artifact = await objectStore.putFile(
+          `${checkpointRoot}/play/${name}`, path.join(playRoot, name), { public: false },
+        );
+        files.push({ ...artifact, scope: "play", name });
+      }
+    } catch {
+      // The play directory may not exist if generation failed very early.
+    }
+    if (files.length) {
+      job.checkpoint = { savedAt: new Date().toISOString(), files };
+    }
   }
 
   async function finishJob(job, code, signal, attemptLog = "") {
@@ -297,11 +390,95 @@ export function createFighterJobs({ appRoot, repoRoot, engineRoot, pipelineUiRoo
         job.displayName = metadata.display || job.name;
         job.short = metadata.short || job.displayName;
         job.costUsd = cost?.total_usd ?? null;
+        const version = `${job.id}-${job.attempt}`;
+        const versionRoot = `characters/${job.slug}/versions/${version}`;
+        const isPublic = job.visibility !== "private";
+        const bundleRoot = path.join(engineRoot, "bundles");
+        const variantFiles = (await readdir(bundleRoot))
+          .filter((name) => name.startsWith(`${job.slug}-`) && name.endsWith(".osb"))
+          .sort();
+        const variants = {};
+        for (const fileName of variantFiles) {
+          const fighter = fileName.slice(job.slug.length + 1, -4);
+          variants[fighter] = await objectStore.putFile(
+            `${versionRoot}/injection/${fileName}`,
+            path.join(bundleRoot, fileName),
+            { contentType: "application/octet-stream", public: isPublic },
+          );
+        }
+        job.artifacts = {
+          portrait: await objectStore.putFile(
+            `${versionRoot}/portrait.png`,
+            path.join(outputRoot, "portrait_raw.png"),
+            { contentType: "image/png", public: isPublic },
+          ),
+          announcer: await objectStore.putFile(
+            `${versionRoot}/announcer.wav`,
+            path.join(bundleRoot, `${job.slug}.wav`),
+            { contentType: "audio/wav", public: isPublic },
+          ),
+          bundle: await objectStore.putFile(
+            `${versionRoot}/injection/${job.slug}.osb`,
+            path.join(bundleRoot, `${job.slug}.osb`),
+            { contentType: "application/octet-stream", public: isPublic },
+          ),
+          ui: await objectStore.putFile(
+            `${versionRoot}/injection/${job.slug}.osbui`,
+            path.join(bundleRoot, `${job.slug}.osbui`),
+            { contentType: "application/octet-stream", public: isPublic },
+          ),
+          character: await objectStore.putFile(
+            `${versionRoot}/character.json`,
+            path.join(outputRoot, "character.json"),
+            { contentType: "application/json", public: isPublic },
+          ),
+          variants,
+        };
+        for (const [key, fileName] of [["stock", "stock_raw.png"], ["emblem", "emblem_raw.png"]]) {
+          try {
+            await access(path.join(outputRoot, fileName));
+            job.artifacts[key] = await objectStore.putFile(
+              `${versionRoot}/${key}.png`,
+              path.join(outputRoot, fileName),
+              { contentType: "image/png", public: isPublic },
+            );
+          } catch {
+            // Optional art is omitted from the manifest if the pipeline did not produce it.
+          }
+        }
+        const manifest = {
+          protocolVersion: 1,
+          character: {
+            slug: job.slug,
+            name: metadata.display || job.name,
+            short: metadata.short || metadata.display || job.name,
+          },
+          visibility: job.visibility,
+          uploader: job.uploader?.displayName ? { displayName: job.uploader.displayName } : null,
+          version,
+          generatedAt: new Date().toISOString(),
+          artifacts: job.artifacts,
+        };
+        job.artifacts.manifest = await objectStore.putJson(
+          `${versionRoot}/manifest.json`, manifest, { public: isPublic },
+        );
+        job.artifacts.latest = await objectStore.putJson(
+          `characters/${job.slug}/latest.json`,
+          {
+            protocolVersion: 1,
+            slug: job.slug,
+            version,
+            manifest: job.artifacts.manifest,
+            updatedAt: new Date().toISOString(),
+          },
+          { public: isPublic, immutable: false },
+        );
         job.status = "complete";
         job.stage = "complete";
         job.stageLabel = "Fighter ready";
         job.progress = 100;
         job.completedAt = new Date().toISOString();
+        job.retry.nextAttemptAt = null;
         job.error = null;
       } catch (error) {
         job.status = "failed";
@@ -317,23 +494,31 @@ export function createFighterJobs({ appRoot, repoRoot, engineRoot, pipelineUiRoo
       const joinedLog = attemptLog || (job.logTail || []).join("\n");
       if (joinedLog.includes("invalid_image_file")) {
         job.error = "The image provider rejected the reference photo. Resume to retry with a normalized copy.";
-        job.retryLabel = "Resume generation";
+        job.retry.label = "Resume generation";
       } else if (joinedLog.includes("moderation_blocked")) {
         if (failedStage === "portrait") {
           job.stageLabel = "Generated portrait was blocked";
           job.error = "The image provider blocked its generated portrait. The model and moveset variants are saved; reroll only the portrait to continue.";
-          job.retryLabel = "Reroll portrait";
+          job.retry.label = "Reroll portrait";
         } else {
           job.stageLabel = "Generated art was blocked";
           job.error = "The image provider blocked generated art. Retry to reroll the missing stage.";
-          job.retryLabel = "Reroll art";
+          job.retry.label = "Reroll art";
         }
       } else {
         const lastUsefulLine = [...(job.logTail || [])].reverse().find((line) => /failed|error|runtime/i.test(line));
         job.error = lastUsefulLine || `Pipeline exited ${signal ? `after ${signal}` : `with code ${code}`}.`;
-        job.retryLabel = "Resume generation";
+        job.retry.label = "Resume generation";
       }
     }
+    if (job.status === "failed") {
+      try {
+        await saveFailureCheckpoint(job);
+      } catch (error) {
+        job.logTail = [...(job.logTail || []), `checkpoint: ${error.message}`].slice(-24);
+      }
+    }
+    job.lease = null;
     await saveJob(job);
   }
 
@@ -344,6 +529,7 @@ export function createFighterJobs({ appRoot, repoRoot, engineRoot, pipelineUiRoo
 
   async function runJob(job, { automatic = false } = {}) {
     workerBusy = true;
+    job.attempt = (job.attempt || 0) + 1;
     job.status = "running";
     if (!automatic) {
       job.stage = "photo";
@@ -352,13 +538,22 @@ export function createFighterJobs({ appRoot, repoRoot, engineRoot, pipelineUiRoo
     }
     job.startedAt ||= new Date().toISOString();
     job.error = null;
+    job.retry.nextAttemptAt = null;
     await saveJob(job);
 
     const normalizedPhoto = path.join(jobRoot(job.id), "photo-normalized.png");
     try {
+      await restoreCheckpoint(job);
+      const localPhoto = path.join(jobRoot(job.id), job.photoFile);
+      try {
+        await access(localPhoto);
+      } catch (error) {
+        if (error.code !== "ENOENT" || !job.input?.key) throw error;
+        await objectStore.getFile(job.input.key, localPhoto);
+      }
       await execFileAsync(
         process.env.PYTHON || "python3",
-        [normalizeImageScript, path.join(jobRoot(job.id), job.photoFile), normalizedPhoto],
+        [normalizeImageScript, localPhoto, normalizedPhoto],
         { cwd: appRoot, timeout: 120_000, maxBuffer: 1024 * 1024 },
       );
       job.normalizedPhotoFile = path.basename(normalizedPhoto);
@@ -374,6 +569,7 @@ export function createFighterJobs({ appRoot, repoRoot, engineRoot, pipelineUiRoo
       job.stageLabel = "Could not prepare the reference photo";
       job.error = "That photo could not be converted into a standard RGB image.";
       job.logTail = [...(job.logTail || []), error.message].slice(-24);
+      job.lease = null;
       await saveJob(job);
       workerBusy = false;
       void runNext();
@@ -410,8 +606,9 @@ export function createFighterJobs({ appRoot, repoRoot, engineRoot, pipelineUiRoo
         if (!line) continue;
         attemptLines.push(line);
         if (attemptLines.length > 200) attemptLines.shift();
-        job.logTail = [...(job.logTail || []), line].slice(-24);
-        const stage = stageFromLine(line);
+        const structuredStage = parseProgressEvent(line);
+        if (!structuredStage) job.logTail = [...(job.logTail || []), line].slice(-24);
+        const stage = structuredStage || stageFromLine(line);
         if (stage && stage.progress >= (job.progress || 0)) {
           job.stage = stage.key;
           job.stageLabel = stage.label;
@@ -421,46 +618,63 @@ export function createFighterJobs({ appRoot, repoRoot, engineRoot, pipelineUiRoo
       scheduleSave();
     }
 
-    child.stdout.on("data", (chunk) => consume(chunk.toString()));
-    child.stderr.on("data", (chunk) => consume(chunk.toString()));
-    child.on("error", async (error) => {
-      job.logTail = [...(job.logTail || []), error.message].slice(-24);
-      job.status = "failed";
-      job.stage = "failed";
-      job.stageLabel = "Could not start the pipeline";
-      job.error = error.message;
-      await saveJob(job);
+    await new Promise((resolve) => {
+      let spawnError = null;
+      child.stdout.on("data", (chunk) => consume(chunk.toString()));
+      child.stderr.on("data", (chunk) => consume(chunk.toString()));
+      child.on("error", (error) => {
+        spawnError = error;
+      });
+      child.on("close", async (code, signal) => {
+        if (saveTimer) clearTimeout(saveTimer);
+        if (pending.trim()) {
+          const finalLine = pending;
+          pending = "";
+          consume(`${finalLine}\n`);
+          if (saveTimer) clearTimeout(saveTimer);
+        }
+        if (spawnError) {
+          job.logTail = [...(job.logTail || []), spawnError.message].slice(-24);
+          job.status = "failed";
+          job.stage = "failed";
+          job.stageLabel = "Could not start the pipeline";
+          job.error = spawnError.message;
+          job.lease = null;
+          await saveJob(job);
+          workerBusy = false;
+          void runNext();
+          resolve();
+          return;
+        }
+        const attemptLog = attemptLines.join("\n");
+        const retryPlan = code === 0
+          ? null
+          : automaticRetryPlan(attemptLog, job.stage, job.retry.automaticCounts);
+        if (retryPlan) {
+          job.retry.automaticCounts[retryPlan.kind] += 1;
+          job.status = "retrying";
+          job.stageLabel = retryPlan.label;
+          job.retry.nextAttemptAt = new Date(Date.now() + retryPlan.delayMs).toISOString();
+          job.error = null;
+          job.retry.label = null;
+          await saveJob(job);
+          setTimeout(async () => {
+            await runJob(job, { automatic: true });
+            resolve();
+          }, retryPlan.delayMs);
+          return;
+        }
+        await finishJob(job, code, signal, attemptLog);
+        workerBusy = false;
+        void runNext();
+        resolve();
+      });
     });
-    child.on("close", async (code, signal) => {
-      if (saveTimer) clearTimeout(saveTimer);
-      if (pending.trim()) {
-        const finalLine = pending;
-        pending = "";
-        consume(`${finalLine}\n`);
-      }
-      const attemptLog = attemptLines.join("\n");
-      const retryPlan = code === 0
-        ? null
-        : automaticRetryPlan(attemptLog, job.stage, job.automaticRetryCounts);
-      if (retryPlan) {
-        job.automaticRetryCounts ||= { moderation: 0, transient: 0 };
-        job.automaticRetryCounts[retryPlan.kind] += 1;
-        job.status = "running";
-        job.stageLabel = retryPlan.label;
-        job.error = null;
-        job.retryLabel = null;
-        await saveJob(job);
-        setTimeout(() => void runJob(job, { automatic: true }), retryPlan.delayMs);
-        return;
-      }
-      await finishJob(job, code, signal, attemptLog);
-      workerBusy = false;
-      void runNext();
-    });
+    return publicJob(job);
   }
 
   async function runNext() {
-    if (workerBusy || process.env.FIGHTER_WORKER_DISABLED === "1") return;
+    if (!localExecution || workerBusy || process.env.FIGHTER_WORKER_DISABLED === "1") return;
     while (queue.length) {
       const id = queue.shift();
       const job = jobs.get(id);
@@ -471,13 +685,93 @@ export function createFighterJobs({ appRoot, repoRoot, engineRoot, pipelineUiRoo
     }
   }
 
-  async function create(req) {
+  async function dispatch(job) {
+    if (localExecution) {
+      queue.push(job.id);
+      void runNext();
+      return;
+    }
+    try {
+      const result = await dispatcher.dispatch(job);
+      job.dispatch = {
+        driver: dispatcher.driver,
+        executionName: result.executionName,
+        dispatchedAt: new Date().toISOString(),
+      };
+      job.stageLabel = "Generation worker scheduled";
+      await saveJob(job);
+    } catch (error) {
+      job.status = "failed";
+      job.stage = "dispatch";
+      job.stageLabel = "Could not schedule generation";
+      job.error = error.message;
+      job.retry.label = "Retry scheduling";
+      await saveJob(job);
+      throw new HttpError(503, "Generation could not be scheduled. Retry this job.");
+    }
+  }
+
+  async function reconcileStaleJobs() {
+    if (localExecution) return;
+    const now = Date.now();
+    const dispatchTimeout = Number(process.env.FIGHTER_DISPATCH_TIMEOUT_SECONDS || 10 * 60) * 1000;
+    for (const job of jobs.values()) {
+      const leaseExpiry = Date.parse(job.lease?.expiresAt || "");
+      const leaseExpired =
+        (job.status === "running" || job.status === "retrying") &&
+        (!Number.isFinite(leaseExpiry) || leaseExpiry < now);
+      const neverClaimed =
+        job.status === "queued" &&
+        job.dispatch?.dispatchedAt &&
+        Date.parse(job.dispatch.dispatchedAt) + dispatchTimeout < now;
+      if (!leaseExpired && !neverClaimed) continue;
+      job.status = "failed";
+      job.stage = "interrupted";
+      job.stageLabel = "Generation worker was interrupted";
+      job.error = "The worker stopped reporting progress. Resume to continue from its last saved checkpoint.";
+      job.retry.label = "Resume generation";
+      job.lease = null;
+      await saveJob(job);
+    }
+  }
+
+  function assertCreationQuota(ownerId) {
+    if (!ownerId) throw new HttpError(401, "A validated ROM session is required.");
+    const allJobs = [...jobs.values()];
+    const activeForOwner = allJobs.filter(
+      (job) => job.ownerId === ownerId && ACTIVE_JOB_STATUSES.has(job.status),
+    ).length;
+    if (activeForOwner >= maxActivePerOwner) {
+      throw new HttpError(429, "Finish your current fighter before starting another.");
+    }
+    const startOfDay = Date.now() - 24 * 60 * 60 * 1000;
+    const dailyForOwner = allJobs.filter(
+      (job) => job.ownerId === ownerId && Date.parse(job.createdAt) >= startOfDay,
+    ).length;
+    if (dailyForOwner >= maxDailyPerOwner) {
+      throw new HttpError(429, "This account has reached its daily fighter limit.");
+    }
+    const globalActive = allJobs.filter((job) => ACTIVE_JOB_STATUSES.has(job.status)).length;
+    if (globalActive >= maxGlobalActive) {
+      throw new HttpError(503, "The fighter queue is full. Try again shortly.");
+    }
+  }
+
+  function ownedJob(id, ownerId) {
+    const job = jobs.get(id);
+    return job && (!ownerId || job.ownerId === ownerId) ? job : null;
+  }
+
+  async function create(req, uploader) {
+    const ownerId = uploader?.uid;
+    assertCreationQuota(ownerId);
     const id = randomUUID();
     const root = jobRoot(id);
     try {
       const { fields, photo } = await receiveForm(req, root);
       const name = String(fields.name || "").trim().replace(/\s+/g, " ");
       const emblem = String(fields.emblem || "").trim().replace(/\s+/g, " ");
+      const { visibility } = submissionSettings(fields);
       if (!name || name.length > 80) throw new HttpError(400, "Enter a fighter name up to 80 characters.");
       if (emblem.length > 200) throw new HttpError(400, "Keep the emblem description under 200 characters.");
       const slug = slugFor(name);
@@ -493,12 +787,46 @@ export function createFighterJobs({ appRoot, repoRoot, engineRoot, pipelineUiRoo
         if (error.code !== "ENOENT") throw error;
       }
 
+      let moderation;
+      try {
+        moderation = await submissionModerator({
+          name,
+          emblem,
+          photoPath: photo.path,
+          mimeType: photo.mimeType,
+        });
+      } catch (error) {
+        console.warn(JSON.stringify({
+          event: "fighter.submission_rejected",
+          uploaderId: ownerId,
+          reason: error.status === 422 ? "moderation" : "moderation_unavailable",
+          categories: error.details?.categories || [],
+        }));
+        throw error;
+      }
+
       const now = new Date().toISOString();
+      const input = await objectStore.putFile(
+        `characters/${slug}/sources/${id}/photo${photo.type.extension}`,
+        photo.path,
+        { contentType: photo.mimeType, public: false },
+      );
       const job = {
+        protocolVersion: 1,
         id,
+        ownerId,
+        uploader: {
+          uid: ownerId,
+          displayName: uploader.displayName || null,
+          email: uploader.email || null,
+          provider: uploader.provider || null,
+        },
         name,
         slug,
         emblem,
+        visibility,
+        rightsAttestedAt: now,
+        moderation,
         photoName: path.basename(photo.originalName).slice(0, 160),
         photoFile: path.basename(photo.path),
         photoMimeType: photo.mimeType,
@@ -507,16 +835,31 @@ export function createFighterJobs({ appRoot, repoRoot, engineRoot, pipelineUiRoo
         stageLabel: workerBusy ? "Waiting for the current fighter" : "Queued for generation",
         progress: 0,
         createdAt: now,
+        updatedAt: now,
+        revision: 0,
+        attempt: 0,
         startedAt: null,
         completedAt: null,
         error: null,
-        automaticRetryCounts: { moderation: 0, transient: 0 },
+        retry: {
+          automaticCounts: { moderation: 0, transient: 0 },
+          nextAttemptAt: null,
+          label: null,
+        },
+        input,
         logTail: [],
       };
       jobs.set(id, job);
-      await saveJob(job);
-      queue.push(id);
-      void runNext();
+      try {
+        await insertJob(job);
+      } catch (error) {
+        jobs.delete(id);
+        if (error.code === "DUPLICATE_SLUG") {
+          throw new HttpError(409, `A generation for '${name}' already exists.`);
+        }
+        throw error;
+      }
+      await dispatch(job);
       return publicJob(job);
     } catch (error) {
       await rm(root, { recursive: true, force: true });
@@ -524,52 +867,111 @@ export function createFighterJobs({ appRoot, repoRoot, engineRoot, pipelineUiRoo
     }
   }
 
-  async function retry(id) {
-    const job = jobs.get(id);
+  async function retry(id, ownerId) {
+    const job = ownedJob(id, ownerId);
     if (!job) throw new HttpError(404, "Fighter job not found.");
-    if (ACTIVE_STATUSES.has(job.status)) throw new HttpError(409, "That fighter is already being generated.");
+    if (ACTIVE_JOB_STATUSES.has(job.status)) throw new HttpError(409, "That fighter is already being generated.");
     if (job.status === "complete") throw new HttpError(409, "That fighter is already complete.");
     job.status = "queued";
     job.stage = "queued";
     job.stageLabel = workerBusy ? "Waiting for the current fighter" : "Queued to resume";
     job.progress = 0;
     job.error = null;
-    job.retryLabel = null;
-    job.automaticRetryCounts = { moderation: 0, transient: 0 };
+    job.retry = {
+      automaticCounts: { moderation: 0, transient: 0 },
+      nextAttemptAt: null,
+      label: null,
+    };
     job.completedAt = null;
     await saveJob(job);
-    queue.push(id);
-    void runNext();
+    await dispatch(job);
     return publicJob(job);
   }
 
   return {
-    async init() {
-      await loadJobs();
+    async init({ loadAll = true } = {}) {
+      if (loadAll) await loadJobs();
+      stopDatabaseWatch = loadAll ? jobDatabase.watch((job) => {
+        const current = jobs.get(job.id);
+        if (!current || (job.revision || 0) > (current.revision || 0)) {
+          jobs.set(job.id, job);
+          events.emit(job.id, jobSnapshot(job));
+        }
+      }) : null;
+      if (loadAll && !localExecution) {
+        await reconcileStaleJobs();
+        setInterval(() => {
+          reconcileStaleJobs().catch((error) => console.error("Stale job reconciliation failed:", error));
+        }, 60_000).unref();
+      }
       void runNext();
     },
-    async create(req) {
-      return create(req);
+    async create(req, uploader) {
+      return create(req, uploader);
     },
-    list() {
+    list(ownerId = null) {
       return [...jobs.values()]
+        .filter((job) => !ownerId || job.ownerId === ownerId)
         .sort((left, right) => right.createdAt.localeCompare(left.createdAt))
         .map(publicJob);
     },
-    get(id) {
-      const job = jobs.get(id);
+    listVisible(ownerId = null) {
+      return [...jobs.values()]
+        .filter((job) => job.visibility !== "private" || job.ownerId === ownerId)
+        .sort((left, right) => right.createdAt.localeCompare(left.createdAt))
+        .map(publicJob);
+    },
+    get(id, ownerId = null) {
+      const job = ownedJob(id, ownerId);
       return job ? publicJob(job) : null;
     },
-    async retry(id) {
-      return retry(id);
+    isAccessible(id, ownerId = null) {
+      return isJobAccessible(jobs.get(id), ownerId);
     },
-    portraitPath(id) {
-      const job = jobs.get(id);
-      return job ? path.join(pipelineUiRoot, job.slug, "portrait_raw.png") : null;
+    isSlugAccessible(slug, ownerId = null) {
+      const job = [...jobs.values()].find((candidate) => candidate.slug === slug);
+      return !job || job.visibility !== "private" || job.ownerId === ownerId;
     },
-    announcerPath(id) {
+    isSlugPublic(slug) {
+      const job = [...jobs.values()].find((candidate) => candidate.slug === slug);
+      return Boolean(job && job.visibility !== "private");
+    },
+    artifact(id, ownerId, name, variant = null) {
       const job = jobs.get(id);
-      return job ? path.join(pipelineUiRoot, job.slug, "announcer.wav") : null;
+      if (!isJobAccessible(job, ownerId)) return null;
+      const artifact = variant
+        ? job.artifacts?.variants?.[variant]
+        : job.artifacts?.[name];
+      return artifact ? { ...artifact, public: job.visibility !== "private" } : null;
+    },
+    subscribe(id, ownerId, listener) {
+      const job = ownedJob(id, ownerId);
+      if (!job) return null;
+      events.on(id, listener);
+      listener(jobSnapshot(job));
+      return () => events.off(id, listener);
+    },
+    async retry(id, ownerId) {
+      return retry(id, ownerId);
+    },
+    async runSingle(id, executionId) {
+      const claim = await jobDatabase.claim(id, executionId, leaseSeconds);
+      if (!claim.claimed) return claim.job ? publicJob(normalizeStoredJob(claim.job)) : null;
+      const job = normalizeStoredJob(claim.job);
+      jobs.set(job.id, job);
+      return runJob(job);
+    },
+    portraitPath(id, ownerId = null) {
+      const job = jobs.get(id);
+      return isJobAccessible(job, ownerId)
+        ? path.join(pipelineUiRoot, job.slug, "portrait_raw.png")
+        : null;
+    },
+    announcerPath(id, ownerId = null) {
+      const job = jobs.get(id);
+      return isJobAccessible(job, ownerId)
+        ? path.join(pipelineUiRoot, job.slug, "announcer.wav")
+        : null;
     },
     HttpError,
   };

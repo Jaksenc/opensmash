@@ -3,7 +3,7 @@
 
   run_character.py "Weird Al Yankovic" [--short WEIRDAL] [--photo ref.png]
                    [--emblem "context or object"] [--out play/ui/<slug>]
-                   [--force-stage <stage>]
+                   [--variants TARGET,...|all] [--force-stage <stage>]
 
 Stages (each skipped if its output already exists — delete a file or use
 --force-stage to redo): expand -> tpose -> mesh (Tripo v3 + rig) ->
@@ -25,6 +25,10 @@ import time
 PIPELINE_DIR = os.path.dirname(os.path.abspath(__file__))
 HERE = os.path.dirname(PIPELINE_DIR)
 WEBDIST = os.path.join(HERE, "..", "BattleShip", "web-dist", "bundles")
+
+# These profiles remain available for deliberate experiments, but are not
+# production-quality enough to generate/assign to every new character yet.
+DEFAULT_VARIANT_EXCLUDES = {"donkey", "yoshi"}
 
 
 def pipeline_script(name):
@@ -114,9 +118,41 @@ EMBLEM_RETRY = (
     "body of the object."
 )
 
+PROGRESS_STAGES = (
+    ("expand:", "expand", "Describing the fighter", 6),
+    ("character:", "character", "Fighter concept ready", 12),
+    ("tpose:", "tpose", "Generating the model sheet", 18),
+    ("mesh: uploading", "mesh-upload", "Starting the 3D model", 27),
+    ("mesh: img3d", "mesh-build", "Building the 3D model", 36),
+    ("mesh: rig task", "mesh-rig", "Rigging the fighter", 45),
+    ("mesh:", "mesh", "3D model ready", 50),
+    ("convert:", "convert", "Converting for the game", 56),
+    ("variants:", "variants", "Building moveset variants", 66),
+    ("portrait:", "portrait", "Painting character-select art", 75),
+    ("stock:", "stock", "Drawing the stock icon", 81),
+    ("emblem:", "emblem", "Designing the emblem", 86),
+    ("ui:", "ui", "Packing game UI", 91),
+    ("voice:", "voice", "Recording the announcer", 95),
+    ("staged into", "publish", "Publishing the fighter", 98),
+    ("done:", "complete", "Fighter ready", 100),
+)
+
 
 def log(msg):
     print(time.strftime("%H:%M:%S"), msg, flush=True)
+    normalized = msg.lower()
+    for prefix, stage, label, progress in PROGRESS_STAGES:
+        if normalized.startswith(prefix):
+            event = {
+                "protocolVersion": 1,
+                "type": "job.progress",
+                "stage": stage,
+                "label": label,
+                "progress": progress,
+                "message": msg,
+            }
+            print("@@opensmash " + json.dumps(event, separators=(",", ":")), flush=True)
+            break
 
 
 def sh(cmd, timeout=900):
@@ -198,6 +234,10 @@ def main():
                          "Default: inferred from the name and photo. Also "
                          "editable afterwards as \"emblem\" in character.json.")
     ap.add_argument("--out", default=None)
+    ap.add_argument(
+        "--variants", default=None, metavar="TARGET,...|all",
+        help="variant targets to build; default is every profile except "
+             "donkey/yoshi, while 'all' includes those experimental targets")
     ap.add_argument("--force-stage", default=None,
                     choices=["expand", "tpose", "mesh", "convert", "variants", "portrait", "stock", "emblem", "ui", "voice"])
     a = ap.parse_args()
@@ -287,24 +327,37 @@ def main():
         sh(["python3", pipeline_script("convert_rigged.py"), "--binary5", F("bundle.json"), osb], timeout=300)
 
     # 4b. variants -------------------------------------------------------
-    # Conversion is pure deterministic geometry (no model calls), so cut
-    # the mesh onto EVERY target fighter skeleton with a profile. Gives
-    # multi-injection demos a free pick of slots per character.
-    variants = sorted(
+    # Conversion is pure deterministic geometry (no model calls). Enabled
+    # targets use the canonical lambda blend (0.5 unless their profile pins a
+    # recipe; Kirby/Purin use 0.6 + ball mode). Build the production target
+    # pool by default; experimental profiles can still be requested explicitly
+    # with --variants donkey,yoshi (or --variants all).
+    all_variants = sorted(
         os.path.basename(pj)[:-len(".profile.json")]
         for pj in glob.glob(os.path.join(HERE, "skels", "*.profile.json")))
+    if a.variants is None:
+        variants = [v for v in all_variants if v not in DEFAULT_VARIANT_EXCLUDES]
+    elif a.variants.strip().lower() == "all":
+        variants = all_variants
+    else:
+        requested = [v.strip().lower() for v in a.variants.split(",") if v.strip()]
+        unknown = sorted(set(requested) - set(all_variants))
+        if unknown:
+            ap.error("unknown variant target(s): " + ", ".join(unknown))
+        variants = list(dict.fromkeys(requested))
     for tgt in variants:
         vosb = os.path.join(HERE, "play", f"{slug}-{tgt}.osb")
         if not stage_needed(vosb, force, "variants"):
             continue
         log(f"variants: retargeting onto {tgt}")
-        vjson = F(f"bundle-{tgt}.json")
+        profile = os.path.join(HERE, "skels", f"{tgt}.profile.json")
         try:
-            sh(["python3", pipeline_script("convert_rigged.py"), "--mild-color", "--flatten",
-                "--target", os.path.join(HERE, "skels", f"{tgt}.profile.json"),
-                F("rigged.glb"), os.path.join(HERE, "skels", f"{tgt}.skel"), vjson],
-               timeout=900)
-            sh(["python3", pipeline_script("convert_rigged.py"), "--binary5", vjson, vosb], timeout=300)
+            # Profiles' production morph recipes (including Kirby/Purin ball
+            # mode and bind-orientation repair) live in the canonical writer.
+            # The old direct-target path silently ignored those settings.
+            sh(["python3", pipeline_script("convert_rigged.py"),
+                "--binary5-canonical", F("bundle.json"), vosb, profile],
+               timeout=300)
         except Exception as e:
             log(f"variants: {tgt} FAILED ({e}) — continuing")
 

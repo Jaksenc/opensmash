@@ -19,8 +19,14 @@ import urllib.error
 import urllib.request
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-KEY = next(line.split("=", 1)[1].strip() for line in open(os.path.join(ROOT, ".env"))
-           if line.startswith("TRIPO_API_KEY="))
+KEY = os.environ.get("TRIPO_API_KEY")
+if not KEY:
+    env_path = os.path.join(ROOT, ".env")
+    if os.path.isfile(env_path):
+        KEY = next((line.split("=", 1)[1].strip() for line in open(env_path)
+                    if line.startswith("TRIPO_API_KEY=")), None)
+if not KEY:
+    raise RuntimeError("TRIPO_API_KEY is missing; set it in the environment or .env")
 BASE = "https://api.tripo3d.ai/v2/openapi"
 
 
