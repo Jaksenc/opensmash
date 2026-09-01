@@ -12,9 +12,8 @@ const FLAME_BRIDGE_CELL_COUNT = 1;
 // The single search cell is two-thirds the former control-strip height.
 const FLAME_BRIDGE_HEIGHT_SCALE = 47 / 552;
 const GRID_COLUMN_BREAKPOINTS = Object.freeze([
-  { minWidth: 1024, columns: 8 },
   { minWidth: 640, columns: 6 },
-  { minWidth: 0, columns: 4 }
+  { minWidth: 0, columns: 3 }
 ]);
 const RASTER_SCALE = 2;
 // Placeholder portraits already carry their native roster captions. Keep the
@@ -882,6 +881,8 @@ const arenaShell = document.querySelector('.arena-shell');
 const arenaSurface = grid.closest('.arena-surface');
 const introVideoFrame = document.querySelector('.intro-video-frame');
 const introVideoRuleCanvas = document.querySelector('.intro-video-rule-layer');
+const siteMenuBridge = document.getElementById('site-menu-bridge');
+const siteMenuRuleCanvas = document.querySelector('.site-menu-rule-layer');
 const flameBridge = document.getElementById('flame-bridge');
 const flameBridgeCells = [...document.querySelectorAll('.flame-bridge-cell')];
 const flameBridgeRuleCanvas = document.querySelector('.flame-bridge-rule-layer');
@@ -931,6 +932,7 @@ grid.append(ruleCanvas);
 
 let currentGridLayout;
 let introVideoRuleSignature = '';
+let siteMenuRuleSignature = '';
 let flameBridgeRuleSignature = '';
 
 function paintIntroVideoRule() {
@@ -952,6 +954,39 @@ function columnsForFlameBridge() {
   return 1;
 }
 
+function sharedControlStripHeight(width) {
+  const logicalWidth = RULE + CELL_W + RULE;
+  const logicalHeight = RULE + CELL_H + RULE;
+  return Math.max(
+    RULE * 2 + 1,
+    Math.round(width * logicalHeight / logicalWidth * FLAME_BRIDGE_HEIGHT_SCALE)
+  );
+}
+
+function paintSiteMenuRule() {
+  if (!currentGridLayout || !siteMenuBridge || !siteMenuRuleCanvas) return;
+  const columns = 3;
+  const rows = 1;
+  const logicalWidth = RULE + CELL_W + RULE;
+  const logicalHeight = RULE + CELL_H + RULE;
+  const width = currentGridLayout.width;
+  const height = sharedControlStripHeight(width);
+  const signature = `${width}x${height}:${columns}x${rows}`;
+
+  // This is the same physical row height as Search Fighters. With six roster
+  // columns each menu cell spans two character units; with three, it spans one.
+  siteMenuBridge.style.aspectRatio =
+    `${logicalWidth} / ${logicalHeight * FLAME_BRIDGE_HEIGHT_SCALE}`;
+  if (signature === siteMenuRuleSignature) return;
+  siteMenuRuleSignature = signature;
+  paintPixels(
+    siteMenuRuleCanvas,
+    renderSharedPanelRules(width, height, columns, rows),
+    width,
+    height
+  );
+}
+
 function paintFlameBridgeRule() {
   if (!currentGridLayout || !flameBridge || !flameBridgeRuleCanvas) return;
   const columns = columnsForFlameBridge();
@@ -959,10 +994,7 @@ function paintFlameBridgeRule() {
   const logicalWidth = RULE + columns * (CELL_W + RULE);
   const logicalHeight = RULE + rows * (CELL_H + RULE);
   const width = currentGridLayout.width;
-  const height = Math.max(
-    RULE * 2 + 1,
-    Math.round(width * logicalHeight / logicalWidth * FLAME_BRIDGE_HEIGHT_SCALE)
-  );
+  const height = sharedControlStripHeight(width);
   const signature = `${width}x${height}:${columns}x${rows}`;
 
   flameBridge.style.setProperty('--flame-bridge-columns', String(columns));
@@ -1043,6 +1075,7 @@ function applyGridLayout(columns = columnsForContainer()) {
 
   paintPixels(ruleCanvas, renderRules(width, height), width, height);
   paintIntroVideoRule();
+  paintSiteMenuRule();
   paintFlameBridgeRule();
 
   const metrics = document.getElementById('replica-metrics');
@@ -1057,6 +1090,7 @@ applyGridLayout();
 function syncLayoutToVideoWidth() {
   applyGridLayout(columnsForContainer());
   paintIntroVideoRule();
+  paintSiteMenuRule();
   paintFlameBridgeRule();
 }
 
