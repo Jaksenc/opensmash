@@ -18,9 +18,7 @@ const REPO_ROOT = path.resolve(APP_ROOT, "..", "..");
 const DIST_ROOT = path.join(APP_ROOT, "dist");
 const ENGINE_ROOT = path.join(REPO_ROOT, "BattleShip", "web-dist");
 const PIPELINE_UI_ROOT = path.join(REPO_ROOT, "pipeline", "play", "ui");
-const VISUAL_ROOT = path.join(APP_ROOT, "visual");
-const SITE_ASSETS_ROOT = path.join(VISUAL_ROOT, "assets");
-const THREE_ROOT = path.join(APP_ROOT, "node_modules", "three");
+const SITE_ASSETS_ROOT = path.join(APP_ROOT, "visual", "assets");
 const CHARACTERS_CONFIG = path.join(APP_ROOT, "config", "characters.json");
 const objectStore = createObjectStore({ appRoot: APP_ROOT });
 const dispatcher = createJobDispatcher();
@@ -61,6 +59,7 @@ const MIME_TYPES = {
   ".js": "text/javascript; charset=utf-8",
   ".json": "application/json; charset=utf-8",
   ".glb": "model/gltf-binary",
+  ".mp3": "audio/mpeg",
   ".mp4": "video/mp4",
   ".png": "image/png",
   ".svg": "image/svg+xml",
@@ -577,28 +576,12 @@ async function handleRequest(req, res, vite) {
     return json(res, 404, { error: "Site asset not found" });
   }
 
-  // The checked-in visual runtime is part of this app. React owns application
-  // state while these self-contained modules own the CRT, 3D, and pixel-grid
-  // presentation layers.
-  if (pathname.startsWith("/visual/")) {
-    const filePath = safeFile(VISUAL_ROOT, pathname.slice("/visual/".length));
-    if (filePath && (await serveFile(req, res, filePath, "public, max-age=300"))) return;
-    return json(res, 404, { error: "Visual runtime asset not found" });
-  }
-
-  // The original visual modules resolve assets relative to the document. Vite
-  // emits the React bundle under /app-assets, leaving /assets as the stable
-  // production path for the shared models, video, sprites, and textures.
+  // Runtime media remains under a stable path; executable visual modules are
+  // part of Vite's hashed production build.
   if (pathname.startsWith("/assets/")) {
     const filePath = safeFile(SITE_ASSETS_ROOT, pathname.slice("/assets/".length));
     if (filePath && (await serveFile(req, res, filePath, "public, max-age=300"))) return;
     return json(res, 404, { error: "Site asset not found" });
-  }
-
-  if (pathname.startsWith("/three/")) {
-    const filePath = safeFile(THREE_ROOT, pathname.slice("/three/".length));
-    if (filePath && (await serveFile(req, res, filePath, "public, max-age=31536000, immutable"))) return;
-    return json(res, 404, { error: "Three.js module not found" });
   }
 
   if (pathname.startsWith("/objects/") && objectStore.driver === "local") {
@@ -624,9 +607,17 @@ async function handleRequest(req, res, vite) {
     return vite.middlewares(req, res, () => json(res, 404, { error: "Not found" }));
   }
 
-  const relative = pathname === "/" ? "index.html" : pathname.slice(1);
+  if (pathname === "/") {
+    if (await serveFile(req, res, path.join(DIST_ROOT, "index.html"), "no-store")) return;
+    return json(res, 404, { error: "Frontend build not found. Run pnpm build first." });
+  }
+
+  const relative = pathname.slice(1);
   const filePath = safeFile(DIST_ROOT, relative);
-  if (filePath && (await serveFile(req, res, filePath, "public, max-age=300"))) return;
+  const cacheControl = pathname.startsWith("/app-assets/")
+    ? "public, max-age=31536000, immutable"
+    : "public, max-age=300";
+  if (filePath && (await serveFile(req, res, filePath, cacheControl))) return;
   if (await serveFile(req, res, path.join(DIST_ROOT, "index.html"), "no-store")) return;
   return json(res, 404, { error: "Frontend build not found. Run pnpm build first." });
 }

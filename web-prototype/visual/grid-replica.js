@@ -2,6 +2,46 @@
 // fire, captions, and interaction stay code-rendered; only the twelve native
 // character portraits are layered into the cells as transparent cutouts.
 
+const BUILD_ASSETS = {
+  ...import.meta.glob([
+    './assets/ui_refs/tile_*.png',
+    './assets/ui_refs/tileglyph_*.png',
+  ], {
+    eager: true,
+    query: '?url',
+    import: 'default',
+  }),
+  ...import.meta.glob([
+    './assets/charselect/mario.png',
+    './assets/charselect/fox.png',
+    './assets/charselect/dk.png',
+    './assets/charselect/samus.png',
+    './assets/charselect/luigi.png',
+    './assets/charselect/link.png',
+    './assets/charselect/yoshi.png',
+    './assets/charselect/falcon.png',
+    './assets/charselect/kirby.png',
+    './assets/charselect/pikachu.png',
+    './assets/charselect/jigglypuff.png',
+    './assets/charselect/ness.png',
+  ], {
+    eager: true,
+    query: '?url',
+    import: 'default',
+  }),
+  ...import.meta.glob('./assets/featured-fighters/*.png', {
+    eager: true,
+    query: '?url',
+    import: 'default',
+  }),
+};
+
+function buildAssetUrl(relativePath) {
+  const url = BUILD_ASSETS[`./assets/${relativePath}`];
+  if (!url) throw new Error(`Missing visual asset: ${relativePath}`);
+  return url;
+}
+
 const RASTER_DEBUG = new URLSearchParams(window.location.search);
 
 const CELL_W = 45;
@@ -64,7 +104,6 @@ const CAPTION_FALLBACK_ROWS = Object.freeze({
   "Y": ["#...#", ".#.#.", "..#..", "..#..", "..#..", "..#..", "..#.."],
   "Z": ["####", "...#", "..#.", "..#.", ".#..", "#...", "####"]
 });
-const CAPTION_GLYPH_ASSET_BASE = 'assets/ui_refs/tileglyph_';
 const CAPTION_PATCH_CUTS = Object.freeze({
   A: ['mario', 11, 17], B: ['kirby', 18, 23], C: ['captain', 3, 8],
   D: ['dk', 5, 12], E: ['ness', 10, 16], F: ['fox', 4, 9],
@@ -275,9 +314,7 @@ async function loadExtractedGlyph(char) {
   const patch = CAPTION_PATCH_CUTS[char];
   if (patch) {
     const [sourceName, x0, x1] = patch;
-    const source = await loadCaptionImage(
-      `assets/ui_refs/tile_${sourceName}.png?v=20260828dq`
-    );
+    const source = await loadCaptionImage(buildAssetUrl(`ui_refs/tile_${sourceName}.png`));
     return Object.freeze({
       char,
       ...cropCaptionPixels(source, x0, x1, true),
@@ -286,7 +323,7 @@ async function loadExtractedGlyph(char) {
   }
   const image = new Image();
   image.decoding = 'async';
-  image.src = `${CAPTION_GLYPH_ASSET_BASE}${char.charCodeAt(0)}.png?v=20260828dq`;
+  image.src = buildAssetUrl(`ui_refs/tileglyph_${char.charCodeAt(0)}.png`);
   await image.decode();
   const canvas = document.createElement('canvas');
   canvas.width = image.naturalWidth;
@@ -345,15 +382,16 @@ function cutOutPortrait(source, sourceLabel) {
 
 const CHARACTER_PORTRAITS = new Map(await Promise.all(VANILLA_ROSTER.map(async character => [
   character.portrait,
-  cutOutPortrait(await loadCaptionImage(
-    `assets/charselect/${character.portrait}.png?v=20260829c`
-  ), character.label)
+  cutOutPortrait(
+    await loadCaptionImage(buildAssetUrl(`charselect/${character.portrait}.png`)),
+    character.label,
+  )
 ])));
 
 async function loadFeaturedPortrait(portraitName, portraitUrl = null) {
   const image = new Image();
   image.decoding = 'async';
-  image.src = portraitUrl || `assets/featured-fighters/${portraitName}.png?v=20260831a`;
+  image.src = portraitUrl || buildAssetUrl(`featured-fighters/${portraitName}.png`);
   await image.decode();
 
   const canvas = document.createElement('canvas');

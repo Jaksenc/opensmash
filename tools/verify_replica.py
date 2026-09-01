@@ -23,7 +23,12 @@ ROOT = Path(__file__).resolve().parents[1]
 WEB_APP = ROOT / "web-prototype"
 VISUAL = WEB_APP / "visual"
 JS = (VISUAL / "grid-replica.js").read_text()
-PAGE = (VISUAL / "site-shell.css").read_text() + (WEB_APP / "src" / "RetroHome.jsx").read_text()
+PAGE = (
+    (VISUAL / "site-shell.css").read_text()
+    + (WEB_APP / "src" / "RetroHome.jsx").read_text()
+    + (WEB_APP / "src" / "visual-runtime.js").read_text()
+    + (VISUAL / "home-runtime.js").read_text()
+)
 ASSETS = VISUAL / "assets" / "charselect"
 sys.path.insert(0, str(ROOT))
 from pipeline.pixel_font import CAP, FACE, GLYPHS, OUTLINE  # noqa: E402
@@ -90,7 +95,7 @@ glyph_pipeline_ok = glyph_diff == 0 and all(token in JS for token in (
     f"const CAPTION_FACE = Object.freeze([{FACE[0]}, {FACE[1]}, {FACE[2]}, {FACE[3]}]);",
     "const CAPTION_OUTLINE = Object.freeze([42, 40, 33, 255]);",
     "const CAPTION_EDGE = Object.freeze([94, 90, 74, 255]);",
-    "const CAPTION_GLYPH_ASSET_BASE = 'assets/ui_refs/tileglyph_';",
+    "image.src = buildAssetUrl(`ui_refs/tileglyph_${char.charCodeAt(0)}.png`);",
     "const CAPTION_PATCH_CUTS = Object.freeze({",
     "const CAPTION_KERNING = Object.freeze({ KI: -1 });",
     "Y: ['yoshi', 4, 10]",
@@ -116,7 +121,7 @@ glyph_pipeline_ok = glyph_diff == 0 and all(token in JS for token in (
     "function renderCaption(value, maxWidth = CELL_W - 5) {",
     "function strictPixelGrade(expected, actual) {",
     "const FONT_GRADE = buildFontBench();",
-)) and "/visual/grid-replica.js" in PAGE
+)) and 'import "./grid-replica.js"' in PAGE
 
 repaired_glyphs_ok = all(token not in JS for token in (
     "GLYPH_BASE",
@@ -242,7 +247,7 @@ portrait_assets_ok = all(
 ) and all(token in JS for token in (
     "function cutOutPortrait(source, sourceLabel) {",
     "const CHARACTER_PORTRAITS = new Map(await Promise.all(",
-    "`assets/charselect/${character.portrait}.png?v=20260829c`",
+    "await loadCaptionImage(buildAssetUrl(`charselect/${character.portrait}.png`))",
     "function compositePortrait(dst, portraitName) {",
     "button.dataset.portrait = character.portrait;",
     "const framebuffer = renderCellFramebuffer(label, character.portrait);",

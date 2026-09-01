@@ -11,6 +11,10 @@ import {
   controlsRoadblockRequired,
 } from './controls-roadblock.js';
 
+import cartridgeLabelUrl from './assets/cartridge-label-art.png?url';
+import cartridgeModelUrl from './assets/n64-cartridge-tripo.glb?url';
+import consoleModelUrl from './assets/hybrid-four-port-console-fitted.glb?url';
+import controllerModelUrl from './assets/nintendo-64-controller.glb?url';
 const APP_BRIDGE = window.openSmashReactBridge;
 const ROM_SHA256 = '15592e79d3c5295cef4371d4992f0bd25bec2102fc29644c93e682f7ea99ef3d';
 const ROM_SIZE = 16 * 1024 * 1024;
@@ -82,6 +86,12 @@ const controlPrompt = document.getElementById('launch-control-prompt');
 const controlKeycaps = [...document.querySelectorAll('[data-control-key]')];
 const controllerCallouts = document.getElementById('controller-callouts');
 const controllerCalloutLines = document.getElementById('controller-callout-lines');
+
+function setLaunchFlowOpen(open) {
+  window.dispatchEvent(new CustomEvent('opensmash:launch-flow', {
+    detail: { open },
+  }));
+}
 
 let pendingFighter = null;
 let validationBusy = false;
@@ -629,14 +639,14 @@ function fitFlowModelToViewport(model, kind) {
 
 function preloadFlowModels() {
   cartridgePromise ||= Promise.all([
-    gltfLoader.loadAsync('./assets/n64-cartridge-tripo.glb'),
-    textureLoader.loadAsync('./assets/cartridge-label-art.png'),
+    gltfLoader.loadAsync(cartridgeModelUrl),
+    textureLoader.loadAsync(cartridgeLabelUrl),
   ]).then(([gltf, texture]) => prepareCartridge(gltf, texture));
   consolePromise ||= gltfLoader
-    .loadAsync('./assets/hybrid-four-port-console-fitted.glb')
+    .loadAsync(consoleModelUrl)
     .then(prepareConsole);
   controllerPromise ||= gltfLoader
-    .loadAsync('./assets/nintendo-64-controller.glb')
+    .loadAsync(controllerModelUrl)
     .then(prepareController);
 }
 
@@ -1748,6 +1758,7 @@ function registerControlKey(event) {
 
 function showControlsPreview() {
   if (!overlay || !overlay.hidden) return;
+  setLaunchFlowOpen(true);
   flowSequence += 1;
   clearTimeout(flowTimer);
   pendingFighter = null;
@@ -1794,6 +1805,7 @@ function showRequiredControls(fighter) {
 
 function showLaunchFlow(fighter, { create = false } = {}) {
   if (!overlay || !overlay.hidden) return;
+  setLaunchFlowOpen(true);
   flowSequence += 1;
   clearTimeout(flowTimer);
   pendingFighter = fighter;
@@ -1834,6 +1846,7 @@ function finishClosingFlow(sequence, restoreFocus) {
   overlay.dataset.mode = 'launch';
   overlay.dataset.step = 'upload';
   document.body.classList.remove('is-launch-flow-open');
+  setLaunchFlowOpen(false);
   requestedModelKind = 'none';
   if (activeModel) activeModel.visible = false;
   stopFlowAnimation();

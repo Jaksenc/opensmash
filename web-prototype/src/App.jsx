@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import flowMusicUrl from "../visual/assets/skyward-save.mp3?url";
+import viewportLogoUrl from "../visual/assets/branding/super-weights-bros-stacked-white.png?url";
 import AuthGate from "./AuthGate.jsx";
 import CreateVisualShell from "./CreateVisualShell.jsx";
 import FighterCreator from "./FighterCreator.jsx";
@@ -12,7 +14,11 @@ import {
   requireControlsRoadblock,
 } from "../visual/controls-roadblock.js";
 import { identifyRomFile } from "./rom-validation.js";
-import { clearControllerTutorialCompletion } from "../visual/control-tutorial.js?v=20260901-reset1";
+import { clearControllerTutorialCompletion } from "../visual/control-tutorial.js";
+import {
+  FLOW_MUSIC_MAX_VOLUME,
+  transitionMediaVolume,
+} from "./audio-envelope.js";
 import {
   BOOT_MODES,
   CHARACTER_MESHES,
@@ -25,6 +31,95 @@ import {
 
 const ADVANCED_OPTIONS_KEY = "opensmash-advanced-options";
 const ACTIVE_FIGHTER_JOB_STATUSES = new Set(["queued", "running", "retrying"]);
+const FLOW_MUSIC_EVENT = "opensmash:launch-flow";
+const FLOW_MUSIC_URL = flowMusicUrl;
+
+function useFlowMusic(flowActive, soundOn) {
+  const flowMusicRef = useRef(null);
+
+  useEffect(() => {
+    const flowMusic = new Audio(FLOW_MUSIC_URL);
+    flowMusic.id = "launch-flow-music";
+    flowMusic.hidden = true;
+    flowMusic.loop = true;
+    flowMusic.preload = "auto";
+    flowMusic.volume = 0;
+    flowMusic.dataset.mixVolume = "0.0000";
+    document.body.append(flowMusic);
+    flowMusicRef.current = flowMusic;
+
+    return () => {
+      flowMusic.pause();
+      flowMusic.removeAttribute("src");
+      flowMusic.load();
+      flowMusic.remove();
+      flowMusicRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    const flowMusic = flowMusicRef.current;
+    if (!flowMusic) return undefined;
+
+    let cancelTransition = () => {};
+    let retryPlayback = null;
+    let cancelled = false;
+    flowMusic.muted = !soundOn;
+
+    if (flowActive) {
+      const play = () => {
+        if (cancelled) return;
+        flowMusic.play()
+          .then(() => {
+            if (!cancelled) {
+              cancelTransition = transitionMediaVolume(flowMusic, FLOW_MUSIC_MAX_VOLUME);
+            }
+          })
+          .catch(() => {
+            if (cancelled) return;
+            // Browsers can block audible autoplay until the first interaction.
+            // Retry from that interaction so the user's saved sound preference
+            // still takes effect without requiring a second click.
+            retryPlayback = play;
+            document.addEventListener("pointerdown", retryPlayback, { once: true, capture: true });
+            document.addEventListener("keydown", retryPlayback, { once: true, capture: true });
+          });
+      };
+      play();
+    } else if (!flowMusic.paused && flowMusic.volume > 0) {
+      cancelTransition = transitionMediaVolume(flowMusic, 0, {
+        onComplete() {
+          flowMusic.pause();
+          flowMusic.currentTime = 0;
+        },
+      });
+    } else {
+      flowMusic.pause();
+      flowMusic.currentTime = 0;
+      flowMusic.volume = 0;
+    }
+
+    return () => {
+      cancelled = true;
+      cancelTransition();
+      if (retryPlayback) {
+        document.removeEventListener("pointerdown", retryPlayback, { capture: true });
+        document.removeEventListener("keydown", retryPlayback, { capture: true });
+      }
+    };
+  }, [flowActive, soundOn]);
+
+  return useCallback(() => {
+    const flowMusic = flowMusicRef.current;
+    if (!flowMusic) return;
+    flowMusic.muted = !soundOn;
+    if (flowMusic.paused) {
+      flowMusic.currentTime = 0;
+      flowMusic.volume = 0;
+    }
+    flowMusic.play().catch(() => {});
+  }, [soundOn]);
+}
 
 function loadAdvancedOptions() {
   try {
@@ -321,12 +416,23 @@ export default function App() {
   const [advancedOptions, setAdvancedOptions] = useState(loadAdvancedOptions);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [createStage, setCreateStage] = useState(null);
+  const [flowMusicActive, setFlowMusicActive] = useState(false);
   const gameRef = useRef(null);
   const gameFrameRef = useRef(null);
   const engineRef = useRef(null);
   const devMenuRef = useRef(null);
   const announcerRef = useRef(null);
   const visualBridgeRef = useRef({});
+  const startFlowMusic = useFlowMusic(flowMusicActive && !engine, soundOn);
+  useEffect(() => {
+    const syncFlowMusic = (event) => {
+      const open = Boolean(event.detail?.open);
+      setFlowMusicActive(open);
+      if (open && !engine) startFlowMusic();
+    };
+    window.addEventListener(FLOW_MUSIC_EVENT, syncFlowMusic);
+    return () => window.removeEventListener(FLOW_MUSIC_EVENT, syncFlowMusic);
+  }, [engine, startFlowMusic]);
   const reportCreateVisualError = useCallback((error) => {
     setPageError(error.message || "Could not load the ROM upload screen.");
   }, []);
@@ -782,6 +888,7 @@ export default function App() {
           engineRef={engineRef}
           gameFrameRef={gameFrameRef}
           isFullscreen={isFullscreen}
+          launchFlowOpen={flowMusicActive}
           onAdvanced={() => setAdvancedOpen(true)}
           onCloseGame={() => setEngine(null)}
           onCreate={openCreateExperience}
@@ -879,7 +986,7 @@ export default function App() {
           ) : (
             <div className="engine-placeholder">
               <img
-                src="/site-assets/branding/super-weights-bros-stacked-white.png"
+                src={viewportLogoUrl}
                 alt="Super Weights Bros"
               />
               <div>
