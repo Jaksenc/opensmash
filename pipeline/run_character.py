@@ -118,9 +118,41 @@ EMBLEM_RETRY = (
     "body of the object."
 )
 
+PROGRESS_STAGES = (
+    ("expand:", "expand", "Describing the fighter", 6),
+    ("character:", "character", "Fighter concept ready", 12),
+    ("tpose:", "tpose", "Generating the model sheet", 18),
+    ("mesh: uploading", "mesh-upload", "Starting the 3D model", 27),
+    ("mesh: img3d", "mesh-build", "Building the 3D model", 36),
+    ("mesh: rig task", "mesh-rig", "Rigging the fighter", 45),
+    ("mesh:", "mesh", "3D model ready", 50),
+    ("convert:", "convert", "Converting for the game", 56),
+    ("variants:", "variants", "Building moveset variants", 66),
+    ("portrait:", "portrait", "Painting character-select art", 75),
+    ("stock:", "stock", "Drawing the stock icon", 81),
+    ("emblem:", "emblem", "Designing the emblem", 86),
+    ("ui:", "ui", "Packing game UI", 91),
+    ("voice:", "voice", "Recording the announcer", 95),
+    ("staged into", "publish", "Publishing the fighter", 98),
+    ("done:", "complete", "Fighter ready", 100),
+)
+
 
 def log(msg):
     print(time.strftime("%H:%M:%S"), msg, flush=True)
+    normalized = msg.lower()
+    for prefix, stage, label, progress in PROGRESS_STAGES:
+        if normalized.startswith(prefix):
+            event = {
+                "protocolVersion": 1,
+                "type": "job.progress",
+                "stage": stage,
+                "label": label,
+                "progress": progress,
+                "message": msg,
+            }
+            print("@@opensmash " + json.dumps(event, separators=(",", ":")), flush=True)
+            break
 
 
 def sh(cmd, timeout=900):
