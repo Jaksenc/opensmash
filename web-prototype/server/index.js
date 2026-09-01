@@ -14,10 +14,10 @@ import { matchesCharacterSearch } from "../shared/character-search.js";
 import { ROMS_BY_SHA1 } from "../shared/rom-catalog.js";
 
 const APP_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const REPO_ROOT = path.resolve(APP_ROOT, "..");
+const REPO_ROOT = path.resolve(APP_ROOT, "..", "..");
 const DIST_ROOT = path.join(APP_ROOT, "dist");
 const ENGINE_ROOT = path.join(REPO_ROOT, "BattleShip", "web-dist");
-const PIPELINE_UI_ROOT = path.join(REPO_ROOT, "play", "ui");
+const PIPELINE_UI_ROOT = path.join(REPO_ROOT, "pipeline", "play", "ui");
 const VISUAL_ROOT = path.join(APP_ROOT, "visual");
 const SITE_ASSETS_ROOT = path.join(VISUAL_ROOT, "assets");
 const THREE_ROOT = path.join(APP_ROOT, "node_modules", "three");
