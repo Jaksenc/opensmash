@@ -1,6 +1,10 @@
 /* Imported from website/index.html by scripts/import-website-visuals.mjs. */
 * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body { min-height: 100%; cursor: none; }
+  html, body { min-height: 100%; }
+  @media (hover: hover) and (pointer: fine) {
+    html.is-custom-cursor-ready,
+    html.is-custom-cursor-ready * { cursor: none !important; }
+  }
   html { background: #000; }
   body {
     --stone-background-image: none;
@@ -118,7 +122,6 @@
     z-index: 1;
     background: transparent;
     color: inherit;
-    cursor: none;
     overflow: hidden;
   }
   .replica-raster-layer {
@@ -291,7 +294,6 @@
     letter-spacing: .025em;
     text-decoration: none;
     text-shadow: 0 2px 0 #260500;
-    cursor: none;
   }
   .retro-site-link:hover,
   .retro-site-link:focus-visible,
@@ -393,7 +395,6 @@
     font: 9px/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     letter-spacing: .08em;
     text-transform: uppercase;
-    cursor: none;
   }
   .intro-video-rule-layer {
     position: absolute;
@@ -414,7 +415,6 @@
     overflow: visible;
     background: #000;
     color: #fff;
-    cursor: none;
     clip-path: none;
     -webkit-mask: none;
     mask: none;
@@ -614,7 +614,6 @@
     font: 600 clamp(15px, 1.55vw, 21px)/1 "Kanit", sans-serif !important;
     letter-spacing: .045em;
     text-shadow: 0 2px 0 #260500, 2px 0 0 #260500, -2px 0 0 #260500;
-    cursor: none;
     transition: border-color 100ms linear, background 100ms linear, box-shadow 100ms linear;
     -webkit-font-smoothing: none;
   }
@@ -814,7 +813,6 @@
     text-decoration: none;
     text-shadow: 0 2px 0 #260500, 2px 0 0 #260500, -2px 0 0 #260500;
     white-space: nowrap;
-    cursor: none;
   }
   .flame-bridge-action {
     display: flex;
@@ -1027,7 +1025,6 @@
     border: 0;
     border-radius: 16px;
     background: transparent;
-    cursor: none;
     touch-action: none;
     pointer-events: auto;
   }
