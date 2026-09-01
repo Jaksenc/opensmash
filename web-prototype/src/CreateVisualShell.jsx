@@ -16,7 +16,7 @@ function loadVisualStyles() {
     const link = document.createElement("link");
     link.id = "site-shell-styles";
     link.rel = "stylesheet";
-    link.href = "/visual/site-shell.css?v=20260901-fighter-progress4";
+    link.href = "/visual/site-shell.css?v=20260901-fighter-progress5";
     link.addEventListener("load", resolve, { once: true });
     link.addEventListener("error", () => reject(new Error("Could not load the ROM upload screen")), { once: true });
     document.head.append(link);
