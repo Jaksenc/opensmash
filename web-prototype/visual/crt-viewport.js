@@ -313,6 +313,7 @@ if (!canvas) {
     );
     const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
     let animationFrame = 0;
+    let previousRenderTime = 0;
 
     function applyCompositeFilter() {
       const filter = [
@@ -342,6 +343,14 @@ if (!canvas) {
     function render(milliseconds) {
       animationFrame = 0;
       if (!settings.enabled) return;
+      const focusedMobileGame =
+        document.body.classList.contains('uses-mobile-controls') &&
+        document.body.classList.contains('is-game-running');
+      if (focusedMobileGame && milliseconds - previousRenderTime < 1000 / 30) {
+        animationFrame = requestAnimationFrame(render);
+        return;
+      }
+      previousRenderTime = milliseconds;
       resize();
       gl.clearColor(0, 0, 0, 0);
       gl.clear(gl.COLOR_BUFFER_BIT);

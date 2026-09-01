@@ -747,7 +747,6 @@ body.is-advanced-open #glove-canvas { z-index: 1800; }
       inset 0 2px 0 rgba(255, 255, 255, .18),
       inset 0 -4px 0 rgba(0, 0, 0, .3),
       0 4px 12px rgba(0, 0, 0, .35);
-    backdrop-filter: blur(3px);
     transition: transform 70ms ease, filter 70ms ease, background 70ms ease;
   }
 
@@ -814,7 +813,16 @@ body.is-advanced-open #glove-canvas { z-index: 1800; }
       inset 0 0 0 8px rgba(255, 255, 255, .05),
       inset 0 0 26px rgba(0, 0, 0, .52),
       0 5px 18px rgba(0, 0, 0, .4);
-    backdrop-filter: blur(3px);
+  }
+
+  body.uses-mobile-controls.is-game-running #hero-logo-stage,
+  body.uses-mobile-controls.is-game-running #glove-canvas {
+    display: none;
+  }
+
+  body.uses-mobile-controls.is-game-running #crt-viewport-canvas {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
   }
 
   .mobile-joystick::before,

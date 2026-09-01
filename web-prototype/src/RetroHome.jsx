@@ -2,7 +2,11 @@ import { useEffect, useState } from "react";
 import MobileControls from "./MobileControls.jsx";
 
 let visualRuntimePromise;
-const MOBILE_CONTROLS_MEDIA = "(max-width: 960px), (hover: none) and (pointer: coarse)";
+const MOBILE_CONTROLS_MEDIA = "(hover: none) and (pointer: coarse)";
+
+function mobileControlsRequested() {
+  return new URLSearchParams(window.location.search).has("mobileControls");
+}
 
 function loadVisualStyles() {
   return new Promise((resolve, reject) => {
@@ -162,17 +166,20 @@ export default function RetroHome({
   user,
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [mobileLayout, setMobileLayout] = useState(() => window.matchMedia(MOBILE_CONTROLS_MEDIA).matches);
+  const [mobileLayout, setMobileLayout] = useState(() => (
+    mobileControlsRequested() || window.matchMedia(MOBILE_CONTROLS_MEDIA).matches
+  ));
   const [mobileControlsPreview, setMobileControlsPreview] = useState(false);
   const previewMobileControls = !engine && mobileLayout && mobileControlsPreview;
-  const mobileControlsVisible = Boolean(engine) || previewMobileControls;
+  const mobileControlsVisible = mobileLayout && (Boolean(engine) || previewMobileControls);
 
   useEffect(() => {
     const showNativeCursor = new URLSearchParams(window.location.search).has("showCursor");
     const mobileControlsMedia = window.matchMedia(MOBILE_CONTROLS_MEDIA);
     const syncMobileControls = () => {
-      setMobileLayout(mobileControlsMedia.matches);
-      document.body.classList.toggle("uses-mobile-controls", mobileControlsMedia.matches);
+      const enabled = mobileControlsRequested() || mobileControlsMedia.matches;
+      setMobileLayout(enabled);
+      document.body.classList.toggle("uses-mobile-controls", enabled);
     };
     document.documentElement.classList.add("is-direct-site");
     document.body.classList.add("retro-home");
@@ -199,6 +206,11 @@ export default function RetroHome({
     if (!ready) return;
     startVisualRuntime().catch((error) => window.openSmashReactBridge?.reportError?.(error));
   }, [ready]);
+
+  useEffect(() => {
+    document.body.classList.toggle("is-game-running", Boolean(engine));
+    return () => document.body.classList.remove("is-game-running");
+  }, [engine]);
 
   useEffect(() => {
     if (!menuOpen) return undefined;

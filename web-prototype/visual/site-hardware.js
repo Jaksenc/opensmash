@@ -2321,6 +2321,8 @@ function tick() {
   requestAnimationFrame(tick);
   if (window.innerWidth && renderer.domElement.width !== window.innerWidth) resize();
   const dt = Math.min(clock.getDelta(), 1 / 30);
+  if (document.body.classList.contains('uses-mobile-controls') &&
+      document.body.classList.contains('is-game-running')) return;
   const t = clock.elapsedTime;
 
   if (cartridgeState === CARTRIDGE_STATE.BOOTING && cartridgeInsertionTime >= 0) {
