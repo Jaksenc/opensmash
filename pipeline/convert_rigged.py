@@ -4853,6 +4853,21 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
                                 if abs(v_[1]-cy) < 0.10*(yhi-ylo) and torso_owned(v_)]
                         best_i = max(band, key=lambda iv: (iv[1][0]*heading[0] +
                                                            iv[1][2]*heading[2]))[0]
+                    elif at_ == "chest-back":
+                        # Upper-back band, rearmost along the heading. This
+                        # is the stow point for torso-mounted gear such as
+                        # Link's second shield model. Restricting the search
+                        # to torso-owned verts prevents a shoulder, arm, or
+                        # hand from winning on compact injected bodies.
+                        cy = (no[6][1] + 0.65*(no[12][1]-no[6][1])) if (6 in no and 12 in no) \
+                             else (no[6][1] if 6 in no else (ylo+yhi)/2)
+                        def torso_owned(v_):
+                            best = max(v_[8], key=lambda jw: jw[1])
+                            return best[0] in (6, 11)
+                        band = [(i_, v_) for i_, v_ in enumerate(sk["verts"])
+                                if abs(v_[1]-cy) < 0.12*(yhi-ylo) and torso_owned(v_)]
+                        best_i = max(band, key=lambda iv: -(iv[1][0]*heading[0] +
+                                                            iv[1][2]*heading[2]))[0]
                     elif at_ == "rear-hip":
                         # verts in the hip height band, rearmost (opposite
                         # the chest heading) — blind nearest-vert lands on
