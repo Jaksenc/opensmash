@@ -673,13 +673,10 @@
     left: 50%;
     bottom: clamp(16px, 3vw, 36px);
     z-index: 4;
-    display: none;
+    display: grid;
     min-height: 0;
     margin: 0;
     transform: translateX(-50%);
-  }
-  .launch-flow-overlay[data-mode="controls-preview"] .launch-flow-controls-close {
-    display: grid;
   }
   .launch-flow-file-input { display: none; }
   .launch-flow-overlay button,

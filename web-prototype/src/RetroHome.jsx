@@ -20,7 +20,7 @@ function loadVisualStyles() {
     const link = document.createElement("link");
     link.id = "site-shell-styles";
     link.rel = "stylesheet";
-    link.href = "/visual/site-shell.css?v=20260901-fighter-progress4";
+    link.href = "/visual/site-shell.css?v=20260901-fighter-progress5";
     link.addEventListener("load", resolve, { once: true });
     link.addEventListener("error", () => reject(new Error("Could not load the site visual system")), { once: true });
     document.head.append(link);
@@ -264,6 +264,28 @@ export default function RetroHome({
     <>
       {pageError && <p className="retro-page-error" role="alert">{pageError}</p>}
       <main className="arena-shell" aria-label="OpenSmash character grid">
+        <header className="retro-site-header">
+          <div id="hero-logo-stage" className="retro-site-logo" aria-label="Smash the Weights">
+            <img className="hero-logo-fallback" src="/assets/smash-the-weights-logo.png" alt="Smash the Weights" draggable="false" />
+            <canvas id="hero-logo-canvas" className="hero-logo-canvas" aria-hidden="true" />
+          </div>
+          <nav className="retro-site-nav" aria-label="Site information and settings">
+            <button className="retro-site-link" type="button" onClick={() => setMenuOpen(true)}>About</button>
+            <button
+              id="controls-menu-button"
+              className={`retro-site-link ${mobileLayout && mobileControlsVisible ? "is-active" : ""}`}
+              type="button"
+              aria-haspopup={mobileLayout ? undefined : "dialog"}
+              aria-controls={mobileLayout ? "touch-control-deck" : "launch-flow-controller-step"}
+              aria-expanded={mobileLayout ? mobileControlsVisible : undefined}
+              aria-pressed={mobileLayout ? mobileControlsVisible : undefined}
+              onClickCapture={toggleMobileControls}
+            >
+              Controls
+            </button>
+            <button className={`retro-site-link ${advancedActive ? "is-active" : ""}`} type="button" aria-haspopup="dialog" onClick={onAdvanced}>Advanced</button>
+          </nav>
+        </header>
         <section className="intro-video-stage" aria-label="Intro video">
           <div className={`game-surface-shell ${mobileControlsVisible ? "has-mobile-control-deck" : ""}`}>
             <div className={`intro-video-frame ${engine ? "is-game-running" : ""}`} ref={gameFrameRef}>
@@ -282,10 +304,6 @@ export default function RetroHome({
                 onPause={() => setIntroVideoPlaying(false)}
               />
               <img className="intro-video-rule-layer" alt="" aria-hidden="true" />
-              <div id="hero-logo-stage" className="intro-video-logo" aria-label="Animated Smash the Weights logo">
-                <img className="hero-logo-fallback" src="/assets/smash-the-weights-logo.png" alt="" aria-hidden="true" draggable="false" />
-                <canvas id="hero-logo-canvas" className="hero-logo-canvas" aria-hidden="true" />
-              </div>
               <iframe ref={engineRef} id="intro-game-frame" className="intro-game-frame" src={engine?.src || "about:blank"} title={engine ? "OpenSmash game engine" : "Super Weights Bros game"} allow="autoplay; gamepad; fullscreen" />
               <div className="retro-game-tools" role="group" aria-label="Game controls">
                 <button
@@ -358,25 +376,6 @@ export default function RetroHome({
               preview={previewMobileControls}
             />
           </div>
-        </section>
-        <section id="site-menu-bridge" className="site-menu-bridge" aria-label="Site information and settings">
-          <div className="flame-bridge-cell"><button id="about-menu-button" className="flame-bridge-action site-menu-button" type="button" onClick={() => setMenuOpen(true)}>About</button></div>
-          <div className="flame-bridge-cell">
-            <button
-              id="controls-menu-button"
-              className={`flame-bridge-action site-menu-button ${mobileLayout && mobileControlsVisible ? "is-active" : ""}`}
-              type="button"
-              aria-haspopup={mobileLayout ? undefined : "dialog"}
-              aria-controls={mobileLayout ? "touch-control-deck" : "launch-flow-controller-step"}
-              aria-expanded={mobileLayout ? mobileControlsVisible : undefined}
-              aria-pressed={mobileLayout ? mobileControlsVisible : undefined}
-              onClickCapture={toggleMobileControls}
-            >
-              Controls
-            </button>
-          </div>
-          <div className="flame-bridge-cell"><button className={`flame-bridge-action site-menu-button ${advancedActive ? "is-active" : ""}`} type="button" aria-haspopup="dialog" onClick={onAdvanced}>Advanced</button></div>
-          <img className="site-menu-rule-layer" alt="" aria-hidden="true" />
         </section>
         <div id="flame-bridge" className="flame-bridge" aria-label="Fighter search">
           <div className="flame-bridge-cell"><input id="fighter-search" className="flame-bridge-search" type="search" placeholder="Search Fighters…" aria-label="Search fighters" autoComplete="off" spellCheck="false" /></div>
