@@ -16,6 +16,10 @@ import { ROMS_BY_SHA1 } from "../shared/rom-catalog.js";
 const APP_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const REPO_ROOT = path.resolve(APP_ROOT, "..", "..");
 const DIST_ROOT = path.join(APP_ROOT, "dist");
+const APP_SHELL_PATHS = new Set(["/", "/create", "/create/", "/index.html"]);
+const APP_SHELL_CACHE_CONTROL = "public, max-age=15";
+const APP_SHELL_EDGE_CACHE_CONTROL =
+  "public, max-age=60, stale-while-revalidate=300, stale-if-error=86400";
 const ENGINE_ROOT = path.join(REPO_ROOT, "BattleShip", "web-dist");
 const PIPELINE_UI_ROOT = path.join(REPO_ROOT, "pipeline", "play", "ui");
 const SITE_ASSETS_ROOT = path.join(APP_ROOT, "visual", "assets");
@@ -205,7 +209,7 @@ function safeFile(root, relativePath) {
   return resolved === root || resolved.startsWith(`${root}${path.sep}`) ? resolved : null;
 }
 
-async function serveFile(req, res, filePath, cacheControl = "no-store") {
+async function serveFile(req, res, filePath, cacheControl = "no-store", extraHeaders = {}) {
   try {
     const info = await stat(filePath);
     if (!info.isFile()) return false;
@@ -213,6 +217,7 @@ async function serveFile(req, res, filePath, cacheControl = "no-store") {
       "Content-Type": MIME_TYPES[path.extname(filePath).toLowerCase()] || "application/octet-stream",
       "Content-Length": info.size,
       "Cache-Control": cacheControl,
+      ...extraHeaders,
     });
     if (req.method === "HEAD") {
       res.end();
@@ -621,8 +626,14 @@ async function handleRequest(req, res, vite) {
     return vite.middlewares(req, res, () => json(res, 404, { error: "Not found" }));
   }
 
-  if (pathname === "/") {
-    if (await serveFile(req, res, path.join(DIST_ROOT, "index.html"), "no-store")) return;
+  if (APP_SHELL_PATHS.has(pathname)) {
+    if (await serveFile(
+      req,
+      res,
+      path.join(DIST_ROOT, "index.html"),
+      APP_SHELL_CACHE_CONTROL,
+      { "Cloudflare-CDN-Cache-Control": APP_SHELL_EDGE_CACHE_CONTROL },
+    )) return;
     return json(res, 404, { error: "Frontend build not found. Run pnpm build first." });
   }
 

@@ -99,6 +99,12 @@ only for the already hash-versioned JavaScript and WASM URLs. Each application
 deploy should rerun this command, which purges the previous edge objects after
 the new worker version is active.
 
+The same script installs a Cache Rule for the shared application shell at `/`
+and `/create`. Browsers keep that HTML for 15 seconds, while Cloudflare keeps it
+for 60 seconds and may serve it stale during background revalidation. User,
+session, and character data remain on the uncached `/api/*` requests made after
+the shell loads.
+
 ## Rollback
 
 Every deploy uses timestamped API and worker image tags. Repoint the API or job

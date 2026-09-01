@@ -23,11 +23,54 @@ if [[ -z "$zone_id" ]]; then
   exit 2
 fi
 
+upsert_shell_cache_rule() {
+  local description="OpenSmash application shell"
+  local expression rulesets_response ruleset_id rule_payload ruleset_response rule_id response
+  expression="(http.host in {\"${DOMAIN}\" \"www.${DOMAIN}\"} and http.request.method in {\"GET\" \"HEAD\"} and http.request.uri.path in {\"/\" \"/create\" \"/create/\" \"/index.html\"})"
+  rule_payload="$(jq -nc --arg description "$description" --arg expression "$expression" \
+    '{action:"set_cache_settings", action_parameters:{cache:true, browser_ttl:{mode:"override_origin", default:15}}, description:$description, enabled:true, expression:$expression}')"
+  rulesets_response="$(curl -fsS \
+    "https://api.cloudflare.com/client/v4/zones/${zone_id}/rulesets" \
+    -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}")"
+  ruleset_id="$(printf '%s' "$rulesets_response" | jq -r \
+    '.result[] | select(.kind == "zone" and .phase == "http_request_cache_settings") | .id' | head -n 1)"
+
+  if [[ -z "$ruleset_id" ]]; then
+    response="$(jq -nc --argjson rule "$rule_payload" \
+      '{name:"OpenSmash cache rules", kind:"zone", phase:"http_request_cache_settings", rules:[$rule]}' | \
+      curl -fsS -X POST \
+        "https://api.cloudflare.com/client/v4/zones/${zone_id}/rulesets" \
+        -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+        -H "Content-Type: application/json" --data @-)"
+  else
+    ruleset_response="$(curl -fsS \
+      "https://api.cloudflare.com/client/v4/zones/${zone_id}/rulesets/${ruleset_id}" \
+      -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}")"
+    rule_id="$(printf '%s' "$ruleset_response" | jq -r --arg description "$description" \
+      '.result.rules[] | select(.description == $description) | .id' | head -n 1)"
+    if [[ -z "$rule_id" ]]; then
+      response="$(printf '%s' "$rule_payload" | curl -fsS -X POST \
+        "https://api.cloudflare.com/client/v4/zones/${zone_id}/rulesets/${ruleset_id}/rules" \
+        -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+        -H "Content-Type: application/json" --data @-)"
+    else
+      response="$(printf '%s' "$rule_payload" | curl -fsS -X PATCH \
+        "https://api.cloudflare.com/client/v4/zones/${zone_id}/rulesets/${ruleset_id}/rules/${rule_id}" \
+        -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+        -H "Content-Type: application/json" --data @-)"
+    fi
+  fi
+  printf '%s' "$response" | jq -e '.success == true' >/dev/null
+}
+
 echo "==> Deploying authenticated engine cache worker"
 npx --yes "wrangler@${WRANGLER_VERSION}" deploy --config "$SCRIPT_DIR/wrangler.jsonc"
 printf '%s' "$COOKIE_SECRET" | \
   npx --yes "wrangler@${WRANGLER_VERSION}" secret put COOKIE_SECRET \
     --config "$SCRIPT_DIR/wrangler.jsonc"
+
+echo "==> Enabling short edge caching for the shared application shell"
+upsert_shell_cache_rule
 
 for hostname in "$DOMAIN" "www.${DOMAIN}"; do
   record_response="$(curl -fsS -G \
