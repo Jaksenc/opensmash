@@ -584,6 +584,7 @@ export default function App() {
           engine={engine}
           engineRef={engineRef}
           gameFrameRef={gameFrameRef}
+          isFullscreen={isFullscreen}
           onAdvanced={() => setAdvancedOpen(true)}
           onCloseGame={() => setEngine(null)}
           onFullscreen={toggleFullscreen}
