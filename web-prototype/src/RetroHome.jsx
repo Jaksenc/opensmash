@@ -33,11 +33,11 @@ function loadModule(src) {
 
 function startVisualRuntime() {
   visualRuntimePromise ||= loadVisualStyles().then(() => [
-    "/visual/grid-replica.js?v=20260901-react1",
-    "/visual/logo-stage.js?v=20260901-react1",
-    "/visual/crt-viewport.js?v=20260901-react1",
-    "/visual/game-launcher.js?v=20260901-react1",
-    "/visual/site-hardware.js?v=20260901-react1",
+    "/visual/grid-replica.js?v=20260901-react2",
+    "/visual/logo-stage.js?v=20260901-react2",
+    "/visual/crt-viewport.js?v=20260901-react2",
+    "/visual/game-launcher.js?v=20260901-react2",
+    "/visual/site-hardware.js?v=20260901-react2",
   ].reduce((ready, src) => ready.then(() => loadModule(src)), Promise.resolve()));
   return visualRuntimePromise;
 }
@@ -162,12 +162,14 @@ export default function RetroHome({
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
+    const showNativeCursor = new URLSearchParams(window.location.search).has("showCursor");
     document.documentElement.classList.add("is-direct-site");
     document.body.classList.add("retro-home");
+    document.body.classList.toggle("show-native-cursor", showNativeCursor);
     loadVisualStyles().catch((error) => window.openSmashReactBridge?.reportError?.(error));
     return () => {
       document.documentElement.classList.remove("is-direct-site");
-      document.body.classList.remove("retro-home");
+      document.body.classList.remove("retro-home", "show-native-cursor");
     };
   }, []);
 

@@ -670,7 +670,7 @@ const gloveMat = new THREE.MeshStandardMaterial({
 });
 
 // ---------------------------------------------------------------------------
-// Assembly: glove(position spring) -> wrist(rotation springs) -> hand(pose)
+// Assembly: glove(pointer position) -> wrist(rotation springs) -> hand(pose)
 // ---------------------------------------------------------------------------
 const glove = new THREE.Group();
 const wrist = new THREE.Group();
@@ -1742,6 +1742,17 @@ new GLTFLoader().load('assets/hybrid-four-port-console-fitted.glb?v=20260831c', 
 }, undefined, error => console.error('Could not load fitted console GLB', error));
 
 let mesh = null;   // set when the GLB loads
+let pointerTipIndex = -1;
+const pointerTipLocal = new THREE.Vector3();
+
+function pinPointerTip() {
+  if (!mesh || pointerTipIndex < 0) return;
+  // Keep the skinned fingertip at the hand pivot. Every wrist/hand transform
+  // then rotates or scales around the pointer instead of dragging it away.
+  mesh.updateMatrixWorld(true);
+  mesh.getVertexPosition(pointerTipIndex, pointerTipLocal);
+  mesh.position.copy(pointerTipLocal).negate();
+}
 
 // ---------------------------------------------------------------------------
 // GLB hand (Meshy): welded, lightly smoothed, aligned into hand-local space,
@@ -1847,27 +1858,23 @@ new GLTFLoader().load('assets/hand-cursor-meshy.glb', (gltf) => {
     g2.computeBoundingBox();
     handUnitH = (g2.boundingBox.max.y - g2.boundingBox.min.y) * hand.scale.y;
 
-    // Hotspot: extreme vertex along the index direction (up-right), mapped
-    // into wrist space so the fingertip sits at the glove origin. Measure the
-    // vertex after applying the live pointing pose: the authored bind pose is
-    // reshaped by poseTweak, so anchoring the undeformed geometry leaves the
-    // browser pointer several pixels above the visible fingertip.
+    // Hotspot: extreme vertex along the index direction (up-right). Measure
+    // the live skinned point rather than the undeformed geometry, then move
+    // the mesh itself so every outer transform pivots around the fingertip.
     {
       const posAttr2 = g2.getAttribute('position');
       const dirX = Math.sin(-INDEX_REST_Z), dirY = Math.cos(-INDEX_REST_Z);
       let bestS = -1e9;
-      let tipIndex = 0;
+      pointerTipIndex = 0;
       for (let vi = 0; vi < posAttr2.count; vi++) {
         const x = posAttr2.getX(vi), y = posAttr2.getY(vi);
         const sscore = x * dirX + y * dirY;
-        if (sscore > bestS) { bestS = sscore; tipIndex = vi; }
+        if (sscore > bestS) { bestS = sscore; pointerTipIndex = vi; }
       }
       for (const f of rigs) { f.jig.a = 0; f.jig.v = 0; }
       poseFingers(0, 0);
-      newMesh.updateMatrixWorld(true);
-      const tipLocal = newMesh.getVertexPosition(tipIndex, new THREE.Vector3());
-      tipLocal.multiplyScalar(hand.scale.x).applyQuaternion(qPoint);
-      hand.position.copy(tipLocal).negate();
+      hand.position.set(0, 0, 0);
+      pinPointerTip();
     }
     resize();
   };
@@ -2180,6 +2187,7 @@ window.captureGlove = (mode = 0) => {
   wrist.rotation.set(0, 0, 0);
   wrist.position.set(0, 0, 0);
   glove.position.set(0, 0, 0);
+  pinPointerTip();
   const w = 128, h = 128;
   camera.aspect = 1;
   camera.updateProjectionMatrix();
@@ -2546,13 +2554,17 @@ function tick() {
     cartridgeRig.position.y -= hardwareExitOffset;
   }
 
-  // --- position spring ---
-  const K = 320, D = 24;
-  vel.x += ((mouse.x - pos.x) * K - vel.x * D) * dt;
-  vel.y += ((mouse.y - pos.y) * K - vel.y * D) * dt;
-  pos.x += vel.x * dt; pos.y += vel.y * dt;
-  glove.position.copy(pos);
-  glove.position.z = GLOVE_DEPTH;  // cursor always passes above the cartridge in depth
+  // Keep the fingertip locked to the latest pointer coordinates. Velocity is
+  // measured from the direct motion so the secondary wrist/finger animation
+  // stays lively without adding positional lag.
+  const pointerVelocityScale = 1 / Math.max(dt, 1e-4);
+  vel.set(
+    (mouse.x - pos.x) * pointerVelocityScale,
+    (mouse.y - pos.y) * pointerVelocityScale,
+    0
+  );
+  pos.set(mouse.x, mouse.y, 0);
+  glove.position.set(mouse.x, mouse.y, GLOVE_DEPTH);
 
   accelSmooth.x += ((vel.x - prevVel.x) / Math.max(dt, 1e-4) - accelSmooth.x) * Math.min(1, dt * 12);
   accelSmooth.y += ((vel.y - prevVel.y) / Math.max(dt, 1e-4) - accelSmooth.y) * Math.min(1, dt * 12);
@@ -2570,7 +2582,7 @@ function tick() {
 
   const idle = Math.sin(t * 1.6) * 0.03;
   wrist.rotation.set(rot.x + idle, rot.y, rot.z + Math.sin(t * 1.3) * 0.02);
-  wrist.position.y = Math.sin(t * 1.8) * 0.05;
+  wrist.position.set(0, 0, 0);
 
   // --- down/press blend: tilt + squash, fingertip planted ---
   grabAmount += ((grabbing ? 1 : 0) - grabAmount) * Math.min(1, dt * 12);
@@ -2591,6 +2603,7 @@ function tick() {
     jig.a += jig.v * dt;
   }
   poseFingers(ease, gEase);
+  pinPointerTip();
 
   if (DBG.includes('raw') || !shaderSettings.enabled) {
     renderer.setRenderTarget(null);
