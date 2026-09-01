@@ -4,10 +4,20 @@
 <meta charset="utf-8">
 <title>OpenSmash</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
 <script>
   if (location.protocol === 'file:') {
-    location.replace('http://localhost:4173/index.html');
+    location.replace(
+      `http://localhost:4173/index.html${location.search}${location.hash}`
+    );
   }
+  const cartridgeIntroRequested =
+    new URLSearchParams(location.search).get('intro') === 'cartridge';
+  document.documentElement.classList.add(
+    cartridgeIntroRequested ? 'is-cartridge-intro' : 'is-direct-site'
+  );
 </script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -153,6 +163,22 @@
   .replica-cell.is-highlighted::after,
   .replica-cell[aria-pressed="true"]::after { opacity: 1; }
   .replica-cell:focus-visible { outline: none; }
+  .replica-cell.is-create::before {
+    content: "+";
+    position: absolute;
+    left: 50%;
+    top: 56%;
+    z-index: 1;
+    color: #fff2d6;
+    font: 900 clamp(30px, 5vw, 64px)/1 "Kanit", sans-serif;
+    text-shadow:
+      0 3px 0 #260500,
+      3px 0 0 #260500,
+      -3px 0 0 #260500,
+      0 -3px 0 #260500;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
   .replica-rule-layer {
     position: absolute;
     inset: 0;
@@ -287,65 +313,21 @@
     z-index: 1;
     width: var(--arena-content-width);
     min-height: 100vh;
+    padding-bottom: var(--roster-layout-reserve, 0px);
     margin-inline: auto;
+    overflow-anchor: none;
   }
-  .presenter-credit {
-    position: relative;
-    z-index: 4;
-    width: min(352px, 80vw);
-    max-width: 100%;
-    padding: 0;
-    margin: 16px auto 0;
-    line-height: 0;
-  }
-  .presenter-credit-art {
-    position: relative;
-    z-index: 1;
-    display: block;
-    width: 100%;
-    height: auto;
-    image-rendering: pixelated;
-    pointer-events: none;
-    user-select: none;
-    -webkit-user-drag: none;
-  }
-  .presenter-credit-link {
-    position: absolute;
-    top: 0;
-    z-index: 0;
-    display: block;
-    height: 100%;
-    cursor: none;
-    outline: none;
-  }
-  .presenter-credit-link::after {
-    content: "";
-    position: absolute;
-    top: 81%;
-    right: 0;
-    left: 0;
-    border-bottom: 2px solid #f2f2f2;
-    box-shadow: 2px 2px #000;
-    transition: border-color 150ms;
-  }
-  .presenter-credit-link:hover::after,
-  .presenter-credit-link:focus-visible::after { border-bottom-color: #fff; }
-  .presenter-credit-link:focus-visible {
-    border-radius: 2px;
-    box-shadow: none;
-    outline: none;
-  }
-  .presenter-credit-link--thomas { left: 1.3%; width: 38.8%; }
-  .presenter-credit-link--joey { left: 51.8%; width: 27.3%; }
   .intro-video-stage {
     display: grid;
     place-items: center;
     width: 100%;
-    padding-top: var(--content-section-space);
+    padding-top: 8px;
     background: transparent;
   }
   .intro-video-frame {
     position: relative;
+    isolation: isolate;
+    contain: layout paint;
     width: 100%;
     max-width: 100%;
     max-height: 75vh;
@@ -359,44 +341,577 @@
     height: 100%;
     border: 0;
     background: #000;
+    object-fit: cover;
     pointer-events: none;
+  }
+  .intro-video-logo {
+    position: absolute;
+    top: clamp(6px, 1.1vw, 14px);
+    left: clamp(8px, 1.2vw, 16px);
+    z-index: 5;
+    display: block;
+    width: clamp(112px, 24%, 260px);
+    aspect-ratio: 3 / 1;
+    filter: drop-shadow(0 2px 0 rgba(0, 0, 0, .72));
+    isolation: isolate;
+    pointer-events: auto;
+    user-select: none;
+    -webkit-user-drag: none;
+  }
+  .hero-logo-canvas,
+  .hero-logo-fallback {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+  .hero-logo-canvas {
+    z-index: 1;
+    background: transparent;
+    pointer-events: none;
+  }
+  .hero-logo-fallback {
+    z-index: 2;
+    object-fit: contain;
+    opacity: 1;
+    transition: opacity 180ms linear;
+    pointer-events: none;
+  }
+  .intro-video-logo.is-ready .hero-logo-fallback { opacity: 0; }
+  .intro-game-frame {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: block;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    background: #000;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+  .intro-video-frame.is-game-running .intro-game-frame {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+  .intro-video-frame.is-game-running .intro-video {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+  .game-close-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 6;
+    display: none;
+    padding: 7px 10px;
+    border: 1px solid rgba(231, 221, 210, .5);
+    border-radius: 2px;
+    background: rgba(8, 8, 8, .8);
+    color: #e7ddd2;
+    font: 9px/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    cursor: none;
+  }
+  .rom-reset-button {
+    position: fixed;
+    top: clamp(8px, 1vw, 14px);
+    left: clamp(8px, 1vw, 14px);
+    z-index: 999;
+    display: block;
+    padding: 6px 8px;
+    border: 1px solid rgba(231, 221, 210, .38);
+    border-radius: 2px;
+    background: rgba(8, 8, 8, .72);
+    color: rgba(231, 221, 210, .78);
+    font: 8px/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    cursor: none;
+    transition: border-color 120ms, color 120ms, background 120ms;
+  }
+  .rom-reset-button:hover,
+  .rom-reset-button:focus-visible {
+    border-color: rgba(240, 87, 49, .9);
+    background: rgba(24, 10, 7, .9);
+    color: #fff2e4;
+    outline: none;
+  }
+  .rom-reset-button[hidden] { display: none; }
+  @media (max-width: 1100px) {
+    .rom-reset-button { top: 48px; }
   }
   .intro-video-rule-layer {
     position: absolute;
     inset: 0;
-    z-index: 1;
+    z-index: 4;
     display: block;
     width: 100%;
     height: 100%;
     pointer-events: none;
     image-rendering: auto;
   }
+  body.is-launch-flow-open { overflow: hidden; }
+  body.is-launch-flow-open #glove-canvas { z-index: 1800; }
+  .launch-flow-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1500;
+    overflow: visible;
+    background: #000;
+    color: #fff;
+    cursor: none;
+    clip-path: none;
+    -webkit-mask: none;
+    mask: none;
+    -webkit-user-select: none;
+    user-select: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 480ms ease, visibility 480ms step-end;
+  }
+  .launch-flow-overlay[hidden] { display: none; }
+  .launch-flow-overlay.is-visible {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 360ms ease, visibility 0s;
+  }
+  .launch-flow-overlay.is-leaving { opacity: 0; }
+  .launch-flow-canvas {
+    position: fixed;
+    inset: 0;
+    z-index: 2;
+    display: block;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    clip-path: none;
+    -webkit-mask: none;
+    mask: none;
+  }
+  .launch-flow-step {
+    position: fixed;
+    inset: 0;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #f7f4ef;
+    text-align: center;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 380ms ease, visibility 380ms step-end;
+  }
+  .launch-flow-overlay.is-model-settled[data-step="upload"] .launch-flow-upload {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transition: opacity 420ms ease, visibility 0s;
+  }
+  .launch-flow-overlay[data-step="controller"] .launch-flow-controller {
+    visibility: visible;
+    transition: opacity 420ms ease 80ms, visibility 0s;
+  }
+  .launch-flow-overlay.is-model-settled[data-step="controller"] .launch-flow-controller {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .launch-flow-upload {
+    --launch-control-width: clamp(210px, 23vw, 300px);
+    z-index: 1;
+    justify-content: center;
+    padding: 0 24px;
+    transform: translateY(clamp(78px, 13vh, 120px));
+  }
+  .launch-flow-controller {
+    justify-content: center;
+    padding: 0 24px;
+    will-change: opacity;
+  }
+  .launch-flow-controller:focus { outline: 0; }
+  .controller-callouts {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .controller-callout-lines {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+  .controller-callout-lines line {
+    stroke: rgba(255, 242, 214, .78);
+    stroke-width: 1.5;
+    vector-effect: non-scaling-stroke;
+  }
+  .controller-callout-lines circle {
+    fill: #fff2d6;
+    stroke: #260500;
+    stroke-width: 1.5;
+    vector-effect: non-scaling-stroke;
+  }
+  .controller-callout-lines g,
+  .controller-callout {
+    transition: opacity 180ms ease;
+  }
+  .controller-callouts.is-z-reveal .controller-callout:not([data-control-callout="z"]),
+  .controller-callouts.is-z-reveal .controller-callout-lines g:not([data-control-line="z"]) {
+    opacity: 0;
+  }
+  .controller-callout {
+    position: absolute;
+    display: grid;
+    place-items: center;
+    transform: translate(-50%, -50%);
+    filter: blur(.4px) contrast(1.14);
+    -webkit-font-smoothing: none;
+  }
+  .controller-keycap {
+    display: grid;
+    min-width: 34px;
+    height: 32px;
+    place-items: center;
+    padding: 2px 8px;
+    border: 1px solid rgba(255, 242, 214, .72);
+    background: #080504;
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 236, 190, .055),
+      inset 0 -3px rgba(38, 5, 0, .82),
+      0 3px 0 #160b08;
+    color: #fff2d6;
+    font: 600 16px/1 "Kanit", sans-serif;
+    letter-spacing: .04em;
+    text-shadow: 0 2px 0 #260500, 2px 0 0 #260500, -2px 0 0 #260500;
+    transition: transform 70ms linear, color 100ms linear, background 100ms linear,
+      border-color 100ms linear, box-shadow 100ms linear;
+  }
+  .controller-keycap.is-complete {
+    border-color: #fff0b5;
+    background: #fff2d6;
+    box-shadow:
+      inset 0 -3px rgba(113, 53, 22, .3),
+      0 3px 0 #4d2615,
+      0 0 16px rgba(255, 125, 42, .3);
+    color: #160b08;
+    text-shadow: none;
+  }
+  .controller-keycap.is-pressed {
+    transform: translateY(2px);
+    box-shadow: inset 0 2px 0 rgba(38, 5, 0, .34), 0 1px 0 #4d2615;
+  }
+  .controller-key-cluster {
+    display: grid;
+    grid-template-columns: repeat(3, 28px);
+    grid-template-rows: repeat(2, 27px);
+    gap: 3px;
+  }
+  .controller-key-cluster .controller-keycap {
+    min-width: 28px;
+    width: 28px;
+    height: 27px;
+    padding: 0;
+    font-size: 12px;
+  }
+  .controller-key-cluster .controller-keycap:first-child { grid-column: 2; }
+  .controller-key-cluster .controller-keycap:nth-child(2) { grid-column: 1; grid-row: 2; }
+  .controller-key-cluster .controller-keycap:nth-child(3) { grid-column: 2; grid-row: 2; }
+  .controller-key-cluster .controller-keycap:nth-child(4) { grid-column: 3; grid-row: 2; }
+  .launch-flow-title {
+    max-width: min(720px, 90vw);
+    color: #fff2d6;
+    filter: blur(.4px) contrast(1.14);
+    font: 600 clamp(24px, 3.1vw, 42px)/1 "Kanit", sans-serif;
+    letter-spacing: .045em;
+    text-wrap: balance;
+    text-shadow: 0 2px 0 #260500, 2px 0 0 #260500, -2px 0 0 #260500;
+    -webkit-font-smoothing: none;
+  }
+  .launch-flow-copy {
+    width: min(760px, 88vw);
+    margin: 12px auto 0;
+    color: #fff2d6;
+    filter: blur(.4px) contrast(1.14);
+    font: 600 clamp(16px, 1.6vw, 22px)/1.4 "Kanit", sans-serif;
+    letter-spacing: .035em;
+    text-shadow: 0 2px 0 #260500;
+    text-wrap: balance;
+    -webkit-font-smoothing: none;
+  }
+  .launch-flow-action {
+    min-width: clamp(180px, 19vw, 250px);
+    min-height: clamp(48px, 6vw, 62px);
+    margin-top: 18px;
+    padding: 9px 22px;
+    border: 1px solid #5d3a2b;
+    border-radius: 0;
+    background: #080504;
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 236, 190, .045),
+      inset 0 -3px rgba(38, 5, 0, .78),
+      0 3px 0 #160b08;
+    color: #fff2d6;
+    filter: blur(.4px) contrast(1.14);
+    font: 600 clamp(15px, 1.55vw, 21px)/1 "Kanit", sans-serif !important;
+    letter-spacing: .045em;
+    text-shadow: 0 2px 0 #260500, 2px 0 0 #260500, -2px 0 0 #260500;
+    cursor: none;
+    transition: border-color 100ms linear, background 100ms linear, box-shadow 100ms linear;
+    -webkit-font-smoothing: none;
+  }
+  .launch-flow-action:hover,
+  .launch-flow-action:focus-visible {
+    border-color: #fff0b5;
+    background: #130907;
+    box-shadow:
+      inset 0 0 0 2px rgba(255, 240, 181, .88),
+      inset 0 -3px rgba(38, 5, 0, .78),
+      0 3px 0 #160b08;
+    outline: 0;
+  }
+  .launch-flow-action:active {
+    background: #21100b;
+    box-shadow: inset 0 2px 0 #050202, inset 0 0 0 2px rgba(255, 240, 181, .72);
+  }
+  .launch-flow-action:disabled { opacity: .45; }
+  .launch-flow-fire-cell {
+    box-sizing: border-box;
+    width: var(--launch-control-width);
+    min-height: clamp(52px, 6vw, 66px);
+    margin-top: 18px;
+    border: 1px solid #5d3a2b;
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 236, 190, .045),
+      inset 0 -3px rgba(38, 5, 0, .78),
+      0 3px 0 #160b08;
+  }
+  .launch-flow-fire-cell:hover,
+  .launch-flow-fire-cell:focus-within {
+    border-color: #fff0b5;
+    box-shadow:
+      inset 0 0 0 2px rgba(255, 240, 181, .88),
+      inset 0 -3px rgba(38, 5, 0, .78),
+      0 3px 0 #160b08;
+  }
+  .launch-flow-fire-cell .launch-flow-action {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    min-width: 0;
+    min-height: inherit;
+    margin: 0;
+    border: 0;
+    background: rgba(6, 2, 1, .28);
+    box-shadow: none;
+  }
+  .launch-flow-fire-cell .launch-flow-action:hover,
+  .launch-flow-fire-cell .launch-flow-action:focus-visible {
+    border: 0;
+    background: rgba(255, 128, 44, .08);
+    box-shadow: none;
+  }
+  .launch-flow-cancel {
+    box-sizing: border-box;
+    width: var(--launch-control-width);
+    min-width: var(--launch-control-width);
+    min-height: 42px;
+    margin-top: 11px;
+    background: #050303;
+  }
+  .launch-flow-file-input { display: none; }
+  .launch-flow-overlay button,
+  .launch-flow-overlay kbd,
+  .launch-flow-overlay p,
+  .launch-flow-overlay h2 {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  .launch-flow-error {
+    width: min(620px, 90vw);
+    margin-top: 15px;
+    color: #ff8a70;
+    filter: blur(.4px) contrast(1.14);
+    font: 600 12px/1.45 "Kanit", sans-serif;
+    text-shadow: 0 2px 0 #260500;
+    text-wrap: balance;
+    -webkit-font-smoothing: none;
+  }
+  .launch-flow-controller-instructions {
+    position: absolute;
+    top: clamp(28px, 6.5vh, 60px);
+    z-index: 2;
+    display: flex;
+    width: min(720px, 90vw);
+    flex-direction: column;
+    align-items: center;
+    margin: 0;
+    pointer-events: none;
+  }
+  .launch-flow-how-title {
+    margin: 0;
+    font-size: clamp(24px, min(3.1vw, 5.2vh), 42px);
+  }
+  .launch-flow-control-prompt {
+    width: 100%;
+    margin: 4px 0 0;
+    color: #fff2d6;
+    filter: blur(.4px) contrast(1.14);
+    font: 700 clamp(14px, min(1.6vw, 2.7vh), 22px)/1.25 "Kanit", sans-serif;
+    letter-spacing: .04em;
+    text-shadow: 0 2px 0 #260500;
+    text-wrap: balance;
+    transform-origin: center;
+    animation: launch-control-prompt-pulse 3.8s ease-in-out infinite;
+    -webkit-font-smoothing: none;
+  }
+  @keyframes launch-control-prompt-pulse {
+    0%, 100% {
+      opacity: .58;
+      transform: scale(.972);
+      text-shadow: 0 2px 0 #260500, 0 0 0 rgba(255, 154, 66, 0);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.042);
+      text-shadow:
+        0 2px 0 #260500,
+        0 0 14px rgba(255, 205, 132, .82),
+        0 0 30px rgba(255, 112, 38, .66);
+    }
+  }
+  .launch-flow-control-prompt.is-complete {
+    color: #fff0b5;
+    opacity: 1;
+    animation: none;
+  }
+  @media (max-height: 720px) {
+    .launch-flow-copy { margin-top: 8px; line-height: 1.35; }
+    .launch-flow-fire-cell { margin-top: 13px; }
+  }
+  @media (max-width: 600px) {
+    .launch-flow-upload { transform: translateY(clamp(72px, 12vh, 96px)); }
+    .launch-flow-title { font-size: clamp(23px, 7vw, 34px); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .launch-flow-overlay,
+    .launch-flow-step,
+    .launch-flow-action { transition-duration: 1ms !important; transition-delay: 0s !important; }
+    .launch-flow-control-prompt { animation: none; }
+  }
   .flame-bridge {
     position: relative;
     z-index: 2;
     display: grid;
-    grid-template-columns: repeat(var(--flame-bridge-columns, 2), minmax(0, 1fr));
+    grid-template-columns: repeat(var(--flame-bridge-columns, 1), minmax(0, 1fr));
+    grid-template-rows: repeat(var(--flame-bridge-rows, 1), minmax(0, 1fr));
     width: 100%;
     margin-top: calc(-1 * var(--shared-rule-overlap));
     overflow: hidden;
     background: #080504;
   }
   .flame-bridge-cell {
+    position: relative;
+    display: grid;
+    place-items: stretch;
     min-width: 0;
     min-height: 0;
     overflow: hidden;
     background: #080504;
   }
+  .flame-bridge-cell::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: rgba(6, 2, 1, .2);
+    pointer-events: none;
+    transition: background 100ms linear;
+  }
+  .flame-bridge-cell:focus-within::after,
+  .flame-bridge-cell:hover::after { background: rgba(255, 128, 44, .08); }
   .flame-bridge-cell canvas {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
     display: block;
     width: 100%;
     height: 100%;
     image-rendering: auto;
   }
+  .flame-bridge-action,
+  .flame-bridge-search {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    min-width: 0;
+    height: 100%;
+    min-height: 0;
+    padding: clamp(3px, .65vw, 8px) clamp(6px, 1.2vw, 14px);
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: #fff2d6;
+    font: 800 clamp(10px, 1.6vw, 20px)/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    letter-spacing: .045em;
+    text-align: center;
+    text-decoration: none;
+    text-shadow: 0 2px 0 #260500, 2px 0 0 #260500, -2px 0 0 #260500;
+    white-space: nowrap;
+    cursor: none;
+  }
+  .flame-bridge-action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .35em;
+  }
+  .flame-bridge-search {
+    display: block;
+    padding-right: clamp(14px, 2vw, 28px);
+    padding-left: calc(clamp(8px, 1.25vw, 18px) + 3px);
+    filter: blur(.4px) contrast(1.14);
+    font-size: clamp(13px, 2vw, 26px);
+    font-weight: 600;
+    line-height: normal;
+    text-align: left;
+    -webkit-font-smoothing: none;
+  }
+  .flame-bridge-action:focus-visible,
+  .flame-bridge-search:focus-within {
+    box-shadow: inset 0 0 0 2px rgba(255, 240, 181, .88);
+  }
+  .flame-bridge-search { cursor: text; }
+  .flame-bridge-search::placeholder {
+    color: #fff2d6;
+    opacity: 1;
+  }
+  .flame-bridge-search::-webkit-search-cancel-button {
+    filter: invert(1) sepia(.3);
+  }
+  @media (max-width: 760px) {
+    .flame-bridge {
+      min-height: clamp(48px, 12vw, 64px);
+    }
+    .flame-bridge-search {
+      padding-block: clamp(8px, 2vw, 12px);
+      padding-left: calc(clamp(8px, 1.25vw, 18px) + 11px);
+      font-size: clamp(18px, 4.6vw, 22px);
+    }
+  }
   .flame-bridge-rule-layer {
     position: absolute;
     inset: 0;
-    z-index: 1;
+    z-index: 3;
     display: block;
     width: 100%;
     height: 100%;
@@ -415,21 +930,19 @@
       filter 620ms steps(5, end),
       transform 620ms steps(5, end);
   }
-  .presenter-credit {
-    opacity: 0;
-    filter: brightness(0) contrast(1.25);
-    transition:
-      opacity 520ms steps(5, end),
-      filter 620ms steps(5, end);
-  }
   body:not(.is-game-booted) { overflow-y: hidden; }
-  body.is-intro-credit-visible .presenter-credit {
-    opacity: 1;
-    filter: none;
-  }
   body.is-game-booted .intro-video-stage,
   body.is-game-booted .flame-bridge,
   body.is-game-booted .arena-surface {
+    opacity: 1;
+    filter: none;
+    transform: none;
+  }
+  html.is-direct-site body { overflow-y: auto; }
+  html.is-direct-site body::before { opacity: 1; }
+  html.is-direct-site .intro-video-stage,
+  html.is-direct-site .flame-bridge,
+  html.is-direct-site .arena-surface {
     opacity: 1;
     filter: none;
     transform: none;
@@ -451,6 +964,20 @@
     overflow: hidden;
     background: transparent;
   }
+  .fighter-empty-state {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    color: #fff2d6;
+    font: 800 clamp(11px, 1.5vw, 17px)/1.3 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    letter-spacing: .04em;
+    text-align: center;
+    text-shadow: 0 2px 0 #260500;
+    pointer-events: none;
+  }
   .arena-shell .replica-cell {
     left: var(--cell-left);
     top: var(--cell-top);
@@ -463,6 +990,61 @@
     pointer-events: none;
     z-index: 1000;
   }
+  #crt-viewport-canvas {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: block;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    /* 199X starts with composite/color passes before drawing its CRT mask.
+       Backdrop filtering gives the live DOM, video, and WebGL layers that same
+       slight NTSC softness and color density before this canvas adds raster. */
+    -webkit-backdrop-filter: blur(.52px) saturate(1.18) contrast(1.07) brightness(1.035);
+    backdrop-filter: blur(.52px) saturate(1.18) contrast(1.07) brightness(1.035);
+  }
+  #crt-viewport-canvas[data-crt-preset="soft"] {
+    -webkit-backdrop-filter: blur(.28px) saturate(1.08) contrast(1.03) brightness(1.015);
+    backdrop-filter: blur(.28px) saturate(1.08) contrast(1.03) brightness(1.015);
+  }
+  #hardware-god-ray {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+    z-index: 998;
+    opacity: 0;
+    mix-blend-mode: screen;
+    will-change: opacity;
+  }
+  .god-ray-outer {
+    fill: url(#god-ray-outer-gradient);
+    filter: url(#god-ray-blur-wide);
+    opacity: .72;
+  }
+  .god-ray-middle {
+    fill: url(#god-ray-middle-gradient);
+    filter: url(#god-ray-blur-medium);
+    opacity: .7;
+  }
+  .god-ray-core {
+    fill: url(#god-ray-core-gradient);
+    filter: url(#god-ray-blur-tight);
+    opacity: .54;
+  }
+  .god-ray-cartridge-halo {
+    fill: url(#god-ray-halo-gradient);
+    filter: url(#god-ray-blur-medium);
+    opacity: .9;
+  }
+  .god-ray-console-haze {
+    fill: url(#god-ray-haze-gradient);
+    filter: url(#god-ray-blur-wide);
+    opacity: .62;
+  }
   #hardware-inset {
     position: fixed;
     top: clamp(22px, 4vh, 48px);
@@ -473,10 +1055,21 @@
     pointer-events: none;
     z-index: 999;
   }
+  html.is-direct-site #hardware-inset,
+  html.is-direct-site #hardware-god-ray { display: none; }
+  #tv-control {
+    position: absolute;
+    left: 50%;
+    top: var(--tv-home-top, 16.666%);
+    width: clamp(112px, 18vw, 190px);
+    aspect-ratio: 4 / 3;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
   #cartridge-control {
     position: absolute;
     left: 50%;
-    top: var(--cartridge-home-top, 30%);
+    top: var(--cartridge-home-top, 50%);
     width: clamp(116px, 14vw, 176px);
     aspect-ratio: 1;
     transform: translate(-50%, -50%);
@@ -503,10 +1096,10 @@
   #console-control {
     position: absolute;
     left: 50%;
-    bottom: 0;
+    top: var(--console-home-top, 83.333%);
     width: 100%;
     aspect-ratio: 1.55;
-    transform: translateX(-50%);
+    transform: translate(-50%, -50%);
     pointer-events: none;
   }
   @media (max-width: 700px) {
@@ -583,11 +1176,86 @@
   @media (max-width: 520px) {
     #shader-tuner { left: 8px; bottom: 8px; width: min(280px, calc(100vw - 16px)); }
   }
+  #crt-tuner {
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+    z-index: 2200;
+    width: min(340px, calc(100vw - 32px));
+    max-height: calc(100vh - 32px);
+    overflow: auto;
+    border: 1px solid rgba(160, 190, 173, .42);
+    border-radius: 9px;
+    background: rgba(7, 12, 10, .94);
+    box-shadow: 0 16px 48px rgba(0, 0, 0, .68), inset 0 1px rgba(226, 255, 238, .06);
+    color: #c9d8ce;
+    font: 11px/1.3 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    pointer-events: auto;
+    cursor: auto;
+    backdrop-filter: blur(12px);
+  }
+  #crt-tuner * { cursor: auto; }
+  #crt-tuner summary {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    padding: 10px 12px;
+    background: rgba(7, 12, 10, .97);
+    color: #e1eee6;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    user-select: none;
+  }
+  #crt-tuner[open] summary { border-bottom: 1px solid rgba(160, 190, 173, .22); }
+  .crt-tuner-body { display: grid; gap: 11px; padding: 11px 12px 12px; }
+  .crt-tuner-group { display: grid; gap: 8px; }
+  .crt-tuner-group + .crt-tuner-group {
+    padding-top: 10px;
+    border-top: 1px solid rgba(160, 190, 173, .16);
+  }
+  .crt-tuner-group h3 {
+    color: #87a994;
+    font-size: 9px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+  }
+  .crt-control { display: grid; gap: 4px; }
+  .crt-control > span,
+  .crt-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .crt-control output {
+    color: #a9e3bd;
+    font-variant-numeric: tabular-nums;
+  }
+  .crt-control input[type="range"] { width: 100%; accent-color: #70b28b; }
+  .crt-toggle input { accent-color: #70b28b; }
+  .crt-tuner-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .crt-tuner-actions button {
+    padding: 6px 7px;
+    border: 1px solid #405e4c;
+    border-radius: 4px;
+    background: #101c15;
+    color: #c9d8ce;
+    font: inherit;
+  }
+  .crt-tuner-actions button:hover { border-color: #70b28b; color: #effff4; }
+  @media (max-width: 520px) {
+    #crt-tuner { right: 8px; bottom: 8px; width: min(320px, calc(100vw - 16px)); }
+  }
   @media (prefers-reduced-motion: reduce) {
-    .presenter-credit,
     .intro-video-stage,
     .flame-bridge,
     .arena-surface { transition: none; }
+    #hardware-god-ray { will-change: auto; }
   }
   .visually-hidden {
     position: absolute;
@@ -600,6 +1268,9 @@
     white-space: nowrap;
     border: 0;
   }
+  button,
+  .flame-bridge-action,
+  .flame-bridge-search { font-family: "Kanit", sans-serif !important; }
 </style>
 <script type="importmap">
 { "imports": {
@@ -609,41 +1280,37 @@
 </script>
 </head>
 <body>
+  <button id="rom-reset-button" class="rom-reset-button" type="button" hidden
+          aria-label="Remove verified ROM and reset the game">Reset ROM</button>
   <main class="arena-shell" aria-label="Two hundred cell character grid">
-    <div class="presenter-credit" aria-label="Thomas Dimson and Joey Flynn present">
-      <img class="presenter-credit-art" src="./assets/credit-presents.png"
-           alt="Thomas Dimson and Joey Flynn present" draggable="false">
-      <a class="presenter-credit-link presenter-credit-link--thomas"
-         href="https://x.com/turtlesoupy" target="_blank" rel="noreferrer"
-         aria-label="Thomas Dimson on X">
-        <span class="visually-hidden">Thomas Dimson</span>
-      </a>
-      <a class="presenter-credit-link presenter-credit-link--joey"
-         href="https://x.com/wjosephflynn" target="_blank" rel="noreferrer"
-         aria-label="Joey Flynn on X">
-        <span class="visually-hidden">Joey Flynn</span>
-      </a>
-    </div>
     <section class="intro-video-stage" aria-label="Intro video">
       <div class="intro-video-frame">
-        <iframe class="intro-video"
-                data-src="https://www.youtube-nocookie.com/embed/_2rnnactus4?autoplay=1&amp;mute=1&amp;loop=1&amp;playlist=_2rnnactus4&amp;playsinline=1&amp;rel=0&amp;start=151&amp;controls=0&amp;disablekb=1&amp;fs=0&amp;iv_load_policy=3&amp;modestbranding=1"
-                title="J - Z"
-                allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-                referrerpolicy="strict-origin-when-cross-origin"
-                allowfullscreen></iframe>
+        <video id="intro-video" class="intro-video"
+               src="./assets/intro-crt.mp4" muted autoplay loop playsinline
+               preload="auto" aria-label="Super Weights Bros intro video"></video>
         <canvas class="intro-video-rule-layer" aria-hidden="true"></canvas>
+        <div id="hero-logo-stage" class="intro-video-logo"
+             aria-label="Animated Smash the Weights logo">
+          <img class="hero-logo-fallback" src="./assets/smash-the-weights-logo.png"
+               alt="" aria-hidden="true" draggable="false">
+          <canvas id="hero-logo-canvas" class="hero-logo-canvas" aria-hidden="true"></canvas>
+        </div>
+        <iframe id="intro-game-frame" class="intro-game-frame" src="about:blank"
+                title="Super Weights Bros game" allow="autoplay; gamepad; fullscreen"></iframe>
+        <button id="game-close-button" class="game-close-button" type="button">Close game</button>
       </div>
     </section>
-    <div id="flame-bridge" class="flame-bridge" aria-hidden="true">
-      <div class="flame-bridge-cell"></div>
-      <div class="flame-bridge-cell"></div>
-      <div class="flame-bridge-cell"></div>
-      <div class="flame-bridge-cell"></div>
+    <div id="flame-bridge" class="flame-bridge" aria-label="Fighter search">
+      <div class="flame-bridge-cell">
+        <input id="fighter-search" class="flame-bridge-search" type="search"
+               placeholder="Search Fighters…" aria-label="Search fighters"
+               autocomplete="off" spellcheck="false">
+      </div>
       <canvas class="flame-bridge-rule-layer"></canvas>
     </div>
     <div class="arena-surface">
-      <div id="replica-grid" class="replica-grid" role="grid" aria-label="Two hundred code-rendered character cells"></div>
+      <div id="replica-grid" class="replica-grid" role="grid" aria-label="Create fighter and character roster"></div>
+      <p id="fighter-empty-state" class="fighter-empty-state" role="status" aria-live="polite" hidden></p>
     </div>
     <span id="replica-metrics" hidden>Building 200-cell grid…</span>
     <section class="font-bench" hidden aria-labelledby="font-bench-title">
@@ -656,7 +1323,118 @@
     </section>
   </main>
 
-  <aside id="hardware-inset" data-cartridge-state="free" aria-label="Interactive cartridge and console">
+  <div id="launch-flow-overlay" class="launch-flow-overlay" data-step="upload" hidden>
+    <canvas id="launch-flow-canvas" class="launch-flow-canvas" aria-hidden="true"></canvas>
+    <section class="launch-flow-step launch-flow-upload" role="dialog" aria-modal="true"
+             aria-labelledby="launch-flow-title" aria-describedby="launch-flow-copy">
+      <h2 id="launch-flow-title" class="visually-hidden">Play Smash the Weights</h2>
+      <p id="launch-flow-copy" class="launch-flow-copy">
+        To play Smash the Weights upload your legally obtained Super Smash Bros 64 ROM. It is hashed locally and never uploaded.
+      </p>
+      <input id="rom-file-input" class="launch-flow-file-input" type="file" hidden
+             accept=".zip,.z64,.n64,.v64,application/zip,application/octet-stream">
+      <div class="launch-flow-fire-cell flame-bridge-cell">
+        <button id="rom-upload-button" class="launch-flow-action" type="button">Upload ROM</button>
+      </div>
+      <button id="launch-cancel-button" class="launch-flow-action launch-flow-cancel" type="button">
+        Cancel
+      </button>
+      <p id="rom-form-error" class="launch-flow-error" role="alert" hidden></p>
+    </section>
+    <section id="launch-flow-controller-step" class="launch-flow-step launch-flow-controller"
+             role="dialog" aria-modal="true" aria-labelledby="how-to-play-title"
+             aria-describedby="launch-control-prompt" tabindex="-1">
+      <div class="launch-flow-controller-instructions">
+        <h2 id="how-to-play-title" class="launch-flow-title launch-flow-how-title">How to play</h2>
+        <p id="launch-control-prompt" class="launch-flow-control-prompt" aria-live="polite">
+          Press each key on your keyboard to continue
+        </p>
+      </div>
+      <div id="controller-callouts" class="controller-callouts" aria-label="Keyboard controls">
+        <svg id="controller-callout-lines" class="controller-callout-lines" aria-hidden="true">
+          <g data-control-line="stick"><line /><circle r="3" /></g>
+          <g data-control-line="a"><line /><circle r="3" /></g>
+          <g data-control-line="b"><line /><circle r="3" /></g>
+          <g data-control-line="z"><line /><circle r="3" /></g>
+          <g data-control-line="left-bumper"><line /><circle r="3" /></g>
+          <g data-control-line="right-bumper"><line /><circle r="3" /></g>
+        </svg>
+        <div class="controller-callout" data-control-callout="stick" aria-label="W A S D: joystick">
+          <span class="controller-key-cluster" aria-hidden="true">
+            <kbd class="controller-keycap" data-control-key="w">W</kbd>
+            <kbd class="controller-keycap" data-control-key="a">A</kbd>
+            <kbd class="controller-keycap" data-control-key="s">S</kbd>
+            <kbd class="controller-keycap" data-control-key="d">D</kbd>
+          </span>
+        </div>
+        <div class="controller-callout" data-control-callout="a" aria-label="J: A button">
+          <kbd class="controller-keycap" data-control-key="j" aria-hidden="true">J</kbd>
+        </div>
+        <div class="controller-callout" data-control-callout="b" aria-label="K: B button">
+          <kbd class="controller-keycap" data-control-key="k" aria-hidden="true">K</kbd>
+        </div>
+        <div class="controller-callout" data-control-callout="z" aria-label="L: Z button">
+          <kbd class="controller-keycap" data-control-key="l" aria-hidden="true">L</kbd>
+        </div>
+        <div class="controller-callout" data-control-callout="left-bumper" aria-label="I: left bumper">
+          <kbd class="controller-keycap" data-control-key="i" aria-hidden="true">I</kbd>
+        </div>
+        <div class="controller-callout" data-control-callout="right-bumper" aria-label="O: right bumper">
+          <kbd class="controller-keycap" data-control-key="o" aria-hidden="true">O</kbd>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <svg id="hardware-god-ray" aria-hidden="true" preserveAspectRatio="none">
+    <defs>
+      <linearGradient id="god-ray-outer-gradient" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#fffde8" stop-opacity=".08" />
+        <stop offset=".34" stop-color="#fff8d4" stop-opacity=".22" />
+        <stop offset=".5" stop-color="#ffeab1" stop-opacity=".15" />
+        <stop offset="1" stop-color="#e5bd76" stop-opacity="0" />
+      </linearGradient>
+      <linearGradient id="god-ray-middle-gradient" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#fffff3" stop-opacity=".12" />
+        <stop offset=".34" stop-color="#fffde1" stop-opacity=".28" />
+        <stop offset=".56" stop-color="#ffe6aa" stop-opacity=".13" />
+        <stop offset="1" stop-color="#dba65b" stop-opacity="0" />
+      </linearGradient>
+      <linearGradient id="god-ray-core-gradient" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#ffffff" stop-opacity=".12" />
+        <stop offset=".3" stop-color="#fffef0" stop-opacity=".32" />
+        <stop offset=".48" stop-color="#fff2c8" stop-opacity=".18" />
+        <stop offset=".84" stop-color="#f2c980" stop-opacity="0" />
+      </linearGradient>
+      <radialGradient id="god-ray-halo-gradient">
+        <stop offset="0" stop-color="#ffffff" stop-opacity=".38" />
+        <stop offset=".28" stop-color="#fffbe2" stop-opacity=".22" />
+        <stop offset="1" stop-color="#f3c97e" stop-opacity="0" />
+      </radialGradient>
+      <radialGradient id="god-ray-haze-gradient">
+        <stop offset="0" stop-color="#fff5d1" stop-opacity=".17" />
+        <stop offset=".44" stop-color="#f2d098" stop-opacity=".08" />
+        <stop offset="1" stop-color="#c58d46" stop-opacity="0" />
+      </radialGradient>
+      <filter id="god-ray-blur-wide" x="-40%" y="-20%" width="180%" height="140%">
+        <feGaussianBlur stdDeviation="28" />
+      </filter>
+      <filter id="god-ray-blur-medium" x="-30%" y="-16%" width="160%" height="132%">
+        <feGaussianBlur stdDeviation="12" />
+      </filter>
+      <filter id="god-ray-blur-tight" x="-20%" y="-12%" width="140%" height="124%">
+        <feGaussianBlur stdDeviation="4" />
+      </filter>
+    </defs>
+    <path id="god-ray-outer" class="god-ray-outer" />
+    <path id="god-ray-middle" class="god-ray-middle" />
+    <path id="god-ray-core" class="god-ray-core" />
+    <ellipse id="god-ray-console-haze" class="god-ray-console-haze" />
+    <ellipse id="god-ray-cartridge-halo" class="god-ray-cartridge-halo" />
+  </svg>
+
+  <aside id="hardware-inset" data-cartridge-state="free" aria-label="Television, interactive cartridge, and console">
+    <div id="tv-control" aria-hidden="true"></div>
     <button id="cartridge-control" type="button" aria-label="Drag the cartridge into the console">
       <span class="visually-hidden">Drag the cartridge into the console</span>
     </button>
@@ -705,9 +1483,96 @@
       </div>
     </div>
   </details>
+  <details id="crt-tuner" hidden>
+    <summary>CRT viewport tuning</summary>
+    <div class="crt-tuner-body">
+      <label class="crt-toggle">
+        <span>Effect enabled</span>
+        <input type="checkbox" data-crt-setting="enabled" checked>
+      </label>
+      <section class="crt-tuner-group" aria-labelledby="crt-image-heading">
+        <h3 id="crt-image-heading">Composite image</h3>
+        <label class="crt-control">
+          <span>Overall intensity <output data-crt-value="intensity"></output></span>
+          <input type="range" min="0" max="1.5" step="0.01" data-crt-setting="intensity">
+        </label>
+        <label class="crt-control">
+          <span>Composite blur <output data-crt-value="compositeBlur"></output></span>
+          <input type="range" min="0" max="1.5" step="0.01" data-crt-setting="compositeBlur">
+        </label>
+        <label class="crt-control">
+          <span>Saturation <output data-crt-value="saturation"></output></span>
+          <input type="range" min="0.5" max="1.8" step="0.01" data-crt-setting="saturation">
+        </label>
+        <label class="crt-control">
+          <span>Contrast <output data-crt-value="contrast"></output></span>
+          <input type="range" min="0.6" max="1.6" step="0.01" data-crt-setting="contrast">
+        </label>
+        <label class="crt-control">
+          <span>Brightness <output data-crt-value="brightness"></output></span>
+          <input type="range" min="0.6" max="1.5" step="0.01" data-crt-setting="brightness">
+        </label>
+      </section>
+      <section class="crt-tuner-group" aria-labelledby="crt-mask-heading">
+        <h3 id="crt-mask-heading">Tube and mask</h3>
+        <label class="crt-control">
+          <span>Scanline depth <output data-crt-value="scanlineStrength"></output></span>
+          <input type="range" min="0" max="0.32" step="0.002" data-crt-setting="scanlineStrength">
+        </label>
+        <label class="crt-control">
+          <span>Scanline spacing <output data-crt-value="scanlineSpacing"></output></span>
+          <input type="range" min="2" max="9" step="0.1" data-crt-setting="scanlineSpacing">
+        </label>
+        <label class="crt-control">
+          <span>RGB grille <output data-crt-value="grilleStrength"></output></span>
+          <input type="range" min="0" max="0.12" step="0.002" data-crt-setting="grilleStrength">
+        </label>
+        <label class="crt-control">
+          <span>Glass vignette <output data-crt-value="vignetteStrength"></output></span>
+          <input type="range" min="0" max="0.9" step="0.01" data-crt-setting="vignetteStrength">
+        </label>
+        <label class="crt-control">
+          <span>Bezel darkness <output data-crt-value="bezelStrength"></output></span>
+          <input type="range" min="0" max="1" step="0.01" data-crt-setting="bezelStrength">
+        </label>
+        <label class="crt-control">
+          <span>Corner radius <output data-crt-value="cornerRadius"></output></span>
+          <input type="range" min="0.005" max="0.16" step="0.001" data-crt-setting="cornerRadius">
+        </label>
+      </section>
+      <section class="crt-tuner-group" aria-labelledby="crt-signal-heading">
+        <h3 id="crt-signal-heading">Analog signal</h3>
+        <label class="crt-control">
+          <span>Noise <output data-crt-value="noiseStrength"></output></span>
+          <input type="range" min="0" max="0.1" step="0.002" data-crt-setting="noiseStrength">
+        </label>
+        <label class="crt-control">
+          <span>Flicker <output data-crt-value="flickerStrength"></output></span>
+          <input type="range" min="0" max="0.08" step="0.001" data-crt-setting="flickerStrength">
+        </label>
+        <label class="crt-control">
+          <span>Rolling band <output data-crt-value="rollingStrength"></output></span>
+          <input type="range" min="0" max="0.12" step="0.002" data-crt-setting="rollingStrength">
+        </label>
+        <label class="crt-control">
+          <span>Animation speed <output data-crt-value="motionSpeed"></output></span>
+          <input type="range" min="0" max="2" step="0.01" data-crt-setting="motionSpeed">
+        </label>
+      </section>
+      <div class="crt-tuner-actions">
+        <button type="button" data-crt-preset="strong">Strong</button>
+        <button type="button" data-crt-preset="soft">Soft</button>
+        <button type="button" data-crt-reset>Reset</button>
+      </div>
+    </div>
+  </details>
   <canvas id="glove-canvas"></canvas>
+  <canvas id="crt-viewport-canvas" aria-hidden="true"></canvas>
 
-<script type="module" src="./grid-replica.js?v=20260830e"></script>
+<script type="module" src="./grid-replica.js?v=20260831e"></script>
+<script type="module" src="./logo-stage.js?v=20260831l"></script>
+<script type="module" src="./crt-viewport.js?v=20260831d"></script>
+<script type="module" src="./game-launcher.js?v=20260831t"></script>
 <script type="module">
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -717,6 +1582,8 @@ import {
   stoneTileDataUrl,
 } from './stone-tile-pipeline/playground.js?v=20260830b';
 
+const CARTRIDGE_INTRO_ENABLED =
+  document.documentElement.classList.contains('is-cartridge-intro');
 const STONE_BACKGROUND_SEED = 3075641479;
 const STONE_BACKGROUND_CANDIDATES = 96;
 let stoneBackgroundReady = false;
@@ -743,6 +1610,13 @@ const canvas = document.getElementById('glove-canvas');
 const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: false });
 renderer.setPixelRatio(1);
 
+const godRayLayer = document.getElementById('hardware-god-ray');
+const godRayOuter = document.getElementById('god-ray-outer');
+const godRayMiddle = document.getElementById('god-ray-middle');
+const godRayCore = document.getElementById('god-ray-core');
+const godRayCartridgeHalo = document.getElementById('god-ray-cartridge-halo');
+const godRayConsoleHaze = document.getElementById('god-ray-console-haze');
+
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
 camera.position.set(0, 0, 16);
@@ -750,6 +1624,252 @@ const cameraRestPosition = camera.position.clone();
 const cameraRestQuaternion = camera.quaternion.clone();
 
 scene.add(new THREE.HemisphereLight(0xffffff, 0x9a9aa8, 0.4));
+
+// The uploaded intro clip is the main-page hero and also drives the optional
+// pre-boot hardware CRT texture.
+const mainHardwareTvRig = new THREE.Group();
+const mainHardwareTvVisual = new THREE.Group();
+const starterTvDisplay = new THREE.Group();
+starterTvDisplay.rotation.set(-0.025, -0.065, 0);
+mainHardwareTvVisual.add(starterTvDisplay);
+mainHardwareTvRig.add(mainHardwareTvVisual);
+scene.add(mainHardwareTvRig);
+mainHardwareTvRig.visible = CARTRIDGE_INTRO_ENABLED;
+let mainHardwareTvUnitH = 0;
+
+// ---------------------------------------------------------------------------
+// Starter-screen Trinitron: a Tripo-generated cabinet with the local intro clip
+// projected onto a curved, emissive CRT surface.
+// ---------------------------------------------------------------------------
+const introVideo = document.getElementById('intro-video');
+const soundToggle = document.getElementById('sound-toggle');
+const soundToggleState = document.getElementById('sound-toggle-state');
+const advancedControl = document.getElementById('advanced-control');
+const crtTuner = document.getElementById('crt-tuner');
+const embeddedGameFrame = document.getElementById('intro-game-frame');
+const SOUND_STORAGE_KEY = 'opensmash-sound';
+let soundOn = true;
+
+try { soundOn = localStorage.getItem(SOUND_STORAGE_KEY) !== 'off'; }
+catch { /* Sound remains on when preferences cannot be persisted. */ }
+
+function syncEmbeddedGameAudio(attempt = 0) {
+  try {
+    const audioContext = embeddedGameFrame?.contentWindow?.Module?.SDL2?.audioContext;
+    if (audioContext) {
+      const update = soundOn ? audioContext.resume() : audioContext.suspend();
+      update?.catch(() => {});
+      return;
+    }
+  } catch { /* The frame may still be navigating. */ }
+  if (attempt < 40 && embeddedGameFrame?.src !== 'about:blank') {
+    window.setTimeout(() => syncEmbeddedGameAudio(attempt + 1), 250);
+  }
+}
+
+function applySoundPreference() {
+  introVideo.muted = !soundOn;
+  window.openSmashSoundOn = soundOn;
+  if (soundToggle) soundToggle.setAttribute('aria-pressed', String(soundOn));
+  if (soundToggleState) soundToggleState.textContent = soundOn ? 'On' : 'Off';
+  syncEmbeddedGameAudio();
+}
+
+soundToggle?.addEventListener('click', () => {
+  soundOn = !soundOn;
+  try { localStorage.setItem(SOUND_STORAGE_KEY, soundOn ? 'on' : 'off'); }
+  catch { /* The current preference still applies for this session. */ }
+  applySoundPreference();
+  if (soundOn) introVideo.play().catch(() => {});
+});
+embeddedGameFrame?.addEventListener('load', () => syncEmbeddedGameAudio());
+applySoundPreference();
+
+function syncAdvancedControl() {
+  advancedControl?.setAttribute(
+    'aria-expanded', String(Boolean(crtTuner && !crtTuner.hidden && crtTuner.open))
+  );
+}
+
+advancedControl?.addEventListener('click', () => {
+  if (!crtTuner) return;
+  const willOpen = crtTuner.hidden || !crtTuner.open;
+  crtTuner.hidden = !willOpen;
+  crtTuner.open = willOpen;
+  syncAdvancedControl();
+  if (willOpen) crtTuner.querySelector('summary')?.focus();
+});
+crtTuner?.addEventListener('toggle', () => {
+  if (!crtTuner.open) crtTuner.hidden = true;
+  syncAdvancedControl();
+});
+syncAdvancedControl();
+
+const tvCabinetMaterial = new THREE.MeshStandardMaterial({
+  color: 0x444748,
+  roughness: 0.68,
+  metalness: 0.08,
+});
+const introVideoTexture = new THREE.VideoTexture(introVideo);
+introVideoTexture.colorSpace = THREE.SRGBColorSpace;
+introVideoTexture.minFilter = THREE.LinearFilter;
+introVideoTexture.magFilter = THREE.LinearFilter;
+introVideoTexture.generateMipmaps = false;
+
+const crtScreenMaterial = new THREE.ShaderMaterial({
+  transparent: true,
+  depthWrite: true,
+  toneMapped: false,
+  uniforms: {
+    videoMap: { value: introVideoTexture },
+    time: { value: 0 },
+    videoResolution: { value: new THREE.Vector2(1280, 960) },
+    screenAspect: { value: 1.48 },
+    videoAspect: { value: 4 / 3 },
+  },
+  vertexShader: `
+    varying vec2 vUv;
+    varying vec3 vNormalView;
+    void main() {
+      vUv = uv;
+      vNormalView = normalize(normalMatrix * normal);
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }
+  `,
+  fragmentShader: `
+    uniform sampler2D videoMap;
+    uniform float time;
+    uniform vec2 videoResolution;
+    uniform float screenAspect;
+    uniform float videoAspect;
+    varying vec2 vUv;
+    varying vec3 vNormalView;
+
+    float hash21(vec2 p) {
+      p = fract(p * vec2(123.34, 456.21));
+      p += dot(p, p + 45.32);
+      return fract(p.x * p.y);
+    }
+
+    void main() {
+      vec2 centered = vUv * 2.0 - 1.0;
+      vec2 rounded = abs(centered) - vec2(0.925, 0.89);
+      float roundedDistance = length(max(rounded, 0.0)) +
+        min(max(rounded.x, rounded.y), 0.0) - 0.075;
+      float edgeAlpha = 1.0 - smoothstep(-0.012, 0.006, roundedDistance);
+      if (edgeAlpha <= 0.001) discard;
+
+      float radius2 = dot(centered, centered);
+      vec2 curved = centered * (1.0 + radius2 * 0.055);
+      vec2 uv = curved * 0.5 + 0.5;
+
+      float aspectScale = screenAspect / videoAspect;
+      uv.y = (uv.y - 0.5) * aspectScale + 0.5;
+      if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) {
+        gl_FragColor = vec4(vec3(0.003), edgeAlpha);
+        return;
+      }
+
+      float aberration = 0.0013 + radius2 * 0.0011;
+      float red = texture2D(videoMap, uv + vec2(aberration, 0.0)).r;
+      float green = texture2D(videoMap, uv).g;
+      float blue = texture2D(videoMap, uv - vec2(aberration, 0.0)).b;
+      vec3 color = vec3(red, green, blue);
+
+      float sourceLine = uv.y * videoResolution.y;
+      float scanline = 0.86 + 0.14 * sin(sourceLine * 3.14159265);
+      float fineLine = 0.96 + 0.04 * sin(sourceLine * 6.2831853 + time * 0.7);
+      float triad = mod(gl_FragCoord.x, 3.0);
+      vec3 phosphorMask = triad < 1.0 ? vec3(1.0, 0.82, 0.78)
+        : triad < 2.0 ? vec3(0.80, 1.0, 0.80)
+        : vec3(0.80, 0.84, 1.0);
+      float rollingBand = 1.0 + 0.035 * exp(-pow(
+        fract(uv.y - time * 0.085) - 0.5, 2.0) / 0.0045);
+      float vignette = pow(clamp(
+        16.0 * vUv.x * vUv.y * (1.0 - vUv.x) * (1.0 - vUv.y), 0.0, 1.0
+      ), 0.23);
+      float noise = (hash21(gl_FragCoord.xy + floor(time * 30.0)) - 0.5) * 0.025;
+      float flicker = 0.985 + 0.015 * sin(time * 47.0);
+      float glassFacing = 0.90 + 0.10 * abs(vNormalView.z);
+
+      color *= scanline * fineLine * phosphorMask * rollingBand;
+      color = color * (0.90 + 0.14 * vignette) * flicker * glassFacing + noise;
+      color += vec3(0.018, 0.028, 0.040) * (1.0 - vignette);
+      gl_FragColor = vec4(max(color, 0.0), edgeAlpha);
+      #include <colorspace_fragment>
+    }
+  `,
+});
+
+function curvedScreenGeometry(width, height, depth) {
+  const geometry = new THREE.PlaneGeometry(width, height, 48, 36);
+  const position = geometry.attributes.position;
+  for (let index = 0; index < position.count; index += 1) {
+    const nx = position.getX(index) / (width * 0.5);
+    const ny = position.getY(index) / (height * 0.5);
+    const dome = Math.max(0, 1 - nx * nx) * Math.max(0, 1 - ny * ny);
+    position.setZ(index, depth * dome);
+  }
+  position.needsUpdate = true;
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
+new GLTFLoader().load('assets/tripo-crt-tv.glb', gltf => {
+  const orientedModel = new THREE.Group();
+  const tvModel = gltf.scene;
+  orientedModel.add(tvModel);
+
+  // Tripo object models use +X as front, +Y as up, and +Z as width.
+  // Present those axes as +Z front, +Y up, and -X width for Three.js.
+  orientedModel.quaternion.setFromRotationMatrix(
+    new THREE.Matrix4().makeBasis(
+      new THREE.Vector3(0, 0, 1),
+      new THREE.Vector3(0, 1, 0),
+      new THREE.Vector3(-1, 0, 0)
+    )
+  );
+  orientedModel.updateMatrixWorld(true);
+
+  const initialBounds = new THREE.Box3().setFromObject(orientedModel);
+  const center = initialBounds.getCenter(new THREE.Vector3());
+  const size = initialBounds.getSize(new THREE.Vector3());
+  orientedModel.position.sub(center);
+  tvModel.traverse(object => {
+    if (!object.isMesh) return;
+    object.frustumCulled = false;
+    object.material = tvCabinetMaterial;
+  });
+  starterTvDisplay.add(orientedModel);
+
+  const screenWidth = size.x * 0.81;
+  const screenHeight = size.y * 0.60;
+  const screenDepth = Math.min(screenWidth, screenHeight) * 0.028;
+  const screen = new THREE.Mesh(
+    curvedScreenGeometry(screenWidth, screenHeight, screenDepth),
+    crtScreenMaterial
+  );
+  screen.name = 'LiveCrtVideoScreen';
+  screen.position.set(0, size.y * 0.095, size.z * 0.505);
+  screen.renderOrder = 3;
+  starterTvDisplay.add(screen);
+
+  const targetHeight = 2.30;
+  starterTvDisplay.name = 'StarterCrtTelevision';
+  starterTvDisplay.scale.setScalar(targetHeight / size.y);
+  starterTvDisplay.position.y = -0.02;
+  mainHardwareTvUnitH = targetHeight;
+  resize();
+}, undefined, error => console.error('Could not load Tripo CRT television', error));
+
+introVideo.addEventListener('loadedmetadata', () => {
+  if (!introVideo.videoWidth || !introVideo.videoHeight) return;
+  crtScreenMaterial.uniforms.videoResolution.value.set(
+    introVideo.videoWidth, introVideo.videoHeight
+  );
+  crtScreenMaterial.uniforms.videoAspect.value =
+    introVideo.videoWidth / introVideo.videoHeight;
+});
 
 // ---------------------------------------------------------------------------
 // N64 retro pipeline: render tiny -> nearest-neighbor upscale, posterized
@@ -861,6 +1981,7 @@ const VIEW_H = 2 * Math.tan(THREE.MathUtils.degToRad(35 / 2)) * 16;
 const GLOVE_PX = 32;   // tuned so the rendered silhouette spans the sprite's 36 rows
 let handUnitH = 0;     // hand height in world units; set once the mesh is built
 const CONSOLE_PX = 150;
+const MAIN_HARDWARE_TV_PX = 124;
 const CARTRIDGE_FIT_SCALE = 0.44;
 const CARTRIDGE_IDLE_Z = 1.55;
 const CARTRIDGE_DRAG_Z = -0.48;
@@ -892,11 +2013,24 @@ function applyHardwareScale(viewportPixelH) {
   if (cartridgeUnitH) {
     cartridgeVisual.scale.setScalar(consoleScaleValue * CARTRIDGE_FIT_SCALE);
   }
+  if (mainHardwareTvUnitH) {
+    const widthResponsivePx = window.innerWidth < 640
+      ? MAIN_HARDWARE_TV_PX * 0.84
+      : MAIN_HARDWARE_TV_PX;
+    const tvResponsivePx = Math.min(
+      widthResponsivePx,
+      viewportPixelH * 0.44 / SHADER_DEFAULTS.pixelSize
+    );
+    const tvScale = tvResponsivePx * SHADER_DEFAULTS.pixelSize
+      * (VIEW_H / viewportPixelH) / mainHardwareTvUnitH;
+    mainHardwareTvVisual.scale.setScalar(tvScale);
+  }
 }
 
 function resize() {
   if (!window.innerWidth || !window.innerHeight) return;  // pane hidden: keep old size
   renderer.setSize(window.innerWidth, window.innerHeight, false);
+  godRayLayer.setAttribute('viewBox', `0 0 ${window.innerWidth} ${window.innerHeight}`);
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.fov = 35;
   camera.updateProjectionMatrix();
@@ -1138,17 +2272,20 @@ scene.add(glove);
 // ---------------------------------------------------------------------------
 const cartridgeControl = document.getElementById('cartridge-control');
 const consoleControl = document.getElementById('console-control');
+const tvControl = document.getElementById('tv-control');
 const hardwareInset = document.getElementById('hardware-inset');
 
-function updateCartridgeHomeLayout() {
+function updateHardwareThirdsLayout() {
   const inset = hardwareInset.getBoundingClientRect();
-  const consoleRect = consoleControl.getBoundingClientRect();
-  const homeViewportY = consoleRect.top * 0.5;
-  const homeInsetY = Math.max(0, homeViewportY - inset.top);
-  hardwareInset.style.setProperty('--cartridge-home-top', `${homeInsetY}px`);
+  const insetY = fraction => THREE.MathUtils.clamp(
+    window.innerHeight * fraction - inset.top, 0, inset.height
+  );
+  hardwareInset.style.setProperty('--tv-home-top', `${insetY(1 / 6)}px`);
+  hardwareInset.style.setProperty('--cartridge-home-top', `${insetY(1 / 2)}px`);
+  hardwareInset.style.setProperty('--console-home-top', `${insetY(5 / 6)}px`);
 }
-updateCartridgeHomeLayout();
-window.addEventListener('resize', updateCartridgeHomeLayout);
+updateHardwareThirdsLayout();
+window.addEventListener('resize', updateHardwareThirdsLayout);
 
 const cartridgeRig = new THREE.Group();
 const cartridgeVisual = new THREE.Group();
@@ -1162,6 +2299,7 @@ cartridgeRig.add(
   cartridgeVisual, cartridgeLight, cartridgeFillLight, cartridgeLight.target
 );
 scene.add(cartridgeRig);
+cartridgeRig.visible = CARTRIDGE_INTRO_ENABLED;
 
 const consoleRig = new THREE.Group();
 const consoleVisual = new THREE.Group();
@@ -1178,6 +2316,7 @@ consoleFillLight.position.set(2.2, 0.4, 2.1);
 consoleFillLight.target = consoleLight.target;
 consoleRig.add(consoleVisual, consoleLight, consoleFillLight, consoleLight.target);
 scene.add(consoleRig);
+consoleRig.visible = CARTRIDGE_INTRO_ENABLED;
 
 const cartridgeMaterial = new THREE.MeshStandardMaterial({
   color: 0xb8b5ba,
@@ -1274,6 +2413,7 @@ function resetCameraAfterShake() {
 }
 
 function playCartridgeSound(kind) {
+  if (!soundOn) return;
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
   if (!AudioContextClass) return;
 
@@ -1400,9 +2540,11 @@ const cartridgeTilt = { x: 0, z: 0, vx: 0, vz: 0 };
 const cartridgeFreeQuaternion = new THREE.Quaternion();
 const cartridgeSocketQuaternion = new THREE.Quaternion();
 const cartridgeSocketWorld = new THREE.Vector3();
-const cartridgeVisibleSocketWorld = new THREE.Vector3();
+const cartridgeMouthWorld = new THREE.Vector3();
+const cartridgeMouthScreen = new THREE.Vector2();
 let consoleModel = null;
 let consoleSnapAnchor = null;
+let consoleMouthAnchor = null;
 
 // ---------------------------------------------------------------------------
 // Cartridge light wisps. Each strand is rebuilt in world space so its source
@@ -1707,8 +2849,14 @@ cartridgeControl.addEventListener('pointerleave', () => {
 });
 
 function getConsoleCollisionGeometry(receiver) {
-  const centerX = receiver.left + receiver.width * 0.5;
-  const slotY = receiver.top + receiver.height * 0.32;
+  let centerX = receiver.left + receiver.width * 0.5;
+  let slotY = receiver.top + receiver.height * 0.32;
+  if (consoleMouthAnchor) {
+    consoleMouthAnchor.getWorldPosition(cartridgeMouthWorld);
+    cartridgeWorldToScreen(cartridgeMouthWorld, cartridgeMouthScreen);
+    centerX = cartridgeMouthScreen.x;
+    slotY = cartridgeMouthScreen.y;
+  }
   const cartridgeHalfWidth = receiver.width * 0.21;
   const cartridgeHalfHeight = receiver.width * 0.14;
   const shellInsetX = receiver.width * 0.065;
@@ -1895,7 +3043,7 @@ function updateCartridgeDrag(e, trackVelocity = true) {
   }
 }
 
-function tryBeginPhysicalCartridgeInsertion(receiver) {
+function tryBeginPhysicalCartridgeInsertion(receiver, allowGuidedTarget = false) {
   if (cartridgeState !== CARTRIDGE_STATE.DRAGGING || cartridgeEjectDrag ||
       cartridgeRouteActive) return false;
   const collision = getConsoleCollisionGeometry(receiver);
@@ -1908,7 +3056,7 @@ function tryBeginPhysicalCartridgeInsertion(receiver) {
     Math.abs(cartridgeRouteScreen.x - collision.centerX) <=
       collision.slotCaptureHalfWidth * 1.35 &&
     cartridgeRouteScreen.y >= collision.slotCaptureY - receiver.height * 0.035;
-  if (!insideCapture && bodyIsAtMouth) {
+  if (!insideCapture && (bodyIsAtMouth || allowGuidedTarget)) {
     // The spring-driven body can trail the pointer during a fast pull. Treat
     // the guided target as a swept collision only once the visible cartridge
     // is already beside the mouth. This prevents it from leaving the cursor
@@ -1976,7 +3124,9 @@ function finishCartridgeDrag(e, cancelled = false) {
   if (!cancelled) updateCartridgeDrag(e);
   if (!cancelled && cartridgeState === CARTRIDGE_STATE.DRAGGING && consoleSnapAnchor) {
     const receiver = consoleControl.getBoundingClientRect();
-    tryBeginPhysicalCartridgeInsertion(receiver);
+    // On release, honor the guided pointer target even if the spring-driven
+    // shell is still catching up to a quick downward drag.
+    tryBeginPhysicalCartridgeInsertion(receiver, true);
   }
   if (cancelled) {
     setCartridgeState(CARTRIDGE_STATE.FREE);
@@ -2129,10 +3279,13 @@ new GLTFLoader().load('assets/n64-cartridge-tripo.glb', (gltf) => {
   resize();
 }, undefined, error => console.error('Could not load cartridge GLB', error));
 
-new GLTFLoader().load('assets/hybrid-four-port-console-fitted.glb', (gltf) => {
+new GLTFLoader().load('assets/hybrid-four-port-console-fitted.glb?v=20260831c', (gltf) => {
   consoleModel = gltf.scene;
   consoleSnapAnchor = consoleModel.getObjectByName('CartridgeSnapAnchor');
-  hardwareInset.dataset.snapAnchor = consoleSnapAnchor ? 'ready' : 'missing';
+  consoleMouthAnchor = consoleModel.getObjectByName('CartridgeMouthAnchor');
+  hardwareInset.dataset.snapAnchor = consoleSnapAnchor && consoleMouthAnchor
+    ? 'ready'
+    : 'missing';
   const bounds = new THREE.Box3().setFromObject(consoleModel);
   const center = bounds.getCenter(new THREE.Vector3());
   const size = bounds.getSize(new THREE.Vector3());
@@ -2315,6 +3468,7 @@ const raycaster = new THREE.Raycaster();
 const worldPt = new THREE.Vector3();
 const cartridgeTarget = new THREE.Vector3();
 const consoleTarget = new THREE.Vector3();
+const mainHardwareTvTarget = new THREE.Vector3();
 
 function screenToSceneWorld(clientX, clientY, z, target) {
   const planeViewHeight = 2 * Math.tan(THREE.MathUtils.degToRad(camera.fov * 0.5)) *
@@ -2337,6 +3491,100 @@ function cartridgeWorldToScreen(world, target) {
     (world.x / (planeViewHeight * camera.aspect * 0.5) + 1) * window.innerWidth * 0.5,
     (1 - world.y / (planeViewHeight * 0.5)) * window.innerHeight * 0.5
   );
+}
+
+let godRayVisibility = 0;
+const godRayCartridgeWorld = new THREE.Vector3();
+const godRayCartridgeScreen = new THREE.Vector2();
+
+function godRayPath(sourceX, focusX, focusY, consoleX, bottomY,
+                    sourceHalfWidth, focusHalfWidth, bottomHalfWidth) {
+  const lowerSpan = Math.max(1, bottomY - focusY);
+  return [
+    `M ${sourceX - sourceHalfWidth} -40`,
+    `C ${sourceX - sourceHalfWidth * 0.78} ${focusY * 0.3}`,
+    `${focusX - focusHalfWidth * 0.88} ${focusY * 0.78}`,
+    `${focusX - focusHalfWidth} ${focusY}`,
+    `C ${focusX - focusHalfWidth * 1.08} ${focusY + lowerSpan * 0.24}`,
+    `${consoleX - bottomHalfWidth * 0.84} ${bottomY - lowerSpan * 0.2}`,
+    `${consoleX - bottomHalfWidth} ${bottomY}`,
+    `L ${consoleX + bottomHalfWidth} ${bottomY}`,
+    `C ${consoleX + bottomHalfWidth * 0.84} ${bottomY - lowerSpan * 0.2}`,
+    `${focusX + focusHalfWidth * 1.08} ${focusY + lowerSpan * 0.24}`,
+    `${focusX + focusHalfWidth} ${focusY}`,
+    `C ${focusX + focusHalfWidth * 0.88} ${focusY * 0.78}`,
+    `${sourceX + sourceHalfWidth * 0.78} ${focusY * 0.3}`,
+    `${sourceX + sourceHalfWidth} -40 Z`,
+  ].join(' ');
+}
+
+function updateGodRay(now, dt) {
+  const beamAvailable = cartridgeModel && consoleModel && cartridgePhysicsReady;
+  const beamActive = beamAvailable &&
+    cartridgeState !== CARTRIDGE_STATE.BOOTING &&
+    cartridgeState !== CARTRIDGE_STATE.RUNNING;
+  const visibilityGoal = beamActive ? 1 : 0;
+  const visibilityRate = visibilityGoal > godRayVisibility ? 2.4 : 8.5;
+  godRayVisibility += (visibilityGoal - godRayVisibility) *
+    Math.min(1, dt * visibilityRate);
+
+  if (godRayVisibility < 0.002) {
+    godRayLayer.style.opacity = '0';
+    return;
+  }
+
+  cartridgeRig.updateMatrixWorld(true);
+  cartridgeVisual.getWorldPosition(godRayCartridgeWorld);
+  cartridgeWorldToScreen(godRayCartridgeWorld, godRayCartridgeScreen);
+
+  const cartridgeRect = cartridgeControl.getBoundingClientRect();
+  const consoleRect = consoleControl.getBoundingClientRect();
+  const focusX = godRayCartridgeScreen.x;
+  const focusY = godRayCartridgeScreen.y;
+  const consoleX = consoleRect.left + consoleRect.width * 0.5;
+  const consoleY = consoleRect.top + consoleRect.height * 0.42;
+  const bottomY = Math.min(
+    window.innerHeight + 70,
+    consoleRect.bottom + consoleRect.height * 0.2
+  );
+  const sourceX = window.innerWidth * 0.5 +
+    (focusX - window.innerWidth * 0.5) * 0.14;
+  const cartridgeHalfWidth = THREE.MathUtils.clamp(
+    cartridgeRect.width * 0.52, 56, 104
+  );
+  const consoleHalfWidth = THREE.MathUtils.clamp(
+    consoleRect.width * 0.84, 180, 340
+  );
+  const shimmer = prefersReducedMotion ? 1 : 0.985 + Math.sin(now * 1.1) * 0.015;
+
+  godRayOuter.setAttribute('d', godRayPath(
+    sourceX, focusX, focusY, consoleX, bottomY,
+    Math.max(32, window.innerWidth * 0.026),
+    cartridgeHalfWidth * 1.35,
+    consoleHalfWidth
+  ));
+  godRayMiddle.setAttribute('d', godRayPath(
+    sourceX + 8, focusX, focusY, consoleX, bottomY,
+    Math.max(16, window.innerWidth * 0.012),
+    cartridgeHalfWidth * 0.82,
+    consoleHalfWidth * 0.64
+  ));
+  godRayCore.setAttribute('d', godRayPath(
+    sourceX - 5, focusX, focusY, consoleX, bottomY - consoleRect.height * 0.1,
+    Math.max(7, window.innerWidth * 0.005),
+    cartridgeHalfWidth * 0.34,
+    consoleHalfWidth * 0.31
+  ));
+
+  godRayCartridgeHalo.setAttribute('cx', focusX);
+  godRayCartridgeHalo.setAttribute('cy', focusY);
+  godRayCartridgeHalo.setAttribute('rx', cartridgeHalfWidth * 1.42);
+  godRayCartridgeHalo.setAttribute('ry', cartridgeHalfWidth * 0.86);
+  godRayConsoleHaze.setAttribute('cx', consoleX);
+  godRayConsoleHaze.setAttribute('cy', consoleY);
+  godRayConsoleHaze.setAttribute('rx', consoleHalfWidth * 0.96);
+  godRayConsoleHaze.setAttribute('ry', consoleRect.height * 0.55);
+  godRayLayer.style.opacity = String(godRayVisibility * shimmer);
 }
 
 function alignCartridgeDragDepth(amount) {
@@ -2430,6 +3678,14 @@ function sampleCartridgeRoute(progress, target) {
 }
 
 function updateHardwareTargets() {
+  const tvRect = tvControl.getBoundingClientRect();
+  screenToSceneWorld(
+    tvRect.left + tvRect.width * 0.5,
+    tvRect.top + tvRect.height * 0.5,
+    -0.70,
+    mainHardwareTvTarget
+  );
+
   const rect = cartridgeControl.getBoundingClientRect();
   const cx = rect.left + rect.width * 0.5;
   const cy = rect.top + rect.height * 0.5;
@@ -2437,11 +3693,8 @@ function updateHardwareTargets() {
 
   const consoleRect = consoleControl.getBoundingClientRect();
   const consoleX = consoleRect.left + consoleRect.width * 0.5;
-  const consoleY = consoleRect.top + consoleRect.height * 0.55;
+  const consoleY = consoleRect.top + consoleRect.height * 0.5;
   screenToSceneWorld(consoleX, consoleY, -0.92, consoleTarget);
-  screenToCartridgeWorld(
-    consoleX, consoleRect.top + consoleRect.height * 0.32, cartridgeVisibleSocketWorld
-  );
 }
 
 function updateTargetFromEvent(e) {
@@ -2450,10 +3703,33 @@ function updateTargetFromEvent(e) {
   raycaster.ray.intersectPlane(rayPlane, worldPt);
   mouse.set(worldPt.x, worldPt.y);
 }
+
+function updateTargetFromEmbeddedGame(event) {
+  const data = event.data;
+  if (event.origin !== window.location.origin ||
+      event.source !== embeddedGameFrame?.contentWindow ||
+      data?.type !== 'opensmash-game-pointer') return;
+
+  if (data.kind === 'up' || data.kind === 'cancel') {
+    grabbing = false;
+    return;
+  }
+
+  const frameRect = embeddedGameFrame.getBoundingClientRect();
+  const sourceWidth = Math.max(1, Number(data.viewportWidth) || frameRect.width);
+  const sourceHeight = Math.max(1, Number(data.viewportHeight) || frameRect.height);
+  updateTargetFromEvent({
+    clientX: frameRect.left + Number(data.x || 0) * frameRect.width / sourceWidth,
+    clientY: frameRect.top + Number(data.y || 0) * frameRect.height / sourceHeight,
+  });
+  if (data.kind === 'down') grabbing = true;
+}
+
 window.addEventListener('pointermove', updateTargetFromEvent);
 window.addEventListener('pointerdown', e => { grabbing = true; updateTargetFromEvent(e); });
 window.addEventListener('pointerup', () => { grabbing = false; });
 window.addEventListener('pointerleave', () => { grabbing = false; });
+window.addEventListener('message', updateTargetFromEmbeddedGame);
 
 // ---------------------------------------------------------------------------
 // Debug capture: freeze the pose, render through the retro pipeline into a
@@ -2525,8 +3801,8 @@ function setCartridgeState(next) {
     cartridgeRouteActive = false;
     cartridgeRouteKind = 'none';
     hardwareInset.dataset.cartridgeRoute = 'idle';
-    resetIntroVideoPlayback();
   }
+  if (next === CARTRIDGE_STATE.EJECTING) restartStarterVideoPlayback();
   const gameRunning = next === CARTRIDGE_STATE.RUNNING;
   if (gameRunning) ensureStoneBackground();
   document.body.classList.toggle('is-game-booted', gameRunning);
@@ -2549,25 +3825,26 @@ function setCartridgeState(next) {
   cartridgeControl.setAttribute('aria-label', labels[next]);
 }
 
-const introVideo = document.querySelector('.intro-video');
-const introVideoPlaybackUrl = introVideo.dataset.src;
-
-function startIntroVideoPlayback() {
-  if (introVideo.getAttribute('src') !== introVideoPlaybackUrl) {
-    introVideo.setAttribute('src', introVideoPlaybackUrl);
-  }
+function startStarterVideoPlayback() {
+  introVideo.play().catch(() => {
+    // If autoplay is declined, the first starter-page gesture retries it.
+  });
 }
 
-function resetIntroVideoPlayback() {
-  introVideo.removeAttribute('src');
+function restartStarterVideoPlayback() {
+  introVideo.currentTime = 0;
+  startStarterVideoPlayback();
 }
+
+startStarterVideoPlayback();
+window.addEventListener('pointerdown', startStarterVideoPlayback, { once: true });
 
 function startCartridgeBoot(now) {
   setCartridgeState(CARTRIDGE_STATE.BOOTING);
   // Auto-insert begins booting before its route is fully seated. Start the
   // reveal choreography only when the insert route has actually completed.
   cartridgeInsertionTime = cartridgeRouteActive ? -1 : now;
-  if (!cartridgeRouteActive) startIntroVideoPlayback();
+  if (!cartridgeRouteActive) startStarterVideoPlayback();
   cartridgeYawVelocity = 0;
   cartridgeVelocity.set(0, 0, 0);
 }
@@ -2592,6 +3869,13 @@ function updateFunLights(now) {
 
 const clock = new THREE.Clock();
 const DBG = location.hash;
+if (!CARTRIDGE_INTRO_ENABLED || DBG.includes('skipboot')) {
+  startStarterVideoPlayback();
+  setCartridgeState(CARTRIDGE_STATE.RUNNING);
+  cartridgeInsertionTime = CARTRIDGE_INTRO_ENABLED
+    ? clock.elapsedTime
+    : clock.elapsedTime - HARDWARE_EXIT_DURATION;
+}
 function tick() {
   requestAnimationFrame(tick);
   if (window.innerWidth && renderer.domElement.width !== window.innerWidth) resize();
@@ -2624,6 +3908,12 @@ function tick() {
   cartridgeEntryAmount += (entryGoal - cartridgeEntryAmount) * Math.min(1, dt * 8.5);
 
   updateHardwareTargets();
+  mainHardwareTvRig.position.copy(mainHardwareTvTarget);
+  mainHardwareTvVisual.position.set(
+    Math.sin(t * 0.31 + 0.7) * 0.010,
+    Math.sin(t * 0.46 + 1.2) * 0.018,
+    0
+  );
   consoleRig.position.copy(consoleTarget);
   consoleIdleEuler.set(
     Math.sin(t * 0.58) * 0.012,
@@ -2643,10 +3933,6 @@ function tick() {
   consoleRig.updateMatrixWorld(true);
   if (consoleSnapAnchor) {
     consoleSnapAnchor.getWorldPosition(cartridgeSocketWorld);
-    // Keep the modeled insertion depth, but align X/Y to the receiver's actual
-    // screen projection so the visible aperture is also the interaction target.
-    cartridgeSocketWorld.x = cartridgeVisibleSocketWorld.x;
-    cartridgeSocketWorld.y = cartridgeVisibleSocketWorld.y + consoleApproachAmount * 0.10;
     consoleVisual.getWorldQuaternion(cartridgeSocketQuaternion);
   } else {
     cartridgeSocketWorld.copy(consoleTarget).add(new THREE.Vector3(0, 0.45, 0.12));
@@ -2692,7 +3978,7 @@ function tick() {
         hardwareInset.dataset.cartridgeRoute = 'seated';
         if (cartridgeState === CARTRIDGE_STATE.BOOTING) {
           cartridgeInsertionTime = t;
-          startIntroVideoPlayback();
+          startStarterVideoPlayback();
         }
       } else if (completedRoute === 'eject-pop') {
         hardwareInset.dataset.cartridgeRoute = 'popped';
@@ -2808,6 +4094,7 @@ function tick() {
     cartridgeFreeQuaternion, cartridgeSocketQuaternion, orientationEase
   );
   updateCartridgeWisps(t, dt);
+  updateGodRay(t, dt);
 
   // Once the cartridge is fully seated, carry it and the console offscreen as
   // one unit. Their base positions are rebuilt every frame, so this visual
@@ -2821,6 +4108,7 @@ function tick() {
       );
     const exitEase = exitProgress * exitProgress * (3 - 2 * exitProgress);
     const hardwareExitOffset = exitEase * VIEW_H;
+    mainHardwareTvRig.position.y -= hardwareExitOffset;
     consoleRig.position.y -= hardwareExitOffset;
     cartridgeRig.position.y -= hardwareExitOffset;
   }
@@ -2886,6 +4174,8 @@ function tick() {
     renderer.setRenderTarget(null);
     renderer.render(postScene, postCam);
   }
+
+  crtScreenMaterial.uniforms.time.value = t;
 }
 tick();
 </script>

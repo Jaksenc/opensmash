@@ -1,8 +1,8 @@
 # OpenSmash web prototype
 
 A deliberately small React site and Node server that lives beside the existing
-`pipeline/website` work. It reads character portraits and metadata from
-`pipeline/play/ui` and serves the existing browser engine from
+`website` work. It reads character portraits and metadata from
+`play/ui` and serves the existing browser engine from
 `BattleShip/web-dist`; those outputs are not copied into this app.
 
 ## Run it
