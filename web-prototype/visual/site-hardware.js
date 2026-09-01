@@ -2,10 +2,15 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
+import cartridgeLabelUrl from './assets/cartridge-label-art.png?url';
+import cartridgeModelUrl from './assets/n64-cartridge-tripo.glb?url';
+import consoleModelUrl from './assets/hybrid-four-port-console-fitted.glb?url';
+import cursorModelUrl from './assets/hand-cursor-meshy.glb?url';
+import tvModelUrl from './assets/tripo-crt-tv.glb?url';
 import {
   generateStoneFromSeed,
   stoneTileDataUrl,
-} from './stone-tile-pipeline/playground.js?v=20260830b';
+} from './stone-tile-pipeline/playground.js';
 
 const CARTRIDGE_INTRO_ENABLED =
   document.documentElement.classList.contains('is-cartridge-intro');
@@ -245,7 +250,7 @@ function curvedScreenGeometry(width, height, depth) {
   return geometry;
 }
 
-new GLTFLoader().load('assets/tripo-crt-tv.glb', gltf => {
+new GLTFLoader().load(tvModelUrl, gltf => {
   const orientedModel = new THREE.Group();
   const tvModel = gltf.scene;
   orientedModel.add(tvModel);
@@ -775,7 +780,7 @@ const cartridgeMaterial = new THREE.MeshStandardMaterial({
   metalness: 0,
 });
 const cartridgeLabelTexture = new THREE.TextureLoader().load(
-  'assets/cartridge-label-art.png'
+  cartridgeLabelUrl
 );
 cartridgeLabelTexture.colorSpace = THREE.SRGBColorSpace;
 cartridgeLabelTexture.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
@@ -1697,7 +1702,7 @@ cartridgeControl.addEventListener('keyup', e => {
   }
 });
 
-new GLTFLoader().load('assets/n64-cartridge-tripo.glb', (gltf) => {
+new GLTFLoader().load(cartridgeModelUrl, (gltf) => {
   cartridgeModel = gltf.scene;
   const bounds = new THREE.Box3().setFromObject(cartridgeModel);
   const center = bounds.getCenter(new THREE.Vector3());
@@ -1728,7 +1733,7 @@ new GLTFLoader().load('assets/n64-cartridge-tripo.glb', (gltf) => {
   resize();
 }, undefined, error => console.error('Could not load cartridge GLB', error));
 
-new GLTFLoader().load('assets/hybrid-four-port-console-fitted.glb?v=20260831c', (gltf) => {
+new GLTFLoader().load(consoleModelUrl, (gltf) => {
   consoleModel = gltf.scene;
   consoleSnapAnchor = consoleModel.getObjectByName('CartridgeSnapAnchor');
   consoleMouthAnchor = consoleModel.getObjectByName('CartridgeMouthAnchor');
@@ -1790,7 +1795,7 @@ const GLB_ALIGN = {
 };
 window.__glbAlign = GLB_ALIGN;
 
-new GLTFLoader().load('assets/hand-cursor-meshy.glb', (gltf) => {
+new GLTFLoader().load(cursorModelUrl, (gltf) => {
   let src = null;
   gltf.scene.traverse(o => { if (o.isMesh && !src) src = o; });
   if (!src) return;
@@ -1912,7 +1917,7 @@ new GLTFLoader().load('assets/hand-cursor-meshy.glb', (gltf) => {
 });
 
 window.__dbg = { scene, camera, rt, renderer, bones, rigs, hand, wrist, glove,
-  qPoint, qGrab, THREE, capsules, cartridgeRig, cartridgeVisual,
+  qPoint, qGrab, capsules, cartridgeRig, cartridgeVisual,
   consoleRig, consoleVisual, funLetterMaterials };
 
 // ---------------------------------------------------------------------------

@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import logoModelUrl from './assets/smash-the-weights-logo.glb?url';
 
 const stage = document.getElementById('hero-logo-stage');
 const canvas = document.getElementById('hero-logo-canvas');
@@ -256,7 +257,7 @@ if (stage && canvas) {
   }
 
   new GLTFLoader().load(
-    './assets/smash-the-weights-logo.glb',
+    logoModelUrl,
     gltf => {
       logoModel = gltf.scene;
       const bounds = new THREE.Box3().setFromObject(logoModel);

@@ -108,7 +108,7 @@ main { width: min(1600px, calc(100% - 40px)); margin: 0 auto; }
   opacity: .48;
   background:
     linear-gradient(100deg, rgba(4,3,3,.96) 12%, rgba(25,11,8,.76) 72%, rgba(95,20,11,.45)),
-    url("/site-assets/charselect/fire_bg.png") center / 96px 92px;
+    url("../visual/assets/charselect/fire_bg.png") center / 96px 92px;
   image-rendering: pixelated;
 }
 .engine-placeholder img { width: min(100%, 330px); opacity: .88; filter: drop-shadow(0 12px 20px #000); }
@@ -219,7 +219,7 @@ body.is-create-experience-open #glove-canvas { z-index: 1800; }
   border: 1px solid #5d3a2b;
   background:
     linear-gradient(rgba(6, 2, 1, .56), rgba(6, 2, 1, .68)),
-    url("/assets/charselect/fire_bg.png") center / cover no-repeat;
+    url("../visual/assets/charselect/fire_bg.png") center / cover no-repeat;
   box-shadow: 0 3px 0 #160b08;
 }
 .creator-panel > * { position: relative; z-index: 1; }
@@ -305,7 +305,7 @@ body.is-create-experience-open #glove-canvas { z-index: 1800; }
   overflow: hidden;
   background:
     linear-gradient(rgba(6, 2, 1, .22), rgba(6, 2, 1, .22)),
-    url("/assets/charselect/fire_bg.png") center / 135px 129px !important;
+    url("../visual/assets/charselect/fire_bg.png") center / 135px 129px !important;
 }
 .create-page .flame-bridge-cell::after { content: ""; position: absolute; inset: 0; z-index: 1; background: rgba(6, 2, 1, .2); pointer-events: none; transition: background 100ms linear; }
 .create-page .flame-bridge-cell:hover::after,

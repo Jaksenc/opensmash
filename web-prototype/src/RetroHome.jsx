@@ -1,53 +1,16 @@
 import { useEffect, useRef, useState } from "react";
+import introVideoUrl from "../visual/assets/intro-crt.mp4?url";
+import logoFallbackUrl from "../visual/assets/smash-the-weights-logo.png?url";
 import FlameAction from "./FlameAction.jsx";
 import MobileControls from "./MobileControls.jsx";
 import ModalPage from "./ModalPage.jsx";
+import { startHomeRuntime } from "./visual-runtime.js";
+import { transitionMediaVolume } from "./audio-envelope.js";
 
-let visualRuntimePromise;
 const MOBILE_CONTROLS_MEDIA = "(hover: none) and (pointer: coarse)";
 
 function mobileControlsRequested() {
   return new URLSearchParams(window.location.search).has("mobileControls");
-}
-
-function loadVisualStyles() {
-  return new Promise((resolve, reject) => {
-    const existing = document.getElementById("site-shell-styles");
-    if (existing) {
-      if (existing.sheet) resolve();
-      else existing.addEventListener("load", resolve, { once: true });
-      return;
-    }
-    const link = document.createElement("link");
-    link.id = "site-shell-styles";
-    link.rel = "stylesheet";
-    link.href = "/visual/site-shell.css?v=20260901-canvas-layers1";
-    link.addEventListener("load", resolve, { once: true });
-    link.addEventListener("error", () => reject(new Error("Could not load the site visual system")), { once: true });
-    document.head.append(link);
-  });
-}
-
-function loadModule(src) {
-  return new Promise((resolve, reject) => {
-    const script = document.createElement("script");
-    script.type = "module";
-    script.src = src;
-    script.addEventListener("load", resolve, { once: true });
-    script.addEventListener("error", () => reject(new Error(`Could not load ${src}`)), { once: true });
-    document.body.append(script);
-  });
-}
-
-function startVisualRuntime() {
-  visualRuntimePromise ||= loadVisualStyles().then(() => [
-    "/visual/grid-replica.js?v=20260901-canvas-layers2",
-    "/visual/logo-stage.js?v=20260901-react6",
-    "/visual/crt-viewport.js?v=20260901-react7",
-    "/visual/game-launcher.js?v=20260901-react9",
-    "/visual/site-hardware.js?v=20260901-react7",
-  ].reduce((ready, src) => ready.then(() => loadModule(src)), Promise.resolve()));
-  return visualRuntimePromise;
 }
 
 function ControllerCallouts() {
@@ -155,6 +118,7 @@ export default function RetroHome({
   engineRef,
   gameFrameRef,
   isFullscreen,
+  launchFlowOpen,
   onAdvanced,
   onCloseGame,
   onCreate,
@@ -195,7 +159,6 @@ export default function RetroHome({
     } else {
       mobileControlsMedia.addListener?.(syncMobileControls);
     }
-    loadVisualStyles().catch((error) => window.openSmashReactBridge?.reportError?.(error));
     return () => {
       document.documentElement.classList.remove("is-direct-site");
       document.body.classList.remove("retro-home", "show-native-cursor", "uses-mobile-controls");
@@ -209,13 +172,19 @@ export default function RetroHome({
 
   useEffect(() => {
     if (!ready) return;
-    startVisualRuntime().catch((error) => window.openSmashReactBridge?.reportError?.(error));
+    startHomeRuntime().catch((error) => window.openSmashReactBridge?.reportError?.(error));
   }, [ready]);
 
   useEffect(() => {
     document.body.classList.toggle("is-game-running", Boolean(engine));
     return () => document.body.classList.remove("is-game-running");
   }, [engine]);
+
+  useEffect(() => {
+    const video = introVideoRef.current;
+    if (!video) return undefined;
+    return transitionMediaVolume(video, launchFlowOpen || engine ? 0 : 1);
+  }, [engine, launchFlowOpen]);
 
   function toggleMobileControls(event) {
     if (!mobileLayout) return;
@@ -251,7 +220,7 @@ export default function RetroHome({
       <main className="arena-shell" aria-label="OpenSmash character grid">
         <header className="retro-site-header">
           <div id="hero-logo-stage" className="retro-site-logo" aria-label="Smash the Weights">
-            <img className="hero-logo-fallback" src="/assets/smash-the-weights-logo.png" alt="Smash the Weights" draggable="false" />
+            <img className="hero-logo-fallback" src={logoFallbackUrl} alt="Smash the Weights" draggable="false" />
             <canvas id="hero-logo-canvas" className="hero-logo-canvas" aria-hidden="true" />
           </div>
           <nav className="retro-site-nav" aria-label="Site information and settings">
@@ -297,7 +266,7 @@ export default function RetroHome({
                 ref={introVideoRef}
                 id="intro-video"
                 className="intro-video"
-                src="/assets/intro-crt.mp4"
+                src={introVideoUrl}
                 muted={!soundOn}
                 autoPlay
                 loop
