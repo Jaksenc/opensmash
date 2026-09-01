@@ -855,6 +855,9 @@ body.retro-home::before {
 }
 .about-title { margin: 0; }
 .about-copy { margin-top: 12px; }
+.about-copy p { margin: 0; }
+.about-copy p + p { margin-top: 12px; }
+.about-legal { opacity: .82; }
 .about-cancel {
   box-sizing: border-box;
   width: clamp(210px, 23vw, 300px);
