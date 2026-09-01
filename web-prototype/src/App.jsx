@@ -3,6 +3,7 @@ import AuthGate from "./AuthGate.jsx";
 import CreateVisualShell from "./CreateVisualShell.jsx";
 import FighterCreator from "./FighterCreator.jsx";
 import FlameAction from "./FlameAction.jsx";
+import ModalPage from "./ModalPage.jsx";
 import RetroHome from "./RetroHome.jsx";
 import RetroChoiceGrid from "./RetroChoiceGrid.jsx";
 import { matchesCharacterSearch } from "../shared/character-search.js";
@@ -131,74 +132,46 @@ function RomModal({ action, onCancel, onValidated }) {
 
 function AdvancedModal({ authorized, debugMode, open, options, onCancel, onResetControllerTutorial, onResetRom, onSave }) {
   const [draft, setDraft] = useState(options);
-  const [isVisible, setIsVisible] = useState(false);
   const firstFieldRef = useRef(null);
-  const closingRef = useRef(false);
-  const closeTimerRef = useRef(null);
-
-  const leave = useCallback((complete) => {
-    if (closingRef.current) return;
-    closingRef.current = true;
-    setIsVisible(false);
-    closeTimerRef.current = window.setTimeout(complete, 360);
-  }, []);
 
   useEffect(() => {
-    if (!open) return undefined;
-    closingRef.current = false;
-    setDraft(options);
-    const previousFocus = document.activeElement;
-    const previousOverflow = document.body.style.overflow;
-    const revealFrame = window.requestAnimationFrame(() => setIsVisible(true));
-    const focusTimer = window.setTimeout(() => firstFieldRef.current?.focus(), 420);
-    document.body.style.overflow = "hidden";
-    document.body.classList.add("is-advanced-open");
-    const closeOnEscape = (event) => {
-      if (event.key === "Escape") leave(onCancel);
-    };
-    window.addEventListener("keydown", closeOnEscape);
-    return () => {
-      window.cancelAnimationFrame(revealFrame);
-      window.clearTimeout(focusTimer);
-      window.clearTimeout(closeTimerRef.current);
-      document.body.style.overflow = previousOverflow;
-      document.body.classList.remove("is-advanced-open");
-      window.removeEventListener("keydown", closeOnEscape);
-      if (previousFocus instanceof HTMLElement) previousFocus.focus();
-    };
-  }, [leave, onCancel, open, options]);
+    if (open) setDraft(options);
+  }, [open, options]);
 
   function update(key, value) {
     setDraft((current) => ({ ...current, [key]: value }));
   }
 
   return (
-    <div
-      className={`advanced-overlay ${isVisible ? "is-visible" : ""}`}
-      hidden={!open}
+    <ModalPage
+      bodyClass="is-advanced-open"
+      className="advanced-overlay"
+      dismissOnBackdrop
+      initialFocusRef={firstFieldRef}
+      onRequestClose={onCancel}
+      open={open}
       role="presentation"
-      onMouseDown={() => leave(onCancel)}
     >
-      <section
-        className="advanced-screen"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="advanced-title"
-        aria-describedby="advanced-copy"
-        onMouseDown={(event) => event.stopPropagation()}
-      >
-        <header className="advanced-heading">
-          <h2 id="advanced-title">Advanced Options</h2>
-          <p id="advanced-copy">Settings apply to every launch in this tab.</p>
-        </header>
-
-        <form
-          className="advanced-form"
-          onSubmit={(event) => {
-            event.preventDefault();
-            leave(() => onSave(draft));
-          }}
+      {(close) => (
+        <section
+          className="modal-page-surface advanced-screen"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="advanced-title"
+          aria-describedby="advanced-copy"
         >
+          <header className="advanced-heading">
+            <h2 id="advanced-title">Advanced Options</h2>
+            <p id="advanced-copy">Settings apply to every launch in this tab.</p>
+          </header>
+
+          <form
+            className="advanced-form"
+            onSubmit={(event) => {
+              event.preventDefault();
+              close(() => onSave(draft));
+            }}
+          >
           <div className="advanced-selects">
             <label className="advanced-field">
               <span className="advanced-field-label">Character Mesh</span>
@@ -249,7 +222,7 @@ function AdvancedModal({ authorized, debugMode, open, options, onCancel, onReset
                   <button
                     className="launch-flow-action reset-rom-button"
                     type="button"
-                    onClick={() => leave(onResetRom)}
+                    onClick={() => close(onResetRom)}
                   >
                     Reset ROM
                   </button>
@@ -257,7 +230,7 @@ function AdvancedModal({ authorized, debugMode, open, options, onCancel, onReset
                 <button
                   className="launch-flow-action reset-controller-button"
                   type="button"
-                  onClick={() => leave(onResetControllerTutorial)}
+                  onClick={() => close(onResetControllerTutorial)}
                 >
                   Reset Controller Tutorial
                 </button>
@@ -279,40 +252,56 @@ function AdvancedModal({ authorized, debugMode, open, options, onCancel, onReset
             <button
               className="launch-flow-action cancel-options-button"
               type="button"
-              onClick={() => leave(onCancel)}
+              onClick={() => close()}
             >
               Cancel
             </button>
           </div>
-        </form>
-      </section>
-    </div>
+          </form>
+        </section>
+      )}
+    </ModalPage>
   );
 }
 
 function CreateExperienceOverlay({ onAuthenticated, onClose, onCreated, onPlay, stage, user }) {
-  useEffect(() => {
-    if (stage !== "auth" && stage !== "creator") return undefined;
-    document.body.classList.add("is-create-experience-open");
-    return () => document.body.classList.remove("is-create-experience-open");
-  }, [stage]);
-
-  if (stage !== "auth" && stage !== "creator") return null;
+  const surfaceRef = useRef(null);
+  const open = stage === "auth" || stage === "creator";
 
   return (
-    <div className="create-experience-backdrop">
-      <section className="create-experience create-page" aria-label="Create a fighter">
-        {stage === "auth" && (
-          <button className="create-experience-close" type="button" onClick={onClose} aria-label="Back to fighters">
-            ×
-          </button>
-        )}
-        {stage === "auth" && <AuthGate onAuthenticated={onAuthenticated} />}
-        {stage === "creator" && user && (
-          <FighterCreator onCancel={onClose} onCreated={onCreated} onPlay={onPlay} />
-        )}
-      </section>
-    </div>
+    <ModalPage
+      bodyClass="is-create-experience-open"
+      className="create-experience-backdrop"
+      initialFocusRef={surfaceRef}
+      onRequestClose={onClose}
+      open={open}
+      role="presentation"
+    >
+      {(close) => (
+        <section
+          ref={surfaceRef}
+          className="modal-page-surface create-experience create-page"
+          aria-label="Create a fighter"
+          aria-modal="true"
+          role="dialog"
+          tabIndex="-1"
+        >
+          {stage === "auth" && (
+            <button className="create-experience-close" type="button" onClick={() => close()} aria-label="Back to fighters">
+              ×
+            </button>
+          )}
+          {stage === "auth" && <AuthGate onAuthenticated={onAuthenticated} />}
+          {stage === "creator" && user && (
+            <FighterCreator
+              onCancel={() => close()}
+              onCreated={(job) => close(() => onCreated(job))}
+              onPlay={onPlay}
+            />
+          )}
+        </section>
+      )}
+    </ModalPage>
   );
 }
 
@@ -788,6 +777,7 @@ export default function App() {
         <RetroHome
           advancedActive={hasAdvancedOverrides(advancedOptions)}
           authorized={authorized}
+          developmentMode={import.meta.env.DEV}
           engine={engine}
           engineRef={engineRef}
           gameFrameRef={gameFrameRef}
@@ -796,6 +786,7 @@ export default function App() {
           onCloseGame={() => setEngine(null)}
           onCreate={openCreateExperience}
           onFullscreen={toggleFullscreen}
+          onResetRom={clearVerification}
           onSignOut={signOutUser}
           onSound={toggleSound}
           pageError={pageError}
@@ -919,11 +910,16 @@ export default function App() {
 
       {isCreatePage && !loadingCharacters && !user && <AuthGate onAuthenticated={authenticated} />}
 
-      {isCreatePage && authorized && user && <FighterCreator
-        onCancel={() => window.location.assign("/")}
-        onCreated={() => window.location.assign("/")}
-        onPlay={selectCharacter}
-      />}
+      {isCreatePage && (
+        <CreateExperienceOverlay
+          onAuthenticated={authenticated}
+          onClose={() => window.location.assign("/")}
+          onCreated={() => window.location.assign("/")}
+          onPlay={selectCharacter}
+          stage={!loadingCharacters && authorized && user ? "creator" : null}
+          user={user}
+        />
+      )}
 
       {!isCreatePage && <section className="select-section" aria-labelledby="select-title">
         <div className="section-heading">

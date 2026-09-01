@@ -293,7 +293,6 @@ if (stage && canvas) {
 
   function renderLogo(now) {
     requestAnimationFrame(renderLogo);
-    if (document.body.classList.contains('is-game-running')) return;
     if (!stageVisible) return;
     resizeLogoRenderer();
     const seconds = now * 0.001;

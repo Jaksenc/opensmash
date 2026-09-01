@@ -2610,7 +2610,7 @@ function tick() {
   poseFingers(ease, gEase);
   pinPointerTip();
 
-  if (gameRunning || DBG.includes('raw') || !shaderSettings.enabled) {
+  if (DBG.includes('raw') || !shaderSettings.enabled) {
     renderer.setRenderTarget(null);
     applyCartridgeLockShake(t);
     renderer.render(scene, camera);
