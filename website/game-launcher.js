@@ -27,14 +27,15 @@ const CONTROLLER_FLIP_SPRING = 30;
 const CONTROLLER_FLIP_DAMPING = 8.7;
 const CONTROLLER_Z_REVEAL_MS = 1150;
 const CONTROLLER_ENTRANCE_HANDOFF_MS = 180;
-const CONSOLE_DOCK_MS = 3370;
-const CONSOLE_APPROACH_MS = 720;
-const CONSOLE_IDLE_MS = 900;
+const CONSOLE_DOCK_MS = 3710;
+const CONSOLE_APPROACH_MS = 1220;
+const CONSOLE_IDLE_MS = 720;
 const CONSOLE_WINDUP_MS = 480;
 const CONSOLE_SUSPENSE_MS = 100;
 const CONSOLE_SLAM_MS = 330;
-const CONSOLE_RETREAT_START_MS = 2570;
+const CONSOLE_RETREAT_START_MS = 2910;
 const CONSOLE_CARTRIDGE_FIT_SCALE = 0.44;
+const CONSOLE_CARTRIDGE_READY_CLEARANCE = 0.34;
 const CONSOLE_DOCK_FRONT_YAW = Math.PI * 1.5;
 const CONSOLE_DOCK_FRONT_PITCH = 0.18;
 const REQUIRED_CONTROL_KEYS = Object.freeze(['w', 'a', 's', 'd', 'j', 'k', 'l', 'i', 'o']);
@@ -1198,10 +1199,15 @@ function easeInOutCubic(value) {
     : 1 - Math.pow(-2 * amount + 2, 3) / 2;
 }
 
-function dampedArrivalProgress(value) {
+function springArrivalProgress(value) {
   const amount = THREE.MathUtils.clamp(value, 0, 1);
-  if (amount >= 1) return 1;
-  return 1 - Math.exp(-5.2 * amount) * Math.cos(amount * Math.PI * 2.05);
+  const riseEnd = 0.8;
+  if (amount < riseEnd) {
+    return easeInOutCubic(amount / riseEnd) * 1.04;
+  }
+  const settle = (amount - riseEnd) / (1 - riseEnd);
+  return 1 + Math.cos(settle * Math.PI * 2) * 0.04 *
+    Math.pow(1 - settle, 2);
 }
 
 function clearConsoleDockTransition() {
@@ -1259,7 +1265,7 @@ async function beginConsoleDockTransition(completion) {
   consoleDockCartridgeStartPosition.copy(activeModel.position);
   consoleDockCartridgeStartQuaternion.copy(activeModel.quaternion);
   consoleDockCartridgeStartScale = activeModel.scale.x;
-  consoleDockCartridgeTargetPosition.set(0, activeModel.userData.homeY + 0.04, 0);
+  consoleDockCartridgeTargetPosition.set(0, activeModel.userData.homeY - 0.18, 0);
   consoleDockCartridgeTargetQuaternion.setFromEuler(
     new THREE.Euler(CONSOLE_DOCK_FRONT_PITCH, CONSOLE_DOCK_FRONT_YAW, 0)
   );
@@ -1277,6 +1283,7 @@ async function beginConsoleDockTransition(completion) {
     .applyQuaternion(consoleDockCartridgeTargetQuaternion);
   consoleDockCartridgeReadyPosition.copy(consoleDockConsoleTargetPosition)
     .add(consoleDockAnchorOffset);
+  consoleDockCartridgeReadyPosition.y += CONSOLE_CARTRIDGE_READY_CLEARANCE;
   consoleDockCartridgeInsertionVector.copy(consoleDockCartridgeTargetPosition)
     .sub(consoleDockCartridgeReadyPosition);
   consoleDockCartridgeWindupPosition.copy(consoleDockCartridgeReadyPosition)
@@ -1284,7 +1291,7 @@ async function beginConsoleDockTransition(completion) {
   consoleDockCartridgeWindupQuaternion.copy(consoleDockCartridgeTargetQuaternion)
     .multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(-0.1, 0, -0.32)));
   consoleDockConsoleStartPosition.copy(consoleDockConsoleTargetPosition)
-    .add(new THREE.Vector3(0.12, -4.5, -0.22));
+    .add(new THREE.Vector3(0.12, -5.2, -0.22));
   consoleDockConsoleTargetQuaternion.copy(consoleDockCartridgeTargetQuaternion);
   consoleDockConsoleStartQuaternion.copy(consoleDockConsoleTargetQuaternion)
     .multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(-0.58, 0.08, -0.06)));
@@ -1302,7 +1309,7 @@ async function beginConsoleDockTransition(completion) {
 function updateConsoleDockTransition(now, reducedMotion) {
   if (!consoleDockAssembly || !consoleDockModel || !activeModel) return 1;
   const elapsed = reducedMotion ? CONSOLE_DOCK_MS : Math.max(0, now - visualStartedAt);
-  const approach = dampedArrivalProgress(elapsed / CONSOLE_APPROACH_MS);
+  const approach = springArrivalProgress(elapsed / CONSOLE_APPROACH_MS);
   consoleDockModel.position.lerpVectors(
     consoleDockConsoleStartPosition,
     consoleDockConsoleTargetPosition,
