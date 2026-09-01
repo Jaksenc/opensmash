@@ -1,38 +1,24 @@
 import { useEffect, useRef, useState } from "react";
 import FighterCreator from "./FighterCreator.jsx";
 import { identifyRomFile } from "./rom-validation.js";
+import {
+  BOOT_MODES,
+  CHARACTER_MESHES,
+  DEFAULT_ADVANCED_OPTIONS,
+  STAGES,
+  engineUrl,
+  hasAdvancedOverrides,
+  normalizeAdvancedOptions,
+} from "./launch-options.js";
 
-const RANDOM_FIGHTER_COUNT = 12;
-const RANDOM_STAGE_COUNT = 9;
+const ADVANCED_OPTIONS_KEY = "opensmash-advanced-options";
 
-function randomInt(max) {
-  return Math.floor(Math.random() * max);
-}
-
-function engineUrl(action) {
-  const params = new URLSearchParams({ cb: String(Date.now()) });
-  if (action.type === "character") {
-    params.set("inject", `bundles/${action.character.bundle}`);
-    params.set("inject_ui", `bundles/${action.character.slug}.osbui`);
-    params.set("inject_voice", `bundles/${action.character.slug}.wav`);
-    params.set("fkind", String(action.character.fkind));
-    params.set("player", "0");
-    params.set(
-      "SSB64_BOOT_BATTLE",
-      [
-        action.character.fkind,
-        randomInt(RANDOM_FIGHTER_COUNT),
-        randomInt(RANDOM_STAGE_COUNT),
-        1,
-        randomInt(RANDOM_FIGHTER_COUNT),
-        randomInt(RANDOM_FIGHTER_COUNT),
-      ].join(","),
-    );
-  } else if (action.type === "select") {
-    params.set("SSB64_START_SCENE", "16");
-    params.set("roster", "1");
+function loadAdvancedOptions() {
+  try {
+    return normalizeAdvancedOptions(JSON.parse(sessionStorage.getItem(ADVANCED_OPTIONS_KEY)));
+  } catch {
+    return { ...DEFAULT_ADVANCED_OPTIONS };
   }
-  return `/engine/?${params}`;
 }
 
 async function getSession() {
@@ -129,6 +115,113 @@ function RomModal({ action, onCancel, onValidated }) {
   );
 }
 
+function AdvancedModal({ options, onCancel, onSave }) {
+  const [draft, setDraft] = useState(options);
+  const firstFieldRef = useRef(null);
+
+  useEffect(() => {
+    firstFieldRef.current?.focus();
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const closeOnEscape = (event) => {
+      if (event.key === "Escape") onCancel();
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [onCancel]);
+
+  function update(key, value) {
+    setDraft((current) => ({ ...current, [key]: value }));
+  }
+
+  return (
+    <div className="modal-backdrop" role="presentation" onMouseDown={onCancel}>
+      <section
+        className="modal advanced-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="advanced-title"
+        onMouseDown={(event) => event.stopPropagation()}
+      >
+        <button className="modal-close" type="button" onClick={onCancel} aria-label="Close">
+          ×
+        </button>
+        <p className="eyebrow">Launch overrides</p>
+        <h2 id="advanced-title">Advanced options</h2>
+        <p className="modal-copy">
+          These choices apply to every launch in this tab and reset when the session ends.
+        </p>
+
+        <form
+          className="advanced-form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            onSave(draft);
+          }}
+        >
+          <div className="advanced-selects">
+            <label>
+              <span>Character mesh</span>
+              <select
+                ref={firstFieldRef}
+                value={draft.characterMesh}
+                onChange={(event) => update("characterMesh", event.target.value)}
+              >
+                {CHARACTER_MESHES.map((mesh) => (
+                  <option value={mesh.value} key={mesh.value}>{mesh.label}</option>
+                ))}
+              </select>
+              <small>Force the skeleton and moveset used by a chosen fighter.</small>
+            </label>
+            <label>
+              <span>Stage</span>
+              <select value={draft.stage} onChange={(event) => update("stage", event.target.value)}>
+                {STAGES.map((stage) => (
+                  <option value={stage.value} key={stage.value}>{stage.label}</option>
+                ))}
+              </select>
+              <small>Used for direct matches and preselected VS launches.</small>
+            </label>
+          </div>
+
+          <fieldset className="boot-mode-fieldset">
+            <legend>Boot destination</legend>
+            <div className="boot-mode-grid">
+              {BOOT_MODES.map((mode) => (
+                <label className={draft.bootMode === mode.value ? "is-selected" : ""} key={mode.value}>
+                  <input
+                    type="radio"
+                    name="boot-mode"
+                    value={mode.value}
+                    checked={draft.bootMode === mode.value}
+                    onChange={(event) => update("bootMode", event.target.value)}
+                  />
+                  <span>{mode.label}</span>
+                  <small>{mode.description}</small>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+
+          <div className="advanced-actions">
+            <button
+              className="reset-options-button"
+              type="button"
+              onClick={() => setDraft({ ...DEFAULT_ADVANCED_OPTIONS })}
+            >
+              Reset defaults
+            </button>
+            <button className="save-options-button" type="submit">Save for session</button>
+          </div>
+        </form>
+      </section>
+    </div>
+  );
+}
+
 export default function App() {
   const isCreatePage = window.location.pathname.replace(/\/+$/, "") === "/create";
   const [characters, setCharacters] = useState([]);
@@ -140,6 +233,8 @@ export default function App() {
   const [fighterSearch, setFighterSearch] = useState("");
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [soundOn, setSoundOn] = useState(() => localStorage.getItem("opensmash-sound") !== "off");
+  const [advancedOptions, setAdvancedOptions] = useState(loadAdvancedOptions);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
   const gameRef = useRef(null);
   const gameFrameRef = useRef(null);
   const engineRef = useRef(null);
@@ -202,9 +297,24 @@ export default function App() {
   }, []);
 
   function launch(action) {
-    setEngine({ src: engineUrl(action), action });
-    setPendingAction(null);
-    requestAnimationFrame(() => gameRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+    try {
+      setEngine({ src: engineUrl(action, advancedOptions), action });
+      setPendingAction(null);
+      requestAnimationFrame(() => gameRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+    } catch (error) {
+      setPageError(error.message || "Could not apply those advanced options.");
+    }
+  }
+
+  function saveAdvancedOptions(nextOptions) {
+    const normalized = normalizeAdvancedOptions(nextOptions);
+    setAdvancedOptions(normalized);
+    try {
+      sessionStorage.setItem(ADVANCED_OPTIONS_KEY, JSON.stringify(normalized));
+    } catch {
+      // The in-memory choice still applies when session storage is unavailable.
+    }
+    setAdvancedOpen(false);
   }
 
   async function requestLaunch(action) {
@@ -317,6 +427,14 @@ export default function App() {
             onClick={toggleSound}
           >
             <i /> Sound {soundOn ? "on" : "off"}
+          </button>
+          <button
+            className={`advanced-button ${hasAdvancedOverrides(advancedOptions) ? "is-active" : ""}`}
+            type="button"
+            aria-haspopup="dialog"
+            onClick={() => setAdvancedOpen(true)}
+          >
+            <i /> Advanced
           </button>
           <span className={`rom-status ${authorized ? "is-ready" : ""}`}>
             <i /> {authorized ? "ROM verified" : "Browser build"}
@@ -444,6 +562,14 @@ export default function App() {
         <span>OpenSmash prototype</span>
         <span>React · Node · WASM on demand</span>
       </footer>
+
+      {advancedOpen && (
+        <AdvancedModal
+          options={advancedOptions}
+          onCancel={() => setAdvancedOpen(false)}
+          onSave={saveAdvancedOptions}
+        />
+      )}
 
       {pendingAction && (
         <RomModal
