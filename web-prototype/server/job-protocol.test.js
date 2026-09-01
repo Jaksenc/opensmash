@@ -40,3 +40,26 @@ test("SSE payloads are versioned snapshots", () => {
   assert.equal(event.protocolVersion, 1);
   assert.equal(event.job.status, "complete");
 });
+
+test("private jobs use owner-checked asset URLs without exposing uploader identifiers", () => {
+  const result = publicJob({
+    ...completeJob,
+    visibility: "private",
+    ownerId: "firebase-uid",
+    uploader: {
+      uid: "firebase-uid",
+      displayName: "Uploader",
+      email: "private@example.com",
+    },
+    artifacts: Object.fromEntries(
+      Object.entries(completeJob.artifacts).map(([name, artifact]) => [name, { ...artifact, url: null }]),
+    ),
+  });
+
+  assert.equal(result.visibility, "private");
+  assert.deepEqual(result.uploader, { displayName: "Uploader" });
+  assert.match(result.character.bundleUrl, /\/api\/fighters\/.+\/assets\/bundle$/);
+  assert.equal("ownerId" in result, false);
+  assert.equal(JSON.stringify(result).includes("private@example.com"), false);
+  assert.equal(JSON.stringify(result).includes("firebase-uid"), false);
+});

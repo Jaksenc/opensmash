@@ -6,17 +6,17 @@ Use Google Cloud's native services rather than treating Firebase as a separate
 platform:
 
 - Firestore is the source of truth for job metadata and revisions.
-- Two Cloud Storage buckets own blobs: a private source bucket for reference
-  photos and a public asset bucket for immutable character outputs. The public
-  bucket can sit behind a Cloud CDN backend bucket.
+- Two Cloud Storage buckets own blobs: a private bucket for reference photos,
+  checkpoints, and private fighter outputs, plus a public asset bucket for
+  immutable public character outputs. The public bucket can sit behind a Cloud
+  CDN backend bucket.
 - A Cloud Run API serves the website, validates the ROM hash, creates jobs, and
   streams status. It never runs the generation pipeline in production.
 - A Cloud Run Job runs one fighter build per execution. The API starts an
   execution with the job ID; the worker reconstructs its workspace from Cloud
   Storage, updates Firestore, and uploads its outputs.
-- The signed ROM session carries a random anonymous `ownerId`, isolating job
-  history without collecting an account. Firebase Auth or another login can
-  replace that identity later without changing the job schema.
+- Firebase Authentication supplies the durable uploader UID used as `ownerId`.
+  The separate signed ROM session remains a product/legal gate for gameplay.
 
 Firebase's Emulator Suite is a good way to run Firestore locally, but the app
 should continue to use the Google Cloud client libraries and portable data
@@ -26,11 +26,13 @@ contracts. This keeps the production architecture straightforward.
 
 1. The browser hashes the selected ROM locally and submits only SHA-256 and byte
    count. The API sets a signed, HTTP-only, secure cookie for an accepted hash.
-2. Every fighter endpoint checks that cookie. `/create` also blocks its UI until
-   validation succeeds.
-3. The browser uploads the reference photo. The API validates its type and
-   limits, puts it at `characters/{slug}/sources/{jobId}/photo.{ext}`, creates the Firestore
-   document, and starts the Cloud Run Job execution.
+2. Every fighter mutation checks both the ROM cookie and a revocation-aware
+   Firebase session cookie. `/create` blocks its UI until both checks succeed.
+3. The browser uploads the reference photo, visibility, and rights attestation.
+   The API validates the form and sends the text plus image to OpenAI's
+   multimodal moderation endpoint. Only approved submissions are written to
+   `characters/{slug}/sources/{jobId}/photo.{ext}`, recorded in Firestore, and
+   dispatched to the Cloud Run Job.
 4. The worker claims the job with a Firestore transaction. Claiming must be
    idempotent because execution delivery and retries are at least once.
 5. Pipeline stages emit `@@opensmash` JSON progress records. The worker writes
@@ -44,8 +46,9 @@ contracts. This keeps the production architecture straightforward.
    completion write points at those exact immutable objects.
 
 The resulting object shape is intentionally browsable by character. `sources`
-and `checkpoints` live in the private bucket; `latest` and `versions` live in
-the public asset bucket:
+and `checkpoints` always live in the private bucket. A public fighter's
+`latest` and `versions` live in the public bucket; a private fighter uses the
+same keys in the private bucket and is returned through owner-checked routes:
 
 ```text
 characters/{slug}/
@@ -71,6 +74,10 @@ characters/{slug}/
   "protocolVersion": 1,
   "id": "uuid",
   "ownerId": "auth uid",
+  "uploader": { "uid": "auth uid", "displayName": "...", "email": "...", "provider": "..." },
+  "visibility": "public | private",
+  "rightsAttestedAt": "ISO-8601",
+  "moderation": { "status": "approved", "model": "omni-moderation-latest", "checkedAt": "ISO-8601" },
   "revision": 18,
   "status": "queued | running | retrying | complete | failed | cancelled",
   "stage": "portrait",
@@ -124,8 +131,9 @@ The browser-side ROM hash check proves that the browser supplied an accepted
 hash string; it does not prove possession to a hostile client. Keep it as a
 legal/product gate, not an authorization or anti-abuse boundary.
 
-Implemented controls include anonymous owner isolation, one active job per
-owner, per-session daily and global queue limits, same-origin mutation checks,
+Implemented controls include Firebase uploader identity and account disabling,
+one active job per owner, per-user daily and global queue limits, rights
+attestation, pre-dispatch text/image moderation, same-origin mutation checks,
 ROM-validation throttling, separate private/public buckets, Firestore worker
 leases, and Secret Manager injection. The deploy starts with one API instance
 so quota checks cannot race.
@@ -134,7 +142,7 @@ Before raising that instance cap or treating the site as an unrestricted paid
 public service:
 
 - move quota reservation into a Firestore transaction;
-- add a durable authenticated identity or payment/invite boundary;
+- add a payment/invite boundary if account creation becomes an abuse vector;
 - add a hard project billing alert and daily provider-spend kill switch;
 - persist Tripo task IDs before polling so abrupt mesh-stage interruption can
   resume the provider task instead of requiring an explicit rerun.

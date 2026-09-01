@@ -22,6 +22,13 @@ gcloud secrets create opensmash-minimax-voice-id --data-file=-
 Generate the cookie secret with at least 32 random bytes. Do not paste API keys
 into `.env.example`, the deploy script, or a container build.
 
+Create a Firebase Web App in the same project, enable Google and Email link in
+Authentication, and add the production domain under Authorized domains. For
+Apple, create the Apple Service ID and private key, register
+`https://PROJECT_ID.firebaseapp.com/__/auth/handler`, then enable Apple in the
+Firebase Authentication provider settings. The deploy uses the Web App's
+public API key and app ID; these are configuration values, not secrets.
+
 ## Build and deploy
 
 From `pipeline/web-prototype`:
@@ -30,10 +37,12 @@ From `pipeline/web-prototype`:
 PROJECT_ID=your-project \
 REGION=us-central1 \
 PUBLIC_ORIGIN=https://example.com \
+FIREBASE_API_KEY=your-public-web-api-key \
+FIREBASE_APP_ID=1:123456789:web:abcdef \
 ./infra/deploy.sh
 ```
 
-The API is initially capped at one instance so anonymous-session quotas and
+The API is initially capped at one instance so uploader quotas and
 local upload parsing cannot race across replicas. Firestore leases still make
 worker execution idempotent. Raise the API instance cap only after moving quota
 reservation into a Firestore transaction.

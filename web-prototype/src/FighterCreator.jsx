@@ -19,13 +19,15 @@ async function readResult(response) {
   return result;
 }
 
-export default function FighterCreator({ onPlay }) {
+export default function FighterCreator({ onPlay, user }) {
   const [jobs, setJobs] = useState([]);
   const [selectedId, setSelectedId] = useState(() => localStorage.getItem(ACTIVE_JOB_KEY));
   const [name, setName] = useState("");
   const [emblem, setEmblem] = useState("");
   const [photo, setPhoto] = useState(null);
   const [photoPreview, setPhotoPreview] = useState("");
+  const [visibility, setVisibility] = useState("public");
+  const [rightsAttested, setRightsAttested] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -103,12 +105,16 @@ export default function FighterCreator({ onPlay }) {
       const form = new FormData();
       form.set("name", name.trim());
       form.set("emblem", emblem.trim());
+      form.set("visibility", visibility);
+      form.set("rightsAttested", String(rightsAttested));
       form.set("photo", photo);
       const result = await readResult(await fetch("/api/fighters", { method: "POST", body: form }));
       setJobs((current) => [result.job, ...current]);
       setSelectedId(result.job.id);
       setName("");
       setEmblem("");
+      setVisibility("public");
+      setRightsAttested(false);
       choosePhoto(null);
     } catch (submitError) {
       setError(submitError.message);
@@ -142,8 +148,10 @@ export default function FighterCreator({ onPlay }) {
         <div className="creator-facts">
           <span><b>~$2</b> per fighter</span>
           <span><b>Several minutes</b> to build</span>
+          <span><b>Safety screened</b> before generation</span>
           <span><b>Server queue</b> survives refreshes</span>
         </div>
+        <p className="uploader-note">Uploading as {user.displayName || user.email || "your account"}.</p>
       </div>
 
       <div className="creator-workbench">
@@ -191,7 +199,52 @@ export default function FighterCreator({ onPlay }) {
                 disabled={submitting}
               />
             </label>
-            <button className="generate-button" type="submit" disabled={!photo || !name.trim() || submitting}>
+            <fieldset className="visibility-fieldset">
+              <legend>Who can see this fighter?</legend>
+              <label className={visibility === "public" ? "is-selected" : ""}>
+                <input
+                  type="radio"
+                  name="visibility"
+                  value="public"
+                  checked={visibility === "public"}
+                  onChange={() => setVisibility("public")}
+                  disabled={submitting}
+                />
+                <span>Public <small>Added to the community roster</small></span>
+              </label>
+              <label className={visibility === "private" ? "is-selected" : ""}>
+                <input
+                  type="radio"
+                  name="visibility"
+                  value="private"
+                  checked={visibility === "private"}
+                  onChange={() => setVisibility("private")}
+                  disabled={submitting}
+                />
+                <span>Private <small>Visible only to your account</small></span>
+              </label>
+            </fieldset>
+            <label className="rights-attestation">
+              <input
+                type="checkbox"
+                checked={rightsAttested}
+                onChange={(event) => setRightsAttested(event.target.checked)}
+                disabled={submitting}
+                required
+              />
+              <span>
+                I confirm I own or have permission to use this character and photo, and that
+                the submission does not contain nudity or abusive content.
+              </span>
+            </label>
+            <p className="moderation-copy">
+              The name, direction, and photo are safety-screened before the paid build starts.
+            </p>
+            <button
+              className="generate-button"
+              type="submit"
+              disabled={!photo || !name.trim() || !rightsAttested || submitting}
+            >
               {submitting ? "Uploading…" : "Generate fighter →"}
             </button>
           </div>
@@ -214,7 +267,7 @@ export default function FighterCreator({ onPlay }) {
                   <small>{selectedJob.status === "complete" ? "Ready to fight" : "Generation job"}</small>
                   <h3>{selectedJob.name}</h3>
                 </div>
-                <span>{selectedJob.status}</span>
+                <span>{selectedJob.visibility === "private" ? "Private · " : ""}{selectedJob.status}</span>
               </div>
               <div className="progress-track" aria-label={`${selectedJob.progress}% complete`}>
                 <i style={{ width: `${selectedJob.progress}%` }} />

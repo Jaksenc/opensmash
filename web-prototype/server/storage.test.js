@@ -24,6 +24,7 @@ test("local database and object storage survive a fresh instance", async (contex
   const artifact = await store.putFile("characters/test/versions/job-1-1/injection/test.osb", source, { public: true });
   assert.match(artifact.url, /^\/objects\//);
   assert.equal(await readFile(store.localPath(artifact.key), "utf8"), "fighter-data");
+  assert.equal((await store.read(artifact.key)).toString("utf8"), "fighter-data");
   const latest = await store.putJson(
     "characters/test/latest.json",
     { version: "job-1-1", manifest: artifact.url },

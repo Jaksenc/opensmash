@@ -1,4 +1,4 @@
-import { copyFile, mkdir, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 function encodeObjectKey(key) {
@@ -51,6 +51,11 @@ class LocalObjectStore {
       url: isPublic ? `/objects/${encodeObjectKey(key)}` : null,
       immutable,
     };
+  }
+
+  async read(key) {
+    assertObjectKey(key);
+    return readFile(path.join(this.root, key));
   }
 
   localPath(key) {
@@ -129,6 +134,12 @@ class GcsObjectStore {
       url: isPublic ? `${this.assetBaseUrl}/${encodeObjectKey(key)}` : null,
       immutable,
     };
+  }
+
+  async read(key, { public: isPublic = false } = {}) {
+    assertObjectKey(key);
+    const [contents] = await (isPublic ? this.publicBucket : this.privateBucket).file(key).download();
+    return contents;
   }
 
   localPath() {

@@ -40,6 +40,8 @@ main { width: min(1600px, calc(100% - 40px)); margin: 0 auto; }
 .header-tools { display: flex; align-items: center; gap: 15px; }
 .create-link { color: #a69d94; font-size: 9px; letter-spacing: .08em; text-decoration: none; text-transform: uppercase; }
 .create-link:hover { color: #f08a6d; }
+.account-button { max-width: 220px; overflow: hidden; padding: 7px 9px; border: 1px solid #332f2b; background: #12100f; color: #8f867e; font-size: 8px; letter-spacing: .05em; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
+.account-button:hover { border-color: #74402f; color: #e08166; }
 .sound-button { display: flex; align-items: center; gap: 7px; padding: 7px 9px; border: 1px solid transparent; background: transparent; color: #6f6963; font-size: 8px; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; }
 .sound-button:hover { color: #c0b6ad; }
 .sound-button i { position: relative; width: 11px; height: 8px; border-left: 5px solid #68625c; border-top: 4px solid transparent; border-bottom: 4px solid transparent; }
@@ -102,6 +104,21 @@ main { width: min(1600px, calc(100% - 40px)); margin: 0 auto; }
 .frame-button:hover { border-color: #a55d45; background: rgba(30,18,14,.9); color: #f0e6dc; }
 .fullscreen-button span { font: 16px/0.7 sans-serif; }
 
+.auth-gate { width: min(620px, 100%); margin: auto; padding: 60px 0 90px; }
+.auth-gate h2 { margin: 0; font: 900 italic clamp(48px, 8vw, 78px)/.84 "Barlow Condensed", sans-serif; letter-spacing: -.04em; text-transform: uppercase; }
+.auth-gate > p:not(.eyebrow):not(.creator-error) { max-width: 58ch; color: #9a928a; font-size: 11px; line-height: 1.75; }
+.auth-options { display: grid; gap: 9px; margin-top: 28px; padding: 18px; border: 1px solid #39322d; background: #12100e; box-shadow: 8px 8px 0 #060504; }
+.auth-options > button { width: 100%; padding: 15px; border: 1px solid #4a423c; background: #0b0908; font: 800 italic 18px/1 "Barlow Condensed", sans-serif; text-align: left; text-transform: uppercase; cursor: pointer; }
+.auth-options > button:hover:not(:disabled) { border-color: #b85e43; background: #27150f; }
+.auth-options button:disabled { color: #625b55; cursor: wait; }
+.auth-options form { display: grid; gap: 8px; margin-top: 7px; padding-top: 15px; border-top: 1px solid #322d29; }
+.auth-options form > label { color: #827970; font-size: 8px; letter-spacing: .09em; text-transform: uppercase; }
+.auth-options form > div { display: grid; grid-template-columns: 1fr auto; }
+.auth-options input { min-width: 0; padding: 13px; border: 1px solid #403933; outline: 0; background: #090807; color: #e8ddd3; }
+.auth-options input:focus { border-color: #a35942; }
+.auth-options form button { padding: 0 15px; border: 1px solid #f16a47; background: #df3f1d; font-size: 9px; text-transform: uppercase; cursor: pointer; }
+.auth-message { margin: 17px 0 0; color: #b8a99e; font-size: 10px; }
+
 .creator-section { width: min(1180px, 100%); display: grid; grid-template-columns: minmax(250px, .72fr) minmax(540px, 1.28fr); gap: clamp(40px, 7vw, 96px); margin: 0 auto; padding: 92px 0 96px; border-bottom: 1px solid #2b2723; scroll-margin-top: 20px; }
 .creator-intro { align-self: start; position: sticky; top: 30px; }
 .creator-intro h2 { max-width: 640px; margin: 0; font: 900 italic clamp(48px, 6.4vw, 82px)/.82 "Barlow Condensed", sans-serif; letter-spacing: -.04em; text-transform: uppercase; }
@@ -109,6 +126,7 @@ main { width: min(1600px, calc(100% - 40px)); margin: 0 auto; }
 .creator-facts { display: grid; gap: 0; border-top: 1px solid #322d29; }
 .creator-facts span { display: flex; justify-content: space-between; gap: 20px; padding: 12px 0; border-bottom: 1px solid #322d29; color: #716b65; font-size: 8px; letter-spacing: .06em; text-transform: uppercase; }
 .creator-facts b { color: #c4b8ae; font-weight: 500; }
+.creator-intro .uploader-note { margin: 16px 0 0; color: #756d66; font-size: 8px; letter-spacing: .05em; text-transform: uppercase; }
 .creator-workbench { min-width: 0; }
 .fighter-form { display: grid; grid-template-columns: minmax(190px, .72fr) minmax(260px, 1.28fr); gap: 18px; padding: 18px; border: 1px solid #39322d; background: #12100e; box-shadow: 10px 10px 0 #060504; }
 .fighter-photo { position: relative; min-height: 270px; display: grid; place-items: center; overflow: hidden; border: 1px dashed #574c44; background: #0d0b0a; cursor: pointer; }
@@ -127,6 +145,17 @@ main { width: min(1600px, calc(100% - 40px)); margin: 0 auto; }
 .fighter-fields input { width: 100%; min-width: 0; padding: 14px 13px; border: 1px solid #403933; outline: 0; background: #090807; color: #e8ddd3; font-size: 11px; text-transform: none; }
 .fighter-fields input::placeholder { color: #514b46; }
 .fighter-fields input:focus { border-color: #a35942; box-shadow: 0 0 0 1px #a35942; }
+.visibility-fieldset { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 0; padding: 0; border: 0; }
+.visibility-fieldset legend { grid-column: 1 / -1; margin-bottom: 8px; padding: 0; color: #91877f; font-size: 8px; letter-spacing: .1em; text-transform: uppercase; }
+.fighter-fields .visibility-fieldset label { position: relative; min-height: 57px; display: flex; align-items: center; padding: 10px 10px 10px 32px; border: 1px solid #3b3530; background: #0c0a09; cursor: pointer; }
+.fighter-fields .visibility-fieldset label.is-selected { border-color: #a65840; background: #25140f; }
+.fighter-fields .visibility-fieldset input { position: absolute; left: 10px; width: 12px; min-width: 12px; height: 12px; margin: 0; padding: 0; accent-color: #e4512c; }
+.fighter-fields .visibility-fieldset span { display: grid; justify-content: start; gap: 4px; color: #d8cdc3; font-size: 9px; }
+.fighter-fields .visibility-fieldset small { color: #746c65; font-size: 7px; line-height: 1.35; text-transform: none; }
+.fighter-fields .rights-attestation { display: flex; grid-template-columns: none; align-items: flex-start; gap: 9px; color: #91877f; font-size: 7px; line-height: 1.5; letter-spacing: 0; text-transform: none; cursor: pointer; }
+.fighter-fields .rights-attestation input { flex: 0 0 auto; width: 13px; min-width: 13px; height: 13px; margin: 1px 0 0; padding: 0; accent-color: #e4512c; }
+.fighter-fields .rights-attestation span { display: block; }
+.moderation-copy { margin: -7px 0 0; color: #625b55; font-size: 7px; line-height: 1.5; }
 .generate-button { margin-top: auto; padding: 17px 15px; border: 1px solid #f16a47; background: #df3f1d; box-shadow: 4px 4px 0 #741b0c; font: 800 italic 20px/1 "Barlow Condensed", sans-serif; text-align: left; text-transform: uppercase; cursor: pointer; }
 .generate-button:hover:not(:disabled) { transform: translate(1px, 1px); box-shadow: 3px 3px 0 #741b0c; }
 .generate-button:disabled { border-color: #39332f; background: #24201d; box-shadow: none; color: #625b55; cursor: not-allowed; }

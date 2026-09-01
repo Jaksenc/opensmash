@@ -5,6 +5,7 @@ import http from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createFighterJobs } from "./fighter-jobs.js";
+import { createAuthService } from "./auth.js";
 import { createJobDatabase } from "./job-database.js";
 import { createJobDispatcher } from "./job-dispatcher.js";
 import { createObjectStore } from "./object-store.js";
@@ -39,6 +40,7 @@ const fighterJobs = createFighterJobs({
 const PORT = Number(process.env.PORT || 4174);
 const HOST = process.env.HOST || (process.env.NODE_ENV === "production" ? "0.0.0.0" : "127.0.0.1");
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
+const authService = createAuthService({ isProduction: IS_PRODUCTION });
 // Bump the cookie name whenever the validation contract changes. This also
 // invalidates cookies created while the prototype was being exercised.
 const COOKIE_NAME = "opensmash_rom_v4";
@@ -233,7 +235,7 @@ async function readJsonBody(req) {
   return JSON.parse(Buffer.concat(chunks).toString("utf8"));
 }
 
-async function configuredCharacters(query = "") {
+async function configuredCharacters(query = "", user = null) {
   const config = JSON.parse(await readFile(CHARACTERS_CONFIG, "utf8"));
   const featuredOrder = new Map(
     config.map((entry, index) => [typeof entry === "string" ? entry : entry.slug, index]),
@@ -243,6 +245,7 @@ async function configuredCharacters(query = "") {
   for (const character of await engineRoster()) {
     const { slug } = character;
     if (!/^[a-z0-9]+$/.test(slug)) continue;
+    if (!fighterJobs.isSlugAccessible(slug, user?.uid)) continue;
 
     const fighterName = character.base || "mario";
     const fkind = FIGHTERS.indexOf(fighterName);
@@ -275,7 +278,7 @@ async function configuredCharacters(query = "") {
   });
 
   const configuredSlugs = new Set(result.map((character) => character.slug));
-  for (const job of fighterJobs.list()) {
+  for (const job of fighterJobs.listVisible(user?.uid)) {
     if (job.status !== "complete" || !job.character || configuredSlugs.has(job.slug)) continue;
     result.push({ ...job.character, generated: true });
   }
@@ -320,7 +323,18 @@ async function engineRoster() {
 async function handleRequest(req, res, vite) {
   const url = new URL(req.url, `http://${req.headers.host || "localhost"}`);
   const { pathname } = url;
-  const session = readSession(req);
+  const romSession = readSession(req);
+  let user = await authService.readUser(req, {
+    checkRevoked: req.method === "POST" && pathname.startsWith("/api/fighters"),
+  });
+  if (!authService.enabled && romSession) {
+    user = {
+      uid: `local-${romSession.subject}`,
+      displayName: "Local developer",
+      email: null,
+      provider: "local",
+    };
+  }
 
   if (
     req.method === "GET" &&
@@ -338,15 +352,42 @@ async function handleRequest(req, res, vite) {
     return json(res, 403, { error: "Request origin is not allowed" });
   }
 
-  if (req.method === "GET" && pathname === "/api/session") {
-    return json(res, 200, { authorized: Boolean(session) });
+  if (req.method === "GET" && pathname === "/api/auth/config") {
+    return json(res, 200, authService.publicConfig());
   }
 
-  const isPublicLegacyFighterAsset =
+  if (req.method === "POST" && pathname === "/api/auth/session") {
+    try {
+      const body = await readJsonBody(req);
+      const result = await authService.createSession(body.idToken);
+      return json(res, 200, { user: result.user }, { "Set-Cookie": result.cookie });
+    } catch (error) {
+      return json(res, error.status || 401, { error: error.message || "Could not sign in." });
+    }
+  }
+
+  if (req.method === "POST" && pathname === "/api/auth/logout") {
+    return json(res, 200, { signedOut: true }, { "Set-Cookie": authService.clearCookie() });
+  }
+
+  if (req.method === "GET" && pathname === "/api/session") {
+    return json(res, 200, {
+      authorized: Boolean(romSession),
+      authenticated: Boolean(user),
+      user,
+    });
+  }
+
+  const fighterAssetMatch = pathname.match(
+    /^\/api\/fighters\/([a-f0-9-]+)\/(?:portrait|announcer|assets(?:\/|$))/,
+  );
+  const accessibleFighterAsset =
     (req.method === "GET" || req.method === "HEAD") &&
-    /^\/api\/fighters\/[a-f0-9-]+\/(portrait|announcer)$/.test(pathname);
-  if (pathname.startsWith("/api/fighters") && !isPublicLegacyFighterAsset && !session) {
-    return json(res, 401, { error: "ROM validation required" });
+    fighterAssetMatch &&
+    fighterJobs.isAccessible(fighterAssetMatch[1], user?.uid);
+  if (pathname.startsWith("/api/fighters") && !accessibleFighterAsset) {
+    if (!romSession) return json(res, 401, { error: "ROM validation required" });
+    if (!user) return json(res, 401, { error: "Sign in to use the fighter lab." });
   }
 
   if (req.method === "POST" && pathname === "/api/dev/clear-rom") {
@@ -364,16 +405,18 @@ async function handleRequest(req, res, vite) {
   }
 
   if (req.method === "GET" && pathname === "/api/characters") {
-    return json(res, 200, { characters: await configuredCharacters(url.searchParams.get("q") || "") });
+    return json(res, 200, {
+      characters: await configuredCharacters(url.searchParams.get("q") || "", user),
+    });
   }
 
   if (req.method === "GET" && pathname === "/api/fighters") {
-    return json(res, 200, { jobs: fighterJobs.list(session.subject) });
+    return json(res, 200, { jobs: fighterJobs.list(user.uid) });
   }
 
   if (req.method === "POST" && pathname === "/api/fighters") {
     try {
-      return json(res, 202, { job: await fighterJobs.create(req, session.subject) });
+      return json(res, 202, { job: await fighterJobs.create(req, user) });
     } catch (error) {
       return json(res, error.status || 400, { error: error.message || "Could not create fighter." });
     }
@@ -381,15 +424,15 @@ async function handleRequest(req, res, vite) {
 
   const fighterEventsMatch = pathname.match(/^\/api\/fighters\/([a-f0-9-]+)\/events$/);
   if (req.method === "GET" && fighterEventsMatch) {
-    if (!fighterJobs.get(fighterEventsMatch[1], session.subject)) {
+    if (!fighterJobs.get(fighterEventsMatch[1], user.uid)) {
       return json(res, 404, { error: "Fighter job not found." });
     }
-    return streamJobEvents(req, res, fighterEventsMatch[1], session.subject);
+    return streamJobEvents(req, res, fighterEventsMatch[1], user.uid);
   }
 
   const fighterMatch = pathname.match(/^\/api\/fighters\/([a-f0-9-]+)$/);
   if (req.method === "GET" && fighterMatch) {
-    const job = fighterJobs.get(fighterMatch[1], session.subject);
+    const job = fighterJobs.get(fighterMatch[1], user.uid);
     return job
       ? json(res, 200, { job })
       : json(res, 404, { error: "Fighter job not found." });
@@ -398,22 +441,50 @@ async function handleRequest(req, res, vite) {
   const fighterRetryMatch = pathname.match(/^\/api\/fighters\/([a-f0-9-]+)\/retry$/);
   if (req.method === "POST" && fighterRetryMatch) {
     try {
-      return json(res, 202, { job: await fighterJobs.retry(fighterRetryMatch[1], session.subject) });
+      return json(res, 202, { job: await fighterJobs.retry(fighterRetryMatch[1], user.uid) });
     } catch (error) {
       return json(res, error.status || 400, { error: error.message || "Could not retry fighter." });
     }
   }
 
+  const fighterArtifactMatch = pathname.match(
+    /^\/api\/fighters\/([a-f0-9-]+)\/assets\/(portrait|announcer|bundle|ui|manifest|stock|emblem)\/?$/,
+  );
+  const fighterVariantMatch = pathname.match(
+    /^\/api\/fighters\/([a-f0-9-]+)\/assets\/variants\/([a-z0-9]+)\/?$/,
+  );
+  if ((req.method === "GET" || req.method === "HEAD") && (fighterArtifactMatch || fighterVariantMatch)) {
+    const id = (fighterArtifactMatch || fighterVariantMatch)[1];
+    const artifact = fighterArtifactMatch
+      ? fighterJobs.artifact(id, user?.uid, fighterArtifactMatch[2])
+      : fighterJobs.artifact(id, user?.uid, "variants", fighterVariantMatch[2]);
+    if (!artifact) return json(res, 404, { error: "Fighter asset not found." });
+    try {
+      const contents = await objectStore.read(artifact.key, { public: artifact.public });
+      res.writeHead(200, {
+        "Content-Type": artifact.contentType || "application/octet-stream",
+        "Content-Length": contents.length,
+        "Cache-Control": artifact.public
+          ? "public, max-age=31536000, immutable"
+          : "private, no-store",
+        Vary: "Cookie",
+      });
+      return req.method === "HEAD" ? res.end() : res.end(contents);
+    } catch {
+      return json(res, 404, { error: "Fighter asset not found." });
+    }
+  }
+
   const fighterPortraitMatch = pathname.match(/^\/api\/fighters\/([a-f0-9-]+)\/portrait$/);
   if ((req.method === "GET" || req.method === "HEAD") && fighterPortraitMatch) {
-    const filePath = fighterJobs.portraitPath(fighterPortraitMatch[1]);
+    const filePath = fighterJobs.portraitPath(fighterPortraitMatch[1], user?.uid);
     if (filePath && (await serveFile(req, res, filePath, "public, max-age=60"))) return;
     return json(res, 404, { error: "Fighter portrait is not ready." });
   }
 
   const fighterAnnouncerMatch = pathname.match(/^\/api\/fighters\/([a-f0-9-]+)\/announcer$/);
   if ((req.method === "GET" || req.method === "HEAD") && fighterAnnouncerMatch) {
-    const filePath = fighterJobs.announcerPath(fighterAnnouncerMatch[1]);
+    const filePath = fighterJobs.announcerPath(fighterAnnouncerMatch[1], user?.uid);
     if (filePath && (await serveFile(req, res, filePath, "public, max-age=60"))) return;
     return json(res, 404, { error: "Fighter announcer clip is not ready." });
   }
@@ -434,7 +505,7 @@ async function handleRequest(req, res, vite) {
       }
 
       const cookie = [
-        `${COOKIE_NAME}=${makeSession(hash, session?.subject)}`,
+        `${COOKIE_NAME}=${makeSession(hash, romSession?.subject)}`,
         "Path=/",
         "HttpOnly",
         "SameSite=Strict",
@@ -457,6 +528,10 @@ async function handleRequest(req, res, vite) {
   if (pathname.startsWith("/engine/")) {
     if (!validSession(req)) return json(res, 401, { error: "ROM validation required" });
     const relative = pathname.slice("/engine/".length) || "index.html";
+    const bundleMatch = relative.match(/^bundles\/([a-z0-9]+)(?:-|\.)/);
+    if (bundleMatch && !fighterJobs.isSlugAccessible(bundleMatch[1], user?.uid)) {
+      return json(res, 404, { error: "Engine file not found" });
+    }
     const filePath = safeFile(ENGINE_ROOT, relative);
     if (filePath && (await serveFile(req, res, filePath))) return;
     return json(res, 404, { error: "Engine file not found" });
@@ -467,10 +542,13 @@ async function handleRequest(req, res, vite) {
     if (pathname === "/bundles.json") {
       const names = (await readdir(path.join(ENGINE_ROOT, "bundles")))
         .filter((name) => /\.(osb|osbui|wav)$/.test(name))
+        .filter((name) => fighterJobs.isSlugAccessible(name.match(/^([a-z0-9]+)/)?.[1], user?.uid))
         .sort();
       return json(res, 200, names);
     }
-    return json(res, 200, await engineRoster());
+    return json(res, 200, (await engineRoster()).filter(
+      (character) => fighterJobs.isSlugAccessible(character.slug, user?.uid),
+    ));
   }
 
   if (pathname.startsWith("/character-assets/")) {
@@ -478,6 +556,9 @@ async function handleRequest(req, res, vite) {
       /^\/character-assets\/([a-z0-9]+)\/(portrait\.png|announcer\.wav)$/,
     );
     if (!match) return json(res, 404, { error: "Character asset not found" });
+    if (!fighterJobs.isSlugAccessible(match[1], user?.uid)) {
+      return json(res, 404, { error: "Character asset not found" });
+    }
     const allowed = (await engineRoster()).some((character) => character.slug === match[1]);
     if (!allowed) return json(res, 404, { error: "Character asset not found" });
     const fileName = match[2] === "portrait.png" ? "portrait_raw.png" : "announcer.wav";
@@ -494,9 +575,13 @@ async function handleRequest(req, res, vite) {
 
   if (pathname.startsWith("/objects/") && objectStore.driver === "local") {
     const objectKey = pathname.slice("/objects/".length);
+    const objectMatch = objectKey.match(/^characters\/([a-z0-9]+)\/(?:versions\/[a-f0-9-]+-\d+\/|latest\.json$)/);
     const isVersioned = /^characters\/[a-z0-9]+\/versions\/[a-f0-9-]+-\d+\//.test(objectKey);
     const isLatest = /^characters\/[a-z0-9]+\/latest\.json$/.test(objectKey);
     if (!isVersioned && !isLatest) {
+      return json(res, 404, { error: "Object not found" });
+    }
+    if (!objectMatch || !fighterJobs.isSlugPublic(objectMatch[1])) {
       return json(res, 404, { error: "Object not found" });
     }
     const filePath = objectStore.localPath(objectKey);
@@ -543,6 +628,7 @@ const server = http.createServer((req, res) => {
 await objectStore.init();
 await jobDatabase.init();
 await dispatcher.init();
+await authService.init();
 await fighterJobs.init();
 server.listen(PORT, HOST, () => {
   console.log(`OpenSmash prototype: http://${HOST}:${PORT}`);

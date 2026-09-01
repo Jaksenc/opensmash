@@ -4,6 +4,8 @@ export const ACTIVE_JOB_STATUSES = new Set(["queued", "running", "retrying"]);
 export const TERMINAL_JOB_STATUSES = new Set(["complete", "failed", "cancelled"]);
 
 export function publicJob(job) {
+  const visibility = job.visibility || "public";
+  const assetRoot = `/api/fighters/${encodeURIComponent(job.id)}/assets`;
   const result = {
     protocolVersion: JOB_PROTOCOL_VERSION,
     id: job.id,
@@ -11,6 +13,8 @@ export function publicJob(job) {
     name: job.name,
     slug: job.slug,
     emblem: job.emblem,
+    visibility,
+    uploader: job.uploader?.displayName ? { displayName: job.uploader.displayName } : null,
     status: job.status,
     stage: job.stage,
     stageLabel: job.stageLabel,
@@ -37,15 +41,20 @@ export function publicJob(job) {
       slug: job.slug,
       name: job.displayName || job.name,
       short: job.short || job.name,
-      portrait: artifacts.portrait?.url || `/api/fighters/${job.id}/portrait?v=${encodeURIComponent(job.completedAt || "")}`,
-      announcer: artifacts.announcer?.url || `/api/fighters/${job.id}/announcer?v=${encodeURIComponent(job.completedAt || "")}`,
-      bundleUrl: artifacts.bundle?.url || null,
-      uiUrl: artifacts.ui?.url || null,
-      voiceUrl: artifacts.announcer?.url || null,
-      manifestUrl: artifacts.manifest?.url || null,
+      portrait: artifacts.portrait?.url || `${assetRoot}/portrait?v=${encodeURIComponent(job.completedAt || "")}`,
+      announcer: artifacts.announcer?.url || `${assetRoot}/announcer?v=${encodeURIComponent(job.completedAt || "")}`,
+      bundleUrl: artifacts.bundle?.url || `${assetRoot}/bundle`,
+      uiUrl: artifacts.ui?.url || `${assetRoot}/ui`,
+      voiceUrl: artifacts.announcer?.url || `${assetRoot}/announcer`,
+      manifestUrl: artifacts.manifest?.url || `${assetRoot}/manifest`,
       variants: Object.fromEntries(
-        Object.entries(artifacts.variants || {}).map(([fighter, artifact]) => [fighter, artifact.url]),
+        Object.entries(artifacts.variants || {}).map(([fighter, artifact]) => [
+          fighter,
+          artifact.url || `${assetRoot}/variants/${encodeURIComponent(fighter)}`,
+        ]),
       ),
+      visibility,
+      uploader: result.uploader,
       fkind: 0,
       bundle: `${job.slug}.osb`,
     };
