@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import MobileControls from "./MobileControls.jsx";
 
 let visualRuntimePromise;
@@ -42,8 +42,8 @@ function startVisualRuntime() {
     "/visual/grid-replica.js?v=20260901-react6",
     "/visual/logo-stage.js?v=20260901-react5",
     "/visual/crt-viewport.js?v=20260901-react7",
-    "/visual/game-launcher.js?v=20260901-react6",
-    "/visual/site-hardware.js?v=20260901-react5",
+    "/visual/game-launcher.js?v=20260901-react8",
+    "/visual/site-hardware.js?v=20260901-react6",
   ].reduce((ready, src) => ready.then(() => loadModule(src)), Promise.resolve()));
   return visualRuntimePromise;
 }
@@ -156,7 +156,7 @@ export default function RetroHome({
   engineRef,
   gameFrameRef,
   onAdvanced,
-  onClearVerification,
+  onCloseGame,
   onFullscreen,
   onSignOut,
   onSound,
@@ -166,6 +166,8 @@ export default function RetroHome({
   user,
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const introVideoRef = useRef(null);
+  const [introVideoPlaying, setIntroVideoPlaying] = useState(false);
   const [mobileLayout, setMobileLayout] = useState(() => (
     mobileControlsRequested() || window.matchMedia(MOBILE_CONTROLS_MEDIA).matches
   ));
@@ -237,24 +239,93 @@ export default function RetroHome({
     if (!engine) setMobileControlsPreview((visible) => !visible);
   }
 
+  function toggleSurfacePower() {
+    const video = introVideoRef.current;
+    if (engine) {
+      onCloseGame();
+      if (video) {
+        video.currentTime = 0;
+        video.play().catch((error) => window.openSmashReactBridge?.reportError?.(error));
+      }
+      return;
+    }
+    if (!video) return;
+    if (video.paused) {
+      video.play().catch((error) => window.openSmashReactBridge?.reportError?.(error));
+    } else {
+      video.pause();
+    }
+  }
+
+  const powerLabel = engine
+    ? "Power off game"
+    : introVideoPlaying ? "Pause intro video" : "Play intro video";
+
   return (
     <>
-      <button id="rom-reset-button" className="rom-reset-button" type="button" hidden={!authorized} aria-label="Remove verified ROM and reset the game">Reset ROM</button>
       {pageError && <p className="retro-page-error" role="alert">{pageError}</p>}
       <main className="arena-shell" aria-label="OpenSmash character grid">
         <section className="intro-video-stage" aria-label="Intro video">
           <div className={`game-surface-shell ${mobileControlsVisible ? "has-mobile-control-deck" : ""}`}>
             <div className={`intro-video-frame ${engine ? "is-game-running" : ""}`} ref={gameFrameRef}>
-              <video id="intro-video" className="intro-video" src="/assets/intro-crt.mp4" muted={!soundOn} autoPlay loop playsInline preload="auto" aria-label="Super Weights Bros intro video" />
+              <video
+                ref={introVideoRef}
+                id="intro-video"
+                className="intro-video"
+                src="/assets/intro-crt.mp4"
+                muted={!soundOn}
+                autoPlay
+                loop
+                playsInline
+                preload="auto"
+                aria-label="Super Weights Bros intro video"
+                onPlay={() => setIntroVideoPlaying(true)}
+                onPause={() => setIntroVideoPlaying(false)}
+              />
               <img className="intro-video-rule-layer" alt="" aria-hidden="true" />
               <div id="hero-logo-stage" className="intro-video-logo" aria-label="Animated Smash the Weights logo">
                 <img className="hero-logo-fallback" src="/assets/smash-the-weights-logo.png" alt="" aria-hidden="true" draggable="false" />
                 <canvas id="hero-logo-canvas" className="hero-logo-canvas" aria-hidden="true" />
               </div>
               <iframe ref={engineRef} id="intro-game-frame" className="intro-game-frame" src={engine?.src || "about:blank"} title={engine ? "OpenSmash game engine" : "Super Weights Bros game"} allow="autoplay; gamepad; fullscreen" />
-              <div className="retro-game-tools">
-                <button id="game-fullscreen-button" className="game-close-button" type="button" onClick={onFullscreen}>Fullscreen</button>
-                <button id="game-close-button" className="game-close-button" type="button">Close game</button>
+              <div className="retro-game-tools" role="group" aria-label="Game controls">
+                <button
+                  id="game-close-button"
+                  className="game-overlay-control is-power"
+                  type="button"
+                  aria-label={powerLabel}
+                  aria-pressed={engine ? undefined : introVideoPlaying}
+                  title={powerLabel}
+                  onClick={toggleSurfacePower}
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M12 2.75v8.5" />
+                    <path d="M7.15 5.55a8 8 0 1 0 9.7 0" />
+                  </svg>
+                </button>
+                <button
+                  className="game-overlay-control is-sound"
+                  type="button"
+                  aria-label={soundOn ? "Mute audio" : "Unmute audio"}
+                  aria-pressed={soundOn}
+                  title={soundOn ? "Mute audio" : "Unmute audio"}
+                  onClick={onSound}
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M4 9.25h4l5-4v13.5l-5-4H4z" />
+                    {soundOn ? (
+                      <>
+                        <path d="M16 8.25a5 5 0 0 1 0 7.5" />
+                        <path d="M18.75 5.5a8.5 8.5 0 0 1 0 13" />
+                      </>
+                    ) : (
+                      <>
+                        <path d="m16.5 9 5 5" />
+                        <path d="m21.5 9-5 5" />
+                      </>
+                    )}
+                  </svg>
+                </button>
               </div>
             </div>
             <MobileControls
@@ -305,7 +376,6 @@ export default function RetroHome({
               <button id="sound-toggle" type="button" aria-pressed={soundOn} onClick={onSound}>Sound <span id="sound-toggle-state">{soundOn ? 'On' : 'Off'}</span></button>
               {engine && <button type="button" onClick={onFullscreen}>Fullscreen game</button>}
               {user && <button type="button" onClick={onSignOut}>{user.displayName || user.email || 'Account'} · Sign out</button>}
-              {authorized && <button type="button" onClick={onClearVerification}>Clear ROM verification</button>}
             </div>
             <p className="retro-rom-status">{authorized ? 'ROM verified for this browser' : 'ROM bytes stay on this device'}</p>
           </section>

@@ -4,6 +4,7 @@ import FighterCreator from "./FighterCreator.jsx";
 import RetroHome from "./RetroHome.jsx";
 import { matchesCharacterSearch } from "../shared/character-search.js";
 import { identifyRomFile } from "./rom-validation.js";
+import { clearControllerTutorialCompletion } from "../visual/control-tutorial.js?v=20260901-reset1";
 import {
   BOOT_MODES,
   CHARACTER_MESHES,
@@ -120,7 +121,7 @@ function RomModal({ action, onCancel, onValidated }) {
   );
 }
 
-function AdvancedModal({ open, options, onCancel, onSave }) {
+function AdvancedModal({ authorized, debugMode, open, options, onCancel, onResetControllerTutorial, onResetRom, onSave }) {
   const [draft, setDraft] = useState(options);
   const [isVisible, setIsVisible] = useState(false);
   const firstFieldRef = useRef(null);
@@ -242,6 +243,33 @@ function AdvancedModal({ open, options, onCancel, onSave }) {
               ))}
             </div>
           </fieldset>
+
+          {debugMode && (
+            <section className="advanced-debug-tools" aria-labelledby="advanced-debug-title">
+              <div>
+                <strong id="advanced-debug-title">Debug</strong>
+                <small>Restore first-run checks for this browser.</small>
+              </div>
+              <div className="advanced-debug-actions">
+                {authorized && (
+                  <button
+                    className="launch-flow-action reset-rom-button"
+                    type="button"
+                    onClick={() => leave(onResetRom)}
+                  >
+                    Reset ROM
+                  </button>
+                )}
+                <button
+                  className="launch-flow-action reset-controller-button"
+                  type="button"
+                  onClick={() => leave(onResetControllerTutorial)}
+                >
+                  Reset Controller Tutorial
+                </button>
+              </div>
+            </section>
+          )}
 
           <div className="advanced-actions">
             <div className="advanced-save-cell launch-flow-fire-cell flame-bridge-cell">
@@ -479,7 +507,20 @@ export default function App() {
     setAuthorized(false);
     setPendingAction(null);
     setEngine(null);
+    setAdvancedOpen(false);
     if (devMenuRef.current) devMenuRef.current.open = false;
+  }
+
+  async function resetRomFromAdvanced() {
+    setAdvancedOpen(false);
+    await clearVerification();
+  }
+
+  function resetControllerTutorialFromAdvanced() {
+    try { clearControllerTutorialCompletion(localStorage); }
+    catch { /* The runtime reset below still applies to this tab. */ }
+    window.gameLauncher?.resetControls?.();
+    setAdvancedOpen(false);
   }
 
   function toggleSound() {
@@ -544,7 +585,7 @@ export default function App() {
           engineRef={engineRef}
           gameFrameRef={gameFrameRef}
           onAdvanced={() => setAdvancedOpen(true)}
-          onClearVerification={clearVerification}
+          onCloseGame={() => setEngine(null)}
           onFullscreen={toggleFullscreen}
           onSignOut={signOutUser}
           onSound={toggleSound}
@@ -554,9 +595,13 @@ export default function App() {
           user={user}
         />
         <AdvancedModal
+          authorized={authorized}
+          debugMode={new URLSearchParams(window.location.search).get("debug") === "1"}
           open={advancedOpen}
           options={advancedOptions}
           onCancel={() => setAdvancedOpen(false)}
+          onResetControllerTutorial={resetControllerTutorialFromAdvanced}
+          onResetRom={resetRomFromAdvanced}
           onSave={saveAdvancedOptions}
         />
       </>
@@ -725,9 +770,13 @@ export default function App() {
       </footer>
 
       <AdvancedModal
+        authorized={authorized}
+        debugMode={new URLSearchParams(window.location.search).get("debug") === "1"}
         open={advancedOpen}
         options={advancedOptions}
         onCancel={() => setAdvancedOpen(false)}
+        onResetControllerTutorial={resetControllerTutorialFromAdvanced}
+        onResetRom={resetRomFromAdvanced}
         onSave={saveAdvancedOptions}
       />
 

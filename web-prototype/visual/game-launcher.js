@@ -1,10 +1,11 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import {
+  clearControllerTutorialCompletion,
   readControllerTutorialCompletion,
   saveControllerTutorialCompletion,
   shouldRequireControllerTutorial,
-} from './control-tutorial.js';
+} from './control-tutorial.js?v=20260901-reset1';
 
 const APP_BRIDGE = window.openSmashReactBridge;
 const ROM_SHA256 = '15592e79d3c5295cef4371d4992f0bd25bec2102fc29644c93e682f7ea99ef3d';
@@ -61,7 +62,6 @@ const grid = document.getElementById('replica-grid');
 const videoFrame = document.querySelector('.intro-video-frame');
 const introVideo = document.getElementById('intro-video');
 const gameFrame = document.getElementById('intro-game-frame');
-const closeGameButton = document.getElementById('game-close-button');
 const resetRomButton = document.getElementById('rom-reset-button');
 const overlay = document.getElementById('launch-flow-overlay');
 const flowCanvas = document.getElementById('launch-flow-canvas');
@@ -128,6 +128,12 @@ function rememberCompletedControllerTutorial() {
   controllerTutorialCompletedThisSession = true;
   try { saveControllerTutorialCompletion(localStorage); }
   catch { /* Completion still applies to this launch if storage is unavailable. */ }
+}
+
+function resetControllerTutorial() {
+  controllerTutorialCompletedThisSession = false;
+  try { clearControllerTutorialCompletion(localStorage); }
+  catch { /* The in-memory reset still applies to this tab. */ }
 }
 
 function requiresControllerTutorial() {
@@ -2021,7 +2027,6 @@ grid?.addEventListener('characterselect', event => {
   }
 });
 
-closeGameButton?.addEventListener('click', closeGame);
 resetRomButton?.addEventListener('click', resetRom);
 window.addEventListener('resize', resizeFlowRenderer);
 window.addEventListener('keydown', event => {
@@ -2062,6 +2067,7 @@ window.gameLauncher = Object.freeze({
   },
   close: closeGame,
   reset: resetRom,
+  resetControls: resetControllerTutorial,
   sync: syncRomResetButton,
 });
 

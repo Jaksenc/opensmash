@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  clearControllerTutorialCompletion,
   readControllerTutorialCompletion,
   saveControllerTutorialCompletion,
   shouldRequireControllerTutorial,
@@ -10,6 +11,7 @@ function memoryStorage() {
   const values = new Map();
   return {
     getItem: (key) => values.get(key) ?? null,
+    removeItem: (key) => values.delete(key),
     setItem: (key, value) => values.set(key, value),
   };
 }
@@ -32,4 +34,11 @@ test("controller tutorial completion persists in storage", () => {
   const storage = memoryStorage();
   saveControllerTutorialCompletion(storage);
   assert.equal(readControllerTutorialCompletion(storage), true);
+});
+
+test("controller tutorial completion can be reset for debug verification", () => {
+  const storage = memoryStorage();
+  saveControllerTutorialCompletion(storage);
+  clearControllerTutorialCompletion(storage);
+  assert.equal(readControllerTutorialCompletion(storage), false);
 });
