@@ -23,10 +23,12 @@ import {
   BOOT_MODES,
   CHARACTER_MESHES,
   DEFAULT_ADVANCED_OPTIONS,
+  OPPONENT_LEVELS,
   STAGES,
   engineUrl,
   hasAdvancedOverrides,
   normalizeAdvancedOptions,
+  selectDirectBattleOpponents,
 } from "./launch-options.js";
 
 const ADVANCED_OPTIONS_KEY = "opensmash-advanced-options";
@@ -293,6 +295,20 @@ function AdvancedModal({ authorized, debugMode, open, options, onCancel, onReset
                 </select>
               </span>
               <small>Used for direct matches and preselected VS launches.</small>
+            </label>
+            <label className="advanced-field">
+              <span className="advanced-field-label">Opponent Difficulty</span>
+              <span className="advanced-select-shell advanced-cell-frame flame-bridge-cell">
+                <select
+                  value={draft.opponentLevel}
+                  onChange={(event) => update("opponentLevel", event.target.value)}
+                >
+                  {OPPONENT_LEVELS.map((level) => (
+                    <option value={level.value} key={level.value}>{level.label}</option>
+                  ))}
+                </select>
+              </span>
+              <small>CPU level for every computer-controlled opponent.</small>
             </label>
           </div>
 
@@ -619,12 +635,28 @@ export default function App() {
 
   function launch(action) {
     try {
-      setEngine({ src: engineUrl(action, advancedOptions), action });
+      const launchAction = prepareLaunchAction(action);
+      setEngine({ src: engineUrl(launchAction, advancedOptions), action: launchAction });
       setPendingAction(null);
       requestAnimationFrame(() => gameRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
     } catch (error) {
       setPageError(error.message || "Could not apply those advanced options.");
     }
+  }
+
+  function prepareLaunchAction(action) {
+    if (action.type !== "character" || action.opponents) return action;
+    const ownedCharacters = fighterJobs
+      .filter((job) => job.status === "complete" && job.character)
+      .map((job) => job.character);
+    return {
+      ...action,
+      opponents: selectDirectBattleOpponents(
+        action.character,
+        characters,
+        ownedCharacters,
+      ),
+    };
   }
 
   function saveAdvancedOptions(nextOptions) {
@@ -768,8 +800,9 @@ export default function App() {
       return "about:blank";
     }
     try {
-      const src = engineUrl(action, advancedOptions);
-      setEngine({ src, action });
+      const launchAction = prepareLaunchAction(action);
+      const src = engineUrl(launchAction, advancedOptions);
+      setEngine({ src, action: launchAction });
       setPendingAction(null);
       setPageError("");
       return src;
