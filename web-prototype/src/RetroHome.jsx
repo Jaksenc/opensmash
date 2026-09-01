@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import MobileControls from "./MobileControls.jsx";
 
 let visualRuntimePromise;
+const MOBILE_CONTROLS_MEDIA = "(max-width: 960px), (hover: none) and (pointer: coarse)";
 
 function loadVisualStyles() {
   return new Promise((resolve, reject) => {
@@ -36,7 +38,7 @@ function startVisualRuntime() {
     "/visual/grid-replica.js?v=20260901-react4",
     "/visual/logo-stage.js?v=20260901-react4",
     "/visual/crt-viewport.js?v=20260901-react4",
-    "/visual/game-launcher.js?v=20260901-react4",
+    "/visual/game-launcher.js?v=20260901-react6",
     "/visual/site-hardware.js?v=20260901-react4",
   ].reduce((ready, src) => ready.then(() => loadModule(src)), Promise.resolve()));
   return visualRuntimePromise;
@@ -160,16 +162,36 @@ export default function RetroHome({
   user,
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [mobileLayout, setMobileLayout] = useState(() => window.matchMedia(MOBILE_CONTROLS_MEDIA).matches);
+  const [mobileControlsPreview, setMobileControlsPreview] = useState(false);
+  const previewMobileControls = !engine && mobileLayout && mobileControlsPreview;
+  const mobileControlsVisible = Boolean(engine) || previewMobileControls;
 
   useEffect(() => {
     const showNativeCursor = new URLSearchParams(window.location.search).has("showCursor");
+    const mobileControlsMedia = window.matchMedia(MOBILE_CONTROLS_MEDIA);
+    const syncMobileControls = () => {
+      setMobileLayout(mobileControlsMedia.matches);
+      document.body.classList.toggle("uses-mobile-controls", mobileControlsMedia.matches);
+    };
     document.documentElement.classList.add("is-direct-site");
     document.body.classList.add("retro-home");
     document.body.classList.toggle("show-native-cursor", showNativeCursor);
+    syncMobileControls();
+    if (mobileControlsMedia.addEventListener) {
+      mobileControlsMedia.addEventListener("change", syncMobileControls);
+    } else {
+      mobileControlsMedia.addListener?.(syncMobileControls);
+    }
     loadVisualStyles().catch((error) => window.openSmashReactBridge?.reportError?.(error));
     return () => {
       document.documentElement.classList.remove("is-direct-site");
-      document.body.classList.remove("retro-home", "show-native-cursor");
+      document.body.classList.remove("retro-home", "show-native-cursor", "uses-mobile-controls");
+      if (mobileControlsMedia.removeEventListener) {
+        mobileControlsMedia.removeEventListener("change", syncMobileControls);
+      } else {
+        mobileControlsMedia.removeListener?.(syncMobileControls);
+      }
     };
   }, []);
 
@@ -197,29 +219,55 @@ export default function RetroHome({
     window.setTimeout(() => window.gameLauncher?.request(actionType), 0);
   }
 
+  function toggleMobileControls(event) {
+    if (!mobileLayout) return;
+    event.stopPropagation();
+    if (!engine) setMobileControlsPreview((visible) => !visible);
+  }
+
   return (
     <>
       <button id="rom-reset-button" className="rom-reset-button" type="button" hidden={!authorized} aria-label="Remove verified ROM and reset the game">Reset ROM</button>
       {pageError && <p className="retro-page-error" role="alert">{pageError}</p>}
       <main className="arena-shell" aria-label="OpenSmash character grid">
         <section className="intro-video-stage" aria-label="Intro video">
-          <div className={`intro-video-frame ${engine ? "is-game-running" : ""}`} ref={gameFrameRef}>
-            <video id="intro-video" className="intro-video" src="/assets/intro-crt.mp4" muted={!soundOn} autoPlay loop playsInline preload="auto" aria-label="Super Weights Bros intro video" />
-            <canvas className="intro-video-rule-layer" aria-hidden="true" />
-            <div id="hero-logo-stage" className="intro-video-logo" aria-label="Animated Smash the Weights logo">
-              <img className="hero-logo-fallback" src="/assets/smash-the-weights-logo.png" alt="" aria-hidden="true" draggable="false" />
-              <canvas id="hero-logo-canvas" className="hero-logo-canvas" aria-hidden="true" />
+          <div className={`game-surface-shell ${mobileControlsVisible ? "has-mobile-control-deck" : ""}`}>
+            <div className={`intro-video-frame ${engine ? "is-game-running" : ""}`} ref={gameFrameRef}>
+              <video id="intro-video" className="intro-video" src="/assets/intro-crt.mp4" muted={!soundOn} autoPlay loop playsInline preload="auto" aria-label="Super Weights Bros intro video" />
+              <canvas className="intro-video-rule-layer" aria-hidden="true" />
+              <div id="hero-logo-stage" className="intro-video-logo" aria-label="Animated Smash the Weights logo">
+                <img className="hero-logo-fallback" src="/assets/smash-the-weights-logo.png" alt="" aria-hidden="true" draggable="false" />
+                <canvas id="hero-logo-canvas" className="hero-logo-canvas" aria-hidden="true" />
+              </div>
+              <iframe ref={engineRef} id="intro-game-frame" className="intro-game-frame" src={engine?.src || "about:blank"} title={engine ? "OpenSmash game engine" : "Super Weights Bros game"} allow="autoplay; gamepad; fullscreen" />
+              <div className="retro-game-tools">
+                <button id="game-fullscreen-button" className="game-close-button" type="button" onClick={onFullscreen}>Fullscreen</button>
+                <button id="game-close-button" className="game-close-button" type="button">Close game</button>
+              </div>
             </div>
-            <iframe ref={engineRef} id="intro-game-frame" className="intro-game-frame" src={engine?.src || "about:blank"} title={engine ? "OpenSmash game engine" : "Super Weights Bros game"} allow="autoplay; gamepad; fullscreen" />
-            <div className="retro-game-tools">
-              <button id="game-fullscreen-button" className="game-close-button" type="button" onClick={onFullscreen}>Fullscreen</button>
-              <button id="game-close-button" className="game-close-button" type="button">Close game</button>
-            </div>
+            <MobileControls
+              active={mobileControlsVisible}
+              frameRef={engineRef}
+              preview={previewMobileControls}
+            />
           </div>
         </section>
         <section id="site-menu-bridge" className="site-menu-bridge" aria-label="Site information and settings">
           <div className="flame-bridge-cell"><button id="about-menu-button" className="flame-bridge-action site-menu-button" type="button" onClick={() => setMenuOpen(true)}>About</button></div>
-          <div className="flame-bridge-cell"><button id="controls-menu-button" className="flame-bridge-action site-menu-button" type="button" aria-haspopup="dialog" aria-controls="launch-flow-controller-step">Controls</button></div>
+          <div className="flame-bridge-cell">
+            <button
+              id="controls-menu-button"
+              className={`flame-bridge-action site-menu-button ${mobileLayout && mobileControlsVisible ? "is-active" : ""}`}
+              type="button"
+              aria-haspopup={mobileLayout ? undefined : "dialog"}
+              aria-controls={mobileLayout ? "touch-control-deck" : "launch-flow-controller-step"}
+              aria-expanded={mobileLayout ? mobileControlsVisible : undefined}
+              aria-pressed={mobileLayout ? mobileControlsVisible : undefined}
+              onClickCapture={toggleMobileControls}
+            >
+              Controls
+            </button>
+          </div>
           <div className="flame-bridge-cell"><button className={`flame-bridge-action site-menu-button ${advancedActive ? "is-active" : ""}`} type="button" aria-haspopup="dialog" onClick={onAdvanced}>Advanced</button></div>
           <canvas className="site-menu-rule-layer" aria-hidden="true" />
         </section>
