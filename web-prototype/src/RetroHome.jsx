@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import FlameAction from "./FlameAction.jsx";
 import MobileControls from "./MobileControls.jsx";
+import ModalPage from "./ModalPage.jsx";
 
 let visualRuntimePromise;
 const MOBILE_CONTROLS_MEDIA = "(hover: none) and (pointer: coarse)";
@@ -20,7 +21,7 @@ function loadVisualStyles() {
     const link = document.createElement("link");
     link.id = "site-shell-styles";
     link.rel = "stylesheet";
-    link.href = "/visual/site-shell.css?v=20260901-fighter-progress5";
+    link.href = "/visual/site-shell.css?v=20260901-roster-bottom-space1";
     link.addEventListener("load", resolve, { once: true });
     link.addEventListener("error", () => reject(new Error("Could not load the site visual system")), { once: true });
     document.head.append(link);
@@ -41,10 +42,10 @@ function loadModule(src) {
 function startVisualRuntime() {
   visualRuntimePromise ||= loadVisualStyles().then(() => [
     "/visual/grid-replica.js?v=20260901-fighter-progress4",
-    "/visual/logo-stage.js?v=20260901-react5",
+    "/visual/logo-stage.js?v=20260901-react6",
     "/visual/crt-viewport.js?v=20260901-react7",
     "/visual/game-launcher.js?v=20260901-react9",
-    "/visual/site-hardware.js?v=20260901-react6",
+    "/visual/site-hardware.js?v=20260901-react7",
   ].reduce((ready, src) => ready.then(() => loadModule(src)), Promise.resolve()));
   return visualRuntimePromise;
 }
@@ -149,6 +150,7 @@ function RuntimeControls() {
 export default function RetroHome({
   advancedActive,
   authorized,
+  developmentMode,
   engine,
   engineRef,
   gameFrameRef,
@@ -157,6 +159,7 @@ export default function RetroHome({
   onCloseGame,
   onCreate,
   onFullscreen,
+  onResetRom,
   onSignOut,
   onSound,
   pageError,
@@ -165,6 +168,7 @@ export default function RetroHome({
   user,
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const aboutCancelRef = useRef(null);
   const introVideoRef = useRef(null);
   const [introVideoPlaying, setIntroVideoPlaying] = useState(false);
   const [mobileLayout, setMobileLayout] = useState(() => (
@@ -213,25 +217,6 @@ export default function RetroHome({
     return () => document.body.classList.remove("is-game-running");
   }, [engine]);
 
-  useEffect(() => {
-    if (!menuOpen) return undefined;
-    const previousOverflow = document.body.style.overflow;
-    const closeOnEscape = (event) => {
-      if (event.key === "Escape") setMenuOpen(false);
-    };
-    document.body.style.overflow = "hidden";
-    window.addEventListener("keydown", closeOnEscape);
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", closeOnEscape);
-    };
-  }, [menuOpen]);
-
-  function requestGame(actionType) {
-    setMenuOpen(false);
-    window.setTimeout(() => window.gameLauncher?.request(actionType), 0);
-  }
-
   function toggleMobileControls(event) {
     if (!mobileLayout) return;
     event.stopPropagation();
@@ -270,7 +255,16 @@ export default function RetroHome({
             <canvas id="hero-logo-canvas" className="hero-logo-canvas" aria-hidden="true" />
           </div>
           <nav className="retro-site-nav" aria-label="Site information and settings">
-            <button className="retro-site-link" type="button" onClick={() => setMenuOpen(true)}>About</button>
+            <button
+              className="retro-site-link"
+              type="button"
+              aria-haspopup="dialog"
+              aria-controls="about-overlay"
+              aria-expanded={menuOpen}
+              onClick={() => setMenuOpen(true)}
+            >
+              About
+            </button>
             <button
               id="controls-menu-button"
               className={`retro-site-link ${mobileLayout && mobileControlsVisible ? "is-active" : ""}`}
@@ -284,6 +278,16 @@ export default function RetroHome({
               Controls
             </button>
             <button className={`retro-site-link ${advancedActive ? "is-active" : ""}`} type="button" aria-haspopup="dialog" onClick={onAdvanced}>Advanced</button>
+            {developmentMode && authorized && (
+              <button
+                className="retro-site-link retro-site-dev-link"
+                type="button"
+                onClick={onResetRom}
+                aria-label="Remove verified ROM and reset the game"
+              >
+                Reset ROM
+              </button>
+            )}
           </nav>
         </header>
         <section className="intro-video-stage" aria-label="Intro video">
@@ -385,25 +389,38 @@ export default function RetroHome({
         <span id="replica-metrics" hidden>Building 200-cell grid…</span>
       </main>
 
-      {menuOpen && (
-        <div className="retro-menu-backdrop" role="presentation" onMouseDown={() => setMenuOpen(false)}>
-          <section className="retro-menu-modal" role="dialog" aria-modal="true" aria-labelledby="retro-menu-title" onMouseDown={(event) => event.stopPropagation()}>
-            <button className="retro-menu-close" type="button" onClick={() => setMenuOpen(false)} aria-label="Close">×</button>
-            <p className="retro-menu-kicker">OpenSmash</p>
-            <h2 id="retro-menu-title">Smash the weights</h2>
-            <p>Pick any fighter for a quick match, or choose another way into the browser build.</p>
-            <div className="retro-menu-actions">
-              <button type="button" onClick={() => requestGame('select')}>Character select</button>
-              <button type="button" onClick={() => requestGame('start')}>Play from start</button>
-              <button type="button" onClick={onCreate}>Create fighter</button>
-              <button id="sound-toggle" type="button" aria-pressed={soundOn} onClick={onSound}>Sound <span id="sound-toggle-state">{soundOn ? 'On' : 'Off'}</span></button>
-              {engine && <button type="button" onClick={onFullscreen}>Fullscreen game</button>}
-              {user && <button type="button" onClick={onSignOut}>{user.displayName || user.email || 'Account'} · Sign out</button>}
+      <ModalPage
+        id="about-overlay"
+        className="about-overlay"
+        bodyClass="is-about-open"
+        initialFocusRef={aboutCancelRef}
+        onRequestClose={() => setMenuOpen(false)}
+        open={menuOpen}
+        role="presentation"
+      >
+        {(close) => (
+          <section
+            className="modal-page-surface about-screen"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="about-title"
+            aria-describedby="about-copy"
+          >
+            <div className="about-content">
+              <h2 id="about-title" className="launch-flow-title about-title">About</h2>
+              <p id="about-copy" className="launch-flow-copy about-copy">I'll find something to put here.</p>
+              <button
+                ref={aboutCancelRef}
+                className="launch-flow-action launch-flow-cancel about-cancel"
+                type="button"
+                onClick={() => close()}
+              >
+                Cancel
+              </button>
             </div>
-            <p className="retro-rom-status">{authorized ? 'ROM verified for this browser' : 'ROM bytes stay on this device'}</p>
           </section>
-        </div>
-      )}
+        )}
+      </ModalPage>
 
       <LaunchFlow />
       <GodRay />

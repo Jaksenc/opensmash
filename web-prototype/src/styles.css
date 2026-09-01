@@ -136,6 +136,26 @@ main { width: min(1600px, calc(100% - 40px)); margin: 0 auto; }
 .auth-options form button { padding: 0 15px; border: 1px solid #f16a47; background: #df3f1d; font-size: 9px; text-transform: uppercase; cursor: pointer; }
 .auth-message { margin: 17px 0 0; color: #b8a99e; font-size: 10px; }
 
+.modal-page {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 480ms ease, visibility 480ms step-end;
+}
+.modal-page[hidden] { display: none; }
+.modal-page.is-visible {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 420ms ease, visibility 0s;
+}
+.modal-page-surface {
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+.modal-page.is-visible .modal-page-surface {
+  opacity: 1;
+  transition: opacity 320ms ease 330ms;
+}
+
 .create-experience-backdrop {
   position: fixed;
   inset: 0;
@@ -421,18 +441,9 @@ footer { display: flex; justify-content: space-between; border-top: 1px solid #2
   overflow-y: auto;
   background: #000;
   color: #fff2d6;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 480ms ease, visibility 480ms step-end;
 }
 html:has(.advanced-overlay:not([hidden])),
 body:has(.advanced-overlay:not([hidden])) { overflow: hidden; }
-.advanced-overlay[hidden] { display: none; }
-.advanced-overlay.is-visible {
-  opacity: 1;
-  visibility: visible;
-  transition: opacity 360ms ease, visibility 0s;
-}
 .advanced-screen {
   width: min(980px, 100%);
   min-height: 100svh;
@@ -442,12 +453,7 @@ body:has(.advanced-overlay:not([hidden])) { overflow: hidden; }
   margin: 0 auto;
   padding: clamp(68px, 8vh, 96px) clamp(20px, 4vw, 48px) clamp(34px, 6vh, 68px);
   font-family: "Kanit", sans-serif;
-  opacity: 0;
-  transform: scale(.992);
-  transform-origin: 50% 50%;
-  transition: opacity 320ms ease 110ms, transform 360ms ease 110ms;
 }
-.advanced-overlay.is-visible .advanced-screen { opacity: 1; transform: none; }
 .advanced-heading { margin-bottom: clamp(24px, 4vh, 38px); text-align: center; }
 .advanced-field-label,
 .boot-mode-fieldset legend {
@@ -823,106 +829,49 @@ body.retro-home::before {
   letter-spacing: .1em;
   text-transform: uppercase;
 }
-.retro-menu-backdrop {
+.about-overlay {
   position: fixed;
   inset: 0;
-  z-index: 2100;
+  z-index: 1500;
+  overflow: hidden;
+  background: #000;
+  color: #fff2d6;
+}
+.about-screen {
+  width: 100%;
+  min-height: 100svh;
   display: grid;
   place-items: center;
-  padding: 20px;
-  background: rgba(0, 0, 0, .84);
-}
-.retro-menu-modal {
-  position: relative;
-  width: min(570px, 100%);
-  padding: clamp(26px, 5vw, 46px);
-  border: 2px solid #5b3828;
-  background:
-    linear-gradient(rgba(10, 3, 1, .82), rgba(8, 3, 1, .92)),
-    url("/assets/charselect/fire_bg.png") center / 192px 184px;
-  box-shadow: 0 0 0 2px #160b08, 0 24px 80px #000;
-  color: #fff2d6;
+  padding: 24px;
   font-family: "Kanit", sans-serif;
+  text-align: center;
 }
-.retro-menu-modal::after {
-  content: "";
-  position: absolute;
-  inset: 8px;
-  border: 1px solid rgba(255, 235, 198, .12);
-  pointer-events: none;
-}
-.retro-menu-modal h2 {
-  position: relative;
-  z-index: 1;
-  margin: 0;
-  font: 800 clamp(36px, 8vw, 66px)/.85 "Kanit", sans-serif;
-  letter-spacing: -.045em;
-  text-transform: uppercase;
-  text-shadow: 0 4px 0 #260500, 2px 0 0 #260500;
-}
-.retro-menu-modal > p:not(.retro-menu-kicker):not(.retro-rom-status) {
-  position: relative;
-  z-index: 1;
-  max-width: 47ch;
-  margin: 20px 0;
-  color: #c7ae91;
-  font-size: 12px;
-  line-height: 1.55;
-}
-.retro-menu-kicker,
-.retro-rom-status {
-  position: relative;
-  z-index: 1;
-  margin: 0 0 10px;
-  color: #ef7f45;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: .16em;
-  text-transform: uppercase;
-}
-.retro-rom-status { margin: 18px 0 0; color: #8f7966; }
-.retro-menu-actions {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 6px;
-}
-.retro-menu-actions button,
-.retro-menu-actions a {
-  min-height: 52px;
+.about-content {
+  --launch-control-width: clamp(210px, 23vw, 300px);
   display: flex;
+  width: min(760px, 100%);
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  padding: 10px 13px;
-  border: 1px solid #6a412e;
-  background: rgba(18, 6, 2, .76);
-  color: #fff2d6;
-  font: 700 14px/1.1 "Kanit", sans-serif;
-  letter-spacing: .035em;
-  text-decoration: none;
-  text-transform: uppercase;
-  cursor: none;
 }
-.retro-menu-actions button:hover,
-.retro-menu-actions button:focus-visible,
-.retro-menu-actions a:hover,
-.retro-menu-actions a:focus-visible {
-  outline: 0;
-  border-color: #ffb05f;
-  background: rgba(92, 30, 10, .84);
+.about-title { margin: 0; }
+.about-copy { margin-top: 12px; }
+.about-cancel {
+  box-sizing: border-box;
+  width: clamp(210px, 23vw, 300px);
+  min-width: clamp(210px, 23vw, 300px);
+  min-height: 48px;
+  margin-top: 22px;
+  background: #050303;
 }
-.retro-menu-close {
-  position: absolute;
-  z-index: 2;
-  top: 12px;
-  right: 15px;
-  border: 0;
-  background: transparent;
-  color: #c8aa8c;
-  font: 28px/1 sans-serif;
-  cursor: none;
+.about-title,
+.about-copy,
+.about-cancel {
+  filter: blur(.4px) contrast(1.14);
+  -webkit-font-smoothing: none;
 }
+body.is-about-open #glove-canvas { z-index: 1800; }
+.retro-home .about-overlay,
+.retro-home .about-overlay button { cursor: none; }
 .retro-home .modal-backdrop { z-index: 2100; cursor: none; }
 .retro-home .modal,
 .retro-home .modal button,
@@ -1166,9 +1115,6 @@ body.is-advanced-open #glove-canvas { z-index: 1800; }
   }
 }
 
-body.is-game-running #hero-logo-canvas { display: none; }
-body.is-game-running #hero-logo-stage .hero-logo-fallback { opacity: 1; }
-
 body.is-game-running #crt-viewport-canvas {
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
@@ -1186,7 +1132,6 @@ body.retro-home.show-native-cursor * {
 }
 
 @media (max-width: 560px) {
-  .retro-menu-actions { grid-template-columns: 1fr; }
   .advanced-debug-actions { grid-template-columns: 1fr; }
   .retro-game-tools { bottom: 6px; right: 6px; }
   .game-overlay-control { width: 44px; height: 44px; }

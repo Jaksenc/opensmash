@@ -246,7 +246,7 @@
     z-index: 1;
     width: var(--arena-content-width);
     min-height: 100vh;
-    padding-bottom: var(--roster-layout-reserve, 0px);
+    padding-bottom: calc(var(--roster-layout-reserve, 0px) + 8px);
     margin-inline: auto;
     overflow-anchor: none;
   }
@@ -304,6 +304,9 @@
   }
   .retro-site-link.is-active {
     text-shadow: 0 0 12px rgba(255, 148, 47, .65), 0 2px 0 #260500;
+  }
+  .retro-site-dev-link {
+    color: #f0a26d;
   }
   .intro-video-stage {
     display: grid;
