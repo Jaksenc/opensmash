@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-required=(PROJECT_ID REGION PUBLIC_ORIGIN)
+required=(PROJECT_ID REGION PUBLIC_ORIGIN FIREBASE_API_KEY FIREBASE_APP_ID)
 for name in "${required[@]}"; do
   if [[ -z "${!name:-}" ]]; then
     echo "$name is required" >&2
@@ -21,6 +21,7 @@ API_SERVICE_ACCOUNT="${API_SERVICE_ACCOUNT:-opensmash-api}"
 WORKER_SERVICE_ACCOUNT="${WORKER_SERVICE_ACCOUNT:-opensmash-worker}"
 API_IDENTITY="${API_SERVICE_ACCOUNT}@${PROJECT_ID}.iam.gserviceaccount.com"
 WORKER_IDENTITY="${WORKER_SERVICE_ACCOUNT}@${PROJECT_ID}.iam.gserviceaccount.com"
+FIREBASE_AUTH_DOMAIN="${FIREBASE_AUTH_DOMAIN:-${PROJECT_ID}.firebaseapp.com}"
 IMAGE_ROOT="${REGION}-docker.pkg.dev/${PROJECT_ID}/${ARTIFACT_REPOSITORY}"
 VERSION="${VERSION:-$(date -u +%Y%m%d-%H%M%S)}"
 API_IMAGE="${IMAGE_ROOT}/web:${VERSION}"
@@ -31,6 +32,7 @@ gcloud services enable \
   artifactregistry.googleapis.com \
   cloudbuild.googleapis.com \
   firestore.googleapis.com \
+  identitytoolkit.googleapis.com \
   run.googleapis.com \
   secretmanager.googleapis.com \
   storage.googleapis.com
@@ -48,6 +50,8 @@ for bucket in "$PRIVATE_BUCKET" "$PUBLIC_BUCKET"; do
       --location "$REGION" --uniform-bucket-level-access
   fi
 done
+gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+  --member "serviceAccount:${API_IDENTITY}" --role roles/firebaseauth.admin >/dev/null
 
 cors_file="$(mktemp)"
 trap 'trash "$cors_file" 2>/dev/null || rm "$cors_file"' EXIT
@@ -85,6 +89,8 @@ for secret in opensmash-cookie-secret opensmash-openai-api-key opensmash-tripo-a
 done
 gcloud secrets add-iam-policy-binding opensmash-cookie-secret \
   --member "serviceAccount:${API_IDENTITY}" --role roles/secretmanager.secretAccessor >/dev/null
+gcloud secrets add-iam-policy-binding opensmash-openai-api-key \
+  --member "serviceAccount:${API_IDENTITY}" --role roles/secretmanager.secretAccessor >/dev/null
 for secret in opensmash-openai-api-key opensmash-tripo-api-key opensmash-fal-key opensmash-minimax-voice-id; do
   gcloud secrets add-iam-policy-binding "$secret" \
     --member "serviceAccount:${WORKER_IDENTITY}" --role roles/secretmanager.secretAccessor >/dev/null
@@ -121,7 +127,7 @@ gcloud run deploy "$SERVICE_NAME" \
   --allow-unauthenticated \
   --port 8080 --cpu 1 --memory 1Gi --concurrency 40 \
   --min-instances 0 --max-instances 1 --timeout 3600 \
-  --set-env-vars "JOB_DATABASE=firestore,OBJECT_STORE=gcs,FIGHTER_JOBS_ROOT=/tmp/fighter-jobs,FIGHTER_EXECUTION_MODE=cloud-run,GOOGLE_CLOUD_PROJECT=${PROJECT_ID},CLOUD_RUN_REGION=${REGION},CLOUD_RUN_WORKER_JOB=${WORKER_JOB},GCS_PRIVATE_BUCKET=${PRIVATE_BUCKET},GCS_PUBLIC_BUCKET=${PUBLIC_BUCKET},ASSET_BASE_URL=${ASSET_BASE_URL},ALLOWED_ORIGINS=${PUBLIC_ORIGIN}" \
-  --set-secrets "COOKIE_SECRET=opensmash-cookie-secret:latest"
+  --set-env-vars "JOB_DATABASE=firestore,OBJECT_STORE=gcs,FIGHTER_JOBS_ROOT=/tmp/fighter-jobs,FIGHTER_EXECUTION_MODE=cloud-run,GOOGLE_CLOUD_PROJECT=${PROJECT_ID},CLOUD_RUN_REGION=${REGION},CLOUD_RUN_WORKER_JOB=${WORKER_JOB},GCS_PRIVATE_BUCKET=${PRIVATE_BUCKET},GCS_PUBLIC_BUCKET=${PUBLIC_BUCKET},ASSET_BASE_URL=${ASSET_BASE_URL},ALLOWED_ORIGINS=${PUBLIC_ORIGIN},FIREBASE_AUTH_ENABLED=1,FIREBASE_PROJECT_ID=${PROJECT_ID},FIREBASE_API_KEY=${FIREBASE_API_KEY},FIREBASE_AUTH_DOMAIN=${FIREBASE_AUTH_DOMAIN},FIREBASE_APP_ID=${FIREBASE_APP_ID},FIREBASE_AUTH_PROVIDERS=google|apple|email,FIGHTER_MODERATION_ENABLED=1" \
+  --set-secrets "COOKIE_SECRET=opensmash-cookie-secret:latest,OPENAI_API_KEY=opensmash-openai-api-key:latest"
 
 echo "Deployed ${SERVICE_NAME} and ${WORKER_JOB} at version ${VERSION}."

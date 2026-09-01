@@ -65,8 +65,12 @@ and exercise the first-run flow again.
 
 ## Generate a fighter
 
-Open `/create`, validate a supported ROM, and submit a name, JPEG/PNG/WebP
-reference photo, and optional emblem direction. In local mode the server stores
+Open `/create`, validate a supported ROM, sign in, and submit a name,
+JPEG/PNG/WebP reference photo, optional emblem direction, and public/private
+visibility. Public is the default. The uploader must attest that they own or
+have permission to use the character and photo. The server safety-screens the
+text and image with `omni-moderation-latest` before it creates or dispatches a
+paid generation job. In local mode the server stores
 uploads and job records under `data/`; the production adapters use Firestore
 and Cloud Storage. A single local worker runs the existing
 `pipeline/run_character.py` command.
@@ -86,6 +90,13 @@ The worker automatically rerolls provider-generated art up to two times when
 output moderation blocks a random result. Temporary rate-limit, timeout, and
 5xx failures receive up to three short backoff retries outside the expensive
 mesh stages. Invalid inputs and mesh failures stop for manual review.
+
+Production authentication uses Firebase Authentication with Google, Apple,
+and passwordless email providers. Firebase's UID becomes the durable job
+`ownerId`; the job also records the uploader profile. Private outputs are kept
+in the private object bucket and served only through owner-checked API routes.
+Disable an abusive uploader in Firebase Authentication to block future
+creation and retry requests.
 
 For UI or API testing without invoking paid providers, disable the worker and
 optionally use a temporary job directory:

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import AuthGate from "./AuthGate.jsx";
 import FighterCreator from "./FighterCreator.jsx";
 import { matchesCharacterSearch } from "../shared/character-search.js";
 import { identifyRomFile } from "./rom-validation.js";
@@ -24,8 +25,8 @@ function loadAdvancedOptions() {
 
 async function getSession() {
   const response = await fetch("/api/session", { cache: "no-store" });
-  if (!response.ok) return false;
-  return Boolean((await response.json()).authorized);
+  if (!response.ok) return { authorized: false, authenticated: false, user: null };
+  return response.json();
 }
 
 function RomModal({ action, onCancel, onValidated }) {
@@ -230,6 +231,7 @@ export default function App() {
   const [characters, setCharacters] = useState([]);
   const [loadingCharacters, setLoadingCharacters] = useState(true);
   const [authorized, setAuthorized] = useState(false);
+  const [user, setUser] = useState(null);
   const [pendingAction, setPendingAction] = useState(null);
   const [engine, setEngine] = useState(null);
   const [pageError, setPageError] = useState("");
@@ -244,18 +246,23 @@ export default function App() {
   const devMenuRef = useRef(null);
   const announcerRef = useRef(null);
 
+  async function loadCharacters() {
+    const response = await fetch("/api/characters", { cache: "no-store" });
+    if (!response.ok) throw new Error("Could not load the configured characters");
+    const loadedCharacters = (await response.json()).characters;
+    setCharacters(loadedCharacters);
+    return loadedCharacters;
+  }
+
   useEffect(() => {
     Promise.all([
-      fetch("/api/characters").then(async (response) => {
-        if (!response.ok) throw new Error("Could not load the configured characters");
-        return (await response.json()).characters;
-      }),
+      loadCharacters(),
       getSession(),
     ])
-      .then(([loadedCharacters, hasSession]) => {
-        setCharacters(loadedCharacters);
-        setAuthorized(hasSession);
-        if (isCreatePage && !hasSession) setPendingAction({ type: "create" });
+      .then(([, session]) => {
+        setAuthorized(Boolean(session.authorized));
+        setUser(session.user || null);
+        if (isCreatePage && !session.authorized) setPendingAction({ type: "create" });
       })
       .catch((error) => setPageError(error.message))
       .finally(() => setLoadingCharacters(false));
@@ -323,18 +330,37 @@ export default function App() {
 
   async function requestLaunch(action) {
     setPageError("");
-    if (authorized || (await getSession())) {
+    const session = authorized ? null : await getSession();
+    if (authorized || session?.authorized) {
       setAuthorized(true);
+      if (session?.user) setUser(session.user);
       launch(action);
     } else {
       setPendingAction(action);
     }
   }
 
-  function validated() {
+  async function validated() {
     setAuthorized(true);
+    const session = await getSession();
+    setUser(session.user || null);
     if (pendingAction && pendingAction.type !== "create") launch(pendingAction);
     else setPendingAction(null);
+  }
+
+  async function authenticated(nextUser) {
+    setUser(nextUser);
+    await loadCharacters().catch((error) => setPageError(error.message));
+  }
+
+  async function signOutUser() {
+    const response = await fetch("/api/auth/logout", { method: "POST" });
+    if (!response.ok) {
+      setPageError("Could not sign out.");
+      return;
+    }
+    setUser(null);
+    await loadCharacters().catch((error) => setPageError(error.message));
   }
 
   function selectCharacter(character) {
@@ -419,6 +445,11 @@ export default function App() {
           <a className="create-link" href={isCreatePage ? "/" : "/create"}>
             {isCreatePage ? "Browse fighters" : "Create fighter"}
           </a>
+          {user && (
+            <button className="account-button" type="button" onClick={signOutUser}>
+              {user.displayName || user.email || "Account"} · Sign out
+            </button>
+          )}
           <button
             className={`sound-button ${soundOn ? "is-on" : ""}`}
             type="button"
@@ -490,8 +521,11 @@ export default function App() {
         </div>
       </section>}
 
-      {isCreatePage && authorized && <FighterCreator
+      {isCreatePage && authorized && !user && <AuthGate onAuthenticated={authenticated} />}
+
+      {isCreatePage && authorized && user && <FighterCreator
         onPlay={selectCharacter}
+        user={user}
       />}
 
       {!isCreatePage && <section className="select-section" aria-labelledby="select-title">

@@ -16,6 +16,7 @@ import { execFile, spawn } from "node:child_process";
 import { EventEmitter } from "node:events";
 import { promisify } from "node:util";
 import { ACTIVE_JOB_STATUSES, jobSnapshot, publicJob } from "./job-protocol.js";
+import { moderateFighterSubmission } from "./submission-moderation.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -54,6 +55,21 @@ class HttpError extends Error {
 
 function slugFor(name) {
   return name.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 16);
+}
+
+export function submissionSettings(fields = {}) {
+  const visibility = fields.visibility || "public";
+  if (visibility !== "public" && visibility !== "private") {
+    throw new HttpError(400, "Choose public or private visibility.");
+  }
+  if (fields.rightsAttested !== "true") {
+    throw new HttpError(400, "Confirm that you have the rights or permission to upload this character and photo.");
+  }
+  return { visibility };
+}
+
+export function isJobAccessible(job, ownerId = null) {
+  return Boolean(job && (job.visibility !== "private" || job.ownerId === ownerId));
 }
 
 export function automaticRetryPlan(log, stage, retryCounts = {}) {
@@ -133,7 +149,7 @@ async function receiveForm(req, jobRoot) {
     try {
       parser = Busboy({
         headers: req.headers,
-        limits: { files: 1, fileSize: MAX_PHOTO_BYTES, fields: 3, fieldSize: 512, parts: 4 },
+        limits: { files: 1, fileSize: MAX_PHOTO_BYTES, fields: 5, fieldSize: 512, parts: 6 },
       });
     } catch (error) {
       reject(new HttpError(400, error.message || "Could not read that form."));
@@ -141,7 +157,7 @@ async function receiveForm(req, jobRoot) {
     }
 
     parser.on("field", (name, value) => {
-      if (name === "name" || name === "emblem") fields[name] = value;
+      if (["name", "emblem", "visibility", "rightsAttested"].includes(name)) fields[name] = value;
     });
     parser.on("file", (fieldName, stream, info) => {
       if (fieldName !== "photo" || photo) {
@@ -194,7 +210,16 @@ async function receiveForm(req, jobRoot) {
   return { fields, photo };
 }
 
-export function createFighterJobs({ appRoot, repoRoot, engineRoot, pipelineUiRoot, objectStore, jobDatabase, dispatcher }) {
+export function createFighterJobs({
+  appRoot,
+  repoRoot,
+  engineRoot,
+  pipelineUiRoot,
+  objectStore,
+  jobDatabase,
+  dispatcher,
+  submissionModerator = moderateFighterSubmission,
+}) {
   const jobsRoot = path.resolve(process.env.FIGHTER_JOBS_ROOT || path.join(appRoot, "data", "fighter-jobs"));
   const pipelineRoot = path.join(repoRoot, "pipeline");
   const pipelineScript = path.join(pipelineRoot, "pipeline", "run_character.py");
@@ -367,6 +392,7 @@ export function createFighterJobs({ appRoot, repoRoot, engineRoot, pipelineUiRoo
         job.costUsd = cost?.total_usd ?? null;
         const version = `${job.id}-${job.attempt}`;
         const versionRoot = `characters/${job.slug}/versions/${version}`;
+        const isPublic = job.visibility !== "private";
         const bundleRoot = path.join(engineRoot, "bundles");
         const variantFiles = (await readdir(bundleRoot))
           .filter((name) => name.startsWith(`${job.slug}-`) && name.endsWith(".osb"))
@@ -377,34 +403,34 @@ export function createFighterJobs({ appRoot, repoRoot, engineRoot, pipelineUiRoo
           variants[fighter] = await objectStore.putFile(
             `${versionRoot}/injection/${fileName}`,
             path.join(bundleRoot, fileName),
-            { contentType: "application/octet-stream", public: true },
+            { contentType: "application/octet-stream", public: isPublic },
           );
         }
         job.artifacts = {
           portrait: await objectStore.putFile(
             `${versionRoot}/portrait.png`,
             path.join(outputRoot, "portrait_raw.png"),
-            { contentType: "image/png", public: true },
+            { contentType: "image/png", public: isPublic },
           ),
           announcer: await objectStore.putFile(
             `${versionRoot}/announcer.wav`,
             path.join(bundleRoot, `${job.slug}.wav`),
-            { contentType: "audio/wav", public: true },
+            { contentType: "audio/wav", public: isPublic },
           ),
           bundle: await objectStore.putFile(
             `${versionRoot}/injection/${job.slug}.osb`,
             path.join(bundleRoot, `${job.slug}.osb`),
-            { contentType: "application/octet-stream", public: true },
+            { contentType: "application/octet-stream", public: isPublic },
           ),
           ui: await objectStore.putFile(
             `${versionRoot}/injection/${job.slug}.osbui`,
             path.join(bundleRoot, `${job.slug}.osbui`),
-            { contentType: "application/octet-stream", public: true },
+            { contentType: "application/octet-stream", public: isPublic },
           ),
           character: await objectStore.putFile(
             `${versionRoot}/character.json`,
             path.join(outputRoot, "character.json"),
-            { contentType: "application/json", public: true },
+            { contentType: "application/json", public: isPublic },
           ),
           variants,
         };
@@ -414,7 +440,7 @@ export function createFighterJobs({ appRoot, repoRoot, engineRoot, pipelineUiRoo
             job.artifacts[key] = await objectStore.putFile(
               `${versionRoot}/${key}.png`,
               path.join(outputRoot, fileName),
-              { contentType: "image/png", public: true },
+              { contentType: "image/png", public: isPublic },
             );
           } catch {
             // Optional art is omitted from the manifest if the pipeline did not produce it.
@@ -427,12 +453,14 @@ export function createFighterJobs({ appRoot, repoRoot, engineRoot, pipelineUiRoo
             name: metadata.display || job.name,
             short: metadata.short || metadata.display || job.name,
           },
+          visibility: job.visibility,
+          uploader: job.uploader?.displayName ? { displayName: job.uploader.displayName } : null,
           version,
           generatedAt: new Date().toISOString(),
           artifacts: job.artifacts,
         };
         job.artifacts.manifest = await objectStore.putJson(
-          `${versionRoot}/manifest.json`, manifest, { public: true },
+          `${versionRoot}/manifest.json`, manifest, { public: isPublic },
         );
         job.artifacts.latest = await objectStore.putJson(
           `characters/${job.slug}/latest.json`,
@@ -443,7 +471,7 @@ export function createFighterJobs({ appRoot, repoRoot, engineRoot, pipelineUiRoo
             manifest: job.artifacts.manifest,
             updatedAt: new Date().toISOString(),
           },
-          { public: true, immutable: false },
+          { public: isPublic, immutable: false },
         );
         job.status = "complete";
         job.stage = "complete";
@@ -721,7 +749,7 @@ export function createFighterJobs({ appRoot, repoRoot, engineRoot, pipelineUiRoo
       (job) => job.ownerId === ownerId && Date.parse(job.createdAt) >= startOfDay,
     ).length;
     if (dailyForOwner >= maxDailyPerOwner) {
-      throw new HttpError(429, "This session has reached its daily fighter limit.");
+      throw new HttpError(429, "This account has reached its daily fighter limit.");
     }
     const globalActive = allJobs.filter((job) => ACTIVE_JOB_STATUSES.has(job.status)).length;
     if (globalActive >= maxGlobalActive) {
@@ -734,7 +762,8 @@ export function createFighterJobs({ appRoot, repoRoot, engineRoot, pipelineUiRoo
     return job && (!ownerId || job.ownerId === ownerId) ? job : null;
   }
 
-  async function create(req, ownerId) {
+  async function create(req, uploader) {
+    const ownerId = uploader?.uid;
     assertCreationQuota(ownerId);
     const id = randomUUID();
     const root = jobRoot(id);
@@ -742,6 +771,7 @@ export function createFighterJobs({ appRoot, repoRoot, engineRoot, pipelineUiRoo
       const { fields, photo } = await receiveForm(req, root);
       const name = String(fields.name || "").trim().replace(/\s+/g, " ");
       const emblem = String(fields.emblem || "").trim().replace(/\s+/g, " ");
+      const { visibility } = submissionSettings(fields);
       if (!name || name.length > 80) throw new HttpError(400, "Enter a fighter name up to 80 characters.");
       if (emblem.length > 200) throw new HttpError(400, "Keep the emblem description under 200 characters.");
       const slug = slugFor(name);
@@ -757,6 +787,24 @@ export function createFighterJobs({ appRoot, repoRoot, engineRoot, pipelineUiRoo
         if (error.code !== "ENOENT") throw error;
       }
 
+      let moderation;
+      try {
+        moderation = await submissionModerator({
+          name,
+          emblem,
+          photoPath: photo.path,
+          mimeType: photo.mimeType,
+        });
+      } catch (error) {
+        console.warn(JSON.stringify({
+          event: "fighter.submission_rejected",
+          uploaderId: ownerId,
+          reason: error.status === 422 ? "moderation" : "moderation_unavailable",
+          categories: error.details?.categories || [],
+        }));
+        throw error;
+      }
+
       const now = new Date().toISOString();
       const input = await objectStore.putFile(
         `characters/${slug}/sources/${id}/photo${photo.type.extension}`,
@@ -767,9 +815,18 @@ export function createFighterJobs({ appRoot, repoRoot, engineRoot, pipelineUiRoo
         protocolVersion: 1,
         id,
         ownerId,
+        uploader: {
+          uid: ownerId,
+          displayName: uploader.displayName || null,
+          email: uploader.email || null,
+          provider: uploader.provider || null,
+        },
         name,
         slug,
         emblem,
+        visibility,
+        rightsAttestedAt: now,
+        moderation,
         photoName: path.basename(photo.originalName).slice(0, 160),
         photoFile: path.basename(photo.path),
         photoMimeType: photo.mimeType,
@@ -849,8 +906,8 @@ export function createFighterJobs({ appRoot, repoRoot, engineRoot, pipelineUiRoo
       }
       void runNext();
     },
-    async create(req, ownerId) {
-      return create(req, ownerId);
+    async create(req, uploader) {
+      return create(req, uploader);
     },
     list(ownerId = null) {
       return [...jobs.values()]
@@ -858,9 +915,34 @@ export function createFighterJobs({ appRoot, repoRoot, engineRoot, pipelineUiRoo
         .sort((left, right) => right.createdAt.localeCompare(left.createdAt))
         .map(publicJob);
     },
+    listVisible(ownerId = null) {
+      return [...jobs.values()]
+        .filter((job) => job.visibility !== "private" || job.ownerId === ownerId)
+        .sort((left, right) => right.createdAt.localeCompare(left.createdAt))
+        .map(publicJob);
+    },
     get(id, ownerId = null) {
       const job = ownedJob(id, ownerId);
       return job ? publicJob(job) : null;
+    },
+    isAccessible(id, ownerId = null) {
+      return isJobAccessible(jobs.get(id), ownerId);
+    },
+    isSlugAccessible(slug, ownerId = null) {
+      const job = [...jobs.values()].find((candidate) => candidate.slug === slug);
+      return !job || job.visibility !== "private" || job.ownerId === ownerId;
+    },
+    isSlugPublic(slug) {
+      const job = [...jobs.values()].find((candidate) => candidate.slug === slug);
+      return Boolean(job && job.visibility !== "private");
+    },
+    artifact(id, ownerId, name, variant = null) {
+      const job = jobs.get(id);
+      if (!isJobAccessible(job, ownerId)) return null;
+      const artifact = variant
+        ? job.artifacts?.variants?.[variant]
+        : job.artifacts?.[name];
+      return artifact ? { ...artifact, public: job.visibility !== "private" } : null;
     },
     subscribe(id, ownerId, listener) {
       const job = ownedJob(id, ownerId);
@@ -879,13 +961,17 @@ export function createFighterJobs({ appRoot, repoRoot, engineRoot, pipelineUiRoo
       jobs.set(job.id, job);
       return runJob(job);
     },
-    portraitPath(id) {
+    portraitPath(id, ownerId = null) {
       const job = jobs.get(id);
-      return job ? path.join(pipelineUiRoot, job.slug, "portrait_raw.png") : null;
+      return isJobAccessible(job, ownerId)
+        ? path.join(pipelineUiRoot, job.slug, "portrait_raw.png")
+        : null;
     },
-    announcerPath(id) {
+    announcerPath(id, ownerId = null) {
       const job = jobs.get(id);
-      return job ? path.join(pipelineUiRoot, job.slug, "announcer.wav") : null;
+      return isJobAccessible(job, ownerId)
+        ? path.join(pipelineUiRoot, job.slug, "announcer.wav")
+        : null;
     },
     HttpError,
   };
