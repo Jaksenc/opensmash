@@ -31,6 +31,7 @@ upsert_dns_record() {
   local record_type="$1"
   local record_name="$2"
   local record_content="$3"
+  local proxied="${4:-false}"
   local records_response record_id payload response
   records_response="$(curl -fsS -G \
     "https://api.cloudflare.com/client/v4/zones/${zone_id}/dns_records" \
@@ -38,8 +39,8 @@ upsert_dns_record() {
     --data-urlencode "type=${record_type}" --data-urlencode "name=${record_name}")"
   record_id="$(printf '%s' "$records_response" | jq -r '.result[0].id // ""')"
   payload="$(jq -nc --arg type "$record_type" --arg name "$record_name" \
-    --arg content "$record_content" \
-    '{type:$type, name:$name, content:$content, ttl:1, proxied:false}')"
+    --arg content "$record_content" --argjson proxied "$proxied" \
+    '{type:$type, name:$name, content:$content, ttl:1, proxied:$proxied}')"
   if [[ -z "$record_id" ]]; then
     response="$(curl -fsS -X POST \
       "https://api.cloudflare.com/client/v4/zones/${zone_id}/dns_records" \
@@ -161,6 +162,8 @@ fi
 
 load_balancer_ip="$(gcloud compute addresses describe "${PREFIX}-ip" --global \
   --project "$PROJECT_ID" --format='value(address)')"
-upsert_dns_record A "$DOMAIN" "$load_balancer_ip"
-upsert_dns_record A "$WWW_DOMAIN" "$load_balancer_ip"
+upsert_dns_record A "$DOMAIN" "$load_balancer_ip" true
+upsert_dns_record A "$WWW_DOMAIN" "$load_balancer_ip" true
+gcloud run services update "$SERVICE_NAME" --region "$REGION" \
+  --ingress=internal-and-cloud-load-balancing --project "$PROJECT_ID" >/dev/null
 printf 'Load balancer and DNS configured for %s at %s\n' "$DOMAIN" "$load_balancer_ip"

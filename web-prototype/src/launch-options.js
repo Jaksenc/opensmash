@@ -193,11 +193,11 @@ function directBattle(params, character, stage, opponents) {
   });
 }
 
-export function engineUrl(action, advancedOptions, now = Date.now()) {
+export function engineUrl(action, advancedOptions) {
   const options = normalizeAdvancedOptions(advancedOptions);
   const character = resolvedCharacter(action.character, options.characterMesh);
   const stage = options.stage === "random" ? Math.floor(Math.random() * 9) : Number(options.stage);
-  const params = new URLSearchParams({ cb: String(now) });
+  const params = new URLSearchParams();
 
   if (character) {
     params.set("inject", character.bundleUrl || `bundles/${character.bundle}`);

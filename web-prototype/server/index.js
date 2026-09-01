@@ -225,6 +225,20 @@ async function serveFile(req, res, filePath, cacheControl = "no-store") {
   }
 }
 
+function engineCacheControl(relative, searchParams) {
+  if (relative === "index.html" || relative === "manifest.json") {
+    return "private, max-age=300";
+  }
+  if (
+    searchParams.has("v") &&
+    (relative === "BattleShip.js" || relative === "BattleShip.wasm")
+  ) {
+    return "private, max-age=31536000, immutable";
+  }
+  if (relative.startsWith("bundles/")) return "private, max-age=300";
+  return "private, max-age=3600";
+}
+
 async function readJsonBody(req) {
   const chunks = [];
   let size = 0;
@@ -536,7 +550,7 @@ async function handleRequest(req, res, vite) {
       return json(res, 404, { error: "Engine file not found" });
     }
     const filePath = safeFile(ENGINE_ROOT, relative);
-    if (filePath && (await serveFile(req, res, filePath))) return;
+    if (filePath && (await serveFile(req, res, filePath, engineCacheControl(relative, url.searchParams)))) return;
     return json(res, 404, { error: "Engine file not found" });
   }
 
@@ -643,6 +657,8 @@ const server = http.createServer((req, res) => {
     else res.destroy();
   });
 });
+server.keepAliveTimeout = 65_000;
+server.headersTimeout = 66_000;
 
 await objectStore.init();
 await jobDatabase.init();
