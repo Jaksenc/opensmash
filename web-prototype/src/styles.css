@@ -600,6 +600,52 @@ body:has(.advanced-overlay:not([hidden])) { overflow: hidden; }
   letter-spacing: .025em;
 }
 .boot-mode-grid .is-selected .boot-mode-copy small { color: #ad947a; }
+.retro-discord-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 4px;
+  background: #5865f2;
+  color: #fff;
+  filter: none;
+  font-weight: 600;
+  letter-spacing: .01em;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, .25);
+  transition: background-color 120ms linear, transform 120ms linear;
+}
+.retro-discord-link:hover,
+.retro-discord-link:focus-visible {
+  background: #4752c4;
+  color: #fff;
+  text-decoration: none;
+  transform: translateY(-1px);
+}
+.retro-discord-link:focus-visible {
+  outline: 2px solid #fff2d6;
+  outline-offset: 2px;
+}
+.retro-discord-link svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  fill: currentColor;
+}
+@media (max-width: 560px) {
+  .retro-home .retro-site-header {
+    gap: 6px;
+    padding-inline: 6px 18px;
+  }
+  .retro-home .retro-site-logo { width: 78px; }
+  .retro-home .retro-site-nav { gap: 6px; }
+  .retro-discord-link {
+    width: 30px;
+    height: 30px;
+    justify-content: center;
+    padding: 0;
+  }
+  .retro-discord-link span { display: none; }
+}
 .advanced-debug-tools {
   display: grid;
   grid-template-columns: 1fr;
