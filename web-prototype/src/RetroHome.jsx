@@ -21,7 +21,7 @@ function loadVisualStyles() {
     const link = document.createElement("link");
     link.id = "site-shell-styles";
     link.rel = "stylesheet";
-    link.href = "/visual/site-shell.css?v=20260901-roster-bottom-space1";
+    link.href = "/visual/site-shell.css?v=20260901-canvas-layers1";
     link.addEventListener("load", resolve, { once: true });
     link.addEventListener("error", () => reject(new Error("Could not load the site visual system")), { once: true });
     document.head.append(link);
@@ -41,7 +41,7 @@ function loadModule(src) {
 
 function startVisualRuntime() {
   visualRuntimePromise ||= loadVisualStyles().then(() => [
-    "/visual/grid-replica.js?v=20260901-fighter-progress4",
+    "/visual/grid-replica.js?v=20260901-canvas-layers2",
     "/visual/logo-stage.js?v=20260901-react6",
     "/visual/crt-viewport.js?v=20260901-react7",
     "/visual/game-launcher.js?v=20260901-react9",
