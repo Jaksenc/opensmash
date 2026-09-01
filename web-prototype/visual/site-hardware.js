@@ -2321,10 +2321,13 @@ function tick() {
   requestAnimationFrame(tick);
   if (window.innerWidth && renderer.domElement.width !== window.innerWidth) resize();
   const dt = Math.min(clock.getDelta(), 1 / 30);
-  if (document.body.classList.contains('uses-mobile-controls') &&
-      document.body.classList.contains('is-game-running')) return;
+  const gameRunning = document.body.classList.contains('is-game-running');
+  const mobileGame = gameRunning &&
+    document.body.classList.contains('uses-mobile-controls');
+  if (mobileGame) return;
   const t = clock.elapsedTime;
 
+  if (!gameRunning) {
   if (cartridgeState === CARTRIDGE_STATE.BOOTING && cartridgeInsertionTime >= 0) {
     const introElapsed = t - cartridgeInsertionTime;
     if (introElapsed >= CREDIT_REVEAL_DELAY) {
@@ -2555,6 +2558,7 @@ function tick() {
     consoleRig.position.y -= hardwareExitOffset;
     cartridgeRig.position.y -= hardwareExitOffset;
   }
+  }
 
   // Keep the fingertip locked to the latest pointer coordinates. Velocity is
   // measured from the direct motion so the secondary wrist/finger animation
@@ -2607,7 +2611,7 @@ function tick() {
   poseFingers(ease, gEase);
   pinPointerTip();
 
-  if (DBG.includes('raw') || !shaderSettings.enabled) {
+  if (gameRunning || DBG.includes('raw') || !shaderSettings.enabled) {
     renderer.setRenderTarget(null);
     applyCartridgeLockShake(t);
     renderer.render(scene, camera);
