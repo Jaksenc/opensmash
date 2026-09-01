@@ -14,6 +14,7 @@ import {
 import path from "node:path";
 import { execFile, spawn } from "node:child_process";
 import { EventEmitter } from "node:events";
+import { pipeline } from "node:stream/promises";
 import { promisify } from "node:util";
 import { ACTIVE_JOB_STATUSES, jobSnapshot, publicJob } from "./job-protocol.js";
 import { moderateFighterSubmission } from "./submission-moderation.js";
@@ -144,61 +145,72 @@ async function receiveForm(req, jobRoot) {
   let uploadError = null;
   const writes = [];
 
-  await new Promise((resolve, reject) => {
-    let parser;
-    try {
-      parser = Busboy({
-        headers: req.headers,
-        limits: { files: 1, fileSize: MAX_PHOTO_BYTES, fields: 5, fieldSize: 512, parts: 6 },
-      });
-    } catch (error) {
-      reject(new HttpError(400, error.message || "Could not read that form."));
-      return;
-    }
+  let parseError = null;
+  try {
+    await new Promise((resolve, reject) => {
+      let parser;
+      try {
+        parser = Busboy({
+          headers: req.headers,
+          limits: { files: 1, fileSize: MAX_PHOTO_BYTES, fields: 5, fieldSize: 512, parts: 6 },
+        });
+      } catch (error) {
+        reject(new HttpError(400, error.message || "Could not read that form."));
+        return;
+      }
 
-    parser.on("field", (name, value) => {
-      if (["name", "emblem", "visibility", "rightsAttested"].includes(name)) fields[name] = value;
-    });
-    parser.on("file", (fieldName, stream, info) => {
-      if (fieldName !== "photo" || photo) {
+      parser.on("field", (name, value) => {
+        if (["name", "emblem", "visibility", "rightsAttested"].includes(name)) fields[name] = value;
+      });
+      parser.on("file", (fieldName, stream, info) => {
+        if (fieldName !== "photo" || photo) {
+          uploadError ||= new HttpError(400, "Upload exactly one fighter photo.");
+          stream.resume();
+          return;
+        }
+        const type = PHOTO_TYPES.get(info.mimeType);
+        if (!type) {
+          uploadError ||= new HttpError(415, "Use a JPEG, PNG, or WebP photo.");
+          stream.resume();
+          return;
+        }
+
+        const filePath = path.join(jobRoot, `photo${type.extension}`);
+        photo = { path: filePath, type, mimeType: info.mimeType, originalName: info.filename || "photo" };
+        const destination = createWriteStream(filePath, { flags: "wx", mode: 0o600 });
+        stream.on("limit", () => {
+          uploadError ||= new HttpError(413, "The photo must be 12 MB or smaller.");
+        });
+        // Observe every write immediately. If parsing fails, Busboy destroys the
+        // active file stream before receiveForm can reach the aggregate await.
+        const finished = pipeline(stream, destination).then(
+          () => null,
+          (error) => error,
+        );
+        writes.push(finished);
+      });
+      parser.on("filesLimit", () => {
         uploadError ||= new HttpError(400, "Upload exactly one fighter photo.");
-        stream.resume();
-        return;
-      }
-      const type = PHOTO_TYPES.get(info.mimeType);
-      if (!type) {
-        uploadError ||= new HttpError(415, "Use a JPEG, PNG, or WebP photo.");
-        stream.resume();
-        return;
-      }
-
-      const filePath = path.join(jobRoot, `photo${type.extension}`);
-      photo = { path: filePath, type, mimeType: info.mimeType, originalName: info.filename || "photo" };
-      const destination = createWriteStream(filePath, { flags: "wx", mode: 0o600 });
-      stream.on("limit", () => {
-        uploadError ||= new HttpError(413, "The photo must be 12 MB or smaller.");
       });
-      const finished = new Promise((writeResolve, writeReject) => {
-        destination.on("close", writeResolve);
-        destination.on("error", writeReject);
-        stream.on("error", writeReject);
+      parser.on("partsLimit", () => {
+        uploadError ||= new HttpError(400, "That form has too many fields.");
       });
-      writes.push(finished);
-      stream.pipe(destination);
+      parser.on("error", reject);
+      parser.on("finish", resolve);
+      req.on("aborted", () => {
+        const error = new HttpError(400, "Upload interrupted.");
+        reject(error);
+        parser.destroy(error);
+      });
+      req.pipe(parser);
     });
-    parser.on("filesLimit", () => {
-      uploadError ||= new HttpError(400, "Upload exactly one fighter photo.");
-    });
-    parser.on("partsLimit", () => {
-      uploadError ||= new HttpError(400, "That form has too many fields.");
-    });
-    parser.on("error", reject);
-    parser.on("finish", resolve);
-    req.on("aborted", () => reject(new HttpError(400, "Upload interrupted.")));
-    req.pipe(parser);
-  });
+  } catch (error) {
+    parseError = error;
+  }
 
-  await Promise.all(writes);
+  const writeError = (await Promise.all(writes)).find(Boolean);
+  if (parseError) throw parseError;
+  if (writeError) throw writeError;
   if (uploadError) throw uploadError;
   if (!photo) throw new HttpError(400, "Choose a fighter photo.");
 
