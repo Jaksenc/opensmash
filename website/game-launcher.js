@@ -27,15 +27,16 @@ const CONTROLLER_FLIP_SPRING = 30;
 const CONTROLLER_FLIP_DAMPING = 8.7;
 const CONTROLLER_Z_REVEAL_MS = 1150;
 const CONTROLLER_ENTRANCE_HANDOFF_MS = 180;
-const CONSOLE_DOCK_MS = 1920;
+const CONSOLE_DOCK_MS = 3370;
 const CONSOLE_APPROACH_MS = 720;
-const CONSOLE_SLAM_DELAY_MS = 120;
-const CONSOLE_SLAM_MS = 320;
-const CONSOLE_RETREAT_START_MS = 1120;
+const CONSOLE_IDLE_MS = 900;
+const CONSOLE_WINDUP_MS = 480;
+const CONSOLE_SUSPENSE_MS = 100;
+const CONSOLE_SLAM_MS = 330;
+const CONSOLE_RETREAT_START_MS = 2570;
 const CONSOLE_CARTRIDGE_FIT_SCALE = 0.44;
 const CONSOLE_DOCK_FRONT_YAW = Math.PI * 1.5;
 const CONSOLE_DOCK_FRONT_PITCH = 0.18;
-const CONSOLE_BACKDROP_DARKNESS = 0.5;
 const REQUIRED_CONTROL_KEYS = Object.freeze(['w', 'a', 's', 'd', 'j', 'k', 'l', 'i', 'o']);
 const CONTROLLER_KEY_TORQUE = Object.freeze({
   w: Object.freeze([0.035, 0, 0]),
@@ -275,9 +276,11 @@ let consoleDockModel = null;
 const consoleDockCartridgeStartPosition = new THREE.Vector3();
 const consoleDockCartridgeReadyPosition = new THREE.Vector3();
 const consoleDockCartridgeTargetPosition = new THREE.Vector3();
+const consoleDockCartridgeWindupPosition = new THREE.Vector3();
 const consoleDockCartridgeInsertionVector = new THREE.Vector3();
 const consoleDockCartridgeStartQuaternion = new THREE.Quaternion();
 const consoleDockCartridgeTargetQuaternion = new THREE.Quaternion();
+const consoleDockCartridgeWindupQuaternion = new THREE.Quaternion();
 const consoleDockConsoleStartPosition = new THREE.Vector3();
 const consoleDockConsoleTargetPosition = new THREE.Vector3();
 const consoleDockConsoleStartQuaternion = new THREE.Quaternion();
@@ -287,7 +290,6 @@ const consoleDockAssemblyOriginPosition = new THREE.Vector3();
 const consoleDockAssemblyOriginQuaternion = new THREE.Quaternion();
 const consoleDockAssemblyTargetPosition = new THREE.Vector3(0, 1.4, -1.8);
 const consoleDockAssemblyTargetQuaternion = new THREE.Quaternion();
-const consoleDockMaterialStates = [];
 let consoleDockCartridgeStartScale = 1;
 let consoleDockCartridgeTargetScale = 1;
 let consoleDockConsoleScale = 1;
@@ -1196,38 +1198,16 @@ function easeInOutCubic(value) {
     : 1 - Math.pow(-2 * amount + 2, 3) / 2;
 }
 
-function rememberConsoleDockMaterials() {
-  consoleDockMaterialStates.length = 0;
-  const seen = new Set();
-  consoleDockAssembly?.traverse(child => {
-    if (!child.isMesh) return;
-    const materials = Array.isArray(child.material) ? child.material : [child.material];
-    materials.forEach(material => {
-      if (!material || seen.has(material)) return;
-      seen.add(material);
-      consoleDockMaterialStates.push({
-        material,
-        color: material.color?.clone() || null,
-        emissive: material.emissive?.clone() || null,
-      });
-    });
-  });
-}
-
-function setConsoleDockDarkness(amount) {
-  const brightness = 1 - THREE.MathUtils.clamp(amount, 0, 1);
-  consoleDockMaterialStates.forEach(({ material, color, emissive }) => {
-    if (color) material.color.copy(color).multiplyScalar(brightness);
-    if (emissive) material.emissive.copy(emissive).multiplyScalar(brightness);
-  });
+function dampedArrivalProgress(value) {
+  const amount = THREE.MathUtils.clamp(value, 0, 1);
+  if (amount >= 1) return 1;
+  return 1 - Math.exp(-5.2 * amount) * Math.cos(amount * Math.PI * 2.05);
 }
 
 function clearConsoleDockTransition() {
   if (!consoleDockAssembly) return;
-  setConsoleDockDarkness(0);
   if (consoleDockModel) consoleDockModel.visible = false;
   scene?.remove(consoleDockAssembly);
-  consoleDockMaterialStates.length = 0;
   consoleDockAssembly = null;
   consoleDockModel = null;
 }
@@ -1235,13 +1215,10 @@ function clearConsoleDockTransition() {
 function finishConsoleDockTransition() {
   const completion = flowMotionCompletion;
   flowMotionCompletion = null;
-  consoleDockAssembly.position.copy(consoleDockAssemblyTargetPosition);
-  consoleDockAssembly.quaternion.copy(consoleDockAssemblyTargetQuaternion);
-  consoleDockAssembly.scale.setScalar(0.54);
-  setConsoleDockDarkness(CONSOLE_BACKDROP_DARKNESS);
+  clearConsoleDockTransition();
   activeModel = null;
   activeModelKind = 'none';
-  visualPhase = 'docked-backdrop';
+  visualPhase = 'departed';
   completion?.();
 }
 
@@ -1275,8 +1252,6 @@ async function beginConsoleDockTransition(completion) {
   consoleDockModel = consoleModel;
   consoleDockAssembly.add(consoleDockModel);
   consoleDockModel.visible = true;
-  rememberConsoleDockMaterials();
-  setConsoleDockDarkness(0);
 
   consoleDockAssembly.position.set(0, 0, 0);
   consoleDockAssembly.quaternion.identity();
@@ -1304,11 +1279,15 @@ async function beginConsoleDockTransition(completion) {
     .add(consoleDockAnchorOffset);
   consoleDockCartridgeInsertionVector.copy(consoleDockCartridgeTargetPosition)
     .sub(consoleDockCartridgeReadyPosition);
+  consoleDockCartridgeWindupPosition.copy(consoleDockCartridgeReadyPosition)
+    .add(new THREE.Vector3(0.46, 0.52, 0.08));
+  consoleDockCartridgeWindupQuaternion.copy(consoleDockCartridgeTargetQuaternion)
+    .multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(-0.1, 0, -0.32)));
   consoleDockConsoleStartPosition.copy(consoleDockConsoleTargetPosition)
     .add(new THREE.Vector3(0.12, -4.5, -0.22));
   consoleDockConsoleTargetQuaternion.copy(consoleDockCartridgeTargetQuaternion);
   consoleDockConsoleStartQuaternion.copy(consoleDockConsoleTargetQuaternion)
-    .multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(-0.2, 0.12, -0.1)));
+    .multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(-0.58, 0.08, -0.06)));
   consoleDockModel.position.copy(consoleDockConsoleStartPosition);
   consoleDockModel.quaternion.copy(consoleDockConsoleStartQuaternion);
   consoleDockModel.scale.setScalar(consoleDockConsoleScale);
@@ -1321,26 +1300,9 @@ async function beginConsoleDockTransition(completion) {
 }
 
 function updateConsoleDockTransition(now, reducedMotion) {
-  if (!consoleDockAssembly || !consoleDockModel || !activeModel) return;
+  if (!consoleDockAssembly || !consoleDockModel || !activeModel) return 1;
   const elapsed = reducedMotion ? CONSOLE_DOCK_MS : Math.max(0, now - visualStartedAt);
-  const cartridgeAlign = easeOutCubic(elapsed / 500);
-  activeModel.position.lerpVectors(
-    consoleDockCartridgeStartPosition,
-    consoleDockCartridgeReadyPosition,
-    cartridgeAlign
-  );
-  activeModel.quaternion.slerpQuaternions(
-    consoleDockCartridgeStartQuaternion,
-    consoleDockCartridgeTargetQuaternion,
-    cartridgeAlign
-  );
-  activeModel.scale.setScalar(THREE.MathUtils.lerp(
-    consoleDockCartridgeStartScale,
-    consoleDockCartridgeTargetScale,
-    cartridgeAlign
-  ));
-
-  const approach = easeOutCubic(elapsed / CONSOLE_APPROACH_MS);
+  const approach = dampedArrivalProgress(elapsed / CONSOLE_APPROACH_MS);
   consoleDockModel.position.lerpVectors(
     consoleDockConsoleStartPosition,
     consoleDockConsoleTargetPosition,
@@ -1352,29 +1314,91 @@ function updateConsoleDockTransition(now, reducedMotion) {
     approach
   );
 
-  const slamStartedAt = CONSOLE_APPROACH_MS + CONSOLE_SLAM_DELAY_MS;
-  const slam = THREE.MathUtils.clamp(
-    (elapsed - slamStartedAt) / CONSOLE_SLAM_MS,
-    0,
-    1
-  );
-  const impactPoint = 0.56;
-  if (slam > 0 && slam < impactPoint) {
-    const acceleration = Math.pow(slam / impactPoint, 3);
+  const windupStartedAt = CONSOLE_APPROACH_MS + CONSOLE_IDLE_MS;
+  const suspenseStartedAt = windupStartedAt + CONSOLE_WINDUP_MS;
+  const slamStartedAt = suspenseStartedAt + CONSOLE_SUSPENSE_MS;
+  const slam = THREE.MathUtils.clamp((elapsed - slamStartedAt) / CONSOLE_SLAM_MS, 0, 1);
+  const impactPoint = 0.68;
+
+  if (elapsed < CONSOLE_APPROACH_MS) {
+    const cartridgeAlign = easeOutCubic(elapsed / CONSOLE_APPROACH_MS);
+    activeModel.position.lerpVectors(
+      consoleDockCartridgeStartPosition,
+      consoleDockCartridgeReadyPosition,
+      cartridgeAlign
+    );
+    activeModel.quaternion.slerpQuaternions(
+      consoleDockCartridgeStartQuaternion,
+      consoleDockCartridgeTargetQuaternion,
+      cartridgeAlign
+    );
+    activeModel.scale.setScalar(THREE.MathUtils.lerp(
+      consoleDockCartridgeStartScale,
+      consoleDockCartridgeTargetScale,
+      cartridgeAlign
+    ));
+  } else if (elapsed < windupStartedAt) {
+    const idleTime = (elapsed - CONSOLE_APPROACH_MS) / 1000;
+    const idleBob = Math.sin(idleTime * Math.PI * 1.5) * 0.025;
+    activeModel.position.copy(consoleDockCartridgeReadyPosition);
+    activeModel.position.y += idleBob;
+    activeModel.quaternion.copy(consoleDockCartridgeTargetQuaternion);
+    activeModel.scale.setScalar(consoleDockCartridgeTargetScale);
+    consoleDockModel.position.y += idleBob * 0.35;
+  } else if (elapsed < suspenseStartedAt) {
+    const windup = easeInOutCubic(
+      (elapsed - windupStartedAt) / CONSOLE_WINDUP_MS
+    );
     activeModel.position.lerpVectors(
       consoleDockCartridgeReadyPosition,
+      consoleDockCartridgeWindupPosition,
+      windup
+    );
+    activeModel.position.y += Math.sin(windup * Math.PI) * 0.16;
+    activeModel.quaternion.slerpQuaternions(
+      consoleDockCartridgeTargetQuaternion,
+      consoleDockCartridgeWindupQuaternion,
+      windup
+    );
+    activeModel.scale.setScalar(consoleDockCartridgeTargetScale * (
+      1 + Math.sin(windup * Math.PI) * 0.055
+    ));
+  } else if (elapsed < slamStartedAt) {
+    const suspense = (elapsed - suspenseStartedAt) / CONSOLE_SUSPENSE_MS;
+    activeModel.position.copy(consoleDockCartridgeWindupPosition);
+    activeModel.position.y += Math.sin(suspense * Math.PI) * 0.018;
+    activeModel.quaternion.copy(consoleDockCartridgeWindupQuaternion);
+    activeModel.scale.setScalar(consoleDockCartridgeTargetScale * 1.02);
+  } else if (slam < impactPoint) {
+    const acceleration = Math.pow(slam / impactPoint, 3);
+    activeModel.position.lerpVectors(
+      consoleDockCartridgeWindupPosition,
       consoleDockCartridgeTargetPosition,
       acceleration
     );
-  } else if (slam >= impactPoint) {
+    activeModel.quaternion.slerpQuaternions(
+      consoleDockCartridgeWindupQuaternion,
+      consoleDockCartridgeTargetQuaternion,
+      acceleration
+    );
+    activeModel.scale.setScalar(consoleDockCartridgeTargetScale * (
+      1.02 - acceleration * 0.06
+    ));
+  } else {
     const settle = (slam - impactPoint) / (1 - impactPoint);
     const rebound = Math.sin(settle * Math.PI * 2.2) *
-      Math.exp(-settle * 4.5) * 0.18;
+      Math.exp(-settle * 4.5) * 0.22;
     activeModel.position.copy(consoleDockCartridgeTargetPosition)
       .addScaledVector(consoleDockCartridgeInsertionVector, rebound);
+    activeModel.quaternion.copy(consoleDockCartridgeTargetQuaternion);
+    activeModel.scale.setScalar(consoleDockCartridgeTargetScale * (
+      1 + Math.sin(settle * Math.PI * 2) * Math.exp(-settle * 4) * 0.04
+    ));
   }
   if (slam >= 1) {
     activeModel.position.copy(consoleDockCartridgeTargetPosition);
+    activeModel.quaternion.copy(consoleDockCartridgeTargetQuaternion);
+    activeModel.scale.setScalar(consoleDockCartridgeTargetScale);
   }
 
   const retreat = easeInOutCubic(
@@ -1392,7 +1416,6 @@ function updateConsoleDockTransition(now, reducedMotion) {
     retreat
   );
   consoleDockAssembly.scale.setScalar(THREE.MathUtils.lerp(1, 0.54, retreat));
-  setConsoleDockDarkness(CONSOLE_BACKDROP_DARKNESS * retreat);
 
   const impactAt = slamStartedAt + CONSOLE_SLAM_MS * impactPoint;
   const shakeElapsed = elapsed - impactAt;
@@ -1408,6 +1431,7 @@ function updateConsoleDockTransition(now, reducedMotion) {
   }
 
   if (elapsed >= CONSOLE_DOCK_MS) finishConsoleDockTransition();
+  return 1 - retreat;
 }
 
 function beginPhysicalDeparture(direction, completion) {
@@ -1526,7 +1550,7 @@ function renderFlow(now) {
     if (visualPhase === 'enter') {
       updatePhysicsEntrance(now, dt, homeY, homeScale, reducedMotion);
     } else if (visualPhase === 'console-dock') {
-      updateConsoleDockTransition(now, reducedMotion);
+      opacity = updateConsoleDockTransition(now, reducedMotion);
     } else if (visualPhase === 'exit' || visualPhase === 'reverse') {
       opacity = updatePhysicalDeparture(dt, reducedMotion);
     } else if (visualPhase === 'idle') {
