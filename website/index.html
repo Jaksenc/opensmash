@@ -152,16 +152,21 @@
     position: absolute;
     inset: 0;
     pointer-events: none;
-    opacity: 0;
+    background: transparent;
+    box-shadow:
+      inset 0 0 0 clamp(2px, .55vw, 5px) transparent,
+      inset 0 0 clamp(8px, 1.6vw, 18px) transparent;
+    transition: background 90ms linear, box-shadow 90ms linear;
+    z-index: 3;
+  }
+  .replica-cell:hover::after { background: rgba(255, 128, 44, .16); }
+  .replica-cell:focus-visible::after,
+  .replica-cell.is-highlighted::after,
+  .replica-cell[aria-pressed="true"]::after {
     box-shadow:
       inset 0 0 0 clamp(2px, .55vw, 5px) #fff0b5,
       inset 0 0 clamp(8px, 1.6vw, 18px) rgba(255, 183, 73, .7);
-    transition: opacity 90ms linear;
-    z-index: 3;
   }
-  .replica-cell:focus-visible::after,
-  .replica-cell.is-highlighted::after,
-  .replica-cell[aria-pressed="true"]::after { opacity: 1; }
   .replica-cell:focus-visible { outline: none; }
   .replica-cell.is-create::before {
     content: "+";
@@ -689,15 +694,7 @@
     width: var(--launch-control-width);
     min-height: clamp(52px, 6vw, 66px);
     margin-top: 18px;
-    border: 1px solid #5d3a2b;
-    box-shadow:
-      inset 0 0 0 1px rgba(255, 236, 190, .045),
-      inset 0 -3px rgba(38, 5, 0, .78),
-      0 3px 0 #160b08;
-  }
-  .launch-flow-fire-cell:hover,
-  .launch-flow-fire-cell:focus-within {
-    border-color: #fff0b5;
+    border: 1px solid #fff0b5;
     box-shadow:
       inset 0 0 0 2px rgba(255, 240, 181, .88),
       inset 0 -3px rgba(38, 5, 0, .78),
@@ -714,6 +711,7 @@
     background: rgba(6, 2, 1, .28);
     box-shadow: none;
   }
+  .launch-flow-fire-cell .launch-flow-action:focus { outline: none; }
   .launch-flow-fire-cell .launch-flow-action:hover,
   .launch-flow-fire-cell .launch-flow-action:focus-visible {
     border: 0;
@@ -727,6 +725,20 @@
     min-height: 42px;
     margin-top: 11px;
     background: #050303;
+  }
+  .launch-flow-controller .launch-flow-controls-close {
+    --launch-control-width: clamp(210px, 23vw, 300px);
+    position: fixed;
+    left: 50%;
+    bottom: clamp(16px, 3vw, 36px);
+    z-index: 4;
+    display: none;
+    min-height: clamp(52px, 6vw, 66px);
+    margin: 0;
+    transform: translateX(-50%);
+  }
+  .launch-flow-overlay[data-mode="controls-preview"] .launch-flow-controls-close {
+    display: grid;
   }
   .launch-flow-file-input { display: none; }
   .launch-flow-overlay button,
@@ -808,6 +820,26 @@
     .launch-flow-action { transition-duration: 1ms !important; transition-delay: 0s !important; }
     .launch-flow-control-prompt { animation: none; }
   }
+  .site-menu-bridge {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+    margin-top: calc(-1 * var(--shared-rule-overlap));
+    overflow: hidden;
+    background: #080504;
+  }
+  .flame-bridge-action.site-menu-button {
+    filter: blur(.4px) contrast(1.14);
+    font-size: clamp(13px, 2vw, 26px);
+    font-weight: 600;
+    line-height: normal;
+    text-align: center;
+    touch-action: manipulation;
+    -webkit-font-smoothing: none;
+    -webkit-tap-highlight-color: transparent;
+  }
   .flame-bridge {
     position: relative;
     z-index: 2;
@@ -815,7 +847,7 @@
     grid-template-columns: repeat(var(--flame-bridge-columns, 1), minmax(0, 1fr));
     grid-template-rows: repeat(var(--flame-bridge-rows, 1), minmax(0, 1fr));
     width: 100%;
-    margin-top: calc(-1 * var(--shared-rule-overlap));
+    margin-top: 24px;
     overflow: hidden;
     background: #080504;
   }
@@ -848,6 +880,9 @@
     height: 100%;
     image-rendering: auto;
   }
+  #flame-bridge .flame-bridge-cell {
+    container-type: size;
+  }
   .flame-bridge-action,
   .flame-bridge-search {
     position: relative;
@@ -878,7 +913,7 @@
   .flame-bridge-search {
     display: block;
     padding-right: clamp(14px, 2vw, 28px);
-    padding-left: calc(clamp(8px, 1.25vw, 18px) + 3px);
+    padding-left: max(16px, calc((100cqh - 1cap) / 2));
     filter: blur(.4px) contrast(1.14);
     font-size: clamp(13px, 2vw, 26px);
     font-weight: 600;
@@ -899,15 +934,19 @@
     filter: invert(1) sepia(.3);
   }
   @media (max-width: 760px) {
+    .site-menu-bridge,
     .flame-bridge {
       min-height: clamp(48px, 12vw, 64px);
     }
+    .flame-bridge-action.site-menu-button {
+      font-size: clamp(18px, 4.6vw, 22px);
+    }
     .flame-bridge-search {
       padding-block: clamp(8px, 2vw, 12px);
-      padding-left: calc(clamp(8px, 1.25vw, 18px) + 11px);
       font-size: clamp(18px, 4.6vw, 22px);
     }
   }
+  .site-menu-rule-layer,
   .flame-bridge-rule-layer {
     position: absolute;
     inset: 0;
@@ -919,6 +958,7 @@
     image-rendering: auto;
   }
   .intro-video-stage,
+  .site-menu-bridge,
   .flame-bridge,
   .arena-surface {
     opacity: 0;
@@ -932,6 +972,7 @@
   }
   body:not(.is-game-booted) { overflow-y: hidden; }
   body.is-game-booted .intro-video-stage,
+  body.is-game-booted .site-menu-bridge,
   body.is-game-booted .flame-bridge,
   body.is-game-booted .arena-surface {
     opacity: 1;
@@ -941,6 +982,7 @@
   html.is-direct-site body { overflow-y: auto; }
   html.is-direct-site body::before { opacity: 1; }
   html.is-direct-site .intro-video-stage,
+  html.is-direct-site .site-menu-bridge,
   html.is-direct-site .flame-bridge,
   html.is-direct-site .arena-surface {
     opacity: 1;
@@ -1253,6 +1295,7 @@
   }
   @media (prefers-reduced-motion: reduce) {
     .intro-video-stage,
+    .site-menu-bridge,
     .flame-bridge,
     .arena-surface { transition: none; }
     #hardware-god-ray { will-change: auto; }
@@ -1300,6 +1343,27 @@
         <button id="game-close-button" class="game-close-button" type="button">Close game</button>
       </div>
     </section>
+    <section id="site-menu-bridge" class="site-menu-bridge" aria-label="Site information and settings">
+      <div class="flame-bridge-cell">
+        <button id="about-menu-button" class="flame-bridge-action site-menu-button"
+                type="button">
+          About
+        </button>
+      </div>
+      <div class="flame-bridge-cell">
+        <button id="controls-menu-button" class="flame-bridge-action site-menu-button" type="button"
+                aria-haspopup="dialog" aria-controls="launch-flow-controller-step">
+          Controls
+        </button>
+      </div>
+      <div class="flame-bridge-cell">
+        <button id="advanced-control" class="flame-bridge-action site-menu-button" type="button"
+                aria-controls="crt-tuner" aria-expanded="false">
+          Advanced
+        </button>
+      </div>
+      <canvas class="site-menu-rule-layer" aria-hidden="true"></canvas>
+    </section>
     <div id="flame-bridge" class="flame-bridge" aria-label="Fighter search">
       <div class="flame-bridge-cell">
         <input id="fighter-search" class="flame-bridge-search" type="search"
@@ -1323,7 +1387,8 @@
     </section>
   </main>
 
-  <div id="launch-flow-overlay" class="launch-flow-overlay" data-step="upload" hidden>
+  <div id="launch-flow-overlay" class="launch-flow-overlay"
+       data-step="upload" data-mode="launch" hidden>
     <canvas id="launch-flow-canvas" class="launch-flow-canvas" aria-hidden="true"></canvas>
     <section class="launch-flow-step launch-flow-upload" role="dialog" aria-modal="true"
              aria-labelledby="launch-flow-title" aria-describedby="launch-flow-copy">
@@ -1382,6 +1447,11 @@
         <div class="controller-callout" data-control-callout="right-bumper" aria-label="O: right bumper">
           <kbd class="controller-keycap" data-control-key="o" aria-hidden="true">O</kbd>
         </div>
+      </div>
+      <div class="launch-flow-fire-cell flame-bridge-cell launch-flow-controls-close">
+        <button id="controls-close-button" class="launch-flow-action" type="button">
+          Close
+        </button>
       </div>
     </section>
   </div>
@@ -1569,10 +1639,10 @@
   <canvas id="glove-canvas"></canvas>
   <canvas id="crt-viewport-canvas" aria-hidden="true"></canvas>
 
-<script type="module" src="./grid-replica.js?v=20260831e"></script>
+<script type="module" src="./grid-replica.js?v=20260901f"></script>
 <script type="module" src="./logo-stage.js?v=20260831l"></script>
 <script type="module" src="./crt-viewport.js?v=20260831d"></script>
-<script type="module" src="./game-launcher.js?v=20260831y"></script>
+<script type="module" src="./game-launcher.js?v=20260901a"></script>
 <script type="module">
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';

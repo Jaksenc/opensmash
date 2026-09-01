@@ -66,6 +66,8 @@ const uploadButton = document.getElementById('rom-upload-button');
 const cancelButton = document.getElementById('launch-cancel-button');
 const formError = document.getElementById('rom-form-error');
 const controllerStep = document.getElementById('launch-flow-controller-step');
+const controlsMenuButton = document.getElementById('controls-menu-button');
+const controlsCloseButton = document.getElementById('controls-close-button');
 const controlPrompt = document.getElementById('launch-control-prompt');
 const controlKeycaps = [...document.querySelectorAll('[data-control-key]')];
 const controllerCallouts = document.getElementById('controller-callouts');
@@ -78,6 +80,7 @@ let flowSequence = 0;
 let flowTimer = 0;
 let controlCheckComplete = false;
 let controlExitPending = false;
+let controlsPreviewMode = false;
 const completedControlKeys = new Set();
 const heldControlKeys = new Set();
 
@@ -1632,7 +1635,9 @@ function resetControlCheck() {
   controlKeycaps.forEach(keycap => keycap.classList.remove('is-complete', 'is-pressed'));
   controlPrompt?.classList.remove('is-complete');
   if (controlPrompt) {
-    controlPrompt.textContent = 'Press each key on your keyboard to continue';
+    controlPrompt.textContent = controlsPreviewMode
+      ? 'Press the mapped keys to try the controls'
+      : 'Press each key on your keyboard to continue';
   }
 }
 
@@ -1647,6 +1652,13 @@ function registerControlKey(event) {
   const keycap = controlKeycaps.find(item => item.dataset.controlKey === key);
   keycap?.classList.add('is-complete', 'is-pressed');
   if (completedControlKeys.size === REQUIRED_CONTROL_KEYS.length) {
+    if (controlsPreviewMode) {
+      controlPrompt?.classList.add('is-complete');
+      if (controlPrompt) {
+        controlPrompt.textContent = 'All controls tested — keep pressing keys or close';
+      }
+      return true;
+    }
     controlCheckComplete = true;
     controlPrompt?.classList.add('is-complete');
     clearTimeout(flowTimer);
@@ -1658,12 +1670,36 @@ function registerControlKey(event) {
   return true;
 }
 
+function showControlsPreview() {
+  if (!overlay || !overlay.hidden) return;
+  flowSequence += 1;
+  clearTimeout(flowTimer);
+  pendingFighter = null;
+  previousFocus = document.activeElement;
+  controlsPreviewMode = true;
+  resetRomPrompt();
+  resetControlCheck();
+  overlay.dataset.mode = 'controls-preview';
+  overlay.dataset.step = 'controller';
+  modelRestedAt = 0;
+  overlay.classList.remove('is-leaving', 'is-model-settled');
+  overlay.hidden = false;
+  document.body.classList.add('is-launch-flow-open');
+  ensureFlowRenderer();
+  showFlowModel('controller');
+  requestAnimationFrame(() => {
+    overlay.classList.add('is-visible');
+    flowTimer = window.setTimeout(() => controllerStep?.focus(), 1150);
+  });
+}
+
 function showLaunchFlow(fighter) {
   if (!overlay) return;
   flowSequence += 1;
   clearTimeout(flowTimer);
   pendingFighter = fighter;
   previousFocus = document.activeElement;
+  controlsPreviewMode = false;
   resetRomPrompt();
   resetControlCheck();
   if (flowTitle) flowTitle.textContent = 'Play Smash the Weights';
@@ -1671,6 +1707,7 @@ function showLaunchFlow(fighter) {
     flowCopy.textContent = 'To play Smash the Weights upload your legally obtained ' +
       'Super Smash Bros 64 ROM. It is hashed locally and never uploaded.';
   }
+  overlay.dataset.mode = 'launch';
   overlay.dataset.step = 'upload';
   modelRestedAt = 0;
   overlay.classList.remove('is-leaving', 'is-model-settled');
@@ -1691,6 +1728,7 @@ function finishClosingFlow(sequence, restoreFocus) {
   overlay.hidden = true;
   modelRestedAt = 0;
   overlay.classList.remove('is-visible', 'is-leaving', 'is-model-settled');
+  overlay.dataset.mode = 'launch';
   overlay.dataset.step = 'upload';
   document.body.classList.remove('is-launch-flow-open');
   requestedModelKind = 'none';
@@ -1698,6 +1736,7 @@ function finishClosingFlow(sequence, restoreFocus) {
   stopFlowAnimation();
   resetCartridgeInteraction();
   resetRomPrompt();
+  controlsPreviewMode = false;
   resetControlCheck();
   if (restoreFocus && previousFocus instanceof HTMLElement) previousFocus.focus();
   previousFocus = null;
@@ -1714,6 +1753,13 @@ function closeLaunchFlow(immediate = false) {
     finishClosingFlow(sequence, false);
     return;
   }
+  if (!activeModel || !activeModel.visible) {
+    overlay.classList.add('is-leaving');
+    flowTimer = window.setTimeout(
+      () => finishClosingFlow(sequence, true), FLOW_FADE_MS
+    );
+    return;
+  }
   beginModelReverse(() => {
     if (sequence !== flowSequence || overlay.hidden) return;
     overlay.classList.add('is-leaving');
@@ -1726,6 +1772,8 @@ function closeLaunchFlow(immediate = false) {
 function transitionToController() {
   if (!overlay || overlay.hidden) return;
   const sequence = flowSequence;
+  controlsPreviewMode = false;
+  overlay.dataset.mode = 'launch';
   resetControlCheck();
   modelRestedAt = 0;
   overlay.classList.remove('is-model-settled');
@@ -1809,6 +1857,8 @@ fileInput?.addEventListener('change', () => validateRom(fileInput.files?.[0]));
 cancelButton?.addEventListener('click', () => {
   if (!validationBusy) closeLaunchFlow();
 });
+controlsMenuButton?.addEventListener('click', showControlsPreview);
+controlsCloseButton?.addEventListener('click', () => closeLaunchFlow());
 
 overlay?.addEventListener('pointerdown', event => {
   if (overlay.dataset.step !== 'upload' || visualPhase !== 'idle' || validationBusy) return;
@@ -1868,8 +1918,10 @@ resetRomButton?.addEventListener('click', resetRom);
 window.addEventListener('resize', resizeFlowRenderer);
 window.addEventListener('keydown', event => {
   if (registerControlKey(event)) return;
+  const dismissibleUpload = overlay?.dataset.step === 'upload' && !validationBusy;
+  const dismissibleControls = controlsPreviewMode && overlay?.dataset.step === 'controller';
   if (event.key === 'Escape' && overlay && !overlay.hidden &&
-      overlay.dataset.step === 'upload' && !validationBusy) {
+      (dismissibleUpload || dismissibleControls)) {
     closeLaunchFlow();
   }
 });
@@ -1888,6 +1940,7 @@ gameFrame?.addEventListener('load', () => {
 window.gameLauncher = Object.freeze({
   get running() { return Boolean(videoFrame?.classList.contains('is-game-running')); },
   get verified() { return hasVerifiedRom(); },
+  showControls: showControlsPreview,
   close: closeGame,
   reset: resetRom,
 });
