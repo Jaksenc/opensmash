@@ -27,6 +27,11 @@ const CONTROLLER_FLIP_SPRING = 30;
 const CONTROLLER_FLIP_DAMPING = 8.7;
 const CONTROLLER_Z_REVEAL_MS = 1150;
 const CONTROLLER_ENTRANCE_HANDOFF_MS = 180;
+const CONSOLE_DOCK_MS = 1840;
+const CONSOLE_APPROACH_MS = 720;
+const CONSOLE_SEAT_MS = 420;
+const CONSOLE_RETREAT_START_MS = 1080;
+const CONSOLE_CARTRIDGE_FIT_SCALE = 0.44;
 const REQUIRED_CONTROL_KEYS = Object.freeze(['w', 'a', 's', 'd', 'j', 'k', 'l', 'i', 'o']);
 const CONTROLLER_KEY_TORQUE = Object.freeze({
   w: Object.freeze([0.035, 0, 0]),
@@ -209,6 +214,7 @@ let entranceScaleVelocity = 0;
 let flowMotionTargetScale = 1;
 let flowMotionCompletion = null;
 let cartridgePromise = null;
+let consolePromise = null;
 let controllerPromise = null;
 let flowRenderTarget = null;
 let flowPostScene = null;
@@ -260,6 +266,24 @@ const controllerEntranceHandoffPosition = new THREE.Vector3();
 const controllerEntranceHandoffQuaternion = new THREE.Quaternion();
 const controllerIdlePosition = new THREE.Vector3();
 const controllerIdleQuaternion = new THREE.Quaternion();
+let consoleDockAssembly = null;
+let consoleDockModel = null;
+const consoleDockCartridgeStartPosition = new THREE.Vector3();
+const consoleDockCartridgeTargetPosition = new THREE.Vector3();
+const consoleDockCartridgeStartQuaternion = new THREE.Quaternion();
+const consoleDockCartridgeTargetQuaternion = new THREE.Quaternion();
+const consoleDockConsoleStartPosition = new THREE.Vector3();
+const consoleDockConsoleMouthPosition = new THREE.Vector3();
+const consoleDockConsoleTargetPosition = new THREE.Vector3();
+const consoleDockConsoleStartQuaternion = new THREE.Quaternion();
+const consoleDockConsoleTargetQuaternion = new THREE.Quaternion();
+const consoleDockAnchorOffset = new THREE.Vector3();
+const consoleDockAssemblyTargetPosition = new THREE.Vector3(0, 0.13, -1.8);
+const consoleDockAssemblyTargetQuaternion = new THREE.Quaternion()
+  .setFromEuler(new THREE.Euler(-0.035, -0.08, 0.018));
+let consoleDockCartridgeStartScale = 1;
+let consoleDockCartridgeTargetScale = 1;
+let consoleDockConsoleScale = 1;
 
 const gltfLoader = new GLTFLoader();
 const textureLoader = new THREE.TextureLoader();
@@ -472,6 +496,38 @@ function prepareController(gltf) {
   return wrapper;
 }
 
+function prepareConsole(gltf) {
+  const model = gltf.scene;
+  const bounds = new THREE.Box3().setFromObject(model);
+  const center = bounds.getCenter(new THREE.Vector3());
+  model.position.sub(center);
+  model.traverse(child => {
+    if (!child.isMesh) return;
+    child.frustumCulled = false;
+    const materials = Array.isArray(child.material) ? child.material : [child.material];
+    materials.forEach(material => {
+      if (material?.map) material.map.colorSpace = THREE.SRGBColorSpace;
+      if (material) {
+        material.roughness = Math.max(material.roughness ?? 0.5, 0.52);
+        material.needsUpdate = true;
+      }
+    });
+  });
+
+  model.updateMatrixWorld(true);
+  const snapAnchor = model.getObjectByName('CartridgeSnapAnchor');
+  const mouthAnchor = model.getObjectByName('CartridgeMouthAnchor');
+  const wrapper = new THREE.Group();
+  wrapper.add(model);
+  wrapper.userData.snapAnchor = snapAnchor
+    ? snapAnchor.getWorldPosition(new THREE.Vector3())
+    : new THREE.Vector3(-0.146, 0.177, 0);
+  wrapper.userData.mouthAnchor = mouthAnchor
+    ? mouthAnchor.getWorldPosition(new THREE.Vector3())
+    : new THREE.Vector3(-0.146, 0.264, 0);
+  return wrapper;
+}
+
 function fitFlowModelToViewport(model, kind) {
   if (!camera || !model) return;
   const viewHeight = 2 * Math.tan(THREE.MathUtils.degToRad(camera.fov * 0.5)) *
@@ -493,6 +549,9 @@ function preloadFlowModels() {
     gltfLoader.loadAsync('./assets/n64-cartridge-tripo.glb'),
     textureLoader.loadAsync('./assets/cartridge-label-art.png'),
   ]).then(([gltf, texture]) => prepareCartridge(gltf, texture));
+  consolePromise ||= gltfLoader
+    .loadAsync('./assets/hybrid-four-port-console-fitted.glb')
+    .then(prepareConsole);
   controllerPromise ||= gltfLoader
     .loadAsync('./assets/nintendo-64-controller.glb')
     .then(prepareController);
@@ -1119,6 +1178,182 @@ function finishCartridgePointer(event, cancelled = false) {
   }
 }
 
+function easeOutCubic(value) {
+  return 1 - Math.pow(1 - THREE.MathUtils.clamp(value, 0, 1), 3);
+}
+
+function easeInOutCubic(value) {
+  const amount = THREE.MathUtils.clamp(value, 0, 1);
+  return amount < 0.5
+    ? 4 * amount * amount * amount
+    : 1 - Math.pow(-2 * amount + 2, 3) / 2;
+}
+
+function dampedSeatProgress(value) {
+  const amount = THREE.MathUtils.clamp(value, 0, 1);
+  if (amount >= 1) return 1;
+  return 1 - Math.exp(-5.8 * amount) * Math.cos(amount * Math.PI * 2.35);
+}
+
+function clearConsoleDockTransition() {
+  if (!consoleDockAssembly) return;
+  if (activeModel?.parent === consoleDockAssembly) activeModel.visible = false;
+  if (consoleDockModel) consoleDockModel.visible = false;
+  scene?.remove(consoleDockAssembly);
+  consoleDockAssembly = null;
+  consoleDockModel = null;
+}
+
+function finishConsoleDockTransition() {
+  const completion = flowMotionCompletion;
+  flowMotionCompletion = null;
+  clearConsoleDockTransition();
+  activeModel = null;
+  activeModelKind = 'none';
+  visualPhase = 'departed';
+  completion?.();
+}
+
+async function beginConsoleDockTransition(completion) {
+  if (!activeModel || activeModelKind !== 'cartridge') {
+    completion?.();
+    return;
+  }
+  requestedModelKind = 'console-dock';
+
+  let consoleModel;
+  try {
+    consoleModel = await consolePromise;
+  } catch (error) {
+    console.error('Could not load the console model; using the standard transition.', error);
+    beginModelExit(completion);
+    return;
+  }
+  if (requestedModelKind !== 'console-dock' || !scene || overlay?.hidden) return;
+
+  cartridgePressed = false;
+  cartridgeDragging = false;
+  cartridgeDragPointerId = null;
+  setCartridgeHovered(false);
+  overlay?.classList.remove('is-cartridge-dragging');
+
+  consoleDockAssembly = new THREE.Group();
+  consoleDockAssembly.name = 'ConsoleDockAssembly';
+  scene.add(consoleDockAssembly);
+  consoleDockAssembly.attach(activeModel);
+  consoleDockModel = consoleModel;
+  consoleDockAssembly.add(consoleDockModel);
+  consoleDockModel.visible = true;
+
+  consoleDockAssembly.position.set(0, 0, 0);
+  consoleDockAssembly.quaternion.identity();
+  consoleDockAssembly.scale.setScalar(1);
+  consoleDockCartridgeStartPosition.copy(activeModel.position);
+  consoleDockCartridgeStartQuaternion.copy(activeModel.quaternion);
+  consoleDockCartridgeStartScale = activeModel.scale.x;
+  consoleDockCartridgeTargetPosition.set(0, activeModel.userData.homeY + 0.04, 0);
+  consoleDockCartridgeTargetQuaternion.setFromEuler(
+    new THREE.Euler(-0.08, CARTRIDGE_FRONT_YAW, 0)
+  );
+  consoleDockCartridgeTargetScale = activeModel.userData.homeScale;
+  consoleDockConsoleScale = consoleDockCartridgeTargetScale /
+    CONSOLE_CARTRIDGE_FIT_SCALE;
+
+  consoleDockAnchorOffset.copy(consoleDockModel.userData.snapAnchor)
+    .multiplyScalar(consoleDockConsoleScale)
+    .applyQuaternion(consoleDockCartridgeTargetQuaternion);
+  consoleDockConsoleTargetPosition.copy(consoleDockCartridgeTargetPosition)
+    .sub(consoleDockAnchorOffset);
+  consoleDockAnchorOffset.copy(consoleDockModel.userData.mouthAnchor)
+    .multiplyScalar(consoleDockConsoleScale)
+    .applyQuaternion(consoleDockCartridgeTargetQuaternion);
+  consoleDockConsoleMouthPosition.copy(consoleDockCartridgeTargetPosition)
+    .sub(consoleDockAnchorOffset);
+  consoleDockConsoleStartPosition.copy(consoleDockConsoleMouthPosition)
+    .add(new THREE.Vector3(0.12, -4.5, -0.22));
+  consoleDockConsoleTargetQuaternion.copy(consoleDockCartridgeTargetQuaternion);
+  consoleDockConsoleStartQuaternion.copy(consoleDockConsoleTargetQuaternion)
+    .multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(-0.2, 0.12, -0.1)));
+  consoleDockModel.position.copy(consoleDockConsoleStartPosition);
+  consoleDockModel.quaternion.copy(consoleDockConsoleStartQuaternion);
+  consoleDockModel.scale.setScalar(consoleDockConsoleScale);
+
+  flowMotionCompletion = completion;
+  visualPhase = 'console-dock';
+  visualStartedAt = performance.now();
+  lastFlowFrameAt = 0;
+  startFlowAnimation();
+}
+
+function updateConsoleDockTransition(now, reducedMotion) {
+  if (!consoleDockAssembly || !consoleDockModel || !activeModel) return;
+  const elapsed = reducedMotion ? CONSOLE_DOCK_MS : Math.max(0, now - visualStartedAt);
+  const cartridgeAlign = easeOutCubic(elapsed / 500);
+  activeModel.position.lerpVectors(
+    consoleDockCartridgeStartPosition,
+    consoleDockCartridgeTargetPosition,
+    cartridgeAlign
+  );
+  activeModel.quaternion.slerpQuaternions(
+    consoleDockCartridgeStartQuaternion,
+    consoleDockCartridgeTargetQuaternion,
+    cartridgeAlign
+  );
+  activeModel.scale.setScalar(THREE.MathUtils.lerp(
+    consoleDockCartridgeStartScale,
+    consoleDockCartridgeTargetScale,
+    cartridgeAlign
+  ));
+
+  if (elapsed < CONSOLE_APPROACH_MS) {
+    const approach = easeOutCubic(elapsed / CONSOLE_APPROACH_MS);
+    consoleDockModel.position.lerpVectors(
+      consoleDockConsoleStartPosition,
+      consoleDockConsoleMouthPosition,
+      approach
+    );
+    consoleDockModel.quaternion.slerpQuaternions(
+      consoleDockConsoleStartQuaternion,
+      consoleDockConsoleTargetQuaternion,
+      approach
+    );
+  } else {
+    const seat = dampedSeatProgress(
+      (elapsed - CONSOLE_APPROACH_MS) / CONSOLE_SEAT_MS
+    );
+    consoleDockModel.position.lerpVectors(
+      consoleDockConsoleMouthPosition,
+      consoleDockConsoleTargetPosition,
+      seat
+    );
+    consoleDockModel.quaternion.copy(consoleDockConsoleTargetQuaternion);
+
+    const impactSeconds = (elapsed - CONSOLE_APPROACH_MS) / 1000;
+    const impactKick = Math.sin(impactSeconds * Math.PI * 8.2) *
+      Math.exp(-impactSeconds * 7.4);
+    activeModel.position.y += impactKick * 0.055;
+    consoleDockModel.position.x += impactKick * 0.012;
+  }
+
+  const retreat = easeInOutCubic(
+    (elapsed - CONSOLE_RETREAT_START_MS) /
+      (CONSOLE_DOCK_MS - CONSOLE_RETREAT_START_MS)
+  );
+  consoleDockAssembly.position.lerpVectors(
+    new THREE.Vector3(),
+    consoleDockAssemblyTargetPosition,
+    retreat
+  );
+  consoleDockAssembly.quaternion.slerpQuaternions(
+    new THREE.Quaternion(),
+    consoleDockAssemblyTargetQuaternion,
+    retreat
+  );
+  consoleDockAssembly.scale.setScalar(THREE.MathUtils.lerp(1, 0.54, retreat));
+
+  if (elapsed >= CONSOLE_DOCK_MS) finishConsoleDockTransition();
+}
+
 function beginPhysicalDeparture(direction, completion) {
   if (!activeModel) return;
   cartridgePressed = false;
@@ -1234,6 +1469,8 @@ function renderFlow(now) {
 
     if (visualPhase === 'enter') {
       updatePhysicsEntrance(now, dt, homeY, homeScale, reducedMotion);
+    } else if (visualPhase === 'console-dock') {
+      updateConsoleDockTransition(now, reducedMotion);
     } else if (visualPhase === 'exit' || visualPhase === 'reverse') {
       opacity = updatePhysicalDeparture(dt, reducedMotion);
     } else if (visualPhase === 'idle') {
@@ -1359,6 +1596,7 @@ function showLaunchFlow(fighter) {
 function finishClosingFlow(sequence, restoreFocus) {
   if (!overlay || sequence !== flowSequence) return;
   flowMotionCompletion = null;
+  clearConsoleDockTransition();
   overlay.hidden = true;
   modelRestedAt = 0;
   overlay.classList.remove('is-visible', 'is-leaving', 'is-model-settled');
@@ -1401,7 +1639,7 @@ function transitionToController() {
   modelRestedAt = 0;
   overlay.classList.remove('is-model-settled');
   overlay.dataset.step = 'transition';
-  beginModelExit(() => {
+  beginConsoleDockTransition(() => {
     if (sequence !== flowSequence || overlay.hidden) return;
     overlay.dataset.step = 'controller';
     showFlowModel('controller');
