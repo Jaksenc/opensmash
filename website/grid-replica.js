@@ -7,7 +7,6 @@ const RASTER_DEBUG = new URLSearchParams(window.location.search);
 const CELL_W = 45;
 const CELL_H = 43;
 const RULE = 2;
-const CELL_COUNT = 200;
 const FLAME_BRIDGE_CELL_COUNT = 1;
 // The single search cell is two-thirds the former control-strip height.
 const FLAME_BRIDGE_HEIGHT_SCALE = 47 / 552;
@@ -76,9 +75,6 @@ const CAPTION_PATCH_CUTS = Object.freeze({
   U: ['pikachu', 36, 42], X: ['fox', 17, 25], Y: ['yoshi', 4, 10]
 });
 const CAPTION_KERNING = Object.freeze({ KI: -1 });
-const CELL_IDS = Object.freeze(Array.from(
-  { length: CELL_COUNT }, (_, index) => `CELL-${String(index + 1).padStart(3, '0')}`
-));
 const RANDOM_NAME_POOL = Object.freeze([
   'ALEX', 'AMIR', 'ANNA', 'ARIA', 'ASH', 'AVA', 'BEAU', 'BEN',
   'BLAKE', 'CARA', 'CHLOE', 'COLE', 'DARA', 'DEV', 'ELI', 'ELLA',
@@ -139,11 +135,17 @@ const LIVE_ROSTER = Object.freeze((APP_BRIDGE?.characters || []).map(character =
 const BAKED_CAPTION_PORTRAITS = new Set(
   VANILLA_ROSTER.map(character => character.portrait)
 );
+const ROSTER = Object.freeze([...new Map(
+  (LIVE_ROSTER.length ? LIVE_ROSTER : [...FEATURED_ROSTER, ...VANILLA_ROSTER])
+    .map(character => [character.asset, character])
+).values()]);
+const CELL_COUNT = ROSTER.length + 1;
+const CELL_IDS = Object.freeze(Array.from(
+  { length: CELL_COUNT }, (_, index) => `CELL-${String(index + 1).padStart(3, '0')}`
+));
 
 function rosterCharacterForIndex(index) {
-  if (LIVE_ROSTER.length) return LIVE_ROSTER[index % LIVE_ROSTER.length];
-  return FEATURED_ROSTER[index] ||
-    VANILLA_ROSTER[(index - FEATURED_ROSTER.length) % VANILLA_ROSTER.length];
+  return ROSTER[index];
 }
 // RGB samples from the supplied screenshot after resolving it to the native
 // 96x92 grid. Only the six vertical and six horizontal 2px rule lanes are
@@ -640,17 +642,30 @@ function mapRuleSample(position, extent, cellSize, sourceExtent) {
 // Repeat the calibrated 2x2 rule lattice across the larger board. Every
 // boundary remains real code geometry, but its pixels come from the sampled
 // frame treatment instead of a flat CSS color.
-function renderRules(gridWidth, gridHeight) {
+function renderRules(gridWidth, gridHeight, columns, cellCount) {
   const sourceWidth = 96;
   const sourceHeight = 92;
   const reference = decodeReferenceRules();
   const dst = new Uint8ClampedArray(gridWidth * gridHeight * 4);
   const xStride = CELL_W + RULE;
   const yStride = CELL_H + RULE;
+  const ruleMask = new Uint8Array(gridWidth * gridHeight);
+
+  for (let index = 0; index < cellCount; index++) {
+    const left = (index % columns) * xStride;
+    const top = Math.floor(index / columns) * yStride;
+    const right = left + CELL_W + RULE * 2;
+    const bottom = top + CELL_H + RULE * 2;
+    for (let y = top; y < bottom; y++) for (let x = left; x < right; x++) {
+      if (x < left + RULE || x >= right - RULE ||
+          y < top + RULE || y >= bottom - RULE) {
+        ruleMask[y * gridWidth + x] = 1;
+      }
+    }
+  }
+
   for (let y = 0; y < gridHeight; y++) for (let x = 0; x < gridWidth; x++) {
-    const xr = x < RULE || x >= gridWidth - RULE || x % xStride < RULE;
-    const yr = y < RULE || y >= gridHeight - RULE || y % yStride < RULE;
-    if (!xr && !yr) continue;
+    if (!ruleMask[y * gridWidth + x]) continue;
     const sourceX = mapRuleSample(x, gridWidth, CELL_W, sourceWidth);
     const sourceY = mapRuleSample(y, gridHeight, CELL_H, sourceHeight);
     const source = (sourceY * sourceWidth + sourceX) * 4;
@@ -1096,7 +1111,12 @@ function applyGridLayout(columns = columnsForContainer()) {
     );
   });
 
-  paintPixels(ruleCanvas, renderRules(width, height), width, height);
+  paintPixels(
+    ruleCanvas,
+    renderRules(width, height, columns, visibleCells.length),
+    width,
+    height
+  );
   paintIntroVideoRule();
   paintSiteMenuRule();
   paintFlameBridgeRule();
