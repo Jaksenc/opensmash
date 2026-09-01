@@ -2,7 +2,8 @@
 
 ## Repository layout
 
-- `website/` — the standalone project website and all of its browser assets
+- `web-prototype/` — the production React website, Node server, deployment
+  configuration, and canonical browser assets under `visual/`
 - `pipeline/` — directly executable Python generation and evaluation tools
 - `scripts/` — batch sweep drivers
 - `play/` — production character bundles consumed by BattleShip
@@ -11,20 +12,22 @@
 - `artifacts/experiments/` — historical generated models, atlases, bundles, and reports
 - `tools/` — maintenance, generation, and verification utilities
 
-Run the website from its own directory so it stays independent of the game
-pipeline:
+Run the website from its app directory:
 
 ```bash
-python3 -m http.server 4173 --directory website
+cd web-prototype
+pnpm install
+pnpm dev
 ```
 
-Then open `http://localhost:4173/`.
+Then open `http://127.0.0.1:4174/`. See `web-prototype/README.md` for the
+production build, fighter worker, authentication, and deployment flows.
 
 ## Retro cartridge
 
-`website/assets/n64-cartridge-tripo.glb` is a Tripo P1 multiview model generated from
+`web-prototype/visual/assets/n64-cartridge-tripo.glb` is a Tripo P1 multiview model generated from
 front, side, and back references. It is used by the centered cartridge
-control in `website/index.html` and rendered inside
+control in the production visual runtime and rendered inside
 the same low-resolution Three.js post-process as the glove, including the
 posterized palette, dithered alpha edge, and dark one-texel outline.
 
@@ -46,7 +49,7 @@ size for the site with:
 blender --background --python tools/prepare_sketchfab_console.py
 ```
 
-`website/assets/hybrid-four-port-console-fitted.glb` preserves the recovered shell,
+`web-prototype/visual/assets/hybrid-four-port-console-fitted.glb` preserves the recovered shell,
 four ports, top switches, badge, and cartridge slot. A small flush cover adds
 `FUN` light pipes, and a `CartridgeSnapAnchor` node drives the site interaction.
 Rebuild that derived interaction asset with:
@@ -175,8 +178,8 @@ python3 tools/generate_mesh.py generate \
   --target-polycount 12000
 ```
 
-Finished models are downloaded to `website/assets/generated/` by default. This folder
-is git-ignored because generated GLBs can be large. Use `--output-dir` or
+Finished models are downloaded to `web-prototype/visual/assets/generated/` by
+default. This folder is git-ignored because generated GLBs can be large. Use `--output-dir` or
 `--name` to change the destination. Run the CLI with `--help` for all options.
 
 Generation consumes provider credits. `--textured` may consume additional

@@ -1,4 +1,4 @@
-// Imported from website/index.html by scripts/import-website-visuals.mjs.
+// Canonical hardware and background runtime for the production React site.
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';

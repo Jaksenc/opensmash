@@ -20,9 +20,10 @@ from mathutils import Vector
 
 
 ROOT = Path(__file__).resolve().parents[1]
-CARTRIDGE_SOURCE = ROOT / "website" / "assets" / "n64-cartridge-tripo.glb"
-CONSOLE_SOURCE = ROOT / "website" / "assets" / "generated" / "hybrid-four-port-console.glb"
-CONSOLE_OUTPUT = ROOT / "website" / "assets" / "hybrid-four-port-console-fitted.glb"
+VISUAL_ASSETS = ROOT / "web-prototype" / "visual" / "assets"
+CARTRIDGE_SOURCE = VISUAL_ASSETS / "n64-cartridge-tripo.glb"
+CONSOLE_SOURCE = VISUAL_ASSETS / "generated" / "hybrid-four-port-console.glb"
+CONSOLE_OUTPUT = VISUAL_ASSETS / "hybrid-four-port-console-fitted.glb"
 
 CARTRIDGE_FIT_SCALE = 0.44
 SLOT_CLEARANCE = 0.012

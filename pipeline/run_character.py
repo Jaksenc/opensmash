@@ -24,6 +24,7 @@ import time
 
 PIPELINE_DIR = os.path.dirname(os.path.abspath(__file__))
 HERE = os.path.dirname(PIPELINE_DIR)
+UI_REFS = os.path.join(HERE, "web-prototype", "visual", "assets", "ui_refs")
 _WEBDIST_CANDIDATES = [
     os.path.join(HERE, "BattleShip", "web-dist", "bundles"),
     os.path.join(HERE, "..", "BattleShip", "web-dist", "bundles"),
@@ -375,7 +376,7 @@ def main():
         for r in ("tile_mario", "tile_samus", "tile_link"):
             up = F(f"_styleref_{r}.png")
             sh(["python3", "-c",
-                f"from PIL import Image; im=Image.open('website/assets/ui_refs/{r}.png').convert('RGB');"
+                f"from PIL import Image; im=Image.open({os.path.join(UI_REFS, r + '.png')!r}).convert('RGB');"
                 f"im.resize((im.width*8,im.height*8),Image.LANCZOS).save('{up}')"])
             refs += ["--ref", up]
         bill("portrait", gen_cost(sh(["python3", pipeline_script("gen.py"), "image"] + refs
@@ -384,7 +385,7 @@ def main():
     if stage_needed(F("stock_raw.png"), force, "stock"):
         log("stock: generating icon art")
         bill("stock", gen_cost(sh(
-            ["python3", pipeline_script("gen.py"), "image", "--ref", os.path.join(HERE, "website", "assets", "ui_refs", "stockicon_ref.png"),
+            ["python3", pipeline_script("gen.py"), "image", "--ref", os.path.join(UI_REFS, "stockicon_ref.png"),
              "--ref", F("tpose.png"), STOCK_TEMPLATE, F("stock_raw.png")], timeout=600)))
     if stage_needed(F("emblem_raw.png"), force, "emblem"):
         # --emblem beats whatever the expander inferred, so the object can be
@@ -398,7 +399,7 @@ def main():
         for _ in range(2):
             bill("emblem", gen_cost(sh(
                 ["python3", pipeline_script("gen.py"), "image",
-                 "--ref", os.path.join(HERE, "website", "assets", "ui_refs", "emblem_ref.png"),
+                 "--ref", os.path.join(UI_REFS, "emblem_ref.png"),
                  prompt, F("emblem_raw.png")], timeout=600)))
             st = json.loads(sh(["python3", pipeline_script("emblem_stencil.py"), F("emblem_raw.png")],
                                timeout=120))

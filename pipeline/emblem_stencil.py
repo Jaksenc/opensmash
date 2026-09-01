@@ -7,7 +7,7 @@ it to one intensity. So ONLY the mask shape survives — taking the art's
 alpha channel (its outer silhouette) throws away everything that made the
 art readable and every solid object lands as a blob.
 
-Look at website/assets/ui_refs/emblem_ref.png (the game's own ten emblems, dumped by
+Look at web-prototype/visual/assets/ui_refs/emblem_ref.png (the game's own ten emblems, dumped by
 extract_vanilla_emblems.py): every one is a stencil. The Poke Ball is a
 plain circle that reads only because its band and centre are cut through;
 Yoshi's egg is an oval with its spots punched out; the Triforce is hollow.

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Dump the game's ten series emblems out of relocData file 20 into a
-reference sheet (website/assets/ui_refs/emblem_ref.png).
+reference sheet (web-prototype/visual/assets/ui_refs/emblem_ref.png).
 
 Format lore (derived here, not documented elsewhere): the o2r stores the
 reloc blob in N64 big-endian; `tools/reloc_data_symbols.us.txt` offsets are
@@ -12,7 +12,7 @@ DRAM-swizzled: odd rows have their 4-byte words swapped inside each 8-byte
 group. Peak intensity is 9/15 (the CSS watermark translucency the
 engine self-calibrates against in ftport port_ui_write_canvas_fit).
 
-Usage: extract_vanilla_emblems.py [--o2r path] [--out website/assets/ui_refs/emblem_ref.png]
+Usage: extract_vanilla_emblems.py [--o2r path] [--out web-prototype/visual/assets/ui_refs/emblem_ref.png]
 """
 import argparse
 import os
@@ -51,7 +51,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--o2r", default=O2R)
     ap.add_argument("--out", default=os.path.join(
-        HERE, "website", "assets", "ui_refs", "emblem_ref.png"))
+        HERE, "web-prototype", "visual", "assets", "ui_refs", "emblem_ref.png"))
     ap.add_argument("--scale", type=int, default=4)
     a = ap.parse_args()
     blob = zipfile.ZipFile(a.o2r).read(ENTRY) + b"\0" * (STRIDE * len(NAMES))

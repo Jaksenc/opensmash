@@ -8,6 +8,10 @@
 !pipeline/web-prototype/server/**
 !pipeline/web-prototype/shared/
 !pipeline/web-prototype/shared/**
+!pipeline/web-prototype/visual/
+!pipeline/web-prototype/visual/assets/
+!pipeline/web-prototype/visual/assets/ui_refs/
+!pipeline/web-prototype/visual/assets/ui_refs/**
 !pipeline/web-prototype/infra/
 !pipeline/web-prototype/infra/requirements-worker.txt
 !pipeline/web-prototype/docker/
@@ -16,10 +20,6 @@
 !pipeline/pipeline/**
 !pipeline/skels/
 !pipeline/skels/**
-!pipeline/website/
-!pipeline/website/assets/
-!pipeline/website/assets/ui_refs/
-!pipeline/website/assets/ui_refs/**
 !pipeline/artifacts/
 !pipeline/artifacts/experiments/
 !pipeline/artifacts/experiments/vg7-tpose.png

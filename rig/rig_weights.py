@@ -4,7 +4,10 @@ from pathlib import Path
 from mathutils import Vector
 
 OUT = "/private/tmp/claude-501/-Users-joey-Claude-Code-smash-weights/f08c86ec-b792-43d7-81d5-37ec45a424ce/scratchpad"
-DEST = str(Path(__file__).resolve().parents[1] / "website" / "assets" / "hand-rigged.glb")
+DEST = str(
+    Path(__file__).resolve().parents[1]
+    / "web-prototype" / "visual" / "assets" / "hand-rigged.glb"
+)
 
 bpy.ops.wm.open_mainfile(filepath=f"{OUT}/hand_rig.blend")
 mesh_obj = bpy.data.objects['hand']

@@ -1,4 +1,4 @@
-/* Imported from website/index.html by scripts/import-website-visuals.mjs. */
+/* Canonical visual shell for the production React site. */
 * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { min-height: 100%; }
   @media (hover: hover) and (pointer: fine) {

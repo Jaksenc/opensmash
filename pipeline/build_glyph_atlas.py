@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """Build the two SSB64 letter atlases from the roster sprite dumps in
-website/assets/ui_refs/ (name_*.png = bold white panel font, tile_*.png = thin tan tile
+web-prototype/visual/assets/ui_refs/ (name_*.png = bold white panel font,
+tile_*.png = thin tan tile
 captions). The roster covers 21 letters; Q,T,V,W,Z are synthesized from
 existing strokes with regenerated drop shadows.
 
-Outputs website/assets/ui_refs/glyph_<ord>.png (panel) and
-website/assets/ui_refs/tileglyph_<ord>.png
+Outputs web-prototype/visual/assets/ui_refs/glyph_<ord>.png (panel) and
+web-prototype/visual/assets/ui_refs/tileglyph_<ord>.png
 (tile). Deterministic — safe to re-run whenever the dumps change.
 """
 import glob
@@ -14,7 +15,7 @@ import os
 from PIL import Image
 
 HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-REFS = os.path.join(HERE, "website", "assets", "ui_refs")
+REFS = os.path.join(HERE, "web-prototype", "visual", "assets", "ui_refs")
 
 
 # ---------------- bold panel font (IA8 dumps: white face, dark shadow) ---

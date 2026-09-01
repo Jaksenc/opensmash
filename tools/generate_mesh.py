@@ -24,7 +24,7 @@ from typing import Any
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "website" / "assets" / "generated"
+DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "web-prototype" / "visual" / "assets" / "generated"
 MESHY_BASE_URL = "https://api.meshy.ai"
 TRIPO_BASE_URL = "https://api.tripo3d.ai/v2/openapi"
 
