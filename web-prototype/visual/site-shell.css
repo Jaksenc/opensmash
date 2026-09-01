@@ -712,7 +712,7 @@
     bottom: clamp(16px, 3vw, 36px);
     z-index: 4;
     display: none;
-    min-height: clamp(52px, 6vw, 66px);
+    min-height: 0;
     margin: 0;
     transform: translateX(-50%);
   }

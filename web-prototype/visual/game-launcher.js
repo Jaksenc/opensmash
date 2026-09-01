@@ -162,6 +162,11 @@ function keepPageScrollableFromGame() {
   if (!gameWindow) return;
 
   gameWindow.addEventListener('wheel', event => {
+    // The Emscripten canvas also handles wheel events. Intercept them before
+    // they reach the game so its WASM handler cannot consume the gesture or
+    // make scrolling the parent page fall behind the pointer/trackpad input.
+    event.preventDefault();
+    event.stopImmediatePropagation();
     const deltaScale = event.deltaMode === WheelEvent.DOM_DELTA_LINE
       ? 16
       : event.deltaMode === WheelEvent.DOM_DELTA_PAGE
@@ -170,9 +175,13 @@ function keepPageScrollableFromGame() {
     window.scrollBy({
       left: event.deltaX * deltaScale,
       top: event.deltaY * deltaScale,
-      behavior: 'auto',
+      // `auto` inherits the page's `scroll-behavior: smooth`, which restarts
+      // the animation for every trackpad tick and makes most of the gesture
+      // appear to be swallowed. Wheel input needs to move the page immediately;
+      // the browser-provided deltas already contain the gesture's momentum.
+      behavior: 'instant',
     });
-  }, { passive: true });
+  }, { capture: true, passive: false });
 }
 
 function launch(fighter) {
@@ -1459,7 +1468,8 @@ function updateConsoleDockTransition(now, reducedMotion) {
 
 function beginPhysicalDeparture(direction, completion) {
   if (!activeModel) return;
-  const controllerExit = direction > 0 && activeModelKind === 'controller';
+  const controllerDeparture = activeModelKind === 'controller';
+  const controllerExit = direction > 0 && controllerDeparture;
   const departureDirection = controllerExit ? -1 : direction;
   cartridgePressed = false;
   cartridgeDragging = false;
@@ -1472,12 +1482,16 @@ function beginPhysicalDeparture(direction, completion) {
   if (activeModelKind === 'cartridge') {
     entranceVelocity.add(cartridgeVelocity);
   }
-  entranceAngularVelocity.set(0, controllerExit ? 0 : direction * 2.2, 0);
+  entranceAngularVelocity.set(0, controllerDeparture ? 0 : direction * 2.2, 0);
   flowMotionTargetAngularVelocity.set(0, 0, 0);
   entranceScale = activeModel.scale.x;
   entranceScaleVelocity = 0;
-  flowMotionTargetScale = activeModel.userData.homeScale * (controllerExit ? 0.9 : 0.76);
-  if (direction < 0) {
+  flowMotionTargetScale = controllerDeparture
+    ? activeModel.scale.x
+    : activeModel.userData.homeScale * 0.76;
+  if (controllerDeparture) {
+    flowMotionTargetRotation.copy(activeModel.rotation);
+  } else if (direction < 0) {
     flowMotionTargetRotation.set(0.18, activeModel.rotation.y - Math.PI * 4, -0.16);
   } else if (activeModelKind === 'cartridge') {
     flowMotionTargetRotation.set(-0.18, activeModel.rotation.y + Math.PI * 2, 0.12);

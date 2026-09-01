@@ -1848,17 +1848,24 @@ new GLTFLoader().load('assets/hand-cursor-meshy.glb', (gltf) => {
     handUnitH = (g2.boundingBox.max.y - g2.boundingBox.min.y) * hand.scale.y;
 
     // Hotspot: extreme vertex along the index direction (up-right), mapped
-    // into wrist space so the fingertip sits at the glove origin.
+    // into wrist space so the fingertip sits at the glove origin. Measure the
+    // vertex after applying the live pointing pose: the authored bind pose is
+    // reshaped by poseTweak, so anchoring the undeformed geometry leaves the
+    // browser pointer several pixels above the visible fingertip.
     {
       const posAttr2 = g2.getAttribute('position');
       const dirX = Math.sin(-INDEX_REST_Z), dirY = Math.cos(-INDEX_REST_Z);
       let bestS = -1e9;
-      const tipLocal = new THREE.Vector3();
+      let tipIndex = 0;
       for (let vi = 0; vi < posAttr2.count; vi++) {
         const x = posAttr2.getX(vi), y = posAttr2.getY(vi);
         const sscore = x * dirX + y * dirY;
-        if (sscore > bestS) { bestS = sscore; tipLocal.set(x, y, posAttr2.getZ(vi)); }
+        if (sscore > bestS) { bestS = sscore; tipIndex = vi; }
       }
+      for (const f of rigs) { f.jig.a = 0; f.jig.v = 0; }
+      poseFingers(0, 0);
+      newMesh.updateMatrixWorld(true);
+      const tipLocal = newMesh.getVertexPosition(tipIndex, new THREE.Vector3());
       tipLocal.multiplyScalar(hand.scale.x).applyQuaternion(qPoint);
       hand.position.copy(tipLocal).negate();
     }
@@ -1888,7 +1895,8 @@ let gripTarget = 0, gripAmount = 0;   // closed-fist pose, see setGrip()
 window.setGrip = v => { gripTarget = THREE.MathUtils.clamp(v, 0, 1); };
 
 const ndc = new THREE.Vector2();
-const rayPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+const GLOVE_DEPTH = 0.55;
+const rayPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), -GLOVE_DEPTH);
 const raycaster = new THREE.Raycaster();
 const worldPt = new THREE.Vector3();
 const cartridgeTarget = new THREE.Vector3();
@@ -2544,7 +2552,7 @@ function tick() {
   vel.y += ((mouse.y - pos.y) * K - vel.y * D) * dt;
   pos.x += vel.x * dt; pos.y += vel.y * dt;
   glove.position.copy(pos);
-  glove.position.z = 0.55;  // cursor always passes above the cartridge in depth
+  glove.position.z = GLOVE_DEPTH;  // cursor always passes above the cartridge in depth
 
   accelSmooth.x += ((vel.x - prevVel.x) / Math.max(dt, 1e-4) - accelSmooth.x) * Math.min(1, dt * 12);
   accelSmooth.y += ((vel.y - prevVel.y) / Math.max(dt, 1e-4) - accelSmooth.y) * Math.min(1, dt * 12);

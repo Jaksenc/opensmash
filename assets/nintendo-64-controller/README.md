@@ -8,7 +8,8 @@ Recovered source asset and unpacked glTF files.
 
 ## Files
 
-- `nintendo_64_controller.glb`: original self-contained model
+- `nintendo_64_controller.glb`: original self-contained model, unchanged
+- `nintendo_64_controller_flat.glb`: controller with the top badge emboss removed
 - `nintendo_64_controller.gltf`: unpacked scene description
 - `nintendo_64_controller.bin`: mesh and attribute data
 - `base_color.png`: base-color texture

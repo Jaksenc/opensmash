@@ -919,6 +919,36 @@ flameBridgeCells.forEach(cell => cell.append(canvasFromPixels(
   'flame-bridge-texture-layer'
 )));
 
+const advancedFrameCells = [...document.querySelectorAll('.advanced-cell-frame')];
+const advancedFrameCanvases = new Map(advancedFrameCells.map(cell => {
+  const canvas = document.createElement('canvas');
+  canvas.className = 'advanced-cell-rule-layer';
+  canvas.setAttribute('aria-hidden', 'true');
+  cell.append(canvas);
+  return [cell, canvas];
+}));
+
+function paintAdvancedFrame(cell) {
+  const canvas = advancedFrameCanvases.get(cell);
+  const width = Math.round(cell.getBoundingClientRect().width);
+  const height = Math.round(cell.getBoundingClientRect().height);
+  if (!canvas || width < RULE * 2 + 1 || height < RULE * 2 + 1) return;
+  const signature = `${width}x${height}`;
+  if (canvas.dataset.signature === signature) return;
+  canvas.dataset.signature = signature;
+  paintPixels(canvas, renderOuterRules(width, height), width, height);
+}
+
+if ('ResizeObserver' in window) {
+  const advancedFrameObserver = new ResizeObserver(entries => {
+    entries.forEach(entry => paintAdvancedFrame(entry.target));
+  });
+  advancedFrameCells.forEach(cell => advancedFrameObserver.observe(cell));
+} else {
+  advancedFrameCells.forEach(paintAdvancedFrame);
+  window.addEventListener('resize', () => advancedFrameCells.forEach(paintAdvancedFrame));
+}
+
 CELL_IDS.forEach((id, index) => {
   const isCreate = index === 0;
   const character = isCreate
