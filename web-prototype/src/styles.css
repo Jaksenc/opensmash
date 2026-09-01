@@ -677,6 +677,12 @@ body.retro-home::before {
 .retro-home .advanced-overlay label { cursor: none; }
 body.is-advanced-open #glove-canvas { z-index: 1800; }
 
+/* Diagnostic mode: compare the native pointer with the spring-driven glove. */
+body.retro-home.show-native-cursor,
+body.retro-home.show-native-cursor * {
+  cursor: auto !important;
+}
+
 @media (max-width: 560px) {
   .retro-menu-actions { grid-template-columns: 1fr; }
   .retro-game-tools { top: 6px; right: 6px; }
