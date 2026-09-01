@@ -25,6 +25,12 @@ import time
 PIPELINE_DIR = os.path.dirname(os.path.abspath(__file__))
 HERE = os.path.dirname(PIPELINE_DIR)
 UI_REFS = os.path.join(HERE, "web-prototype", "visual", "assets", "ui_refs")
+PORTRAIT_STYLE_REFS = os.path.join(HERE, "assets", "portrait_style_refs")
+PORTRAIT_STYLE_REFERENCE_FILES = (
+    "blakerobbins.png",
+    "kaishahom.png",
+    "rohansahai.png",
+)
 _WEBDIST_CANDIDATES = [
     os.path.join(HERE, "BattleShip", "web-dist", "bundles"),
     os.path.join(HERE, "..", "BattleShip", "web-dist", "bundles"),
@@ -81,13 +87,21 @@ N64_TEMPLATE = (
 PHOTO_NOTE = (" Keep the exact likeness of the person in the attached photo(s), "
               "same expression but with closed lips.")
 PORTRAIT_TEMPLATE = (
-    "Character select screen portrait tile for a 1999 Nintendo 64 fighting "
-    "game, in exactly the same art style as the three reference portrait "
-    "tiles (pre-rendered 90s CGI bust, soft plastic-like shading, slightly "
-    "grainy, dark fiery red-black background with embers): a bust portrait "
-    "of the character shown in the fourth reference image. Head and "
-    "shoulders, three-quarter view facing slightly left, dramatic warm "
-    "lighting from upper left. NO text, NO letters, NO border. Square image."
+    "Create a late-1990s console fighting-game character-select portrait of "
+    "the character shown in the fourth reference image. Match the coarse "
+    "pre-rendered CGI language of the first three reference images: a simple "
+    "bust built from a few large rounded polygonal forms, soft plastic "
+    "material, restrained facial detail, slightly soft raster edges, mild "
+    "texture filtering, subtle grain, and a dark red-black backdrop. It must "
+    "look designed to remain readable when reduced to approximately 48 by 43 "
+    "pixels. Tight head-and-shoulders crop; face occupies most of the tile; "
+    "three-quarter view facing slightly left; square image. Soft warm key "
+    "light from upper left, deep shadow on the opposite side, restrained "
+    "highlights. Preserve the recognizable subject, clothing, hair, and face "
+    "from the fourth reference image; use the first three reference images "
+    "only for style. Intentionally low-detail late-90s pre-rendered CGI, not "
+    "a crisp modern low-poly illustration; no sharp vector-like facets; no "
+    "high-frequency skin detail; no text, letters, border, logo, or watermark."
 )
 STOCK_TEMPLATE = (
     "A tiny video-game stock/life icon in the exact style of the first "
@@ -373,12 +387,11 @@ def main():
     if stage_needed(F("portrait_raw.png"), force, "portrait"):
         log("portrait: generating tile art")
         refs = []
-        for r in ("tile_mario", "tile_samus", "tile_link"):
-            up = F(f"_styleref_{r}.png")
-            sh(["python3", "-c",
-                f"from PIL import Image; im=Image.open({os.path.join(UI_REFS, r + '.png')!r}).convert('RGB');"
-                f"im.resize((im.width*8,im.height*8),Image.LANCZOS).save('{up}')"])
-            refs += ["--ref", up]
+        for filename in PORTRAIT_STYLE_REFERENCE_FILES:
+            ref = os.path.join(PORTRAIT_STYLE_REFS, filename)
+            if not os.path.exists(ref):
+                raise RuntimeError(f"portrait style reference missing: {ref}")
+            refs += ["--ref", ref]
         bill("portrait", gen_cost(sh(["python3", pipeline_script("gen.py"), "image"] + refs
              + ["--ref", F("tpose.png"), PORTRAIT_TEMPLATE, F("portrait_raw.png")],
              timeout=600)))
