@@ -39,8 +39,14 @@ REGION=us-central1 \
 PUBLIC_ORIGIN=https://example.com \
 FIREBASE_API_KEY=your-public-web-api-key \
 FIREBASE_APP_ID=1:123456789:web:abcdef \
+CLOUDFLARE_API_TOKEN=... \
+CLOUDFLARE_ACCOUNT_ID=... \
 ./infra/deploy.sh
 ```
+
+Run from clean commits in both the `pipeline` and sibling `BattleShip`
+repositories. The first deploy creates `opensmash-cookie-secret-previous` by
+copying the current signing key; subsequent rotations maintain it.
 
 The API is initially capped at one instance so uploader quotas and
 local upload parsing cannot race across replicas. Firestore leases still make
@@ -81,29 +87,49 @@ wait with `CERT_WAIT_SECONDS` if needed.
 
 ## Cloudflare edge cache
 
-Deploy the engine worker after the Google load balancer exists. It validates
-the existing ROM-session cookie before looking up `/engine/*` in Cloudflare's
-shared cache, then enables proxying for the apex and `www` records. Public
-content-hashed Vite assets use Cloudflare's normal static cache.
+The main `deploy.sh` command also deploys the engine worker after Cloud Run. It
+validates the existing ROM-session cookie before looking up shared `/engine/*`
+runtime files in Cloudflare's cache, then enables proxying for the apex and
+`www` records. Private-capable `/engine/bundles/*` requests always bypass the
+shared cache. Public content-hashed Vite assets use Cloudflare's normal static
+cache.
 
 ```bash
 CLOUDFLARE_API_TOKEN=... \
 CLOUDFLARE_ACCOUNT_ID=... \
 COOKIE_SECRET=... \
+COOKIE_SECRET_PREVIOUS=... \
 ./infra/deploy-edge.sh
 ```
 
-The worker stores engine responses at the edge for 24 hours. Browsers receive
-short private TTLs for stable bundle/file paths and a one-year immutable TTL
-only for the already hash-versioned JavaScript and WASM URLs. Each application
-deploy should rerun this command, which purges the previous edge objects after
-the new worker version is active.
+`deploy-edge.sh` remains useful for an edge-only repair. Normally use
+`deploy.sh`, which refuses uncommitted build inputs, regenerates the engine
+package, synchronizes both cookie verification keys, and purges the previous
+edge objects after the new application and Worker versions are active.
+
+The worker stores engine responses at the edge for 24 hours. The engine build
+stamps one content-derived version across its manifest, JS, WASM, and runtime
+file URLs, so browsers can keep those URLs for one year with `immutable` while
+a changed build gets a new URL.
 
 The same script installs a Cache Rule for the shared application shell at `/`
 and `/create`. Browsers keep that HTML for 15 seconds, while Cloudflare keeps it
 for 60 seconds and may serve it stale during background revalidation. User,
 session, and character data remain on the uncached `/api/*` requests made after
 the shell loads.
+
+Rotate the shared cookie signing key with overlap after a full deploy has added
+the previous-key secret to both Cloud Run and Cloudflare:
+
+```bash
+PROJECT_ID=... REGION=... \
+CLOUDFLARE_API_TOKEN=... CLOUDFLARE_ACCOUNT_ID=... \
+./infra/rotate-cookie-secret.sh
+```
+
+The rotation activates the new key and retains the former key as
+`COOKIE_SECRET_PREVIOUS`, so existing 30-day ROM-validation cookies continue to
+work. Do not update either provider's copy manually.
 
 ## Rollback
 

@@ -12,6 +12,7 @@ done
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DOMAIN="${DOMAIN:-smashtheweights.com}"
 WRANGLER_VERSION="${WRANGLER_VERSION:-4.34.0}"
+COOKIE_SECRET_PREVIOUS="${COOKIE_SECRET_PREVIOUS:-$COOKIE_SECRET}"
 export CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID
 
 zone_response="$(curl -fsS -G "https://api.cloudflare.com/client/v4/zones" \
@@ -67,6 +68,9 @@ echo "==> Deploying authenticated engine cache worker"
 npx --yes "wrangler@${WRANGLER_VERSION}" deploy --config "$SCRIPT_DIR/wrangler.jsonc"
 printf '%s' "$COOKIE_SECRET" | \
   npx --yes "wrangler@${WRANGLER_VERSION}" secret put COOKIE_SECRET \
+    --config "$SCRIPT_DIR/wrangler.jsonc"
+printf '%s' "$COOKIE_SECRET_PREVIOUS" | \
+  npx --yes "wrangler@${WRANGLER_VERSION}" secret put COOKIE_SECRET_PREVIOUS \
     --config "$SCRIPT_DIR/wrangler.jsonc"
 
 echo "==> Enabling short edge caching for the shared application shell"

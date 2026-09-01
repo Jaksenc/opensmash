@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-required=(PROJECT_ID REGION PUBLIC_ORIGIN FIREBASE_API_KEY FIREBASE_APP_ID)
+required=(PROJECT_ID REGION PUBLIC_ORIGIN FIREBASE_API_KEY FIREBASE_APP_ID CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID)
 for name in "${required[@]}"; do
   if [[ -z "${!name:-}" ]]; then
     echo "$name is required" >&2
@@ -11,6 +11,7 @@ done
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WORKSPACE_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+BATTLESHIP_ROOT="$WORKSPACE_ROOT/BattleShip"
 SERVICE_NAME="${SERVICE_NAME:-opensmash-web}"
 WORKER_JOB="${WORKER_JOB:-opensmash-fighter-worker}"
 ARTIFACT_REPOSITORY="${ARTIFACT_REPOSITORY:-opensmash}"
@@ -26,6 +27,37 @@ IMAGE_ROOT="${REGION}-docker.pkg.dev/${PROJECT_ID}/${ARTIFACT_REPOSITORY}"
 VERSION="${VERSION:-$(date -u +%Y%m%d-%H%M%S)}"
 API_IMAGE="${IMAGE_ROOT}/web:${VERSION}"
 WORKER_IMAGE="${IMAGE_ROOT}/worker:${VERSION}"
+COOKIE_SECRET_NAME="${COOKIE_SECRET_NAME:-opensmash-cookie-secret}"
+COOKIE_SECRET_PREVIOUS_NAME="${COOKIE_SECRET_PREVIOUS_NAME:-opensmash-cookie-secret-previous}"
+DOMAIN="${DOMAIN:-${PUBLIC_ORIGIN#https://}}"
+DOMAIN="${DOMAIN%/}"
+
+assert_clean_source() {
+  local repo="$1"
+  local label="$2"
+  shift 2
+  local changes
+  changes="$(git -C "$repo" status --porcelain --untracked-files=normal -- "$@")"
+  if [[ -n "$changes" ]]; then
+    echo "$label has source changes that are not committed:" >&2
+    printf '%s\n' "$changes" >&2
+    echo "Commit or stash them before deploying so Cloud Build receives a reproducible tree." >&2
+    exit 2
+  fi
+}
+
+# Cloud Build uploads the local filesystem, so fail before any remote mutation
+# if a file included by either Docker context could differ from a commit.
+assert_clean_source "$WORKSPACE_ROOT/pipeline" pipeline \
+  web-prototype pipeline skels \
+  play/ui/joeyflynn play/ui/barackobama play/ui/queen play/ui/rohansahai \
+  artifacts/experiments/vg7-tpose.png
+assert_clean_source "$BATTLESHIP_ROOT" BattleShip web scripts
+
+# Always regenerate the complete engine package. package_web.sh derives one
+# version from every runtime input and preserves separately built bundles.
+"$BATTLESHIP_ROOT/scripts/package_web.sh" \
+  "$BATTLESHIP_ROOT/build-wasm" "$BATTLESHIP_ROOT/web-dist"
 
 gcloud config set project "$PROJECT_ID"
 gcloud services enable \
@@ -84,10 +116,17 @@ for bucket in "$PRIVATE_BUCKET" "$PUBLIC_BUCKET"; do
   done
 done
 
-for secret in opensmash-cookie-secret opensmash-openai-api-key opensmash-tripo-api-key opensmash-fal-key opensmash-minimax-voice-id; do
+for secret in "$COOKIE_SECRET_NAME" opensmash-openai-api-key opensmash-tripo-api-key opensmash-fal-key opensmash-minimax-voice-id; do
   gcloud secrets describe "$secret" >/dev/null
 done
-gcloud secrets add-iam-policy-binding opensmash-cookie-secret \
+if ! gcloud secrets describe "$COOKIE_SECRET_PREVIOUS_NAME" >/dev/null 2>&1; then
+  gcloud secrets create "$COOKIE_SECRET_PREVIOUS_NAME" --replication-policy=automatic >/dev/null
+  gcloud secrets versions access latest --secret "$COOKIE_SECRET_NAME" | \
+    gcloud secrets versions add "$COOKIE_SECRET_PREVIOUS_NAME" --data-file=- >/dev/null
+fi
+gcloud secrets add-iam-policy-binding "$COOKIE_SECRET_NAME" \
+  --member "serviceAccount:${API_IDENTITY}" --role roles/secretmanager.secretAccessor >/dev/null
+gcloud secrets add-iam-policy-binding "$COOKIE_SECRET_PREVIOUS_NAME" \
   --member "serviceAccount:${API_IDENTITY}" --role roles/secretmanager.secretAccessor >/dev/null
 gcloud secrets add-iam-policy-binding opensmash-openai-api-key \
   --member "serviceAccount:${API_IDENTITY}" --role roles/secretmanager.secretAccessor >/dev/null
@@ -129,6 +168,13 @@ gcloud run deploy "$SERVICE_NAME" \
   --port 8080 --cpu 1 --memory 1Gi --concurrency 40 \
   --min-instances 0 --max-instances 1 --timeout 3600 \
   --set-env-vars "JOB_DATABASE=firestore,OBJECT_STORE=gcs,FIGHTER_JOBS_ROOT=/tmp/fighter-jobs,FIGHTER_EXECUTION_MODE=cloud-run,GOOGLE_CLOUD_PROJECT=${PROJECT_ID},CLOUD_RUN_REGION=${REGION},CLOUD_RUN_WORKER_JOB=${WORKER_JOB},GCS_PRIVATE_BUCKET=${PRIVATE_BUCKET},GCS_PUBLIC_BUCKET=${PUBLIC_BUCKET},ASSET_BASE_URL=${ASSET_BASE_URL},ALLOWED_ORIGINS=${PUBLIC_ORIGIN},FIREBASE_AUTH_ENABLED=1,FIREBASE_PROJECT_ID=${PROJECT_ID},FIREBASE_API_KEY=${FIREBASE_API_KEY},FIREBASE_AUTH_DOMAIN=${FIREBASE_AUTH_DOMAIN},FIREBASE_APP_ID=${FIREBASE_APP_ID},FIREBASE_AUTH_PROVIDERS=google|apple|email,FIGHTER_MODERATION_ENABLED=1" \
-  --set-secrets "COOKIE_SECRET=opensmash-cookie-secret:latest,OPENAI_API_KEY=opensmash-openai-api-key:latest"
+  --set-secrets "COOKIE_SECRET=${COOKIE_SECRET_NAME}:latest,COOKIE_SECRET_PREVIOUS=${COOKIE_SECRET_PREVIOUS_NAME}:latest,OPENAI_API_KEY=opensmash-openai-api-key:latest"
 
-echo "Deployed ${SERVICE_NAME} and ${WORKER_JOB} at version ${VERSION}."
+cookie_secret="$(gcloud secrets versions access latest --secret "$COOKIE_SECRET_NAME")"
+cookie_secret_previous="$(gcloud secrets versions access latest --secret "$COOKIE_SECRET_PREVIOUS_NAME")"
+COOKIE_SECRET="$cookie_secret" \
+COOKIE_SECRET_PREVIOUS="$cookie_secret_previous" \
+DOMAIN="$DOMAIN" \
+  "$SCRIPT_DIR/deploy-edge.sh"
+
+echo "Deployed ${SERVICE_NAME}, ${WORKER_JOB}, and Cloudflare edge at version ${VERSION}."
