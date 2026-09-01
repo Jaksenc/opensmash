@@ -1436,28 +1436,30 @@ function updateConsoleDockTransition(now, reducedMotion) {
 
 function beginPhysicalDeparture(direction, completion) {
   if (!activeModel) return;
+  const controllerExit = direction > 0 && activeModelKind === 'controller';
+  const departureDirection = controllerExit ? -1 : direction;
   cartridgePressed = false;
   cartridgeDragging = false;
   cartridgeDragPointerId = null;
   setCartridgeHovered(false);
   overlay?.classList.remove('is-cartridge-dragging');
   flowMotionStartPosition.copy(activeModel.position);
-  flowMotionTargetPosition.set(0, direction * 5.3, 0);
-  entranceVelocity.set(0, direction * 1.2, 0);
+  flowMotionTargetPosition.set(0, departureDirection * 5.3, 0);
+  entranceVelocity.set(0, departureDirection * 1.2, 0);
   if (activeModelKind === 'cartridge') {
     entranceVelocity.add(cartridgeVelocity);
   }
-  entranceAngularVelocity.set(0, direction * 2.2, 0);
+  entranceAngularVelocity.set(0, controllerExit ? 0 : direction * 2.2, 0);
   flowMotionTargetAngularVelocity.set(0, 0, 0);
   entranceScale = activeModel.scale.x;
   entranceScaleVelocity = 0;
-  flowMotionTargetScale = activeModel.userData.homeScale * 0.76;
+  flowMotionTargetScale = activeModel.userData.homeScale * (controllerExit ? 0.9 : 0.76);
   if (direction < 0) {
     flowMotionTargetRotation.set(0.18, activeModel.rotation.y - Math.PI * 4, -0.16);
   } else if (activeModelKind === 'cartridge') {
     flowMotionTargetRotation.set(-0.18, activeModel.rotation.y + Math.PI * 2, 0.12);
   } else {
-    flowMotionTargetRotation.set(1.1, activeModel.rotation.y + Math.PI * 0.75, -0.12);
+    flowMotionTargetRotation.set(1.58, 0.06, 0);
   }
   flowMotionCompletion = completion;
   visualPhase = direction < 0 ? 'reverse' : 'exit';
@@ -1481,6 +1483,7 @@ function finishPhysicalDeparture() {
 }
 
 function updatePhysicalDeparture(dt, reducedMotion) {
+  const controllerExit = activeModelKind === 'controller' && visualPhase === 'exit';
   const totalDistance = Math.max(
     0.001,
     flowMotionStartPosition.distanceTo(flowMotionTargetPosition)
@@ -1492,6 +1495,7 @@ function updatePhysicalDeparture(dt, reducedMotion) {
     1
   );
   if (settled || progress >= 0.94) finishPhysicalDeparture();
+  if (controllerExit) return 1;
   return 1 - THREE.MathUtils.clamp((progress - 0.68) / 0.26, 0, 1);
 }
 
