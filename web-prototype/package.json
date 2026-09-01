@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",
+    "@zip.js/zip.js": "^2.8.61",
     "busboy": "^1.6.0",
     "react": "latest",
     "react-dom": "latest",

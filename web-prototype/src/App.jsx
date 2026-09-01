@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import FighterCreator from "./FighterCreator.jsx";
+import { identifyRomFile } from "./rom-validation.js";
 
 const RANDOM_FIGHTER_COUNT = 12;
 const RANDOM_STAGE_COUNT = 9;
@@ -60,18 +61,13 @@ function RomModal({ action, onCancel, onValidated }) {
     if (!file) return;
     setError("");
     try {
-      setStatus("hashing");
-      const buffer = await file.arrayBuffer();
-      const digest = await crypto.subtle.digest("SHA-256", buffer);
-      const hash = [...new Uint8Array(digest)]
-        .map((byte) => byte.toString(16).padStart(2, "0"))
-        .join("");
+      const rom = await identifyRomFile(file, { onStatus: setStatus });
 
       setStatus("validating");
       const response = await fetch("/api/validate-rom", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ algorithm: "SHA-256", hash, size: file.size }),
+        body: JSON.stringify({ algorithm: "SHA-1", hash: rom.sha1, size: rom.size }),
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "ROM validation failed");
@@ -109,7 +105,7 @@ function RomModal({ action, onCancel, onValidated }) {
             <input
               ref={inputRef}
               type="file"
-              accept=".zip,.z64,.n64,.v64,application/zip,application/octet-stream"
+              accept=".zip,.z64,.n64,.v64,.rom,application/zip,application/octet-stream"
               onChange={(event) => {
                 setFile(event.target.files?.[0] || null);
                 setError("");
@@ -117,11 +113,13 @@ function RomModal({ action, onCancel, onValidated }) {
               disabled={status !== "idle"}
             />
             <span>{file ? file.name : "Choose ROM file"}</span>
-            <small>{file ? `${(file.size / 1024 / 1024).toFixed(1)} MB` : ".zip, .z64, .n64, or .v64"}</small>
+            <small>{file ? `${(file.size / 1024 / 1024).toFixed(1)} MB` : ".zip, .z64, .n64, .v64, or .rom"}</small>
           </label>
           {error && <p className="form-error">{error}</p>}
           <button className="validate-button" type="submit" disabled={!file || status !== "idle"}>
-            {status === "hashing" && "Hashing locally…"}
+            {status === "reading" && "Reading locally…"}
+            {status === "extracting" && "Extracting locally…"}
+            {status === "hashing" && "Normalizing & hashing locally…"}
             {status === "validating" && "Checking ROM…"}
             {status === "idle" && "Validate & play"}
           </button>

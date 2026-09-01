@@ -38,15 +38,18 @@ entry when its portrait, metadata, or selected `.osb` bundle is missing.
 
 ## ROM gate
 
-The browser computes the selected file's SHA-256 locally and sends only the
-hash and byte count to `POST /api/validate-rom`. The server currently accepts
-the exact `Super Smash Bros. (USA).z64` file in Downloads, then issues a signed,
-HTTP-only, 30-day cookie. Add later accepted hashes to the `ROMS` map in
-`server/index.js`. The engine routes return 401 without that cookie, and the
-cookie itself is signed with HMAC-SHA-256.
+The browser reads the selected file locally, unwraps ordinary unencrypted ZIPs,
+normalizes N64 `.z64` / `.v64` / `.n64` byte order plus recognized leading
+headers and trailing padding, and compares the canonical SHA-1 and size against
+`shared/rom-catalog.js`. It sends only that canonical digest and byte count to
+`POST /api/validate-rom`; the server checks the same shared catalog and issues a
+signed, HTTP-only, 30-day cookie. The accepted catalog covers the known Japan,
+Australia, Europe, USA, and USA LodgeNet images. The engine routes return 401
+without that cookie, and the cookie itself is signed with HMAC-SHA-256.
 
-The ROM file is never uploaded or stored. The current WASM package already
-contains the project's extracted engine assets.
+The ROM and archive bytes are never uploaded or stored. Password-protected and
+unsupported archives must be extracted by the user first. The current WASM
+package already contains the project's extracted engine assets.
 
 Use the `Dev: clear ROM` button in the header to expire the validation cookie
 and exercise the first-run flow again.
