@@ -89,15 +89,14 @@ function useFlowMusic(flowActive, soundOn) {
       };
       play();
     } else if (!flowMusic.paused && flowMusic.volume > 0) {
+      // Pause in place so the next overlay resumes where the music left off.
       cancelTransition = transitionMediaVolume(flowMusic, 0, {
         onComplete() {
           flowMusic.pause();
-          flowMusic.currentTime = 0;
         },
       });
     } else {
       flowMusic.pause();
-      flowMusic.currentTime = 0;
       flowMusic.volume = 0;
     }
 
@@ -115,10 +114,7 @@ function useFlowMusic(flowActive, soundOn) {
     const flowMusic = flowMusicRef.current;
     if (!flowMusic) return;
     flowMusic.muted = !soundOn;
-    if (flowMusic.paused) {
-      flowMusic.currentTime = 0;
-      flowMusic.volume = 0;
-    }
+    if (flowMusic.paused) flowMusic.volume = 0;
     flowMusic.play().catch(() => {});
   }, [soundOn]);
 }
@@ -431,6 +427,7 @@ export default function App() {
   const [soundOn, setSoundOn] = useState(() => localStorage.getItem("opensmash-sound") !== "off");
   const [advancedOptions, setAdvancedOptions] = useState(loadAdvancedOptions);
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [aboutOpen, setAboutOpen] = useState(false);
   const [createStage, setCreateStage] = useState(null);
   const [flowMusicActive, setFlowMusicActive] = useState(false);
   const gameRef = useRef(null);
@@ -439,7 +436,9 @@ export default function App() {
   const devMenuRef = useRef(null);
   const announcerRef = useRef(null);
   const visualBridgeRef = useRef({});
-  const startFlowMusic = useFlowMusic(flowMusicActive && !engine, soundOn);
+  // The launch flow, About, and Advanced overlays share one music bed.
+  const overlayMusicActive = flowMusicActive || advancedOpen || aboutOpen;
+  const startFlowMusic = useFlowMusic(overlayMusicActive && !engine, soundOn);
   useEffect(() => {
     const syncFlowMusic = (event) => {
       const open = Boolean(event.detail?.open);
@@ -914,6 +913,7 @@ export default function App() {
     return (
       <>
         <RetroHome
+          aboutOpen={aboutOpen}
           advancedActive={hasAdvancedOverrides(advancedOptions)}
           authorized={authorized}
           developmentMode={import.meta.env.DEV}
@@ -921,7 +921,8 @@ export default function App() {
           engineRef={engineRef}
           gameFrameRef={gameFrameRef}
           isFullscreen={isFullscreen}
-          launchFlowOpen={flowMusicActive}
+          launchFlowOpen={overlayMusicActive}
+          onAboutChange={setAboutOpen}
           onAdvanced={() => setAdvancedOpen(true)}
           onCloseGame={() => setEngine(null)}
           onCreate={openCreateExperience}

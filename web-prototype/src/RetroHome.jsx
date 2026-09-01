@@ -119,6 +119,7 @@ function RuntimeControls() {
 }
 
 export default function RetroHome({
+  aboutOpen,
   advancedActive,
   authorized,
   developmentMode,
@@ -127,6 +128,7 @@ export default function RetroHome({
   gameFrameRef,
   isFullscreen,
   launchFlowOpen,
+  onAboutChange,
   onAdvanced,
   onCloseGame,
   onCreate,
@@ -139,7 +141,6 @@ export default function RetroHome({
   soundOn,
   user,
 }) {
-  const [menuOpen, setMenuOpen] = useState(false);
   const aboutCancelRef = useRef(null);
   const introVideoRef = useRef(null);
   const [introVideoPlaying, setIntroVideoPlaying] = useState(false);
@@ -237,8 +238,8 @@ export default function RetroHome({
               type="button"
               aria-haspopup="dialog"
               aria-controls="about-overlay"
-              aria-expanded={menuOpen}
-              onClick={() => setMenuOpen(true)}
+              aria-expanded={aboutOpen}
+              onClick={() => onAboutChange(true)}
             >
               About
             </button>
@@ -367,8 +368,8 @@ export default function RetroHome({
         className="about-overlay"
         bodyClass="is-about-open"
         initialFocusRef={aboutCancelRef}
-        onRequestClose={() => setMenuOpen(false)}
-        open={menuOpen}
+        onRequestClose={() => onAboutChange(false)}
+        open={aboutOpen}
         role="presentation"
       >
         {(close) => (
@@ -381,7 +382,18 @@ export default function RetroHome({
           >
             <div className="about-content">
               <h2 id="about-title" className="launch-flow-title about-title">About</h2>
-              <p id="about-copy" className="launch-flow-copy about-copy">I'll find something to put here.</p>
+              <div id="about-copy" className="about-copy">
+                <p className="launch-flow-copy">
+                  OpenSmash is a fan-made browser port of Super Smash Bros. for the Nintendo 64 which allows you to
+                  create custom fighters and play them inside the original game.
+                </p>
+                <p className="launch-flow-copy">You must supply a legally obtained copy of the game ROM to play.</p>
+                <p className="launch-flow-copy about-legal">
+                  OpenSmash is not affiliated with, endorsed by, or sponsored by Nintendo. Super Smash Bros., Nintendo
+                  64, and all related characters, names, and marks are trademarks of Nintendo and their respective
+                  owners.
+                </p>
+              </div>
               <button
                 ref={aboutCancelRef}
                 className="launch-flow-action launch-flow-cancel about-cancel"
