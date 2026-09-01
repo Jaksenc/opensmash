@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import AuthGate from "./AuthGate.jsx";
 import FighterCreator from "./FighterCreator.jsx";
 import RetroHome from "./RetroHome.jsx";
@@ -120,83 +120,113 @@ function RomModal({ action, onCancel, onValidated }) {
   );
 }
 
-function AdvancedModal({ options, onCancel, onSave }) {
+function AdvancedModal({ open, options, onCancel, onSave }) {
   const [draft, setDraft] = useState(options);
+  const [isVisible, setIsVisible] = useState(false);
   const firstFieldRef = useRef(null);
+  const closingRef = useRef(false);
+  const closeTimerRef = useRef(null);
+
+  const leave = useCallback((complete) => {
+    if (closingRef.current) return;
+    closingRef.current = true;
+    setIsVisible(false);
+    closeTimerRef.current = window.setTimeout(complete, 360);
+  }, []);
 
   useEffect(() => {
-    firstFieldRef.current?.focus();
+    if (!open) return undefined;
+    closingRef.current = false;
+    setDraft(options);
+    const previousFocus = document.activeElement;
     const previousOverflow = document.body.style.overflow;
+    const revealFrame = window.requestAnimationFrame(() => setIsVisible(true));
+    const focusTimer = window.setTimeout(() => firstFieldRef.current?.focus(), 420);
     document.body.style.overflow = "hidden";
+    document.body.classList.add("is-advanced-open");
     const closeOnEscape = (event) => {
-      if (event.key === "Escape") onCancel();
+      if (event.key === "Escape") leave(onCancel);
     };
     window.addEventListener("keydown", closeOnEscape);
     return () => {
+      window.cancelAnimationFrame(revealFrame);
+      window.clearTimeout(focusTimer);
+      window.clearTimeout(closeTimerRef.current);
       document.body.style.overflow = previousOverflow;
+      document.body.classList.remove("is-advanced-open");
       window.removeEventListener("keydown", closeOnEscape);
+      if (previousFocus instanceof HTMLElement) previousFocus.focus();
     };
-  }, [onCancel]);
+  }, [leave, onCancel, open, options]);
 
   function update(key, value) {
     setDraft((current) => ({ ...current, [key]: value }));
   }
 
   return (
-    <div className="modal-backdrop" role="presentation" onMouseDown={onCancel}>
+    <div
+      className={`advanced-overlay ${isVisible ? "is-visible" : ""}`}
+      hidden={!open}
+      role="presentation"
+      onMouseDown={() => leave(onCancel)}
+    >
       <section
-        className="modal advanced-modal"
+        className="advanced-screen"
         role="dialog"
         aria-modal="true"
         aria-labelledby="advanced-title"
+        aria-describedby="advanced-copy"
         onMouseDown={(event) => event.stopPropagation()}
       >
-        <button className="modal-close" type="button" onClick={onCancel} aria-label="Close">
-          ×
-        </button>
-        <p className="eyebrow">Launch overrides</p>
-        <h2 id="advanced-title">Advanced options</h2>
-        <p className="modal-copy">
-          These choices apply to every launch in this tab and reset when the session ends.
-        </p>
+        <header className="advanced-heading">
+          <h2 id="advanced-title">Advanced Options</h2>
+          <p id="advanced-copy">Settings apply to every launch in this tab.</p>
+        </header>
 
         <form
           className="advanced-form"
           onSubmit={(event) => {
             event.preventDefault();
-            onSave(draft);
+            leave(() => onSave(draft));
           }}
         >
           <div className="advanced-selects">
-            <label>
-              <span>Character mesh</span>
-              <select
-                ref={firstFieldRef}
-                value={draft.characterMesh}
-                onChange={(event) => update("characterMesh", event.target.value)}
-              >
-                {CHARACTER_MESHES.map((mesh) => (
-                  <option value={mesh.value} key={mesh.value}>{mesh.label}</option>
-                ))}
-              </select>
+            <label className="advanced-field">
+              <span className="advanced-field-label">Character Mesh</span>
+              <span className="advanced-select-shell advanced-cell-frame flame-bridge-cell">
+                <select
+                  ref={firstFieldRef}
+                  value={draft.characterMesh}
+                  onChange={(event) => update("characterMesh", event.target.value)}
+                >
+                  {CHARACTER_MESHES.map((mesh) => (
+                    <option value={mesh.value} key={mesh.value}>{mesh.label}</option>
+                  ))}
+                </select>
+              </span>
               <small>Force the skeleton and moveset used by a chosen fighter.</small>
             </label>
-            <label>
-              <span>Stage</span>
-              <select value={draft.stage} onChange={(event) => update("stage", event.target.value)}>
-                {STAGES.map((stage) => (
-                  <option value={stage.value} key={stage.value}>{stage.label}</option>
-                ))}
-              </select>
+            <label className="advanced-field">
+              <span className="advanced-field-label">Stage</span>
+              <span className="advanced-select-shell advanced-cell-frame flame-bridge-cell">
+                <select value={draft.stage} onChange={(event) => update("stage", event.target.value)}>
+                  {STAGES.map((stage) => (
+                    <option value={stage.value} key={stage.value}>{stage.label}</option>
+                  ))}
+                </select>
+              </span>
               <small>Used for direct matches and preselected VS launches.</small>
             </label>
           </div>
 
           <fieldset className="boot-mode-fieldset">
-            <legend>Boot destination</legend>
+            <legend>Boot Destination</legend>
             <div className="boot-mode-grid">
               {BOOT_MODES.map((mode) => (
-                <label className={draft.bootMode === mode.value ? "is-selected" : ""} key={mode.value}>
+                <label
+                  className={`advanced-cell-frame flame-bridge-cell ${draft.bootMode === mode.value ? "is-selected" : ""}`}
+                  key={mode.value}
+                >
                   <input
                     type="radio"
                     name="boot-mode"
@@ -204,22 +234,33 @@ function AdvancedModal({ options, onCancel, onSave }) {
                     checked={draft.bootMode === mode.value}
                     onChange={(event) => update("bootMode", event.target.value)}
                   />
-                  <span>{mode.label}</span>
-                  <small>{mode.description}</small>
+                  <span className="boot-mode-copy">
+                    <strong>{mode.label}</strong>
+                    <small>{mode.description}</small>
+                  </span>
                 </label>
               ))}
             </div>
           </fieldset>
 
           <div className="advanced-actions">
+            <div className="advanced-save-cell launch-flow-fire-cell flame-bridge-cell">
+              <button className="launch-flow-action save-options-button" type="submit">Save Settings</button>
+            </div>
             <button
-              className="reset-options-button"
+              className="launch-flow-action reset-options-button"
               type="button"
               onClick={() => setDraft({ ...DEFAULT_ADVANCED_OPTIONS })}
             >
-              Reset defaults
+              Reset Settings
             </button>
-            <button className="save-options-button" type="submit">Save for session</button>
+            <button
+              className="launch-flow-action cancel-options-button"
+              type="button"
+              onClick={() => leave(onCancel)}
+            >
+              Cancel
+            </button>
           </div>
         </form>
       </section>
@@ -512,13 +553,12 @@ export default function App() {
           soundOn={soundOn}
           user={user}
         />
-        {advancedOpen && (
-          <AdvancedModal
-            options={advancedOptions}
-            onCancel={() => setAdvancedOpen(false)}
-            onSave={saveAdvancedOptions}
-          />
-        )}
+        <AdvancedModal
+          open={advancedOpen}
+          options={advancedOptions}
+          onCancel={() => setAdvancedOpen(false)}
+          onSave={saveAdvancedOptions}
+        />
       </>
     );
   }
@@ -684,13 +724,12 @@ export default function App() {
         <span>React · Node · WASM on demand</span>
       </footer>
 
-      {advancedOpen && (
-        <AdvancedModal
-          options={advancedOptions}
-          onCancel={() => setAdvancedOpen(false)}
-          onSave={saveAdvancedOptions}
-        />
-      )}
+      <AdvancedModal
+        open={advancedOpen}
+        options={advancedOptions}
+        onCancel={() => setAdvancedOpen(false)}
+        onSave={saveAdvancedOptions}
+      />
 
       {pendingAction && (
         <RomModal

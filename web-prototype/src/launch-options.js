@@ -28,11 +28,11 @@ export const STAGES = [
 ];
 
 export const BOOT_MODES = [
-  { value: "free-for-all", label: "Free-for-all", description: "Skip menus and start a VS match." },
-  { value: "vs-menu", label: "VS menu", description: "Open the VS mode menu." },
-  { value: "vs-character-select", label: "VS character select", description: "Open the multiplayer fighter-select screen." },
-  { value: "one-player-character-select", label: "1P character select", description: "Open the one-player fighter-select screen." },
-  { value: "full-boot", label: "Full boot", description: "Start from the N64 boot sequence." },
+  { value: "free-for-all", label: "Free-for-All", description: "Skip menus and start a VS match." },
+  { value: "vs-menu", label: "VS Menu", description: "Open the VS mode menu." },
+  { value: "vs-character-select", label: "VS Character Select", description: "Open the multiplayer fighter-select screen." },
+  { value: "one-player-character-select", label: "1P Character Select", description: "Open the one-player fighter-select screen." },
+  { value: "full-boot", label: "Full Boot", description: "Start from the N64 boot sequence." },
 ];
 
 export const DEFAULT_ADVANCED_OPTIONS = Object.freeze({
