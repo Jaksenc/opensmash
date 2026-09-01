@@ -47,7 +47,10 @@ const authService = createAuthService({ isProduction: IS_PRODUCTION });
 // invalidates cookies created while the prototype was being exercised.
 const COOKIE_NAME = "opensmash_rom_v4";
 const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
-const COOKIE_SECRET = process.env.COOKIE_SECRET || "opensmash-local-development-only";
+const COOKIE_SECRETS = [
+  process.env.COOKIE_SECRET || "opensmash-local-development-only",
+  process.env.COOKIE_SECRET_PREVIOUS,
+].filter((secret, index, secrets) => secret && secrets.indexOf(secret) === index);
 const MAX_JSON_BODY = 4096;
 const ROM_VALIDATION_WINDOW_MS = 15 * 60 * 1000;
 const ROM_VALIDATION_LIMIT = Number(process.env.ROM_VALIDATION_LIMIT || 10);
@@ -121,8 +124,8 @@ function parseCookies(req) {
   return Object.fromEntries(entries);
 }
 
-function signatureFor(payload) {
-  return createHmac("sha256", COOKIE_SECRET).update(payload).digest("base64url");
+function signatureFor(payload, secret = COOKIE_SECRETS[0]) {
+  return createHmac("sha256", secret).update(payload).digest("base64url");
 }
 
 function makeSession(hash, subject = randomUUID()) {
@@ -140,13 +143,13 @@ function readSession(req) {
 
   const payload = value.slice(0, separator);
   const signature = value.slice(separator + 1);
-  const expected = signatureFor(payload);
   const signatureBuffer = Buffer.from(signature);
-  const expectedBuffer = Buffer.from(expected);
-  if (
-    signatureBuffer.length !== expectedBuffer.length ||
-    !timingSafeEqual(signatureBuffer, expectedBuffer)
-  ) {
+  const validSignature = COOKIE_SECRETS.some((secret) => {
+    const expectedBuffer = Buffer.from(signatureFor(payload, secret));
+    return signatureBuffer.length === expectedBuffer.length &&
+      timingSafeEqual(signatureBuffer, expectedBuffer);
+  });
+  if (!validSignature) {
     return null;
   }
 
@@ -231,15 +234,13 @@ async function serveFile(req, res, filePath, cacheControl = "no-store", extraHea
 }
 
 function engineCacheControl(relative, searchParams) {
-  if (relative === "index.html" || relative === "manifest.json") {
+  if (relative === "index.html") {
     return "private, max-age=300";
   }
-  if (
-    searchParams.has("v") &&
-    (relative === "BattleShip.js" || relative === "BattleShip.wasm")
-  ) {
+  if (searchParams.has("v") && !relative.startsWith("bundles/")) {
     return "private, max-age=31536000, immutable";
   }
+  if (relative === "manifest.json") return "private, max-age=300";
   if (relative.startsWith("bundles/")) return "private, max-age=300";
   return "private, max-age=3600";
 }
