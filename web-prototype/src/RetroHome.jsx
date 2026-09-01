@@ -266,6 +266,18 @@ export default function RetroHome({
                 Reset ROM
               </button>
             )}
+            <a
+              className="retro-site-link retro-discord-link"
+              href="https://discord.gg/qYBbGmwBhr"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Join the OpenSmash community on Discord"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M19.6 5.3A18 18 0 0 0 15.3 4l-.5 1a14.7 14.7 0 0 0-5.6 0l-.5-1a18 18 0 0 0-4.3 1.3C1.7 9.4 1 13.4 1.4 17.4a17.3 17.3 0 0 0 5.3 2.7l1.3-1.8a10.8 10.8 0 0 1-2-1l.5-.4a12.6 12.6 0 0 0 11 0l.5.4a11 11 0 0 1-2 1l1.3 1.8a17.3 17.3 0 0 0 5.3-2.7c.5-4.6-.8-8.5-3-12.1ZM8.5 15.2c-1.3 0-2.3-1.2-2.3-2.7s1-2.7 2.3-2.7 2.3 1.2 2.3 2.7-1 2.7-2.3 2.7Zm7 0c-1.3 0-2.3-1.2-2.3-2.7s1-2.7 2.3-2.7 2.3 1.2 2.3 2.7-1 2.7-2.3 2.7Z" />
+              </svg>
+              <span>Join Discord</span>
+            </a>
           </nav>
         </header>
         <section className="intro-video-stage" aria-label="Intro video">
