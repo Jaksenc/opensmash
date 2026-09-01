@@ -358,11 +358,7 @@ export default function RetroHome({
             />
           </div>
         </section>
-        <div id="flame-bridge" className="flame-bridge" aria-label="Fighter search">
-          <div className="flame-bridge-cell"><input id="fighter-search" className="flame-bridge-search" type="search" placeholder="Search Fighters…" aria-label="Search fighters" autoComplete="off" spellCheck="false" /></div>
-          <img className="flame-bridge-rule-layer" alt="" aria-hidden="true" />
-        </div>
-        <div className="arena-surface"><div id="replica-grid" className="replica-grid" role="grid" aria-label="Create fighter and character roster" />{!ready && <p className="retro-roster-loading">Loading fighters…</p>}<p id="fighter-empty-state" className="fighter-empty-state" role="status" aria-live="polite" hidden /></div>
+        <div className="arena-surface"><div id="replica-grid" className="replica-grid" role="grid" aria-label="Search, create, and character roster" />{!ready && <p className="retro-roster-loading">Loading fighters…</p>}<p id="fighter-empty-state" className="fighter-empty-state" role="status" aria-live="polite" hidden /></div>
         <span id="replica-metrics" hidden>Building 200-cell grid…</span>
       </main>
 

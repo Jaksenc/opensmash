@@ -34,3 +34,7 @@ export function launchGate({ romVerified, controlsRequired }) {
   if (controlsRequired) return "controls";
   return "game";
 }
+
+export function postRomUploadGate({ create }) {
+  return create ? "create" : "controls";
+}

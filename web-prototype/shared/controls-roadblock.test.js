@@ -4,6 +4,7 @@ import {
   completeControlsRoadblock,
   controlsRoadblockRequired,
   launchGate,
+  postRomUploadGate,
   requireControlsRoadblock,
 } from "../visual/controls-roadblock.js";
 
@@ -30,4 +31,19 @@ test("launch gating orders ROM, required controls, then the game", () => {
   assert.equal(launchGate({ romVerified: false, controlsRequired: true }), "rom");
   assert.equal(launchGate({ romVerified: true, controlsRequired: true }), "controls");
   assert.equal(launchGate({ romVerified: true, controlsRequired: false }), "game");
+});
+
+test("a play upload always proceeds through controls", () => {
+  assert.equal(postRomUploadGate({ create: false }), "controls");
+});
+
+test("a create-first upload opens the creator before controls", () => {
+  const storage = memoryStorage();
+
+  assert.equal(postRomUploadGate({ create: true }), "create");
+  requireControlsRoadblock(storage);
+  assert.equal(launchGate({
+    romVerified: true,
+    controlsRequired: controlsRoadblockRequired(storage),
+  }), "controls");
 });

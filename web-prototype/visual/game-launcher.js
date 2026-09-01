@@ -9,7 +9,8 @@ import {
 import {
   completeControlsRoadblock,
   controlsRoadblockRequired,
-} from './controls-roadblock.js';
+  postRomUploadGate,
+} from './controls-roadblock.js?v=20260901-upload-flow1';
 
 import cartridgeLabelUrl from './assets/cartridge-label-art.png?url';
 import cartridgeModelUrl from './assets/n64-cartridge-tripo.glb?url';
@@ -1948,15 +1949,15 @@ async function validateRom(file) {
       }
     }
     rememberVerifiedRom();
-    if (createUploadMode) {
+    const postUploadGate = postRomUploadGate({ create: createUploadMode });
+    if (postUploadGate === 'create') {
       APP_BRIDGE?.completeCreateRom?.();
       createUploadMode = false;
       closeLaunchFlow();
-    } else if (!requiresControllerTutorial()) {
-      const fighter = pendingFighter;
-      launch(fighter);
-      closeLaunchFlow(true);
     } else {
+      // A fresh play upload always gets the full console/cartridge docking
+      // sequence before the required controller check, even if this browser
+      // completed the tutorial during an earlier ROM session.
       transitionToController();
     }
   } catch (error) {
@@ -2016,7 +2017,11 @@ cancelButton?.addEventListener('click', () => {
 controlsMenuButton?.addEventListener('click', () => {
   if (!usesMobileControls()) showControlsPreview();
 });
-controlsCloseButton?.addEventListener('click', () => closeLaunchFlow());
+controlsCloseButton?.addEventListener('click', () => {
+  if (controlsPreviewMode && overlay?.dataset.mode === 'controls-preview') {
+    closeLaunchFlow();
+  }
+});
 
 overlay?.addEventListener('pointerdown', event => {
   if (overlay.dataset.step !== 'upload' || visualPhase !== 'idle' || validationBusy) return;
