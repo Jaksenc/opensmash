@@ -94,6 +94,19 @@ certificate to become active before creating or changing the HTTPS proxy. It
 also provisions an HTTP-to-HTTPS redirect. Override the 30-minute certificate
 wait with `CERT_WAIT_SECONDS` if needed.
 
+Additional domains can share the existing load balancer and certificate map.
+Give each domain a unique `CERT_PREFIX` so its DNS authorizations, certificate,
+and map entries remain independent:
+
+```bash
+PROJECT_ID=your-project \
+REGION=us-central1 \
+DOMAIN=alias.example \
+CERT_PREFIX=opensmash-alias \
+CLOUDFLARE_API_TOKEN=... \
+./infra/configure-domain.sh
+```
+
 ## Cloudflare edge cache
 
 The main `deploy.sh` command also deploys the engine worker after Cloud Run. It
