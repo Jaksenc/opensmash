@@ -26,6 +26,16 @@ try:
 except ImportError:  # direct execution: python3 pipeline/expand_character.py
     from gen import http, ENV, token_cost
 
+# The roster tile caption is drawn in the vanilla 48px tile's pixel font
+# (pixel_font.py): 42 face pixels wide at zero tracking. Anything wider gets
+# condensed or truncated, so the prompt states the budget in pixels rather
+# than a character count (EISENHOWER -> IKE instead of EISENHOW).
+CAPTION_BUDGET_PX = 42
+CAPTION_WIDTH_RULE = ("Letter widths in pixels: I=1; E F J L S Z=4; N=6; M W=7; every other "
+                      "letter=5; letters butt together with no gap. The whole label must be "
+                      f"at most {CAPTION_BUDGET_PX} pixels wide (about 8 average letters).")
+
+
 FORBIDDEN = ["handbag", "purse", "bag", "cane", "walking stick", "sword", "umbrella", "staff",
              "scepter", "sceptre", "rifle", "gun", "pistol", "phone", "cup", "mug", "briefcase",
              "suitcase", "backpack", "shield", "spear", "guitar", "book", "baton", "leash",
@@ -34,7 +44,7 @@ FORBIDDEN = ["handbag", "purse", "bag", "cane", "walking stick", "sword", "umbre
 
 SYSTEM = """You write one-line visual descriptions of characters for a low-poly fighting-game character pipeline.
 Output ONLY a JSON object {"display": <name>, "short": <short name>, "desc": <description>, "emblem": <emblem object>}.
-"short" is the in-game roster label: UPPERCASE A-Z only, at most 10 characters, no spaces or punctuation. Choose the conventional name by which people identify the character, not the longest string that happens to fit. Prefer a defining title (Queen Elizabeth II -> QUEEN), a familiar surname (Barack Obama -> OBAMA; Abraham Lincoln -> LINCOLN; Michael Jackson -> JACKSON), or an established multi-word stage name with spaces removed (Weird Al Yankovic -> WEIRDAL). Keep a canonical one-word character name intact (JIGGLYPUFF). For an ordinary multi-word personal name, prefer a complete distinctive surname when it works (Mark Kupa -> KUPA), or the complete joined name only when that is clearer. Never invent a cryptic hybrid such as MKUPA or cut a word off arbitrarily such as MARKKU. You do not need to fill all 10 characters; shorter is better when it is equally recognizable.
+"short" is the in-game roster label: UPPERCASE A-Z only, no spaces or punctuation, and it must FIT THE TILE: """ + CAPTION_WIDTH_RULE + """ Choose the conventional name by which people identify the character, not the longest string that happens to fit. Prefer a defining title (Queen Elizabeth II -> QUEEN), a familiar surname (Barack Obama -> OBAMA; Abraham Lincoln -> LINCOLN; Michael Jackson -> JACKSON), or an established multi-word stage name with spaces removed (Weird Al Yankovic -> WEIRDAL). Keep a canonical one-word character name intact (JIGGLYPUFF). For an ordinary multi-word personal name, prefer a complete distinctive surname when it works (Mark Kupa -> KUPA), or the complete joined name only when that is clearer. Never invent a cryptic hybrid such as MKUPA or cut a word off arbitrarily such as MARKKU. Shorter is better when it is equally recognizable.
 The description is a single sentence (60-110 words) starting with the character's name, covering: face (shape, skin tone, notable features), hair/facial hair, eyes, and ONE iconic outfit described as flat solid colors from head to toe including shoes.
 HARD RULES:
 - Worn or attached items are allowed (hats, glasses, watches, jewelry, belts, badges, headphones, capes that are part of the outfit).

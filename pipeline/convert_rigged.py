@@ -43,6 +43,25 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 # ---------------------------------------------------------------- glTF rig
+
+class _atomic_out:
+    """Write to <out>.tmp and rename on success, so a crash mid-write never
+    leaves a truncated bundle that resume logic mistakes for a finished one
+    (the Statue of Liberty KeyError left a half .osb behind)."""
+    def __init__(self, path):
+        self.path, self.tmp = path, path + ".tmp"
+    def __enter__(self):
+        self.f = open(self.tmp, "wb")
+        return self.f
+    def __exit__(self, et, ev, tb):
+        self.f.close()
+        if et is None:
+            os.replace(self.tmp, self.path)
+        else:
+            try: os.remove(self.tmp)
+            except OSError: pass
+        return False
+
 def node_rest_world(gltf):
     """Global rest-pose position per node index (TRS compose down the tree)."""
     nodes = gltf["nodes"]
@@ -3455,6 +3474,11 @@ def main():
     except (KeyError, IndexError, ValueError):
         fit_scale = 1.0
 
+    # Every joint the shipped weights actually reference must be in
+    # joint_ids (and get a bind frame below). Later claim/diffusion passes
+    # can weight verts onto joints absent from the initial union — the
+    # Statue of Liberty's hands (9/15) crashed write_binary5 with KeyError.
+    sk_joint_ids = sorted(set(sk_joint_ids) | {j for v in sk_verts for j, _ in v[8]})
     skinned = {"fit_scale": round(fit_scale, 4),
                "joint_ids": sorted({_emit(j) for j in sk_joint_ids}),
                "verts": sk_verts,
@@ -3581,7 +3605,7 @@ def write_binary3(bundle_json_path, out_path):
     TW, TH = atlas.size
     px = atlas.load()
 
-    with open(out_path, "wb") as f:
+    with _atomic_out(out_path) as f:
         f.write(b"OSB4")
         f.write(struct.pack("<III", len(d["parts"]), TW, TH))
         f.write(pack_rgba16_dithered(atlas))
@@ -4979,7 +5003,7 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
     verts = sk["verts"]      # [x,y,z,u,v,nx,ny,nz, [(ji,w),...]]
     tris = sk["tris"]
 
-    with open(out_path, "wb") as f:
+    with _atomic_out(out_path) as f:
         f.write(b"OSB5")
         f.write(struct.pack("<IIIII", len(joint_ids), len(verts), len(tris), TW, TH))
         for j in (canon["tids"] if canon else joint_ids):
@@ -4990,7 +5014,11 @@ def write_binary5(bundle_json_path, out_path, canonical_profile=None, morph_lamb
             x, y, z, u, vv, nx, ny, nz, wlist = v
             s = max(0, min(TW*32 - 1, int(round(u * TW * 32))))
             t = max(0, min(TH*32 - 1, int(round(vv * TH * 32))))
-            wl = sorted(wlist, key=lambda kv: -kv[1])[:4]
+            # safety net: a weight on a joint the bundle doesn't ship is
+            # dropped and the rest renormalised (never crash the writer)
+            wl = sorted(((j, w) for j, w in wlist if j in jindex), key=lambda kv: -kv[1])[:4]
+            if not wl:
+                wl = [(joint_ids[0], 1.0)]
             tot = sum(w for _, w in wl) or 1.0
             ws = [int(round(w / tot * 255)) for _, w in wl]
             while len(wl) < 4:
@@ -5132,7 +5160,7 @@ def add_cpm1(in_path, out_path, canonical_profile):
     sec = bytearray(b"CPM1")
     for row in mats[cp]:
         sec += struct.pack("<fff", *row)
-    with open(out_path, "wb") as f:
+    with _atomic_out(out_path) as f:
         f.write(data[:insert_at])
         f.write(sec)
         f.write(data[replace_end:])
