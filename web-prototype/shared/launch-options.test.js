@@ -86,6 +86,7 @@ test("character launches mix one vanilla, one grid, and one unused owned opponen
         bundleUrl: "bundles/gridfighter-link.osb",
         uiUrl: null,
         voiceUrl: null,
+        portraitUrl: null,
       },
       {
         player: 3,
@@ -96,6 +97,7 @@ test("character launches mix one vanilla, one grid, and one unused owned opponen
         bundleUrl: "/api/fighters/mine/assets/bundle",
         uiUrl: null,
         voiceUrl: null,
+        portraitUrl: null,
       },
     ],
   );

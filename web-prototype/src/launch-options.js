@@ -252,6 +252,9 @@ function characterAssets(character) {
     bundleUrl: character.bundleUrl || `bundles/${character.bundle}`,
     uiUrl: character.uiUrl || (character.ui ? `bundles/${character.slug}.osbui` : null),
     voiceUrl: character.voiceUrl || (character.voice ? `bundles/${character.slug}.wav` : null),
+    // Opening-movie portrait (the Sector cockpit face): the 256px derivative
+    // is plenty for a 320x240 texture and keeps a trailer boot small.
+    portraitUrl: character.portraitUrl || character.portraitMedium || character.portraitFull || null,
   };
 }
 
