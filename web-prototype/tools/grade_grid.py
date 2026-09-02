@@ -10,7 +10,7 @@ import numpy as np
 from PIL import Image
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-ASSETS = os.path.join(ROOT, "assets", "charselect")
+ASSETS = os.path.join(ROOT, "asset-sources", "charselect")
 SCRATCH = sys.argv[1] if len(sys.argv) > 1 else "."
 
 def load_raw(prefix):

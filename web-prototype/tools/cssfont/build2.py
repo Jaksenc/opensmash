@@ -2,7 +2,7 @@
 """Build the SSB64 character-select PORTRAIT name font.
 
 Source: the names baked into the 45x43 RGBA32 portrait tiles
-(`llMNPlayersPortraits<Name>Sprite`, assets/css-font/portraits/*.png).
+(`llMNPlayersPortraits<Name>Sprite`, asset-sources/css-font/portraits/*.png).
 Tan face (146,139,114) 7 px tall with a black outline + soft shadow, drawn
 over transparency; character art overlaps some letters (masked as unknown).
 

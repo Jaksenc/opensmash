@@ -2,7 +2,7 @@
 import numpy as np, os
 from PIL import Image
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-DIR = os.path.join(ROOT, 'assets', 'css-font', 'portraits')
+DIR = os.path.join(ROOT, 'asset-sources', 'css-font', 'portraits')
 FACE = np.array([146, 139, 114], float)
 NAMES = {'Mario': 'MARIO', 'Luigi': 'LUIGI', 'Donkey': 'D K', 'Samus': 'SAMUS', 'Fox': 'FOX', 'Kirby': 'KIRBY',
          'Link': 'LINK', 'Yoshi': 'YOSHI', 'Pikachu': 'PIKACHU', 'Ness': 'NESS', 'Captain': 'C.FALCON', 'Purin': 'JIGGLYPUFF'}

@@ -5,6 +5,10 @@
 pipeline/web-prototype/node_modules/
 pipeline/web-prototype/data/
 pipeline/web-prototype/dist/
+# Site asset sources, Blender/font tooling and review docs are not runtime inputs.
+pipeline/web-prototype/asset-sources/
+pipeline/web-prototype/tools/
+pipeline/web-prototype/docs/
 !BattleShip/
 !BattleShip/web-dist/
 !BattleShip/web-dist/index.html

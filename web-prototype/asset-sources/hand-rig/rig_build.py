@@ -10,8 +10,8 @@ from pathlib import Path
 from mathutils import Vector
 
 GLB = str(
-    Path(__file__).resolve().parents[1]
-    / "web-prototype" / "visual" / "assets" / "hand-cursor-meshy.glb"
+    Path(__file__).resolve().parents[2]
+    / "visual" / "assets" / "hand-cursor-meshy.glb"
 )
 OUT = "/private/tmp/claude-501/-Users-joey-Claude-Code-smash-weights/f08c86ec-b792-43d7-81d5-37ec45a424ce/scratchpad"
 

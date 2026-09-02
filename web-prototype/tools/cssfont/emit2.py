@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Synthesize the missing letters (J Q T V W Z), repair art-damaged defaults,
 and emit the final portrait name font:
-  web-prototype/src/fonts/ssb-name-font-data.js   glyphs, kerning, layouts, reference sprites
-  assets/css-font/letters/<L>.png (+@8x, sheet)    letters over black
+  src/fonts/ssb-name-font-data.js   glyphs, kerning, layouts, reference sprites
+  asset-sources/css-font/letters/<L>.png (+@8x, sheet)    letters over black
 Run after build2.py (reads p_stage1.json).
 """
 import json, os, sys
@@ -12,8 +12,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import build2 as B, portrait_src as P
 
 HERE = B.HERE
-OUT_DATA = os.path.join(B.ROOT, 'web-prototype', 'src', 'fonts', 'ssb-name-font-data.js')
-OUT_LETTERS = os.path.join(B.ROOT, 'assets', 'css-font', 'letters')
+OUT_DATA = os.path.join(B.ROOT, 'src', 'fonts', 'ssb-name-font-data.js')
+OUT_LETTERS = os.path.join(B.ROOT, 'asset-sources', 'css-font', 'letters')
 d = json.load(open(os.path.join(HERE, 'p_stage1.json')))
 G, KERN, LAYOUTS = d['glyphs'], d['kern'], d['layouts']
 FW = B.FACE_Y0 - B.BOX_Y0          # face top row inside the box (=1)

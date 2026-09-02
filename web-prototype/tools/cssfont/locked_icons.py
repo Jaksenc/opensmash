@@ -2,13 +2,13 @@
 """Search-glass and plus icons in the style of the character-select question
 mark (MNPlayersPortraits QuestionMark: 45x43 IA8 coverage mask, ~4 px stroke,
 23 px tall, tinted in-game with prim (C4,B9,A9) / env (5B,41,33)).
-Writes assets/css-font/locked/{SearchGlass,Plus}.png (white + alpha, same
+Writes asset-sources/css-font/locked/{SearchGlass,Plus}.png (white + alpha, same
 format as the extracted question mark) and a tinted preview sheet."""
 import os, sys
 import numpy as np
 from PIL import Image
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-OUT = os.path.join(ROOT, 'assets', 'css-font', 'locked')
+OUT = os.path.join(ROOT, 'asset-sources', 'css-font', 'locked')
 W, H, SS = 45, 43, 12
 PRIM = np.array([0xC4, 0xB9, 0xA9], float); ENV = np.array([0x5B, 0x41, 0x33], float)
 
@@ -82,8 +82,8 @@ def main(out=OUT, preview=None, portraits=None):
     """Write SearchGlass.png + Plus.png into `out` and a tinted preview sheet
     to `preview` (default: <out>/preview.png). The sheet reads
     QuestionMark.png from `out` and FireBg.png from `portraits` (default:
-    assets/css-font/portraits)."""
-    portraits = portraits or os.path.join(ROOT, 'assets', 'css-font', 'portraits')
+    asset-sources/css-font/portraits)."""
+    portraits = portraits or os.path.join(ROOT, 'asset-sources', 'css-font', 'portraits')
     os.makedirs(out, exist_ok=True)
     icons = build_icons()
     for name, im in icons.items(): im.save(os.path.join(out, f'{name}.png'))

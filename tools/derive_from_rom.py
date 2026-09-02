@@ -11,14 +11,14 @@ Everything is produced by the existing extractors (imported, not forked):
   tools/extract_sprites.py               o2r Sprite decoder (portraits, labels)
   pipeline/extract_vanilla_emblems.py    emblem_ref.png
   pipeline/build_glyph_atlas.py          glyph_*/tileglyph_* atlases
-  tools/cssfont/locked_icons.py          SearchGlass.png / Plus.png
-  stone-tile-investigation/extract_source_tile.py
+  web-prototype/tools/cssfont/locked_icons.py            SearchGlass.png / Plus.png
+  web-prototype/asset-sources/stone-tile/extract_source_tile.py
   pipeline/render_announcer_refs.py      announcer WAVs (ROM)
 
 Targets (all under the repo root):
-  assets/css-font/portraits/<Name>.png   12 portraits + FireBg, 45x43 RGBA32,
+  web-prototype/asset-sources/css-font/portraits/<Name>.png   12 portraits + FireBg, 45x43 RGBA32,
                                          MNPlayersPortraits llMNPlayersPortraits*Sprite
-  assets/css-font/locked/*.png           QuestionMark + four *Shadow (same file),
+  web-prototype/asset-sources/css-font/locked/*.png           QuestionMark + four *Shadow (same file),
                                          SearchGlass/Plus synthesized by locked_icons
   web-prototype/visual/assets/ui_refs/
     tile_<f>.png    48x45  the same portrait Sprites in texel-storage layout
@@ -28,7 +28,7 @@ Targets (all under the repo root):
     stockicon_ref.png      Mario's 8x10 CI4 stock icon (MarioModel
                     llMarioModelStockSprite) nearest-scaled 32x on a 320x320 canvas
     emblem_ref.png, glyph_*.png, tileglyph_*.png, glyph_backup/glyph_{66,67,68,75}.png
-  stone-tile-investigation/source-stone-tile{,-8x,-4up}.png + source-analysis.json
+  web-prototype/asset-sources/stone-tile/source-stone-tile{,-8x,-4up}.png + source-analysis.json
   eval/announcer_conditioning_corrected/** (ROM)
 
 Engine-run derivations (skels/*.skel, skels/parts/*.json, and the four
@@ -56,8 +56,9 @@ DEFAULT_O2R = next((p for p in (os.path.join(BATTLESHIP, b, "BattleShip.o2r")
                    os.path.join(BATTLESHIP, "build-us", "BattleShip.o2r"))
 ROM_SHA1 = "e2929e10fccc0aa84e5776227e798abc07cedabf"
 
-for p in (HERE, os.path.join(HERE, "cssfont"), os.path.join(ROOT, "pipeline"),
-          os.path.join(ROOT, "stone-tile-investigation")):
+WEB = os.path.join(ROOT, "web-prototype")
+for p in (HERE, os.path.join(WEB, "tools", "cssfont"), os.path.join(ROOT, "pipeline"),
+          os.path.join(WEB, "asset-sources", "stone-tile")):
     sys.path.insert(0, p)
 
 import extract_sprites as es                      # noqa: E402
@@ -67,10 +68,10 @@ import extract_source_tile as stone_tile          # noqa: E402
 import locked_icons                               # noqa: E402
 import render_announcer_refs as announcer         # noqa: E402
 
-PORTRAITS = "assets/css-font/portraits"
-LOCKED = "assets/css-font/locked"
+PORTRAITS = "web-prototype/asset-sources/css-font/portraits"
+LOCKED = "web-prototype/asset-sources/css-font/locked"
 UI_REFS = "web-prototype/visual/assets/ui_refs"
-STONE = "stone-tile-investigation"
+STONE = "web-prototype/asset-sources/stone-tile"
 ANNOUNCER = "eval/announcer_conditioning_corrected"
 
 # ll*Sprite offsets from BattleShip/include/reloc_data.us.h

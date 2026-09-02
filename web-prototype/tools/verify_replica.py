@@ -20,7 +20,7 @@ from PIL import Image
 
 
 ROOT = Path(__file__).resolve().parents[1]
-WEB_APP = ROOT / "web-prototype"
+WEB_APP = ROOT
 VISUAL = WEB_APP / "visual"
 JS = (VISUAL / "grid-replica.js").read_text()
 PAGE = (

@@ -21,8 +21,8 @@ from mathutils import Matrix, Vector
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = ROOT / "assets" / "n64-console-sketchfab-recovered.glb"
-OUTPUT = ROOT / "assets" / "generated" / "hybrid-four-port-console.glb"
+SOURCE = ROOT / "asset-sources" / "n64-console-sketchfab-recovered.glb"
+OUTPUT = ROOT / "asset-sources" / "generated" / "hybrid-four-port-console.glb"
 TARGET_WIDTH = 0.998
 MAX_TEXTURE_EDGE = 1024
 PLASTIC_ROUGHNESS = 0.52

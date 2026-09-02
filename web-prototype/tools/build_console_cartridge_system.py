@@ -20,7 +20,7 @@ from mathutils import Vector
 
 
 ROOT = Path(__file__).resolve().parents[1]
-VISUAL_ASSETS = ROOT / "web-prototype" / "visual" / "assets"
+VISUAL_ASSETS = ROOT / "visual" / "assets"
 CARTRIDGE_SOURCE = VISUAL_ASSETS / "n64-cartridge-tripo.glb"
 CONSOLE_SOURCE = VISUAL_ASSETS / "generated" / "hybrid-four-port-console.glb"
 CONSOLE_OUTPUT = VISUAL_ASSETS / "hybrid-four-port-console-fitted.glb"

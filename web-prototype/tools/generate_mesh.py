@@ -23,8 +23,10 @@ from pathlib import Path
 from typing import Any
 
 
+# web-prototype/ (this file is web-prototype/tools/generate_mesh.py); .env lives one level up
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "web-prototype" / "visual" / "assets" / "generated"
+REPO_ROOT = PROJECT_ROOT.parent
+DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "visual" / "assets" / "generated"
 MESHY_BASE_URL = "https://api.meshy.ai"
 TRIPO_BASE_URL = "https://api.tripo3d.ai/v2/openapi"
 
@@ -58,7 +60,7 @@ def api_key(provider: str) -> str:
     variable = "MESHY_API_KEY" if provider == "meshy" else "TRIPO_API_KEY"
     value = os.environ.get(variable, "").strip()
     if not value:
-        raise ApiError(f"{variable} is missing; add it to {PROJECT_ROOT / '.env'}")
+        raise ApiError(f"{variable} is missing; add it to {REPO_ROOT / '.env'}")
     return value
 
 
@@ -704,7 +706,7 @@ def validate_args(args: argparse.Namespace) -> None:
 
 def main() -> int:
     try:
-        load_dotenv(PROJECT_ROOT / ".env")
+        load_dotenv(REPO_ROOT / ".env")
         args = build_parser().parse_args()
         validate_args(args)
         return args.handler(args)

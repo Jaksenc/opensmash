@@ -46,12 +46,12 @@ What's in this repo:
 | | What |
 |---|---|
 | `pipeline/` | The generator. `run_character.py` turns a name + photo into a playable fighter. |
-| `web-prototype/` | The site: React frontend + Node server. Character grid, ROM check, launching the engine, and the hosted "create a fighter" flow (Cloud Run, Firestore, GCS). |
+| `web-prototype/` | The site: React frontend + Node server. Character grid, ROM check, launching the engine, and the hosted "create a fighter" flow (Cloud Run, Firestore, GCS). Its own `asset-sources/` and `tools/` hold the site's 3D props, fonts, and the Blender scripts that built them. |
 | `skels/` | The twelve target skeletons, per-fighter conform profiles, and the reference part data the converter fits meshes onto. |
 | `play/` | Local generation output (gitignored). The production roster lives in a public GCS bucket, pinned by `web-prototype/config/baked-assets.json`. |
-| `scripts/`, `tools/` | Batch driver, utilities, the derive-from-ROM scripts. |
+| `scripts/`, `tools/` | Batch driver, the derive-from-ROM scripts, sprite extraction, the Wikipedia roster seed. |
 | `eval/` | Mesh eval harness (`EVAL.md`). |
-| `config/`, `docs/`, `assets/` | Roster lists, docs, site and branding assets. |
+| `config/`, `docs/`, `assets/` | Roster lists, docs, and the portrait style references the generator uses. |
 
 ## Running the site
 
@@ -131,7 +131,7 @@ hosted generation flow are documented in
 | `FAL_KEY` | Announcer clips (fal's MiniMax speech endpoint) and creating the announcer voice. |
 | `MINIMAX_ANNOUNCER_VOICE_ID` | The MiniMax voice clone the announcer speaks with. Made once; see below. |
 | `GEMINI_API_KEY` | Optional. Alternative image model for some experiments. |
-| `MESHY_API_KEY` | Optional. Only `tools/generate_mesh.py` (site props). |
+| `MESHY_API_KEY` | Optional. Only `web-prototype/tools/generate_mesh.py` (site props). |
 
 A fighter costs about $0.65 in provider fees. Each run writes a per-stage
 breakdown to `play/ui/<slug>/cost.json`.
@@ -221,13 +221,13 @@ from your ROM:
 | Files | What | Rebuilt by |
 |---|---|---|
 | `skels/*.skel`, `skels/fk*-all.log`, `skels/parts/*.json` | Rest-pose skeletons and part geometry for the twelve fighters | `derive_skeletons.py` (runs the engine) |
-| `assets/css-font/portraits`, `assets/css-font/locked` | Character-select portraits, fire slot, question mark, shadows | `derive_from_rom.py` |
+| `web-prototype/asset-sources/css-font/{portraits,locked}` | Character-select portraits, fire slot, question mark, shadows | `derive_from_rom.py` |
 | `web-prototype/visual/assets/ui_refs/` | Tile and name sprites, stock icon, emblem sheet, glyph atlases | `derive_from_rom.py` (four letters need `--skeletons`) |
 | `eval/announcer_conditioning_corrected/` | Announcer lines the voice clone is conditioned on, at in-game pitch | `derive_from_rom.py` |
-| `stone-tile-investigation/source-*` | The character-select stone texture | `derive_from_rom.py` |
+| `web-prototype/asset-sources/stone-tile/source-*` | The character-select stone texture | `derive_from_rom.py` |
 
 Not derived: the hand-authored `skels/*.profile.json`, `skels/VALIDATION.md`,
-and `assets/css-font/letters`. `skels/reference/mario.skel` is an old capture
+and `asset-sources/css-font/letters`. `skels/reference/mario.skel` is an old capture
 from a different engine build that `texture_check.py` still reads; the scripts
 report it as `LEGACY` and leave it alone.
 
@@ -293,8 +293,8 @@ one consumer only checks whether it's zero.
 
 - `EVAL.md`: mesh generation / skinning eval harness and its experiment log.
 - `ANNOUNCER.md`: announcer voice generation, the clone, provider settings.
-- `docs/site-visual-assets.md`: how the site's console, cartridge, CRT intro,
-  and other props were made.
+- `web-prototype/docs/site-visual-assets.md`: how the site's console,
+  cartridge, CRT intro, and other props were made.
 - `web-prototype/docs/production-architecture.md`: the hosted generation
   service (job protocol, retries, abuse controls).
 - `BattleShip/docs/`: engine internals, web harness, controller ports,

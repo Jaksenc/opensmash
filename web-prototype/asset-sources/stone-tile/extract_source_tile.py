@@ -11,7 +11,8 @@ import zipfile
 from PIL import Image
 
 
-ROOT = Path(__file__).resolve().parents[1]
+# repo root (this file lives in web-prototype/asset-sources/stone-tile/)
+ROOT = Path(__file__).resolve().parents[3]
 ARCHIVE = ROOT / "BattleShip/build-wasm/BattleShip.o2r"
 RESOURCE = "reloc_menus/MNSelectCommon"
 OUTPUT = Path(__file__).resolve().parent

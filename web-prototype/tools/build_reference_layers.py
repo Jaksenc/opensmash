@@ -17,7 +17,7 @@ from PIL import Image
 
 
 ROOT = Path(__file__).resolve().parents[1]
-ASSETS = ROOT / "assets" / "charselect"
+ASSETS = ROOT / "asset-sources" / "charselect"
 REFERENCE = ASSETS / "reference-2x2.png"
 SOFT_LABEL_OUTPUT = ASSETS / "reference-labels-soft.png"
 RULE_OUTPUT = ASSETS / "reference-rules.png"

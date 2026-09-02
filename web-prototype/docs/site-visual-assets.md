@@ -2,12 +2,12 @@
 
 How the 3D hardware, CRT intro, and mesh-generation tooling behind the
 website's look were made. Nothing here is needed to run the site or generate
-fighters; the finished assets are committed under `web-prototype/visual/assets`
-and `assets/`.
+fighters; the finished assets are committed under `visual/assets`, the sources and
+references under `asset-sources/`. Commands below run from `web-prototype/`.
 
 ## Retro cartridge
 
-`web-prototype/visual/assets/n64-cartridge-tripo.glb` is a Tripo P1 multiview model generated from
+`visual/assets/n64-cartridge-tripo.glb` is a Tripo P1 multiview model generated from
 front, side, and back references. It is used by the centered cartridge
 control in the production visual runtime and rendered inside
 the same low-resolution Three.js post-process as the glove, including the
@@ -21,7 +21,7 @@ blender --background --python tools/build_cartridge_model.py
 
 ## Recovered N64 console + fitted cartridge interaction
 
-`assets/n64-console-sketchfab-recovered.glb` is the recovered 718-triangle
+`asset-sources/n64-console-sketchfab-recovered.glb` is the recovered 718-triangle
 viewer model with embedded diffuse, normal, and AO maps from NeoZeroo's
 original Sketchfab upload.
 The archival recovery remains untouched. Normalize its axes, scale, and texture
@@ -31,7 +31,7 @@ size for the site with:
 blender --background --python tools/prepare_sketchfab_console.py
 ```
 
-`web-prototype/visual/assets/hybrid-four-port-console-fitted.glb` preserves the recovered shell,
+`visual/assets/hybrid-four-port-console-fitted.glb` preserves the recovered shell,
 four ports, top switches, badge, and cartridge slot. A small flush cover adds
 `FUN` light pipes, and a `CartridgeSnapAnchor` node drives the site interaction.
 Rebuild that derived interaction asset with:
@@ -75,10 +75,10 @@ The tuning controls remain part of the page but are hidden from the final UI.
 
 ## Tripo CRT intro screen
 
-`assets/tripo-crt-tv.glb` is a 10k-face-target, geometry-only Tripo v3.0
+`asset-sources/tripo-crt-tv.glb` is a 10k-face-target, geometry-only Tripo v3.0
 image-to-model result generated from the supplied Trinitron reference. The
 optional cartridge intro gives the cabinet an authored charcoal material and
-places the local `assets/intro-crt.mp4` clip on a segmented, physically curved
+places the local `asset-sources/intro-crt.mp4` clip on a segmented, physically curved
 screen. The default route loads the character-grid site directly and plays the
 same clip in the 4:3 video container at the top of the page.
 Its dedicated Three.js shader adds barrel distortion, scanlines, an RGB
@@ -160,7 +160,7 @@ python3 tools/generate_mesh.py generate \
   --target-polycount 12000
 ```
 
-Finished models are downloaded to `web-prototype/visual/assets/generated/` by
+Finished models are downloaded to `visual/assets/generated/` by
 default. This folder is git-ignored because generated GLBs can be large. Use `--output-dir` or
 `--name` to change the destination. Run the CLI with `--help` for all options.
 
