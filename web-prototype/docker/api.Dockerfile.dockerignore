@@ -5,6 +5,8 @@
 pipeline/web-prototype/node_modules/
 pipeline/web-prototype/data/
 pipeline/web-prototype/dist/
+# Fetched copy of the baked roster (pnpm assets:fetch); the image serves it from the bucket.
+pipeline/web-prototype/.baked-characters/
 # Site asset sources, Blender/font tooling and review docs are not runtime inputs.
 pipeline/web-prototype/asset-sources/
 pipeline/web-prototype/tools/
