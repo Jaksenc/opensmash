@@ -308,14 +308,20 @@
     align-items: center;
     justify-content: space-between;
     gap: 20px;
-    padding: 0 clamp(9px, 1.4vw, 16px);
+    padding: 0;
     background: transparent;
+  }
+  @media (max-width: 1024px) {
+    .retro-site-header {
+      padding-left: clamp(9px, 1.4vw, 16px);
+      padding-right: calc(clamp(9px, 1.4vw, 16px) + 4px);
+    }
   }
   .retro-site-logo {
     position: relative;
     flex: 0 0 auto;
     display: block;
-    width: clamp(105px, 19.5%, 152px);
+    width: 152px;
     aspect-ratio: 3 / 1;
     transform: translateY(3px);
     filter: none;
@@ -337,12 +343,12 @@
     border: 0;
     outline: 0;
     background: transparent;
-    color: #e9dfcf;
+    color: #fff2d6;
     filter: none;
     font: 500 15px/1 "Kanit", sans-serif;
     letter-spacing: .025em;
     text-decoration: none;
-    text-shadow: 0 2px 0 #260500;
+    text-shadow: 0 0 3px rgba(255, 240, 181, .35), 0 2px 0 #260500;
     -webkit-font-smoothing: none;
   }
   .retro-site-link.is-active {
@@ -393,7 +399,7 @@
     .retro-site-nav > .retro-site-dev-link { display: none; }
     .retro-site-more { display: block; }
   }
-  @media (hover: none) and (pointer: coarse) {
+  @media (min-width: 601px) and (hover: none) and (pointer: coarse) {
     #controls-menu-button,
     .retro-site-more,
     .retro-site-nav > .retro-site-dev-link { display: none; }
@@ -689,6 +695,7 @@
     text-wrap: balance;
     -webkit-font-smoothing: none;
   }
+  .launch-flow-upload .launch-flow-copy { width: min(45ch, 88vw); }
   .launch-flow-action {
     min-width: clamp(180px, 19vw, 250px);
     min-height: clamp(48px, 6vw, 62px);
