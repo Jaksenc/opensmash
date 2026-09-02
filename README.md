@@ -1,226 +1,216 @@
-# Smash Weights
+# OpenSmash / Smash the Weights
 
-## Repository layout
+Super Smash Bros. 64 running in the browser, with a roster of AI-generated
+fighters. Type a name (and optionally supply a photo) and the pipeline turns it
+into a rigged, textured, low-poly fighter with a character-select portrait,
+stock icon, series emblem, and an announcer call, then injects it into the game
+on top of one of the original twelve skeletons.
 
-- `web-prototype/` — the production React website, Node server, deployment
-  configuration, and canonical browser assets under `visual/`
-- `pipeline/` — directly executable Python generation and evaluation tools
-- `scripts/` — batch sweep drivers
-- `play/` — git-ignored local fighter-generation workspace; production runtime
-  files are content-addressed in GCS and pinned by
-  `web-prototype/config/baked-assets.json`
-- `skels/` — canonical skeletons, profiles, and extracted part data
-- `eval/` — evaluation code, fixtures, and generated results
-- `artifacts/experiments/` — historical generated models, atlases, bundles, and reports
-- `tools/` — maintenance, generation, and verification utilities
+Nothing Nintendo owns is in this repository or served by the site. The engine
+is compiled from the [BattleShip](https://github.com/turtlesoupy/BattleShip)
+decompilation port, and the game's assets are extracted inside the player's
+browser from a ROM they already own.
 
-Run the website from its app directory:
+## How the pieces fit
 
-```bash
-cd web-prototype
-pnpm install
-pnpm dev
+| Piece | Where | What it does |
+|---|---|---|
+| Engine | sibling repo `BattleShip/` | The game, compiled to WebAssembly with Emscripten. Includes Torch compiled to wasm so the browser can build the asset archive from the player's ROM. |
+| Generator | `pipeline/` in this repo | Python scripts that turn a name + photo into a playable fighter (`run_character.py` is the one command). |
+| Website | `web-prototype/` in this repo | React site + Node server: the character grid, ROM validation, launching the engine, and the hosted "create a fighter" flow (Cloud Run + Firestore + GCS in production). |
+| Skeletons | `skels/` | The twelve target skeletons, per-fighter conform profiles, and the reference part data the converter fits generated meshes onto. |
+| Roster | `play/` (git-ignored) and GCS | Your local generation workspace. The production roster is content-addressed in a public GCS bucket and pinned by `web-prototype/config/baked-assets.json`. |
+
+Other directories: `scripts/` (batch generation driver), `tools/` (one-off
+utilities), `eval/` (mesh-quality evaluation harness, see `EVAL.md`),
+`config/` (roster lists and editorial policy inputs), `docs/`.
+
+## Setting up a clone
+
+The two repositories sit side by side, with the Emscripten SDK next to them:
+
+```
+opensmash/
+  BattleShip/    git clone https://github.com/turtlesoupy/BattleShip
+  pipeline/      git clone https://github.com/turtlesoupy/opensmash   (this repo)
+  emsdk/         https://github.com/emscripten-core/emsdk
 ```
 
-Then open `http://127.0.0.1:4174/`. See `web-prototype/README.md` for the
-production build, fighter worker, authentication, and deployment flows.
+The site server looks for the engine at `pipeline/BattleShip/web-dist` first
+and `../BattleShip/web-dist` second, so either a symlink
+(`ln -s ../BattleShip pipeline/BattleShip`) or the sibling layout works.
 
-## Retro cartridge
+You will need:
 
-`web-prototype/visual/assets/n64-cartridge-tripo.glb` is a Tripo P1 multiview model generated from
-front, side, and back references. It is used by the centered cartridge
-control in the production visual runtime and rendered inside
-the same low-resolution Three.js post-process as the glove, including the
-posterized palette, dithered alpha edge, and dark one-texel outline.
+- **Node 20+ and pnpm** (`corepack enable`; the lockfile pins pnpm 11).
+- **Python 3.11+** with `numpy scipy Pillow opencv-python-headless fal-client`
+  (the same list the production worker installs, see
+  `web-prototype/infra/requirements-worker.txt`), plus `ffmpeg` on your PATH
+  for announcer audio.
+- **A legal Super Smash Bros. (USA, NTSC-U v1.0) ROM.** SHA-1
+  `e2929e10fccc0aa84e5776227e798abc07cedabf`. Never commit it. Other regions
+  are recognised and rejected; the engine is region-compiled.
+- **Emscripten** (only to build the engine; skip if someone hands you a built
+  `web-dist`).
+- **API keys** if you want to generate fighters, see below.
 
-The original procedural fallback can be rebuilt with:
+## Run the website locally
 
-```bash
-blender --background --python tools/build_cartridge_model.py
-```
+### 1. Build the engine once
 
-## Recovered N64 console + fitted cartridge interaction
-
-`assets/n64-console-sketchfab-recovered.glb` is the recovered 718-triangle
-viewer model with embedded diffuse, normal, and AO maps from NeoZeroo's
-original Sketchfab upload.
-The archival recovery remains untouched. Normalize its axes, scale, and texture
-size for the site with:
-
-```bash
-blender --background --python tools/prepare_sketchfab_console.py
-```
-
-`web-prototype/visual/assets/hybrid-four-port-console-fitted.glb` preserves the recovered shell,
-four ports, top switches, badge, and cartridge slot. A small flush cover adds
-`FUN` light pipes, and a `CartridgeSnapAnchor` node drives the site interaction.
-Rebuild that derived interaction asset with:
+From `BattleShip/`, with the ROM at its root as `baserom.us.z64` and emsdk
+activated (`source ../emsdk/emsdk_env.sh`):
 
 ```bash
-blender --background --python tools/build_console_cartridge_system.py
-```
-
-The cartridge is scaled to 44% of the console width. The receiver is derived
-from the cartridge bounds and adds 0.006 units of clearance per side. It begins
-centered in the open space between the top of the viewport and the console;
-its idle depth sits closer to the camera. Pressing it springs the cartridge back
-onto the console's drag plane and immediately gives the console a small upward
-tilt. Dragging downward smoothly continues that tilt toward the cartridge while
-rotating the cartridge into its entry angle well before it reaches the slot.
-The console is treated as a fixed rounded rigid collider and the dragged
-cartridge as a spring-driven movable rigid body. Off-axis approaches resolve
-against the console's top, shoulders, rounded corners, and sides with normal
-impulse, light restitution, and tangential friction. Only a narrow capture
-throat around the cartridge centerline is open. Once the cartridge body reaches
-the visibly seated point inside that throat, it clamps to the slot mouth and
-finishes with a short non-overshooting insertion animation; high-speed pulls
-cannot tunnel through the console. Releasing any incomplete drag always
-springs it directly from the release point to the upper resting pose with a
-small settling overshoot, without an intermediate slot or center waypoint.
-Inside a tapered cone above the slot,
-a progressive horizontal attraction stays gentle high up and grows assertive
-near the opening; outside that cone there is no positional assistance. Approach
-assistance also rotates the cartridge into the authored slot angle and eases it
-onto the slot's exact depth plane while the console tilts slightly upward to
-meet it. Once the cartridge is fully seated, the cartridge and console animate
-off the bottom of the viewport. The presenter credit fades in first, followed
-by the rest of the site two seconds later. Releasing the free cartridge launches
-a fast clockwise Y-axis spring that leaves its label facing forward; inserting
-it requires dragging it into the console slot. The hand mesh is always rendered
-above both pieces of hardware.
-
-The default runtime shader uses 2× pixels, 12 color steps, 50% posterization,
-full edge dither, a 70%-strength 1px `#383838` outline, and display gamma 2.50.
-The tuning controls remain part of the page but are hidden from the final UI.
-
-## Tripo CRT intro screen
-
-`assets/tripo-crt-tv.glb` is a 10k-face-target, geometry-only Tripo v3.0
-image-to-model result generated from the supplied Trinitron reference. The
-optional cartridge intro gives the cabinet an authored charcoal material and
-places the local `assets/intro-crt.mp4` clip on a segmented, physically curved
-screen. The default route loads the character-grid site directly and plays the
-same clip in the 4:3 video container at the top of the page.
-Its dedicated Three.js shader adds barrel distortion, scanlines, an RGB
-phosphor mask, chromatic separation, a rolling brightness band, vignette,
-flicker, and fine analog noise. The optimized 1280×960 H.264 clip preserves the
-original 4:3 framing while reducing the browser payload from 108 MB to about
-7.4 MB.
-
-Append `?intro=cartridge` to the local URL to preview the preserved cartridge
-insertion experience. The default URL opens the running main screen directly.
-`#skipboot` can still be added to the cartridge URL to bypass its interaction.
-
-The full browser viewport uses a 199X-inspired two-stage treatment: a backdrop
-pass adds the slight composite softness, color density, and pixel blending of
-the original preset's color/NTSC stages, then `crt-viewport.js` adds the tube
-edge, vignette, visible raster lines, RGB aperture grille, rolling luminance,
-flicker, and analog noise above every page layer. Add `?crt=off` to compare the
-page without the viewport effect, or `?crt=soft` for a restrained version of
-the default exaggerated preset.
-
-## Mesh generation
-
-Meshy and Tripo are configured through the git-ignored `.env` file. The mesh
-generator is dependency-free and uses Python 3's standard library.
-
-Validate both API connections without spending generation credits:
-
-```bash
-python3 tools/generate_mesh.py check
-```
-
-Generate an untextured GLB (the cheaper geometry-only path):
-
-```bash
-python3 tools/generate_mesh.py generate \
-  --provider meshy \
-  --prompt "a low-poly fighting-game arena platform"
+emcmake cmake -B build-wasm -G Ninja -DCMAKE_BUILD_TYPE=Release -DSSB64_VERSION=us
 ```
 
 ```bash
-python3 tools/generate_mesh.py generate \
-  --provider tripo \
-  --prompt "a low-poly fighting-game arena platform"
+cmake --build build-wasm --target BattleShip.js -j
 ```
-
-Generate from ordered front, left, back, and right reference images with
-Tripo's multiview model:
 
 ```bash
-python3 tools/generate_mesh.py generate-multiview \
-  --front front.png \
-  --left left.png \
-  --back back.png \
-  --right right.png \
-  --target-polycount 8000 \
-  --name referenced-model.glb
+scripts/build_torch_wasm.sh
 ```
-
-Generate from a single concept or product reference image with Tripo:
 
 ```bash
-python3 tools/generate_mesh.py generate-image \
-  --image concept.png \
-  --textured \
-  --target-polycount 15000 \
-  --name referenced-model.glb
+scripts/package_web.sh build-wasm web-dist
 ```
 
-Add `--textured` for textures and PBR maps. Meshy accepts optional texture
-guidance with `--texture-prompt`; either provider accepts `--target-polycount`.
-For example:
+`package_web.sh` produces `web-dist/`, the self-contained engine package the
+site serves under `/engine/`. Every runtime URL in it carries a content-derived
+build version, and the package deliberately does not contain the ROM-derived
+archive; the browser rebuilds that from the player's ROM on first launch (see
+`BattleShip/docs/web_rom_extraction.md`). After C changes, rebuild with
+`ninja -C build-wasm BattleShip.js` and re-run `package_web.sh`.
+
+### 2. Get a roster
+
+Either download the pinned production roster (1000+ fighters, about 3.3 GB)
+into `web-prototype/.baked-characters`:
 
 ```bash
-python3 tools/generate_mesh.py generate \
-  --provider meshy \
-  --prompt "a chunky red arcade joystick, centered, no background" \
-  --textured \
-  --texture-prompt "red enamel, brushed steel base, subtle wear" \
-  --target-polycount 12000
+cd web-prototype && PUBLIC_BUCKET=smash-the-weights-fighter-assets pnpm assets:fetch
 ```
 
-Finished models are downloaded to `web-prototype/visual/assets/generated/` by
-default. This folder is git-ignored because generated GLBs can be large. Use `--output-dir` or
-`--name` to change the destination. Run the CLI with `--help` for all options.
+or generate your own into `play/` (next section). In development the server
+reads `play/` directly.
 
-Generation consumes provider credits. `--textured` may consume additional
-credits, and Meshy's textured flow runs a preview task followed by a refine task.
-
-## Wikipedia people seed
-
-Build a popularity-ranked, upload-ready people list from Wikipedia pageviews
-and Wikidata's human metadata. The default ordering is pure all-Wikipedia
-Wikidata PageRank, favoring durable encyclopedic centrality over short-lived
-attention spikes. QRank's rolling twelve-month pageview total remains available
-for an optional geometric rank blend. Monthly English top-page lists supply the
-candidate pool; they do not supply the final score:
+### 3. Start the site
 
 ```bash
-python3 tools/build_wikipedia_people_seed.py --limit 500
+cd web-prototype && pnpm install && pnpm dev:safe
 ```
 
-The size is deliberately tunable; for a larger pool, use `--limit 2000` with
-the same ranking and eligibility rules. The default output is
-`wikipedia-people-<limit>.txt`, one name per line. Add `--details-output` for a
-scored review CSV, `--exclude`/`--exclude-file` for editorial exclusions, or
-increase `--months` and `--oversample` if a very large target exhausts the
-eligible candidate pool. The weights pipeline is assumed to supply imagery;
-`--require-image` is available as an optional stricter filter. API responses
-and the ranking snapshots are cached under `.cache/`. Use `--pagerank-weight 0`
-for pure QRank or `--pagerank-weight 0.35` for the previous 65/35 blend.
-`--qrank-file` and
-`--pagerank-file` accept local snapshots; the corresponding URL options update
-the default sources.
+Open <http://127.0.0.1:4174>, drop in your ROM, and play. `dev:safe` disables
+the local fighter worker so clicking around `/create` cannot spend provider
+credits; use `pnpm dev` to run real generations from the web UI. Details of
+the ROM gate, authentication, ROM hand-off between devices, and the hosted
+generation flow are in [`web-prototype/README.md`](web-prototype/README.md).
 
-The generator also applies `config/wikipedia-roster-inclusions.txt`. Those
-names are guaranteed a slot within the exact `--limit`, displacing the lowest
-ranked non-inclusions when necessary. Use `--include`/`--include-file` for
-additional names or `--no-default-inclusions` to audit pure ranking output.
-If a named person has no standalone human Wikipedia/Wikidata page, the literal
-name is retained with deterministic local metadata and a zero popularity score.
+## Generate a fighter
 
-The generator applies `config/wikipedia-roster-exclusions.txt` by default and
-replaces excluded entries so `--limit` remains exact. The human-review rules
-behind that list are documented in `docs/character-roster-editorial-policy.md`.
-Use `--no-default-exclusions` only for auditing the unfiltered source pool.
+### Keys
+
+Copy `.env.example` to `.env` at the repository root (git-ignored; every
+pipeline script reads it) and fill in:
+
+| Key | Used for |
+|---|---|
+| `OPENAI_API_KEY` | Character description (`gpt-5.6-luna`), the T-pose model sheet, portrait, stock, and emblem art (`gpt-image-2`), the facing check, and the website's upload moderation. |
+| `TRIPO_API_KEY` | Image-to-3D mesh and auto-rig. About 55 credits (roughly $0.55) per fighter; the paid task ids are checkpointed so a retry never buys the mesh twice. |
+| `FAL_KEY` | Announcer clip via fal's MiniMax speech endpoint. |
+| `MINIMAX_ANNOUNCER_VOICE_ID` | The MiniMax voice clone the announcer clip is spoken with. You create this once in MiniMax from announcer reference audio; see `ANNOUNCER.md`. |
+| `GEMINI_API_KEY` | Optional. Alternative image model used by some experiments. |
+| `MESHY_API_KEY` | Optional. Only `tools/generate_mesh.py` (site props), not the fighter pipeline. |
+
+A full fighter costs about $0.65 in provider fees; each run writes a
+per-stage breakdown to `play/ui/<slug>/cost.json`.
+
+### One fighter
+
+```bash
+python3 pipeline/run_character.py "Weird Al Yankovic" --photo ref.png
+```
+
+Useful options: `--short WEIRDAL` (the in-game tile caption, up to 10
+capital letters), `--display "Mozart"` (the in-game name and what the announcer
+shouts), `--emblem "a red accordion"` (the series emblem, otherwise inferred),
+`--notes "..."` (steer which depiction, outfit, or era the description picks),
+`--variants all` (also build the experimental DK and Yoshi targets).
+
+The stages run in order: `expand` (description) → `tpose` (model sheet) →
+`mesh` (Tripo mesh + rig) → `convert` (fit onto the game skeletons) →
+`portrait` → `stock` → `emblem` → `ui` → `voice`. Each stage is skipped when
+its output already exists, so a failed run resumes where it stopped. Delete a
+stage's output or pass `--force-stage <stage>` to redo one; editing
+`character.json` and re-running is the normal way to fix a description or
+emblem.
+
+Outputs land in `play/ui/<slug>/` (art, `character.json`, the `.osbui` UI
+pack, `announcer.wav`, and intermediates) plus `play/<slug>.osb6`, the single
+bundle carrying the mesh for every target skeleton. The web UI's `/create`
+page runs exactly this script.
+
+### Many fighters
+
+```bash
+python3 scripts/batch_characters.py names.txt --workers 3
+```
+
+One name per line. The driver retries transient provider errors, re-rolls
+moderation-blocked images, skips names that are already complete, and records
+progress under `batch-state/`. Touch `batch-state/STOP` to finish in-flight
+work and exit. `tools/build_wikipedia_people_seed.py` builds popularity-ranked
+name lists from Wikipedia; the editorial rules for who belongs on the roster
+are in `docs/character-roster-editorial-policy.md`.
+
+## Publish fighters to the site roster
+
+`web-prototype/config/characters.json` is the ordered allowlist of baked
+fighters. After reviewing a fighter locally:
+
+```bash
+python3 pipeline/baked_roster.py <slug>
+```
+
+validates the required files and appends the slug (or pass `--publish` to
+`run_character.py`). Then upload the roster's runtime files to the public
+bucket and refresh the checksum pin:
+
+```bash
+cd web-prototype && PUBLIC_BUCKET=<project>-fighter-assets pnpm assets:publish
+```
+
+Commit `config/characters.json` and `config/baked-assets.json` together.
+Objects are keyed by content hash, so publishing is additive and every past
+commit stays reproducible. Deployment (Cloud Run, Cloud Run job worker,
+Cloudflare edge cache) is one script; see
+[`web-prototype/infra/README.md`](web-prototype/infra/README.md).
+
+## Game-derived inputs
+
+A few generator inputs are captured from the game itself rather than
+authored, and `tools/` holds what produced them:
+
+- `skels/*.skel` and `skels/parts/vanilla-*-parts*.json`: skeleton rest poses
+  and the original fighters' part geometry, dumped from a running BattleShip
+  build. The converter fits generated meshes onto these.
+- `assets/css-font/` and `web-prototype/visual/assets/ui_refs/`: the
+  character-select sprites (name font, tiles, stock icon, emblem references)
+  extracted from the asset archive with `tools/extract_sprites.py`;
+  `tools/cssfont/` turns the name strips into the site's pixel font.
+- The announcer voice clone is conditioned on the game's announcer lines
+  (`ANNOUNCER.md`).
+
+## More documentation
+
+- `EVAL.md`: the mesh-generation and skinning evaluation harness and its
+  history of experiments.
+- `ANNOUNCER.md`: announcer voice generation and the MiniMax clone.
+- `docs/site-visual-assets.md`: how the site's 3D console, cartridge, CRT
+  intro, and other props were made.
+- `web-prototype/docs/production-architecture.md`: the hosted generation
+  service (Firestore job protocol, retries, abuse controls).
+- `BattleShip/docs/`: engine internals, the web harness, controller ports,
+  and in-browser ROM extraction.
