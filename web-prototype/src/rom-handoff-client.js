@@ -41,6 +41,11 @@ async function fetchIceConfig() {
   return { iceServers: FALLBACK_ICE_SERVERS, relay: false };
 }
 
+const BLOCKED_BROWSER_MESSAGE =
+  "This browser is blocking direct connections: it produced no network candidates at all. " +
+  "A privacy or ad-blocking extension, or a WebRTC policy, is usually the cause. " +
+  "Try an incognito or private window (extensions off) or a different browser on this device.";
+
 function connectionFailedMessage(relay) {
   return relay
     ? "The connection between the devices failed. Check that both are online and try again."
@@ -124,14 +129,16 @@ function sleep(ms, signal) {
  * data channel opens. Returns when `until()` becomes true or throws on abort,
  * timeout, or a failed ICE state.
  */
-async function runSignalling({ pc, room, role, key, onRemote, until, signal, deadlineMs, relay = false, diagnostics }) {
-  let cursor = 0;
-  const pendingCandidates = [];
-  let remoteDescriptionSet = false;
-  let connectStartedAt = 0;
-  const diag = diagnostics || { localTypes: new Set(), remoteTypes: new Set(), remoteCount: 0, postFailures: 0 };
-
-  // Batch outgoing candidates.
+/**
+ * Capture and relay this side's ICE candidates. MUST be attached before any
+ * description is set: gathering starts at setLocalDescription and the first
+ * host candidates fire within milliseconds, long before a signalling round
+ * trip to the server completes. (The original code attached this after
+ * uploading the offer, so against Firestore latency the host posted no
+ * candidates at all and the peer could never connect.)
+ */
+function attachCandidateRelay({ pc, room, role, key }) {
+  const diag = { localTypes: new Set(), remoteTypes: new Set(), remoteCount: 0, postFailures: 0, gatheredNothing: false };
   let outbox = [];
   let flushTimer = 0;
   const flush = () => {
@@ -153,6 +160,27 @@ async function runSignalling({ pc, room, role, key, onRemote, until, signal, dea
     outbox.push(event.candidate.toJSON());
     if (!flushTimer) flushTimer = setTimeout(flush, CANDIDATE_BATCH_MS);
   });
+  // A browser that finishes gathering with nothing to offer can never connect.
+  // This is a privacy extension or a WebRTC IP-handling policy, not the
+  // network — say so instead of blaming Wi-Fi after a long timeout.
+  pc.addEventListener("icegatheringstatechange", () => {
+    if (pc.iceGatheringState === "complete" && diag.localTypes.size === 0) diag.gatheredNothing = true;
+  });
+  return { diag, flush };
+}
+
+/**
+ * Drive one side of the signalling exchange: feed remote descriptions and
+ * candidates into the connection until the data channel opens. Returns when
+ * `until()` becomes true or throws on abort, timeout, or a failed ICE state.
+ * `relayer` comes from attachCandidateRelay (attached earlier).
+ */
+async function runSignalling({ pc, room, role, key, onRemote, until, signal, deadlineMs, relay = false, relayer }) {
+  let cursor = 0;
+  const pendingCandidates = [];
+  let remoteDescriptionSet = false;
+  let connectStartedAt = 0;
+  const { diag, flush } = relayer;
 
   const addRemote = async (candidate) => {
     diag.remoteCount += 1;
@@ -166,6 +194,9 @@ async function runSignalling({ pc, room, role, key, onRemote, until, signal, dea
     if (signal?.aborted) throw new HandoffCancelled();
     if (Date.now() - started > deadlineMs) {
       throw new Error(`The other device never connected. ${describeDiagnostics(pc, diag)}`);
+    }
+    if (diag.gatheredNothing) {
+      throw new Error(BLOCKED_BROWSER_MESSAGE + " " + describeDiagnostics(pc, diag));
     }
     if (connectStartedAt && Date.now() - connectStartedAt > CONNECT_TIMEOUT_MS) {
       throw new Error(`${connectionFailedMessage(relay)} ${describeDiagnostics(pc, diag)}`);
@@ -249,6 +280,7 @@ export function startRomHandoffHost({ loadRom, onState = () => {} }) {
     const ice = await fetchIceConfig();
     pc = new RTCPeerConnection({ iceServers: ice.iceServers });
     logCandidateTypes(pc, "host");
+    const relayer = attachCandidateRelay({ pc, room: roomCode, role: "host", key: hostKey });
     const channel = pc.createDataChannel("rom", { ordered: true });
     channel.binaryType = "arraybuffer";
     channel.bufferedAmountLowThreshold = BUFFER_LOW_WATER;
@@ -268,6 +300,7 @@ export function startRomHandoffHost({ loadRom, onState = () => {} }) {
       key: hostKey,
       signal,
       relay: ice.relay,
+      relayer,
       deadlineMs: WAIT_FOR_PEER_MS,
       onRemote: async (message) => {
         if (message.type === "answer") {
@@ -352,6 +385,7 @@ export function receiveRomHandoff({ code, onState = () => {}, signal } = {}) {
     const ice = await fetchIceConfig();
     pc = new RTCPeerConnection({ iceServers: ice.iceServers });
     logCandidateTypes(pc, "guest");
+    const relayer = attachCandidateRelay({ pc, room: roomCode, role: "guest", key: guestKey });
     let channel = null;
     // The host starts sending the moment its side of the channel opens, which
     // can be up to a poll interval before this side leaves the signalling loop.
@@ -375,6 +409,7 @@ export function receiveRomHandoff({ code, onState = () => {}, signal } = {}) {
       key: guestKey,
       signal: abortSignal,
       relay: ice.relay,
+      relayer,
       deadlineMs: CONNECT_TIMEOUT_MS,
       onRemote: async (message) => {
         if (message.type !== "offer") return;
