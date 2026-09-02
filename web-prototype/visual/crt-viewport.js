@@ -25,7 +25,7 @@ const strongPreset = Object.freeze({
 const softPreset = Object.freeze({
   enabled: true,
   intensity: 0.72,
-  compositeBlur: 0.28,
+  compositeBlur: 0,
   saturation: 1.08,
   contrast: 1.03,
   brightness: 1.02,
@@ -143,7 +143,11 @@ if (!canvas) {
     antialias: false,
     depth: false,
     stencil: false,
-    premultipliedAlpha: false,
+    // Safari and Chromium disagree when a transparent WebGL canvas with
+    // straight-alpha color is promoted into a backdrop-filtered compositor
+    // layer. Keep the default framebuffer premultiplied and write matching
+    // premultiplied color below so the phosphor mask blends identically.
+    premultipliedAlpha: true,
     powerPreference: 'low-power',
   });
 
@@ -256,7 +260,7 @@ if (!canvas) {
           (darkness + phosphorAmount) * intensity, 0.0, 0.98
         );
 
-        gl_FragColor = vec4(overlayColor, overlayAlpha);
+        gl_FragColor = vec4(overlayColor * overlayAlpha, overlayAlpha);
       }
     `;
 

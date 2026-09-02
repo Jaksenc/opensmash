@@ -42,7 +42,18 @@ const CONTROLLER_DROP_DAMPING = 18;
 const CONTROLLER_FLIP_SPRING = 30;
 const CONTROLLER_FLIP_DAMPING = 8.7;
 const CONTROLLER_Z_REVEAL_MS = 1150;
-const CONTROLLER_ENTRANCE_HANDOFF_MS = 180;
+const CONTROLLER_REST_PITCH = 1.32;
+const CONTROLLER_REST_YAW = 0;
+const CONTROLLER_IDLE_BOB = 0.04;
+const CONTROLLER_IDLE_PITCH = 0.014;
+const CONTROLLER_IDLE_YAW = 0.014;
+const CONTROLLER_IDLE_ENTRY_DECAY = 9;
+const CONTROLLER_ENTRANCE_POSITION_SPRING = 92;
+const CONTROLLER_ENTRANCE_POSITION_DAMPING = 19;
+const CONTROLLER_ENTRANCE_ROTATION_SPRING = 92;
+const CONTROLLER_ENTRANCE_ROTATION_DAMPING = 19;
+const CONTROLLER_ENTRANCE_SCALE_SPRING = 105;
+const CONTROLLER_ENTRANCE_SCALE_DAMPING = 20.5;
 const CONSOLE_DOCK_MS = 3710;
 const CONSOLE_APPROACH_MS = 1220;
 const CONSOLE_IDLE_MS = 720;
@@ -345,17 +356,20 @@ const controllerBaseEuler = new THREE.Euler(0, 0, 0, 'XYZ');
 const controllerPressEuler = new THREE.Euler(0, 0, 0, 'XYZ');
 const controllerBaseQuaternion = new THREE.Quaternion();
 const controllerPressQuaternion = new THREE.Quaternion();
+const controllerIdleEntryPosition = new THREE.Vector3();
+const controllerIdleEntryVelocity = new THREE.Vector3();
+const controllerIdleEntryAcceleration = new THREE.Vector3();
+const controllerIdleEntryRotation = new THREE.Vector3();
+const controllerIdleEntryAngularVelocity = new THREE.Vector3();
+const controllerIdleEntryAngularAcceleration = new THREE.Vector3();
+let controllerIdleEntryScale = 0;
+let controllerIdleEntryScaleVelocity = 0;
+let controllerIdleEntryScaleAcceleration = 0;
 let controllerDrop = 0;
 let controllerDropVelocity = 0;
 let controllerFlip = 0;
 let controllerFlipVelocity = 0;
 let controllerZRevealUntil = 0;
-let controllerEntranceHandoffStartedAt = 0;
-let controllerEntranceHandoffScale = 1;
-const controllerEntranceHandoffPosition = new THREE.Vector3();
-const controllerEntranceHandoffQuaternion = new THREE.Quaternion();
-const controllerIdlePosition = new THREE.Vector3();
-const controllerIdleQuaternion = new THREE.Quaternion();
 let consoleDockAssembly = null;
 let consoleDockModel = null;
 const consoleDockCartridgeStartPosition = new THREE.Vector3();
@@ -795,7 +809,24 @@ function resetControllerPhysics() {
   controllerFlip = 0;
   controllerFlipVelocity = 0;
   controllerZRevealUntil = 0;
-  controllerEntranceHandoffStartedAt = 0;
+  controllerIdleEntryPosition.set(0, 0, 0);
+  controllerIdleEntryVelocity.set(0, 0, 0);
+  controllerIdleEntryAcceleration.set(0, 0, 0);
+  controllerIdleEntryRotation.set(0, 0, 0);
+  controllerIdleEntryAngularVelocity.set(0, 0, 0);
+  controllerIdleEntryAngularAcceleration.set(0, 0, 0);
+  controllerIdleEntryScale = 0;
+  controllerIdleEntryScaleVelocity = 0;
+  controllerIdleEntryScaleAcceleration = 0;
+}
+
+function controllerIdleEntryResidual(offset, velocity, acceleration, idleVelocity, time) {
+  const decay = CONTROLLER_IDLE_ENTRY_DECAY;
+  const linear = velocity - idleVelocity + decay * offset;
+  const quadratic = (
+    acceleration + 2 * decay * linear - decay * decay * offset
+  ) * 0.5;
+  return (offset + linear * time + quadratic * time * time) * Math.exp(-decay * time);
 }
 
 function pressControllerControl(key, repeated) {
@@ -814,7 +845,9 @@ function pressControllerControl(key, repeated) {
 }
 
 function updateControllerPhysics(now, dt, homeY, homeScale, reducedMotion) {
-  const idleTime = now / 1000;
+  // Start the idle cycle at its neutral pose so the entrance does not have to
+  // correct toward an arbitrary point on a page-global animation timeline.
+  const idleTime = Math.max(0, now - visualStartedAt) / 1000;
   controllerTiltTarget.set(0, 0, 0);
   if (!reducedMotion) {
     for (const key of heldControlKeys) {
@@ -854,45 +887,74 @@ function updateControllerPhysics(now, dt, homeY, homeScale, reducedMotion) {
   ) * dt;
   controllerFlip += controllerFlipVelocity * dt;
 
-  activeModel.position.set(
+  const positionX = controllerIdleEntryResidual(
+    controllerIdleEntryPosition.x,
+    controllerIdleEntryVelocity.x,
+    controllerIdleEntryAcceleration.x,
     0,
-    homeY + Math.sin(idleTime * 1.75) * 0.045 + controllerDrop,
-    0
+    idleTime
   );
-  activeModel.scale.setScalar(homeScale);
+  const positionY = controllerIdleEntryResidual(
+    controllerIdleEntryPosition.y,
+    controllerIdleEntryVelocity.y,
+    controllerIdleEntryAcceleration.y,
+    CONTROLLER_IDLE_BOB * 1.75,
+    idleTime
+  );
+  const positionZ = controllerIdleEntryResidual(
+    controllerIdleEntryPosition.z,
+    controllerIdleEntryVelocity.z,
+    controllerIdleEntryAcceleration.z,
+    0,
+    idleTime
+  );
+  const pitchEntry = controllerIdleEntryResidual(
+    controllerIdleEntryRotation.x,
+    controllerIdleEntryAngularVelocity.x,
+    controllerIdleEntryAngularAcceleration.x,
+    CONTROLLER_IDLE_PITCH * 1.1,
+    idleTime
+  );
+  const yawEntry = controllerIdleEntryResidual(
+    controllerIdleEntryRotation.y,
+    controllerIdleEntryAngularVelocity.y,
+    controllerIdleEntryAngularAcceleration.y,
+    CONTROLLER_IDLE_YAW * 0.75,
+    idleTime
+  );
+  const rollEntry = controllerIdleEntryResidual(
+    controllerIdleEntryRotation.z,
+    controllerIdleEntryAngularVelocity.z,
+    controllerIdleEntryAngularAcceleration.z,
+    0,
+    idleTime
+  );
+  const scaleEntry = controllerIdleEntryResidual(
+    controllerIdleEntryScale,
+    controllerIdleEntryScaleVelocity,
+    controllerIdleEntryScaleAcceleration,
+    0,
+    idleTime
+  );
+
+  activeModel.position.set(
+    positionX,
+    homeY + Math.sin(idleTime * 1.75) * CONTROLLER_IDLE_BOB + positionY +
+      controllerDrop,
+    positionZ
+  );
+  activeModel.scale.setScalar(homeScale + scaleEntry);
   controllerBaseEuler.set(
-    1.32 + Math.sin(idleTime * 1.1) * 0.018 + controllerTilt.x,
-    0.06 + Math.sin(idleTime * 0.75) * 0.025,
-    0
+    CONTROLLER_REST_PITCH + Math.sin(idleTime * 1.1) * CONTROLLER_IDLE_PITCH +
+      pitchEntry + controllerTilt.x,
+    CONTROLLER_REST_YAW + Math.sin(idleTime * 0.75) * CONTROLLER_IDLE_YAW +
+      yawEntry,
+    rollEntry
   );
   controllerPressEuler.set(0, controllerTilt.y + controllerFlip, controllerTilt.z);
   controllerBaseQuaternion.setFromEuler(controllerBaseEuler);
   controllerPressQuaternion.setFromEuler(controllerPressEuler);
   activeModel.quaternion.copy(controllerPressQuaternion).multiply(controllerBaseQuaternion);
-
-  if (controllerEntranceHandoffStartedAt) {
-    const handoffProgress = THREE.MathUtils.clamp(
-      (now - controllerEntranceHandoffStartedAt) / CONTROLLER_ENTRANCE_HANDOFF_MS,
-      0,
-      1
-    );
-    const handoffBlend = THREE.MathUtils.smootherstep(handoffProgress, 0, 1);
-    controllerIdlePosition.copy(activeModel.position);
-    controllerIdleQuaternion.copy(activeModel.quaternion);
-    activeModel.position.lerpVectors(
-      controllerEntranceHandoffPosition,
-      controllerIdlePosition,
-      handoffBlend
-    );
-    activeModel.quaternion.copy(controllerEntranceHandoffQuaternion)
-      .slerp(controllerIdleQuaternion, handoffBlend);
-    activeModel.scale.setScalar(THREE.MathUtils.lerp(
-      controllerEntranceHandoffScale,
-      homeScale,
-      handoffBlend
-    ));
-    if (handoffProgress >= 1) controllerEntranceHandoffStartedAt = 0;
-  }
 
   if (controlExitPending && now >= controllerZRevealUntil &&
       Math.abs(controllerFlip) < 0.025 && Math.abs(controllerFlipVelocity) < 0.12) {
@@ -920,7 +982,7 @@ function configureEntrancePhysics(model, kind) {
     flowMotionTargetAngularVelocity.set(0, CARTRIDGE_IDLE_SPIN_SPEED, 0);
   } else {
     model.rotation.set(0.92, -0.32, 0.12);
-    flowMotionTargetRotation.set(1.32, 0.06, 0);
+    flowMotionTargetRotation.set(CONTROLLER_REST_PITCH, CONTROLLER_REST_YAW, 0);
     flowMotionTargetAngularVelocity.set(0, 0, 0);
   }
 }
@@ -940,13 +1002,46 @@ function finishPhysicsEntrance(now, homeY, homeScale, snapToRest = false) {
     cartridgeYawVelocity = entranceAngularVelocity.y;
     cartridgePhysicsReady = true;
   } else if (snapToRest) {
-    activeModel.rotation.set(1.32, 0.06, 0);
-    controllerEntranceHandoffStartedAt = 0;
+    controllerIdleEntryPosition.set(0, 0, 0);
+    controllerIdleEntryVelocity.set(0, 0, 0);
+    controllerIdleEntryAcceleration.set(0, 0, 0);
+    controllerIdleEntryRotation.set(0, 0, 0);
+    controllerIdleEntryAngularVelocity.set(0, 0, 0);
+    controllerIdleEntryAngularAcceleration.set(0, 0, 0);
+    controllerIdleEntryScale = 0;
+    controllerIdleEntryScaleVelocity = 0;
+    controllerIdleEntryScaleAcceleration = 0;
+    activeModel.rotation.set(CONTROLLER_REST_PITCH, CONTROLLER_REST_YAW, 0);
   } else {
-    controllerEntranceHandoffPosition.copy(activeModel.position);
-    controllerEntranceHandoffQuaternion.copy(activeModel.quaternion);
-    controllerEntranceHandoffScale = activeModel.scale.x;
-    controllerEntranceHandoffStartedAt = now;
+    controllerIdleEntryPosition.set(
+      activeModel.position.x,
+      activeModel.position.y - homeY,
+      activeModel.position.z
+    );
+    controllerIdleEntryVelocity.copy(entranceVelocity);
+    controllerIdleEntryAcceleration.copy(controllerIdleEntryPosition)
+      .multiplyScalar(-CONTROLLER_ENTRANCE_POSITION_SPRING)
+      .addScaledVector(
+        controllerIdleEntryVelocity,
+        -CONTROLLER_ENTRANCE_POSITION_DAMPING
+      );
+    controllerIdleEntryRotation.set(
+      activeModel.rotation.x - CONTROLLER_REST_PITCH,
+      activeModel.rotation.y - CONTROLLER_REST_YAW,
+      activeModel.rotation.z
+    );
+    controllerIdleEntryAngularVelocity.copy(entranceAngularVelocity);
+    controllerIdleEntryAngularAcceleration.copy(controllerIdleEntryRotation)
+      .multiplyScalar(-CONTROLLER_ENTRANCE_ROTATION_SPRING)
+      .addScaledVector(
+        controllerIdleEntryAngularVelocity,
+        -CONTROLLER_ENTRANCE_ROTATION_DAMPING
+      );
+    controllerIdleEntryScale = entranceScale - homeScale;
+    controllerIdleEntryScaleVelocity = entranceScaleVelocity;
+    controllerIdleEntryScaleAcceleration =
+      -controllerIdleEntryScale * CONTROLLER_ENTRANCE_SCALE_SPRING -
+      controllerIdleEntryScaleVelocity * CONTROLLER_ENTRANCE_SCALE_DAMPING;
   }
   visualPhase = 'idle';
   visualStartedAt = now;
@@ -954,64 +1049,94 @@ function finishPhysicsEntrance(now, homeY, homeScale, snapToRest = false) {
 }
 
 function stepFlowMotionPhysics(dt) {
+  const settlingControllerEntrance = activeModelKind === 'controller' &&
+    visualPhase === 'enter';
+  const positionSpring = settlingControllerEntrance
+    ? CONTROLLER_ENTRANCE_POSITION_SPRING
+    : FLOW_POSITION_SPRING;
+  const positionDamping = settlingControllerEntrance
+    ? CONTROLLER_ENTRANCE_POSITION_DAMPING
+    : FLOW_POSITION_DAMPING;
+  const rotationSpring = settlingControllerEntrance
+    ? CONTROLLER_ENTRANCE_ROTATION_SPRING
+    : FLOW_ROTATION_SPRING;
+  const rotationDamping = settlingControllerEntrance
+    ? CONTROLLER_ENTRANCE_ROTATION_DAMPING
+    : FLOW_ROTATION_DAMPING;
+  const scaleSpring = settlingControllerEntrance
+    ? CONTROLLER_ENTRANCE_SCALE_SPRING
+    : FLOW_SCALE_SPRING;
+  const scaleDamping = settlingControllerEntrance
+    ? CONTROLLER_ENTRANCE_SCALE_DAMPING
+    : FLOW_SCALE_DAMPING;
   let remainingDt = dt;
   while (remainingDt > 0) {
     const stepDt = Math.min(remainingDt, 1 / 120);
     entranceVelocity.x += (
-      (flowMotionTargetPosition.x - activeModel.position.x) * FLOW_POSITION_SPRING -
-      entranceVelocity.x * FLOW_POSITION_DAMPING
+      (flowMotionTargetPosition.x - activeModel.position.x) * positionSpring -
+      entranceVelocity.x * positionDamping
     ) * stepDt;
     entranceVelocity.y += (
-      (flowMotionTargetPosition.y - activeModel.position.y) * FLOW_POSITION_SPRING -
-      entranceVelocity.y * FLOW_POSITION_DAMPING
+      (flowMotionTargetPosition.y - activeModel.position.y) * positionSpring -
+      entranceVelocity.y * positionDamping
     ) * stepDt;
     entranceVelocity.z += (
-      (flowMotionTargetPosition.z - activeModel.position.z) * FLOW_POSITION_SPRING -
-      entranceVelocity.z * FLOW_POSITION_DAMPING
+      (flowMotionTargetPosition.z - activeModel.position.z) * positionSpring -
+      entranceVelocity.z * positionDamping
     ) * stepDt;
     activeModel.position.addScaledVector(entranceVelocity, stepDt);
 
     flowMotionTargetRotation.addScaledVector(flowMotionTargetAngularVelocity, stepDt);
     entranceAngularVelocity.x += (
-      (flowMotionTargetRotation.x - activeModel.rotation.x) * FLOW_ROTATION_SPRING -
+      (flowMotionTargetRotation.x - activeModel.rotation.x) * rotationSpring -
       (entranceAngularVelocity.x - flowMotionTargetAngularVelocity.x) *
-        FLOW_ROTATION_DAMPING
+        rotationDamping
     ) * stepDt;
     entranceAngularVelocity.y += (
-      (flowMotionTargetRotation.y - activeModel.rotation.y) * FLOW_ROTATION_SPRING -
+      (flowMotionTargetRotation.y - activeModel.rotation.y) * rotationSpring -
       (entranceAngularVelocity.y - flowMotionTargetAngularVelocity.y) *
-        FLOW_ROTATION_DAMPING
+        rotationDamping
     ) * stepDt;
     entranceAngularVelocity.z += (
-      (flowMotionTargetRotation.z - activeModel.rotation.z) * FLOW_ROTATION_SPRING -
+      (flowMotionTargetRotation.z - activeModel.rotation.z) * rotationSpring -
       (entranceAngularVelocity.z - flowMotionTargetAngularVelocity.z) *
-        FLOW_ROTATION_DAMPING
+        rotationDamping
     ) * stepDt;
     activeModel.rotation.x += entranceAngularVelocity.x * stepDt;
     activeModel.rotation.y += entranceAngularVelocity.y * stepDt;
     activeModel.rotation.z += entranceAngularVelocity.z * stepDt;
 
     entranceScaleVelocity += (
-      (flowMotionTargetScale - entranceScale) * FLOW_SCALE_SPRING -
-      entranceScaleVelocity * FLOW_SCALE_DAMPING
+      (flowMotionTargetScale - entranceScale) * scaleSpring -
+      entranceScaleVelocity * scaleDamping
     ) * stepDt;
     entranceScale += entranceScaleVelocity * stepDt;
     activeModel.scale.setScalar(entranceScale);
     remainingDt -= stepDt;
   }
 
+  const positionToleranceSquared = settlingControllerEntrance ? 0.000025 : 0.00015;
+  const velocityToleranceSquared = settlingControllerEntrance ? 0.0016 : 0.0064;
+  const rotationTolerance = settlingControllerEntrance ? 0.003 : 0.008;
+  const angularVelocityTolerance = settlingControllerEntrance ? 0.025 : 0.06;
+  const scaleTolerance = settlingControllerEntrance ? 0.001 : 0.0025;
+  const scaleVelocityTolerance = settlingControllerEntrance ? 0.01 : 0.02;
   const positionSettled = activeModel.position.distanceToSquared(flowMotionTargetPosition) <
-      0.00015 &&
-    entranceVelocity.lengthSq() < 0.0064;
-  const rotationSettled = Math.abs(activeModel.rotation.x - flowMotionTargetRotation.x) < 0.008 &&
-    Math.abs(activeModel.rotation.y - flowMotionTargetRotation.y) < 0.008 &&
-    Math.abs(activeModel.rotation.z - flowMotionTargetRotation.z) < 0.008 &&
-    Math.abs(entranceAngularVelocity.x - flowMotionTargetAngularVelocity.x) < 0.06 &&
-    Math.abs(entranceAngularVelocity.y - flowMotionTargetAngularVelocity.y) < 0.06 &&
-    Math.abs(entranceAngularVelocity.z - flowMotionTargetAngularVelocity.z) < 0.06;
+      positionToleranceSquared &&
+    entranceVelocity.lengthSq() < velocityToleranceSquared;
+  const rotationSettled =
+    Math.abs(activeModel.rotation.x - flowMotionTargetRotation.x) < rotationTolerance &&
+    Math.abs(activeModel.rotation.y - flowMotionTargetRotation.y) < rotationTolerance &&
+    Math.abs(activeModel.rotation.z - flowMotionTargetRotation.z) < rotationTolerance &&
+    Math.abs(entranceAngularVelocity.x - flowMotionTargetAngularVelocity.x) <
+      angularVelocityTolerance &&
+    Math.abs(entranceAngularVelocity.y - flowMotionTargetAngularVelocity.y) <
+      angularVelocityTolerance &&
+    Math.abs(entranceAngularVelocity.z - flowMotionTargetAngularVelocity.z) <
+      angularVelocityTolerance;
   const scaleSettled = Math.abs(entranceScale - flowMotionTargetScale) <
-      flowMotionTargetScale * 0.0025 &&
-    Math.abs(entranceScaleVelocity) < flowMotionTargetScale * 0.02;
+      flowMotionTargetScale * scaleTolerance &&
+    Math.abs(entranceScaleVelocity) < flowMotionTargetScale * scaleVelocityTolerance;
   return positionSettled && rotationSettled && scaleSettled;
 }
 
@@ -1669,7 +1794,9 @@ function renderFlow(now) {
         );
         if (cartridgeAtRest) {
           if (!modelRestedAt) modelRestedAt = now;
-          const settleDelay = reducedMotion ? 0 : 140;
+          const settleDelay = reducedMotion
+            ? 0
+            : activeModelKind === 'cartridge' ? 70 : 140;
           if (now - modelRestedAt >= settleDelay) {
             overlay?.classList.add('is-model-settled');
           }

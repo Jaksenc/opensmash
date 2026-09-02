@@ -2,15 +2,21 @@
 // fire, captions, and interaction stay code-rendered; only the twelve native
 // character portraits are layered into the cells as transparent cutouts.
 
+import {
+  rosterGridDimensions,
+  rosterReserveHeight,
+} from '../shared/roster-layout.js';
+// Character-select name font: the tan 7 px captions baked into the decomp's
+// portrait tiles, rebuilt as a bitmap font with the original spacing rules
+// (see tools/cssfont and font-playground.html).
+import {
+  SSB_NAME_FONT,
+  layoutText as layoutNameFont,
+  renderIA as renderNameFontIA,
+  toImageData as nameFontImageData,
+} from '../src/fonts/ssb-name-font.js';
+
 const BUILD_ASSETS = {
-  ...import.meta.glob([
-    './assets/ui_refs/tile_*.png',
-    './assets/ui_refs/tileglyph_*.png',
-  ], {
-    eager: true,
-    query: '?url',
-    import: 'default',
-  }),
   ...import.meta.glob([
     './assets/charselect/mario.png',
     './assets/charselect/fox.png',
@@ -50,8 +56,9 @@ const RULE = 2;
 // Shared menu cells use the same compressed height as the former control strip.
 const FLAME_BRIDGE_HEIGHT_SCALE = 47 / 552;
 const GRID_COLUMN_BREAKPOINTS = Object.freeze([
+  { minWidth: 800, columns: 8 },
   { minWidth: 640, columns: 6 },
-  { minWidth: 0, columns: 3 }
+  { minWidth: 0, columns: 4 }
 ]);
 const RASTER_SCALE = 2;
 // Placeholder portraits already carry their native roster captions. Keep the
@@ -72,48 +79,7 @@ const FIRE_RGBA5551 = 'eIeRh5mFqkXDQ9QBzIXcydTJ1IfUQcvBw8HLgcNBw0HCwbsBw0HLwdRB1
 // these same native pixels, so arbitrary names use the identical face, outline,
 // tracking, fitting, and browser-capture path as the original roster names.
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-const CAPTION_CAP = 7;
-const CAPTION_FACE = Object.freeze([146, 139, 114, 255]);
-const CAPTION_EDGE = Object.freeze([94, 90, 74, 255]);
-const CAPTION_OUTLINE = Object.freeze([42, 40, 33, 255]);
-const CAPTION_FALLBACK_ROWS = Object.freeze({
-  "A": ["..#..", ".#.#.", "#...#", "#####", "#...#", "#...#", "#...#"],
-  "B": ["####.", "#...#", "#...#", "####.", "#...#", "#...#", "####."],
-  "C": [".###.", "#...#", "#....", "#....", "#....", "#...#", ".###."],
-  "D": ["####.", "#...#", "#...#", "#...#", "#...#", "#...#", "####."],
-  "E": ["####", "#...", "#...", "###.", "#...", "#...", "####"],
-  "F": ["####", "#...", "#...", "###.", "#...", "#...", "#..."],
-  "G": [".###.", "#...#", "#....", "#.###", "#...#", "#...#", ".###."],
-  "H": ["#...#", "#...#", "#...#", "#####", "#...#", "#...#", "#...#"],
-  "I": ["#", "#", "#", "#", "#", "#", "#"],
-  "J": ["...#", "...#", "...#", "...#", "...#", "#..#", ".##."],
-  "K": ["#...#", "#..#.", "#.#..", "##...", "#.#..", "#..#.", "#...#"],
-  "L": ["#...", "#...", "#...", "#...", "#...", "#...", "####"],
-  "M": ["#.....#", "##...##", "#.#.#.#", "#..#..#", "#.....#", "#.....#", "#.....#"],
-  "N": ["#....#", "##...#", "#.#..#", "#..#.#", "#...##", "#....#", "#....#"],
-  "O": [".###.", "#...#", "#...#", "#...#", "#...#", "#...#", ".###."],
-  "P": ["####.", "#...#", "#...#", "####.", "#....", "#....", "#...."],
-  "Q": [".###.", "#...#", "#...#", "#...#", "#.#.#", "#..#.", ".##.#"],
-  "R": ["####.", "#...#", "#...#", "####.", "#.#..", "#..#.", "#...#"],
-  "S": [".###", "#...", "#...", ".##.", "...#", "...#", "###."],
-  "T": ["#####", "..#..", "..#..", "..#..", "..#..", "..#..", "..#.."],
-  "U": ["#...#", "#...#", "#...#", "#...#", "#...#", "#...#", ".###."],
-  "V": ["#...#", "#...#", "#...#", "#...#", ".#.#.", ".#.#.", "..#.."],
-  "W": ["#.....#", "#.....#", "#.....#", "#..#..#", "#.#.#.#", "##...##", "#.....#"],
-  "X": ["#...#", ".#.#.", "..#..", "..#..", "..#..", ".#.#.", "#...#"],
-  "Y": ["#...#", ".#.#.", "..#..", "..#..", "..#..", "..#..", "..#.."],
-  "Z": ["####", "...#", "..#.", "..#.", ".#..", "#...", "####"]
-});
-const CAPTION_PATCH_CUTS = Object.freeze({
-  A: ['mario', 11, 17], B: ['kirby', 18, 23], C: ['captain', 3, 8],
-  D: ['dk', 5, 12], E: ['ness', 10, 16], F: ['fox', 4, 9],
-  G: ['purin', 9, 14], H: ['yoshi', 23, 29], I: ['link', 9, 12],
-  J: ['purin', 3, 7], K: ['dk', 12, 19], L: ['link', 4, 9],
-  M: ['mario', 4, 11], N: ['ness', 4, 10], O: ['fox', 9, 16],
-  P: ['pikachu', 4, 9], R: ['mario', 17, 23], S: ['yoshi', 17, 23],
-  U: ['pikachu', 36, 42], X: ['fox', 17, 25], Y: ['yoshi', 4, 10]
-});
-const CAPTION_KERNING = Object.freeze({ KI: -1 });
+const CAPTION_CHARS = /[^A-Z. ]/g;
 const RANDOM_NAME_POOL = Object.freeze([
   'ALEX', 'AMIR', 'ANNA', 'ARIA', 'ASH', 'AVA', 'BEAU', 'BEN',
   'BLAKE', 'CARA', 'CHLOE', 'COLE', 'DARA', 'DEV', 'ELI', 'ELLA',
@@ -241,15 +207,6 @@ function drawFire(dst) {
   }
 }
 
-function fallbackGlyph(char) {
-  const rows = CAPTION_FALLBACK_ROWS[char];
-  const width = rows[0].length;
-  const pixels = new Uint8ClampedArray(width * 10 * 4);
-  rows.forEach((row, y) => [...row].forEach((cell, x) => {
-    if (cell === '#') put(pixels, width, x, y + 3, ...CAPTION_FACE);
-  }));
-  return Object.freeze({ char, width, height: 10, advance: width + 1, pixels, extracted: false });
-}
 
 const CAPTION_SOURCE_IMAGES = new Map();
 
@@ -275,78 +232,23 @@ async function loadCaptionImage(url) {
   return CAPTION_SOURCE_IMAGES.get(url);
 }
 
-function cropCaptionPixels(source, x0, x1, exactSourceColors) {
-  const height = 10;
-  const cutWidth = x1 - x0;
-  const cut = new Uint8ClampedArray(cutWidth * height * 4);
-  for (let y = 0; y < height; y++) for (let x = 0; x < cutWidth; x++) {
-    const sourceIndex = (y * source.width + x + x0) * 4;
-    const r = source.pixels[sourceIndex];
-    const g = source.pixels[sourceIndex + 1];
-    const b = source.pixels[sourceIndex + 2];
-    const a = source.pixels[sourceIndex + 3];
-    const isCaptionPixel = exactSourceColors
-      ? a > 0 && r >= 15 && r <= 150 && Math.abs(r - g) <= 15 && g >= b && g - b <= 35
-      : a > 0;
-    if (!isCaptionPixel) continue;
-    const target = (y * cutWidth + x) * 4;
-    cut[target] = r;
-    cut[target + 1] = g;
-    cut[target + 2] = b;
-    cut[target + 3] = 255;
-  }
-  let left = cutWidth, right = 0;
-  for (let y = 0; y < height; y++) for (let x = 0; x < cutWidth; x++) {
-    if (!cut[(y * cutWidth + x) * 4 + 3]) continue;
-    left = Math.min(left, x);
-    right = Math.max(right, x + 1);
-  }
-  const width = Math.max(1, right - left);
-  const pixels = new Uint8ClampedArray(width * height * 4);
-  for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) {
-    const sourceIndex = (y * cutWidth + x + left) * 4;
-    pixels.set(cut.subarray(sourceIndex, sourceIndex + 4), (y * width + x) * 4);
-  }
-  return Object.freeze({ width, height, advance: cutWidth, pixels });
-}
 
-async function loadExtractedGlyph(char) {
-  const patch = CAPTION_PATCH_CUTS[char];
-  if (patch) {
-    const [sourceName, x0, x1] = patch;
-    const source = await loadCaptionImage(buildAssetUrl(`ui_refs/tile_${sourceName}.png`));
-    return Object.freeze({
-      char,
-      ...cropCaptionPixels(source, x0, x1, true),
-      extracted: true
-    });
-  }
-  const image = new Image();
-  image.decoding = 'async';
-  image.src = buildAssetUrl(`ui_refs/tileglyph_${char.charCodeAt(0)}.png`);
-  await image.decode();
-  const canvas = document.createElement('canvas');
-  canvas.width = image.naturalWidth;
-  canvas.height = image.naturalHeight;
-  const context = canvas.getContext('2d', { willReadFrequently: true });
-  context.drawImage(image, 0, 0);
-  const source = Object.freeze({
-    width: canvas.width,
-    height: canvas.height,
-    pixels: context.getImageData(0, 0, canvas.width, canvas.height).data
-  });
-  const fallback = cropCaptionPixels(source, 0, source.width, false);
-  const outlined = addCaptionOutline(fallback.pixels, fallback.width, fallback.height);
-  return Object.freeze({ char, ...outlined, advance: outlined.width, extracted: true });
-}
-
-const CAPTION_GLYPHS = new Map(await Promise.all([...ALPHABET].map(async char => {
-  try {
-    return [char, await loadExtractedGlyph(char)];
-  } catch {
-    return [char, fallbackGlyph(char)];
-  }
-})));
+// One entry per letter (plus '.'), as RGBA tiles in cell coordinates: the
+// glyph box (outline row, 7 face rows, outline row) sits at rows 2..10 like
+// the baked captions, so existing consumers see the same geometry.
+const CAPTION_GLYPHS = new Map([...ALPHABET, '.'].map(char => {
+  const glyph = SSB_NAME_FONT.glyphs[char];
+  const r = renderNameFontIA(char, { exact: false });
+  const image = nameFontImageData(r);
+  const top = SSB_NAME_FONT.faceRow - r.originY;
+  const height = top + r.height;
+  const pixels = new Uint8ClampedArray(r.width * height * 4);
+  pixels.set(image.data, top * r.width * 4);
+  return [char, Object.freeze({
+    char, width: r.width, height, advance: glyph.faceW + SSB_NAME_FONT.defaultGap,
+    originX: r.originX, pixels, extracted: !glyph.synth, synth: !!glyph.synth
+  })];
+}));
 
 function cutOutPortrait(source, sourceLabel) {
   const bakedCaption = renderCaption(sourceLabel);
@@ -445,200 +347,67 @@ await Promise.all(LIVE_ROSTER.map(async character => {
   }
 }));
 
-function padExtractedGlyph(char, glyph, left = 0, right = 0) {
-  const width = glyph.width + left + right;
-  const pixels = new Uint8ClampedArray(width * glyph.height * 4);
-  for (let y = 0; y < glyph.height; y++) for (let x = 0; x < glyph.width; x++) {
-    const source = (y * glyph.width + x) * 4;
-    pixels.set(glyph.pixels.subarray(source, source + 4), (y * width + x + left) * 4);
-  }
-  return Object.freeze({
-    char, width, height: glyph.height, advance: glyph.advance ?? glyph.width,
-    pixels, extracted: true
-  });
-}
 
-function cropExtractedGlyph(char, glyph, x0, x1) {
-  const width = Math.max(1, x1 - x0);
-  const pixels = new Uint8ClampedArray(width * glyph.height * 4);
-  for (let y = 0; y < glyph.height; y++) for (let x = 0; x < width; x++) {
-    const source = (y * glyph.width + x + x0) * 4;
-    pixels.set(glyph.pixels.subarray(source, source + 4), (y * width + x) * 4);
-  }
-  return Object.freeze({
-    char, width, height: glyph.height, advance: glyph.advance ?? glyph.width,
-    pixels, extracted: true
-  });
-}
 
-function synthesizeExtractedT() {
-  const top = CAPTION_GLYPHS.get('F');
-  const stem = CAPTION_GLYPHS.get('I');
-  const width = top.width;
-  const height = Math.max(top.height, stem.height);
-  const pixels = new Uint8ClampedArray(width * height * 4);
-  // Copy only F's actual top bar. Earlier versions copied a rectangular band,
-  // which preserved a dark horizontal fragment inside the T.
-  const topY = 3;
-  for (let x = 0; x < top.width; x++) {
-    const source = (topY * top.width + x) * 4;
-    if (top.pixels[source + 3]) {
-      pixels.set(top.pixels.subarray(source, source + 4), (topY * width + x) * 4);
-    }
-  }
-  // Use only I's brightest face sample in each row. Its dim side sample is
-  // appropriate on a freestanding I, but reads as a dark bar inside T.
-  const stemX = Math.floor(width / 2);
-  for (let y = topY; y < stem.height; y++) {
-    let brightest = -1;
-    let brightestValue = -1;
-    for (let x = 0; x < stem.width; x++) {
-      const source = (y * stem.width + x) * 4;
-      if (!stem.pixels[source + 3]) continue;
-      const value = stem.pixels[source] + stem.pixels[source + 1] + stem.pixels[source + 2];
-      if (value > brightestValue) { brightest = source; brightestValue = value; }
-    }
-    if (brightest >= 0) {
-      const target = (y * width + stemX) * 4;
-      pixels.set(stem.pixels.subarray(brightest, brightest + 4), target);
-    }
-  }
-  return Object.freeze({
-    char: 'T', width, height, advance: top.advance ?? width,
-    pixels, extracted: true
-  });
-}
 
-function synthesizeExtractedQ() {
-  const bowl = CAPTION_GLYPHS.get('O');
-  const width = bowl.width + 1;
-  const pixels = new Uint8ClampedArray(width * bowl.height * 4);
-  for (let y = 0; y < bowl.height; y++) for (let x = 0; x < bowl.width; x++) {
-    const source = (y * bowl.width + x) * 4;
-    pixels.set(bowl.pixels.subarray(source, source + 4), (y * width + x) * 4);
+
+
+function layoutCaption(text, tracking = 0) {
+  const layout = layoutNameFont(text, { exact: false, tracking });
+  if (!layout.glyphs.length) return { glyphs: [], width: 0, left: 0 };
+  let left = Infinity, right = -Infinity;
+  for (const { id, x } of layout.glyphs) {
+    const glyph = SSB_NAME_FONT.glyphs[id];
+    left = Math.min(left, x + glyph.ox);
+    right = Math.max(right, x + glyph.ox + glyph.w);
   }
-  // A one-texel diagonal tail keeps Q the same bowl weight as O.
-  put(pixels, width, bowl.width - 2, 8, ...CAPTION_FACE);
-  put(pixels, width, bowl.width - 1, 9, ...CAPTION_FACE);
-  put(pixels, width, bowl.width, 9, ...CAPTION_EDGE);
-  return Object.freeze({
-    char: 'Q', width, height: bowl.height, advance: (bowl.advance ?? bowl.width) + 1,
-    pixels, extracted: true
-  });
+  // width measured from the first face origin (cell column 4) to the last
+  // glyph's outline edge — the extent that has to fit inside the cell.
+  return { glyphs: layout.glyphs, width: right, left };
 }
-
-function synthesizeExtractedZ() {
-  const rows = CAPTION_FALLBACK_ROWS.Z;
-  const width = rows[0].length + 1;
-  const height = 10;
-  const pixels = new Uint8ClampedArray(width * height * 4);
-  rows.forEach((row, rowIndex) => [...row].forEach((cell, x) => {
-    if (cell !== '#') return;
-    const y = rowIndex + 3;
-    put(pixels, width, x, y, ...CAPTION_FACE);
-    if (x + 1 < width && row[x + 1] !== '#') {
-      put(pixels, width, x + 1, y, ...CAPTION_EDGE);
-    }
-  }));
-  return Object.freeze({ char: 'Z', width, height, advance: width, pixels, extracted: true });
-}
-
-// Preserve a transparent right side-bearing so browser reduction cannot crop
-// the open C endpoints or L foot. Remove MARIO's borrowed lower-left R column.
-CAPTION_GLYPHS.set('C', padExtractedGlyph('C', CAPTION_GLYPHS.get('C'), 0, 1));
-CAPTION_GLYPHS.set('L', padExtractedGlyph('L', CAPTION_GLYPHS.get('L'), 0, 1));
-CAPTION_GLYPHS.set('R', cropExtractedGlyph('R', CAPTION_GLYPHS.get('R'), 1, CAPTION_GLYPHS.get('R').width));
-CAPTION_GLYPHS.set('T', synthesizeExtractedT());
-CAPTION_GLYPHS.set('Q', synthesizeExtractedQ());
-CAPTION_GLYPHS.set('Z', synthesizeExtractedZ());
 
 function measureCaption(text, tracking = 0) {
-  const chars = [...text].filter(char => CAPTION_GLYPHS.has(char));
-  if (!chars.length) return 0;
-  let width = 0;
-  chars.forEach((char, index) => {
-    const glyph = CAPTION_GLYPHS.get(char);
-    width += glyph.advance ?? glyph.width;
-    if (index < chars.length - 1) {
-      width += tracking + (CAPTION_KERNING[char + chars[index + 1]] || 0);
-    }
-  });
-  return width;
+  return layoutCaption(text, tracking).width;
 }
 
 function fitCaption(value, maxWidth = CELL_W - 5) {
-  let text = String(value).toUpperCase().replace(/[^A-Z]/g, '');
+  let text = String(value).toUpperCase().replace(CAPTION_CHARS, '').trim();
   for (const tracking of [0, -1]) {
     const width = measureCaption(text, tracking);
     if (width <= maxWidth) return Object.freeze({ text, tracking, width: Math.max(1, width) });
   }
-  while (text && measureCaption(text, -1) > maxWidth) text = text.slice(0, -1);
+  while (text && measureCaption(text, -1) > maxWidth) text = text.slice(0, -1).trim();
   return Object.freeze({ text, tracking: -1, width: Math.max(1, measureCaption(text, -1)) });
 }
 
-function drawGlyph(dst, dstWidth, glyph, originX, originY) {
-  for (let y = 0; y < glyph.height; y++) for (let x = 0; x < glyph.width; x++) {
-    const source = (y * glyph.width + x) * 4;
-    put(
-      dst, dstWidth, originX + x, originY + y,
-      glyph.pixels[source], glyph.pixels[source + 1],
-      glyph.pixels[source + 2], glyph.pixels[source + 3]
-    );
-  }
-}
 
-function addCaptionOutline(facePixels, faceWidth, faceHeight) {
-  const width = faceWidth + 2;
-  const height = faceHeight + 1;
-  const pixels = new Uint8ClampedArray(width * height * 4);
-  const faceCells = [];
-  for (let y = 0; y < faceHeight; y++) for (let x = 0; x < faceWidth; x++) {
-    const source = (y * faceWidth + x) * 4;
-    if (facePixels[source + 3] > 0) faceCells.push([x + 1, y, source]);
-  }
-  for (const [x, y] of faceCells) {
-    for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) {
-      if (dx || dy) put(pixels, width, x + dx, y + dy, ...CAPTION_OUTLINE);
-    }
-  }
-  for (const [x, y] of faceCells) {
-    for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) {
-      put(pixels, width, x + dx, y + dy, ...CAPTION_EDGE);
-    }
-  }
-  for (const [x, y, source] of faceCells) {
-    put(
-      pixels, width, x, y,
-      facePixels[source], facePixels[source + 1],
-      facePixels[source + 2], facePixels[source + 3]
-    );
-  }
-  return Object.freeze({ width, height, pixels });
-}
 
 function renderCaption(value, maxWidth = CELL_W - 5) {
   const layout = fitCaption(value, maxWidth);
-  const height = Math.max(10, ...[...layout.text].map(char => CAPTION_GLYPHS.get(char)?.height || 0));
-  const pixels = new Uint8ClampedArray(layout.width * height * 4);
-  let x = 0;
-  const chars = [...layout.text];
-  chars.forEach((char, index) => {
-    const glyph = CAPTION_GLYPHS.get(char);
-    if (!glyph) return;
-    drawGlyph(pixels, layout.width, glyph, x, 0);
-    x += glyph.advance ?? glyph.width;
-    if (index < chars.length - 1) {
-      x += layout.tracking + (CAPTION_KERNING[char + chars[index + 1]] || 0);
+  const r = renderNameFontIA(layout.text, { exact: false, tracking: layout.tracking });
+  // Cell-space bitmap: x=0 is the first face origin (cell column 4), y=0 the
+  // cell's top row; the font's left outline margin lands at negative x and is
+  // clipped by put(), matching how the baked tiles sit against the frame.
+  const top = SSB_NAME_FONT.faceRow - r.originY;
+  const height = Math.max(10, top + r.height);
+  const pixels = new Uint8ClampedArray(Math.max(1, layout.width) * height * 4);
+  if (r.width) {
+    const image = nameFontImageData(r);
+    for (let y = 0; y < r.height; y++) for (let x = 0; x < r.width; x++) {
+      const source = (y * r.width + x) * 4;
+      put(
+        pixels, Math.max(1, layout.width), x - r.originX, y + top,
+        image.data[source], image.data[source + 1], image.data[source + 2], image.data[source + 3]
+      );
     }
-  });
+  }
   return Object.freeze({ ...layout, height, pixels });
 }
 
 function drawLabel(dst, value, opacity = 1) {
   const caption = renderCaption(value);
   if (!caption.text) return;
-  // These source cuts retain the character-select tile's native top margin
-  // and complete baked edge intensities. The first sampled pixel begins at x=4.
+  // The baked tile captions start their first face column at x=4, y=3.
   const originX = 4;
   const originY = 0;
   for (let y = 0; y < caption.height; y++) for (let x = 0; x < caption.width; x++) {
@@ -1165,18 +934,15 @@ function paintSiteMenuRule() {
 }
 
 function columnsForContainer() {
-  const containerWidth = introVideoFrame?.clientWidth
-    || arenaSurface?.clientWidth
-    || window.innerWidth;
-  return GRID_COLUMN_BREAKPOINTS.find(({ minWidth }) => containerWidth >= minWidth).columns;
+  // The arena is square and capped by viewport height, so using its rendered
+  // width keeps wide laptop windows stuck at six columns. Break the roster by
+  // page width instead; the cells still scale to the arena once laid out.
+  return GRID_COLUMN_BREAKPOINTS.find(({ minWidth }) => window.innerWidth >= minWidth).columns;
 }
 
 function reserveRosterFootprint(layout) {
   const renderedWidth = arenaSurface.clientWidth || window.innerWidth;
-  const reserveHeight = Math.max(
-    0,
-    (layout.reservedHeight - layout.height) * renderedWidth / layout.width
-  );
+  const reserveHeight = rosterReserveHeight(layout, renderedWidth);
   arenaShell.style.setProperty('--roster-layout-reserve', `${reserveHeight}px`);
 }
 
@@ -1194,20 +960,32 @@ function visibleCellsInDisplayOrder() {
 function applyGridLayout(columns = columnsForContainer()) {
   const visibleCells = visibleCellsInDisplayOrder();
   const visibleSignature = visibleCells.map(button => button.dataset.character).join(',');
+  // Job cells arrive after the static roster. Keep the unfiltered footprint in
+  // the cache key so a job sync cannot leave a filtered layout using a stale
+  // reserve merely because none of the new cells match the current query.
+  const reservedCellCount = cells.size;
   if (currentGridLayout?.columns === columns &&
-      currentGridLayout.visibleSignature === visibleSignature) {
+      currentGridLayout.visibleSignature === visibleSignature &&
+      currentGridLayout.reservedCellCount === reservedCellCount) {
     reserveRosterFootprint(currentGridLayout);
     return currentGridLayout;
   }
 
-  const rows = Math.max(1, Math.ceil(visibleCells.length / columns));
-  const width = RULE + columns * (CELL_W + RULE);
-  const height = RULE + rows * (CELL_H + RULE);
-  const reservedRows = Math.ceil(CELL_COUNT / columns);
-  const reservedHeight = RULE + reservedRows * (CELL_H + RULE);
+  const { rows, width, height } = rosterGridDimensions(visibleCells.length, columns, {
+    cellWidth: CELL_W,
+    cellHeight: CELL_H,
+    rule: RULE,
+  });
+  const reservedLayout = rosterGridDimensions(reservedCellCount, columns, {
+    cellWidth: CELL_W,
+    cellHeight: CELL_H,
+    rule: RULE,
+  });
+  const reservedRows = reservedLayout.rows;
+  const reservedHeight = reservedLayout.height;
   currentGridLayout = Object.freeze({
     columns, rows, width, height,
-    reservedRows, reservedHeight,
+    reservedCellCount, reservedRows, reservedHeight,
     visibleCount: visibleCells.length,
     visibleSignature
   });
@@ -1215,10 +993,13 @@ function applyGridLayout(columns = columnsForContainer()) {
   arenaShell.style.setProperty(
     '--shared-rule-overlap', `${100 * RULE / width}%`
   );
-  arenaSurface.style.aspectRatio = `${width} / ${height}`;
   // Filtering compacts the visible tiles, but keep the roster's original page
   // footprint so a focused search field does not trigger scroll anchoring.
+  // Apply the reserve before contracting the surface: reserveRosterFootprint()
+  // reads clientWidth and therefore forces layout. Reversing these assignments
+  // briefly makes sparse searches shorter than the viewport and clamps scrollY.
   reserveRosterFootprint(currentGridLayout);
+  arenaSurface.style.aspectRatio = `${width} / ${height}`;
   grid.setAttribute('aria-colcount', String(columns));
   grid.setAttribute('aria-rowcount', String(rows));
 
@@ -1270,6 +1051,12 @@ window.addEventListener('resize', syncLayoutToVideoWidth);
 const fighterSearch = document.getElementById('fighter-search');
 const fighterEmptyState = document.getElementById('fighter-empty-state');
 const searchCell = [...cells.values()].find(button => button.dataset.kind === 'search');
+let pendingSearchSelection = null;
+
+function selectableRosterCell(target) {
+  const cell = target?.closest?.('.replica-cell');
+  return cell?.hasAttribute('aria-pressed') && !cell.hidden ? cell : null;
+}
 
 function updateSearchTile(query = '') {
   if (!searchCell) return;
@@ -1330,34 +1117,61 @@ function filterRoster(query = '') {
 }
 
 fighterSearch?.addEventListener('input', event => filterRoster(event.currentTarget.value));
-searchCell?.addEventListener('pointerdown', event => {
-  // Focus the embedded input before the browser's pointer default runs. The
-  // later click handler is too late to prevent focus-driven page scrolling.
+grid.addEventListener('pointerdown', event => {
   if (!event.isPrimary || event.button !== 0) return;
+  pendingSearchSelection = document.activeElement === fighterSearch
+    ? selectableRosterCell(event.target)
+    : null;
+}, { capture: true });
+searchCell?.addEventListener('pointerdown', event => {
+  // Mouse users expect the field to focus as soon as they press. Touch input
+  // waits for click so a scroll gesture that begins here does not activate it.
+  if (!event.isPrimary || event.button !== 0 || event.pointerType !== 'mouse') return;
   fighterSearch?.focus({ preventScroll: true });
 });
 fighterSearch?.addEventListener('focus', event => filterRoster(event.currentTarget.value));
-fighterSearch?.addEventListener('blur', () => {
-  // Wait until the pending click has landed before restoring the full grid, so
-  // a filtered fighter cannot move out from under the pointer mid-selection.
+fighterSearch?.addEventListener('blur', event => {
+  // Pointer-down blurs the input before click selects the fighter. Keep the
+  // filtered layout stable until that click lands, or it can land on empty
+  // space after the full roster is restored.
+  if (pendingSearchSelection || selectableRosterCell(event.relatedTarget)) return;
   window.setTimeout(() => {
     if (document.activeElement !== fighterSearch) clearFighterSearch();
   }, 0);
 });
+window.addEventListener('pointerup', event => {
+  if (!pendingSearchSelection) return;
+  if (selectableRosterCell(event.target) !== pendingSearchSelection) {
+    pendingSearchSelection = null;
+    if (document.activeElement !== fighterSearch) clearFighterSearch();
+  }
+});
+window.addEventListener('pointercancel', () => {
+  pendingSearchSelection = null;
+  if (document.activeElement !== fighterSearch) clearFighterSearch();
+});
+document.addEventListener('click', event => {
+  if (searchCell?.contains(event.target)) return;
+  pendingSearchSelection = null;
+  clearFighterSearch();
+});
 fighterSearch?.addEventListener('keydown', event => {
   if (event.key !== 'Escape') return;
   event.preventDefault();
-  fighterSearch.value = '';
-  filterRoster('');
-  fighterSearch.blur();
+  clearFighterSearch();
 });
 
 function clearFighterSearch() {
   if (!fighterSearch) return;
-  if (!fighterSearch.value && document.activeElement !== fighterSearch) return;
+  const searchTileStillActive = searchCell?.classList.contains('is-searching');
+  if (!fighterSearch.value &&
+      document.activeElement !== fighterSearch &&
+      !searchTileStillActive) return;
   fighterSearch.value = '';
-  filterRoster('');
   fighterSearch.blur();
+  // Paint after blur so the custom pixel caret and dimmed SEARCH label reflect
+  // the input's final focus state instead of preserving the focused frame.
+  filterRoster('');
 }
 
 function getCell(name) {
@@ -1544,6 +1358,7 @@ function select(name) {
 function requestSelection(name) {
   const selected = name == null ? null : getCell(name);
   if (selected) {
+    pendingSearchSelection = null;
     clearFighterSearch();
     grid.dispatchEvent(new CustomEvent('characterselect', {
       bubbles: true,
