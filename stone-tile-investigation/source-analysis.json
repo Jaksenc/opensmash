@@ -1,5 +1,5 @@
 {
-  "source_archive": "BattleShip/build-wasm/BattleShip.o2r",
+  "source_archive": "BattleShip/BattleShip.o2r",
   "source_resource": "reloc_menus/MNSelectCommon",
   "sprite_name": "StoneBackground",
   "width": 64,
