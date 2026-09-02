@@ -125,12 +125,10 @@ export default function RetroHome({
   launchFlowOpen,
   onAboutChange,
   onAdvanced,
-  onCloseGame,
   onCreate,
   onFullscreen,
   onResetRom,
   onSignOut,
-  onSound,
   pageError,
   ready,
   soundOn,
@@ -139,7 +137,6 @@ export default function RetroHome({
   const aboutCancelRef = useRef(null);
   const introVideoRef = useRef(null);
   const moreMenuRef = useRef(null);
-  const [introVideoPlaying, setIntroVideoPlaying] = useState(false);
   const [mobileLayout, setMobileLayout] = useState(() => (
     mobileControlsRequested() || window.matchMedia(MOBILE_CONTROLS_MEDIA).matches
   ));
@@ -260,28 +257,6 @@ export default function RetroHome({
     onResetRom();
   }
 
-  function toggleSurfacePower() {
-    const video = introVideoRef.current;
-    if (engine) {
-      onCloseGame();
-      if (video) {
-        video.currentTime = 0;
-        video.play().catch((error) => window.openSmashReactBridge?.reportError?.(error));
-      }
-      return;
-    }
-    if (!video) return;
-    if (video.paused) {
-      video.play().catch((error) => window.openSmashReactBridge?.reportError?.(error));
-    } else {
-      video.pause();
-    }
-  }
-
-  const powerLabel = engine
-    ? "Power off game"
-    : introVideoPlaying ? "Pause intro video" : "Play intro video";
-
   return (
     <>
       {pageError && <p className="retro-page-error" role="alert">{pageError}</p>}
@@ -331,12 +306,12 @@ export default function RetroHome({
             >
               Controls
             </button>
-            <button className={`retro-site-link retro-site-advanced-button ${advancedActive ? "is-active" : ""}`} type="button" aria-haspopup="dialog" onClick={onAdvanced}>Advanced</button>
+            <button className={`retro-site-link retro-site-advanced-button ${advancedActive ? "is-active" : ""}`} type="button" aria-haspopup="dialog" onClick={onAdvanced}>Settings</button>
             <details className="retro-site-more" ref={moreMenuRef}>
               <summary className="retro-site-link">More</summary>
               <div className="retro-site-more-menu" role="menu">
                 <button className="retro-site-link" type="button" role="menuitem" onClick={openControlsFromMore}>Controls</button>
-                <button className={`retro-site-link ${advancedActive ? "is-active" : ""}`} type="button" role="menuitem" onClick={openAdvancedFromMore}>Advanced</button>
+                <button className={`retro-site-link ${advancedActive ? "is-active" : ""}`} type="button" role="menuitem" onClick={openAdvancedFromMore}>Settings</button>
                 {developmentMode && authorized && (
                   <button className="retro-site-link retro-site-dev-link" type="button" role="menuitem" onClick={resetRomFromMore}>Reset ROM</button>
                 )}
@@ -380,76 +355,30 @@ export default function RetroHome({
                 playsInline
                 preload="auto"
                 aria-label="Super Weights Bros intro video"
-                onPlay={() => setIntroVideoPlaying(true)}
-                onPause={() => setIntroVideoPlaying(false)}
               />
               <img className="intro-video-rule-layer" alt="" aria-hidden="true" />
               <iframe ref={engineRef} id="intro-game-frame" className="intro-game-frame" src={engine?.src || "about:blank"} title={engine ? "OpenSmash game engine" : "Super Weights Bros game"} allow="autoplay; gamepad; fullscreen" />
-              <div className="retro-game-tools" role="group" aria-label="Game controls">
-                <button
-                  id="game-close-button"
-                  className="game-overlay-control is-power"
-                  type="button"
-                  aria-label={powerLabel}
-                  aria-pressed={engine ? undefined : introVideoPlaying}
-                  title={powerLabel}
-                  onClick={toggleSurfacePower}
-                >
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M12 2.75v8.5" />
-                    <path d="M7.15 5.55a8 8 0 1 0 9.7 0" />
-                  </svg>
-                </button>
-                <button
-                  className="game-overlay-control is-fullscreen"
-                  type="button"
-                  aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-                  title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-                  onClick={onFullscreen}
-                >
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    {isFullscreen ? (
-                      <>
-                        <path d="M9 3v6H3" />
-                        <path d="M15 3v6h6" />
-                        <path d="M9 21v-6H3" />
-                        <path d="M15 21v-6h6" />
-                      </>
-                    ) : (
-                      <>
-                        <path d="M8 3H3v5" />
-                        <path d="M16 3h5v5" />
-                        <path d="M8 21H3v-5" />
-                        <path d="M16 21h5v-5" />
-                      </>
-                    )}
-                  </svg>
-                </button>
-                <button
-                  className="game-overlay-control is-sound"
-                  type="button"
-                  aria-label={soundOn ? "Mute audio" : "Unmute audio"}
-                  aria-pressed={soundOn}
-                  data-ui-sound-toggle
-                  title={soundOn ? "Mute audio" : "Unmute audio"}
-                  onClick={onSound}
-                >
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M4 9.25h4l5-4v13.5l-5-4H4z" />
-                    {soundOn ? (
-                      <>
-                        <path d="M16 8.25a5 5 0 0 1 0 7.5" />
-                        <path d="M18.75 5.5a8.5 8.5 0 0 1 0 13" />
-                      </>
-                    ) : (
-                      <>
-                        <path d="m16.5 9 5 5" />
-                        <path d="m21.5 9-5 5" />
-                      </>
-                    )}
-                  </svg>
-                </button>
-              </div>
+              <button
+                className="game-fullscreen-control"
+                type="button"
+                aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+                title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+                onClick={onFullscreen}
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  {isFullscreen ? (
+                    <>
+                      <path d="m4 4 6 6m0-5v5H5" />
+                      <path d="m20 20-6-6m0 5v-5h5" />
+                    </>
+                  ) : (
+                    <>
+                      <path d="M10 10 4 4m0 6V4h6" />
+                      <path d="m14 14 6 6m0-6v6h-6" />
+                    </>
+                  )}
+                </svg>
+              </button>
             </div>
             <MobileControls
               active={mobileControlsVisible}

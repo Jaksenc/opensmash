@@ -261,6 +261,37 @@
     transition: width 380ms steps(6, end);
   }
   .fighter-job-cell.is-failed .fighter-job-progress i { background: #8e2319; }
+  .fighter-job-cell.is-failed .replica-texture-layer {
+    filter: grayscale(.72) brightness(.34);
+  }
+  .fighter-job-error {
+    position: absolute;
+    inset: 12% 6% 9%;
+    z-index: 5;
+    display: grid;
+    place-content: center;
+    gap: clamp(2px, .3vw, 4px);
+    padding: 4%;
+    background: rgba(25, 4, 2, .76);
+    color: #ffd3c5;
+    font-family: "Kanit", sans-serif;
+    line-height: 1.05;
+    text-align: center;
+    text-shadow: 0 1px 0 #240300, 1px 0 0 #240300, -1px 0 0 #240300;
+    pointer-events: none;
+  }
+  .fighter-job-error strong {
+    font-size: clamp(7px, 1.08vw, 13px);
+    font-weight: 800;
+    letter-spacing: .035em;
+    text-transform: uppercase;
+  }
+  .fighter-job-error small {
+    color: #f0a38f;
+    font-size: clamp(6px, .7vw, 9px);
+    font-weight: 600;
+    letter-spacing: .025em;
+  }
   @keyframes fighter-job-spin {
     to { transform: translate(-50%, -50%) rotate(1turn); }
   }
@@ -518,6 +549,8 @@
     inset: 0;
     z-index: 1500;
     overflow: visible;
+    overscroll-behavior: none;
+    touch-action: none;
     background: #000;
     color: #fff;
     clip-path: none;

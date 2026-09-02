@@ -90,7 +90,7 @@ export function hasAdvancedOverrides(options) {
 }
 
 // Which device drives each N64 port for a launch, from the controllers the
-// page can currently see plus the player's Advanced choices.
+// page can currently see plus the player's Settings choices.
 export function controllerPlan(options, gamepads = []) {
   return planControllerPorts({ gamepads, ports: normalizeAdvancedOptions(options).ports });
 }

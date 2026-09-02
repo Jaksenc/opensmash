@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { lockPageScroll } from "../shared/page-scroll-lock.js";
 
 const DEFAULT_CLOSE_DURATION = 400;
 const DEFAULT_FOCUS_DELAY = 570;
@@ -42,10 +43,9 @@ export default function ModalPage({
     }
     closingRef.current = false;
     const previousFocus = document.activeElement;
-    const previousOverflow = document.body.style.overflow;
     const revealFrame = window.requestAnimationFrame(() => setIsVisible(true));
     const focusTimer = window.setTimeout(() => initialFocusRef?.current?.focus(), focusDelay);
-    document.body.style.overflow = "hidden";
+    const releasePageScroll = lockPageScroll();
     if (bodyClass) document.body.classList.add(bodyClass);
 
     const closeOnEscape = (event) => {
@@ -57,8 +57,8 @@ export default function ModalPage({
       window.cancelAnimationFrame(revealFrame);
       window.clearTimeout(focusTimer);
       window.clearTimeout(closeTimerRef.current);
-      document.body.style.overflow = previousOverflow;
       if (bodyClass) document.body.classList.remove(bodyClass);
+      releasePageScroll();
       window.removeEventListener("keydown", closeOnEscape);
       if (previousFocus instanceof HTMLElement) previousFocus.focus();
     };

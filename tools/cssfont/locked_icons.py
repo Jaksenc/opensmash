@@ -67,7 +67,7 @@ glass = union(ring(20.0, 19.5, 5.5, STROKE - 0.5), segment(24.3, 23.8, 29.3, 29.
 plus = union(segment(CX, TOP + 3.5, CX, BOT - 3.5, STROKE), segment(CX - 7.5, 21.5, CX + 7.5, 21.5, STROKE))
 
 # overall icon scale about the tile's icon centre (2/3 of the '?' size)
-SCALE = 0.8
+SCALE = 0.74
 ICX, ICY = 22.5, 21.5
 def scaled(f):
     return lambda x, y: f(ICX + (x - ICX) / SCALE, ICY + (y - ICY) / SCALE) * SCALE

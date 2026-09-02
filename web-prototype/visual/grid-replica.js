@@ -9,6 +9,7 @@ import {
   rosterGridDimensions,
   rosterReserveHeight,
 } from '../shared/roster-layout.js';
+import { formatFighterJobCellError } from '../shared/fighter-job-ui.js';
 // Character-select name font: the tan 7 px captions baked into the decomp's
 // portrait tiles, rebuilt as a bitmap font with the original spacing rules
 // (see tools/cssfont and font-playground.html).
@@ -818,6 +819,7 @@ const siteMenuBridge = document.getElementById('site-menu-bridge');
 const siteMenuRuleCanvas = document.querySelector('.site-menu-rule-layer');
 const cells = new Map();
 const jobCells = new Map();
+const jobDetails = new Map();
 
 const advancedFrameCells = [...document.querySelectorAll('.advanced-cell-frame')];
 const advancedFrameCanvases = new Map(advancedFrameCells.map(cell => {
@@ -892,7 +894,7 @@ CELL_IDS.forEach((id, index) => {
     button.append(input);
   }
   const framebuffer = renderCellFramebuffer(
-    isSearch || isCreate ? '' : label,
+    label,
     character.portrait,
     1,
     isSearch
@@ -1107,16 +1109,16 @@ function updateSearchTile(query = '') {
 
   searchCell.classList.toggle('is-searching', active);
   searchCell.style.setProperty('--search-caret-left', `${100 * caretX / CELL_W}%`);
-  // Idle: just the glass. Focused: the glass steps aside and the SEARCH
-  // placeholder (or the typed query) appears at the top; blur swaps back.
-  const showText = active || Boolean(value);
+  // The SEARCH caption (or the typed query) always sits at the top; the glass
+  // shows while idle and steps aside while the box is focused or has text.
+  const showGlass = !active && !value;
   paintCellCanvas(
     searchCell.querySelector('.replica-texture-layer'),
-    showText ? displayLabel : '',
+    displayLabel,
     ACTION_PORTRAITS.search,
     active && !value ? 0.5 : 1,
     ACTION_CELL_BACKGROUND_PIXELS.search,
-    showText ? { static: true } : { static: true, icon: ACTION_ICONS.search }
+    showGlass ? { static: true, icon: ACTION_ICONS.search } : { static: true }
   );
 }
 
@@ -1128,7 +1130,7 @@ function repaintActionCells() {
   if (createCell && !createCell.hidden) {
     paintCellCanvas(
       createCell.querySelector('.replica-texture-layer'),
-      '',
+      'CREATE',
       ACTION_PORTRAITS.create,
       1,
       ACTION_CELL_BACKGROUND_PIXELS.create,
@@ -1372,7 +1374,21 @@ function createJobCell(job) {
   progress.append(fill);
   button.append(progress);
 
+  const failure = document.createElement('span');
+  failure.className = 'fighter-job-error';
+  failure.hidden = true;
+  const failureMessage = document.createElement('strong');
+  const failureHint = document.createElement('small');
+  failureHint.textContent = 'Tap for details';
+  failure.append(failureMessage, failureHint);
+  button.append(failure);
+
   button.addEventListener('click', () => {
+    const currentJob = jobDetails.get(job.id);
+    if (currentJob?.status === 'failed') {
+      APP_BRIDGE?.reportGenerationError?.(currentJob);
+      return;
+    }
     if (button.dataset.kind === 'fighter' || button.dataset.kind === 'creation') {
       requestSelection(button.dataset.rosterCharacter);
     }
@@ -1386,11 +1402,13 @@ function createJobCell(job) {
 async function updateJobCell(job) {
   if (!job?.id) return null;
   const button = jobCells.get(job.id) || createJobCell(job);
+  jobDetails.set(job.id, job);
   const revision = Number(button.dataset.revision || -1);
   if (revision >= (job.revision || 0)) return button;
 
   const active = ['queued', 'running', 'retrying'].includes(job.status);
   const complete = job.status === 'complete' && job.character;
+  const failed = job.status === 'failed';
   const progress = Math.max(0, Math.min(100, Number(job.progress) || 0));
   button.dataset.revision = String(job.revision || 0);
   button.dataset.status = job.status;
@@ -1398,17 +1416,24 @@ async function updateJobCell(job) {
   button.dataset.label = fitCaption(job.character?.short || job.name).text;
   button.dataset.rosterCharacter = job.character?.slug || job.slug;
   button.classList.toggle('is-generating', active);
-  button.classList.toggle('is-failed', job.status === 'failed');
+  button.classList.toggle('is-failed', failed);
   button.querySelector('.fighter-job-spinner').hidden = !active;
   const progressElement = button.querySelector('.fighter-job-progress');
-  progressElement.hidden = complete;
+  progressElement.hidden = complete || failed;
   progressElement.setAttribute('aria-valuenow', String(progress));
   progressElement.setAttribute('aria-label', `${job.name} generation ${progress}% complete`);
   progressElement.querySelector('i').style.width = `${progress}%`;
+  const failureElement = button.querySelector('.fighter-job-error');
+  failureElement.hidden = !failed;
+  failureElement.querySelector('strong').textContent = failed
+    ? formatFighterJobCellError(job)
+    : '';
   button.setAttribute('aria-label', complete
     ? `${job.character.name}, ready to fight`
-    : `${job.name}, ${job.stageLabel || job.status}, ${progress}% complete`);
-  button.setAttribute('aria-disabled', String(!complete));
+    : failed
+      ? `${job.name}, ${formatFighterJobCellError(job)}. Open error details.`
+      : `${job.name}, ${job.stageLabel || job.status}, ${progress}% complete`);
+  button.setAttribute('aria-disabled', String(!complete && !failed));
 
   if (complete) {
     button.dataset.kind = 'creation';
@@ -1458,6 +1483,7 @@ async function syncJobs(jobs = []) {
     if (nextIds.has(jobId)) continue;
     cells.delete(jobCellId(jobId));
     jobCells.delete(jobId);
+    jobDetails.delete(jobId);
     button.remove();
   }
   await Promise.all(renderedJobs.map(updateJobCell));
