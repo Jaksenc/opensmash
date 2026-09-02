@@ -335,11 +335,13 @@ export function engineUrl(action, advancedOptions, gamepads = []) {
   // assets are also omitted by the shell, making vanilla the per-card fallback.
   if (options.bootMode === "full-boot") {
     if (action.trailerIntro) params.set("SSB64_TRAILER_HOLD", "1");
+    if (action.trailerRecording) params.set("SSB64_TRAILER_RECORD", "1");
     action.introConfig?.forEach((card) => {
       if (card.type !== "character") return;
       params.append("intro_character", JSON.stringify({
         ...characterAssets(card.character),
         fkind: card.fkind,
+        base: card.character.fkind,
       }));
     });
     const roomCards = (action.introRoomPicks || []).map((slug) =>

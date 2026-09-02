@@ -1,8 +1,9 @@
-import { FULL_BOOT_INTRO_CARDS } from "./launch-options.js";
+import { CHARACTER_MESHES, FULL_BOOT_INTRO_CARDS } from "./launch-options.js";
 import trailerConfig from "../config/trailer.js";
 
 export const TRAILER_CONFIG = trailerConfig;
 export const TRAILER_INTRO_SLUGS = trailerConfig.introFighters;
+export const TRAILER_INTRO_MESHES = trailerConfig.introMeshes;
 export const TRAILER_INTRO_ROOM_PICKS = trailerConfig.introRoomPicks;
 export const TRAILER_OPPONENT_SLUGS = trailerConfig.match.opponents;
 export const TRAILER_STAGE = trailerConfig.match.stage;
@@ -13,11 +14,20 @@ function characterBySlug(characters, slug) {
 }
 
 export function createTrailerIntroConfig(characters) {
+  if (TRAILER_INTRO_MESHES.length !== TRAILER_INTRO_SLUGS.length) {
+    throw new Error("Trailer config needs one render mesh for every intro fighter.");
+  }
   let injectedIndex = 0;
   return FULL_BOOT_INTRO_CARDS.map((card) => {
     if (card.mode === "vanilla") return { ...card, type: "vanilla" };
 
-    const slug = TRAILER_INTRO_SLUGS[injectedIndex++];
+    const introIndex = injectedIndex++;
+    const slug = TRAILER_INTRO_SLUGS[introIndex];
+    const meshName = TRAILER_INTRO_MESHES[introIndex];
+    const mesh = CHARACTER_MESHES.find((candidate) => candidate.value === meshName);
+    if (!mesh || !Number.isInteger(mesh.fkind)) {
+      throw new Error(`Trailer render mesh is unavailable: ${meshName}`);
+    }
     const character = characterBySlug(characters, slug);
     if (!character) return { ...card, type: "vanilla" };
 
@@ -26,7 +36,7 @@ export function createTrailerIntroConfig(characters) {
     return {
       ...card,
       type: "character",
-      character: { ...character, fkind: card.fkind, base: card.mesh },
+      character: { ...character, fkind: mesh.fkind, base: mesh.value },
     };
   });
 }

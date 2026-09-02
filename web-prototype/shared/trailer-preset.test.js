@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import { DEFAULT_ADVANCED_OPTIONS, engineUrl } from "../src/launch-options.js";
 import {
   TRAILER_CPU_LEVEL,
+  TRAILER_INTRO_MESHES,
   TRAILER_INTRO_ROOM_PICKS,
   TRAILER_INTRO_SLUGS,
   TRAILER_OPPONENT_SLUGS,
@@ -25,12 +26,20 @@ function fighter(slug, fkind) {
 
 test("trailer intro assigns the fixed cast to every injectable opening card", () => {
   const characters = TRAILER_INTRO_SLUGS.map((slug, index) => fighter(slug, index));
-  const action = createTrailerIntroAction({ type: "start", trailerIntro: true }, characters);
+  const action = createTrailerIntroAction({
+    type: "start",
+    trailerIntro: true,
+    trailerRecording: true,
+  }, characters);
   const config = action.introConfig;
 
   assert.deepEqual(
     config.filter((card) => card.type === "character").map((card) => card.character.slug),
     TRAILER_INTRO_SLUGS,
+  );
+  assert.deepEqual(
+    config.filter((card) => card.type === "character").map((card) => card.character.base),
+    TRAILER_INTRO_MESHES,
   );
   assert.deepEqual(
     config.filter((card) => card.type === "vanilla").map((card) => card.mesh),
@@ -42,6 +51,12 @@ test("trailer intro assigns the fixed cast to every injectable opening card", ()
     { ...DEFAULT_ADVANCED_OPTIONS, bootMode: "full-boot" },
   ), "https://opensmash.test");
   assert.equal(url.searchParams.get("SSB64_TRAILER_HOLD"), "1");
+  assert.equal(url.searchParams.get("SSB64_TRAILER_RECORD"), "1");
+  const introEntries = url.searchParams.getAll("intro_character").map((row) => JSON.parse(row));
+  assert.deepEqual(
+    introEntries.map((entry) => entry.base),
+    config.filter((card) => card.type === "character").map((card) => card.character.fkind),
+  );
   const roomFkinds = TRAILER_INTRO_ROOM_PICKS.map((slug) =>
     config.find((card) => card.type === "character" && card.character.slug === slug).fkind,
   );

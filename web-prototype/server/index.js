@@ -1,6 +1,7 @@
 import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
+import { spawn } from "node:child_process";
 import { createReadStream } from "node:fs";
-import { access, readdir, readFile, stat } from "node:fs/promises";
+import { access, mkdir, open, readdir, readFile, rename, stat, unlink } from "node:fs/promises";
 import http from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -117,6 +118,53 @@ const COOKIE_SECRETS = [
 const MAX_JSON_BODY = 4096;
 // WebRTC offers/answers run a few KiB; the room store caps each message again.
 const MAX_HANDOFF_BODY = 32 * 1024;
+const MAX_TRAILER_CAPTURE_BODY = 2 * 1024 * 1024 * 1024;
+const TRAILER_CAPTURE_PATH = path.join(
+  PIPELINE_PROJECT_ROOT,
+  "artifacts",
+  "trailer-captures",
+  "intro-4x3-high.webm",
+);
+
+function finishTrailerCapture(inputPath, outputPath) {
+  const args = [
+    "-y",
+    "-hide_banner",
+    "-loglevel", "error",
+    "-fflags", "+genpts",
+    "-i", inputPath,
+    "-map", "0:v:0",
+    "-map", "0:a:0?",
+    "-vf", "fps=60,scale=2560:1920:flags=neighbor",
+    "-fps_mode", "cfr",
+    "-c:v", "libvpx-vp9",
+    "-pix_fmt", "yuv420p",
+    "-b:v", "50M",
+    "-deadline", "realtime",
+    "-cpu-used", "8",
+    "-row-mt", "1",
+    "-threads", "8",
+    "-c:a", "libopus",
+    "-b:a", "192k",
+    "-f", "webm",
+    outputPath,
+  ];
+  return new Promise((resolve, reject) => {
+    const child = spawn(process.env.FFMPEG_PATH || "ffmpeg", args, {
+      stdio: ["ignore", "ignore", "pipe"],
+    });
+    let stderr = "";
+    child.stderr.setEncoding("utf8");
+    child.stderr.on("data", (chunk) => {
+      stderr = `${stderr}${chunk}`.slice(-64 * 1024);
+    });
+    child.on("error", reject);
+    child.on("close", (code) => {
+      if (code === 0) resolve();
+      else reject(new Error(`Trailer finishing failed (ffmpeg ${code}): ${stderr.trim()}`));
+    });
+  });
+}
 // Memory locally, Firestore in production (follows JOB_DATABASE) so every API
 // replica sees every room.
 const handoffRooms = await createHandoffRoomsFromEnv();
@@ -699,6 +747,47 @@ async function handleRequest(req, res, vite) {
       .filter(Boolean)
       .join("; ");
     return json(res, 200, { cleared: true }, { "Set-Cookie": cookie });
+  }
+
+  if (req.method === "POST" && pathname === "/api/dev/trailer-capture") {
+    if (IS_PRODUCTION) return json(res, 404, { error: "Not found" });
+    if (!String(req.headers["content-type"] || "").startsWith("video/webm")) {
+      return json(res, 415, { error: "Expected a WebM trailer capture." });
+    }
+    const uploadPath = `${TRAILER_CAPTURE_PATH}.upload.part.webm`;
+    const finishedPath = `${TRAILER_CAPTURE_PATH}.finish.part.webm`;
+    let captureFile;
+    let bytes = 0;
+    try {
+      await mkdir(path.dirname(TRAILER_CAPTURE_PATH), { recursive: true });
+      captureFile = await open(uploadPath, "w");
+      for await (const chunk of req) {
+        bytes += chunk.length;
+        if (bytes > MAX_TRAILER_CAPTURE_BODY) {
+          throw new Error("Trailer capture exceeded the 2 GB local limit.");
+        }
+        await captureFile.write(chunk);
+      }
+      await captureFile.close();
+      captureFile = null;
+      await finishTrailerCapture(uploadPath, finishedPath);
+      await rename(finishedPath, TRAILER_CAPTURE_PATH);
+      await unlink(uploadPath).catch(() => {});
+      const finishedBytes = (await stat(TRAILER_CAPTURE_PATH)).size;
+      return json(res, 201, {
+        path: TRAILER_CAPTURE_PATH,
+        bytes: finishedBytes,
+        sourceBytes: bytes,
+        width: 2560,
+        height: 1920,
+        framesPerSecond: 60,
+      });
+    } catch (error) {
+      await captureFile?.close().catch(() => {});
+      await unlink(uploadPath).catch(() => {});
+      await unlink(finishedPath).catch(() => {});
+      return json(res, 500, { error: error.message || "Could not save trailer capture." });
+    }
   }
 
   if (req.method === "GET" && pathname === "/api/characters") {

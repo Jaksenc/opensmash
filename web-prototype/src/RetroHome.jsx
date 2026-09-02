@@ -228,6 +228,7 @@ export default function RetroHome({
   trailerEngineReady = false,
   trailerEngineStarted = false,
   trailerMode = false,
+  trailerRecording = false,
   user,
 }) {
   const aboutCancelRef = useRef(null);
@@ -543,7 +544,7 @@ export default function RetroHome({
             </div>
             {trailerMode && trailerCinematic && (
               <button
-                className={`trailer-cinematic-control ${trailerEngineStarted ? "is-reveal" : ""}`}
+                className={`trailer-cinematic-control ${trailerEngineStarted && !trailerRecording ? "is-reveal" : ""}`}
                 type="button"
                 disabled={!trailerEngineReady}
                 onClick={runTrailerControl}
@@ -551,7 +552,7 @@ export default function RetroHome({
                 {!trailerEngineReady
                   ? "Loading intro…"
                   : trailerEngineStarted
-                    ? "Reveal website"
+                    ? trailerRecording ? "Stop capture" : "Reveal website"
                     : "Start capture"}
               </button>
             )}

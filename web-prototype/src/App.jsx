@@ -48,6 +48,7 @@ import {
 const ADVANCED_OPTIONS_KEY = "opensmash-advanced-options";
 // Posted by BattleShip/web/index.html when the engine cannot obtain its assets.
 const ENGINE_ASSET_ERROR_MESSAGE = "opensmash:engine-asset-error";
+const ENGINE_TRAILER_CAPTURE_SAVED_MESSAGE = "opensmash:trailer-capture-saved";
 const ENGINE_TRAILER_READY_MESSAGE = "opensmash:trailer-ready";
 const ENGINE_TRAILER_REVEAL_MESSAGE = "opensmash:trailer-reveal";
 
@@ -318,6 +319,9 @@ export default function App() {
   const isCreatePage = window.location.pathname.replace(/\/+$/, "") === "/create";
   const [trailerMode] = useState(() => (
     !isCreatePage && new URLSearchParams(window.location.search).get("trailer") === "1"
+  ));
+  const [trailerRecording] = useState(() => (
+    new URLSearchParams(window.location.search).get("record") === "1"
   ));
   const [characters, setCharacters] = useState(() => INLINE_CHARACTERS || []);
   const [fighterJobs, setFighterJobs] = useState([]);
@@ -742,7 +746,7 @@ export default function App() {
   useEffect(() => {
     if (!trailerMode || loadingCharacters || loadingSession || trailerBootStartedRef.current) return;
     trailerBootStartedRef.current = true;
-    const action = { type: "start", trailerIntro: true };
+    const action = { type: "start", trailerIntro: true, trailerRecording };
     if (authorized) {
       launch(action);
       return undefined;
@@ -763,7 +767,7 @@ export default function App() {
     }
     requestTrailerLaunch();
     return () => window.clearTimeout(timer);
-  }, [authorized, loadingCharacters, loadingSession, trailerMode]);
+  }, [authorized, loadingCharacters, loadingSession, trailerMode, trailerRecording]);
 
   function updateAdvancedOptions(nextOptions) {
     const normalized = normalizeAdvancedOptions(nextOptions);
@@ -976,6 +980,10 @@ export default function App() {
         runTrailerControl();
         return;
       }
+      if (event.data?.type === ENGINE_TRAILER_CAPTURE_SAVED_MESSAGE) {
+        setPageError(`Trailer capture saved: ${event.data.path}`);
+        return;
+      }
       if (event.data?.type === ENGINE_ASSET_ERROR_MESSAGE) {
         reportEngineAssetError(new Error(String(event.data.message || "unknown error")));
       }
@@ -1088,6 +1096,17 @@ export default function App() {
       return;
     }
 
+    if (trailerRecording) {
+      const stopTrailerClip = engineRef.current?.contentWindow?.stopTrailerClip;
+      if (typeof stopTrailerClip !== "function") {
+        setPageError("The trailer capture has already stopped and is finishing or saved.");
+        return;
+      }
+      stopTrailerClip();
+      setPageError("Finishing the 2560×1920 trailer capture…");
+      return;
+    }
+
     if (fullscreenElement) {
       try {
         const exitFullscreen = document.exitFullscreen || document.webkitExitFullscreen;
@@ -1180,6 +1199,7 @@ export default function App() {
           trailerEngineReady={trailerEngineReady}
           trailerEngineStarted={trailerEngineStarted}
           trailerMode={trailerMode}
+          trailerRecording={trailerRecording}
           user={user}
         />
         <CreateExperienceOverlay
