@@ -126,6 +126,7 @@ export default function RetroHome({
   engine,
   engineRef,
   gameFrameRef,
+  gamepadCount = 0,
   isFullscreen,
   launchFlowOpen,
   onAboutChange,
@@ -233,6 +234,23 @@ export default function RetroHome({
             <canvas id="hero-logo-canvas" className="hero-logo-canvas" aria-hidden="true" />
           </div>
           <nav className="retro-site-nav" aria-label="Site information and settings">
+            {gamepadCount > 0 && (
+              <button
+                className="retro-site-link retro-site-pads"
+                type="button"
+                aria-haspopup="dialog"
+                aria-label={`${gamepadCount} controller${gamepadCount === 1 ? "" : "s"} connected. Open controller settings.`}
+                title={`${gamepadCount} controller${gamepadCount === 1 ? "" : "s"} connected`}
+                onClick={onAdvanced}
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M7.5 6.5h9a4.5 4.5 0 0 1 4.5 4.5v2.2a4.3 4.3 0 0 1-7.6 2.8L12 14.6l-1.4 1.4A4.3 4.3 0 0 1 3 13.2V11a4.5 4.5 0 0 1 4.5-4.5z" />
+                  <path d="M7.5 9.5v4M5.5 11.5h4" />
+                  <path d="M16.2 10.6h.01M18.6 12.6h.01" />
+                </svg>
+                <span>{gamepadCount}</span>
+              </button>
+            )}
             <button
               className="retro-site-link"
               type="button"
@@ -371,7 +389,7 @@ export default function RetroHome({
             />
           </div>
         </section>
-        <div className="arena-surface"><div id="replica-grid" className="replica-grid" role="grid" aria-label="Search, create, and character roster" />{!ready && <p className="retro-roster-loading">Loading fighters…</p>}<p id="fighter-empty-state" className="fighter-empty-state" role="status" aria-live="polite" hidden /></div>
+        <div className="arena-surface"><div id="replica-grid" className="replica-grid" role="grid" aria-label="Search, create, and character roster" />{!ready && <p className="retro-roster-loading">Loading fighters…</p>}<p id="fighter-empty-state" className="fighter-empty-state" role="status" aria-live="polite" hidden /><p id="fighter-pick-prompt" className="fighter-pick-prompt" role="status" aria-live="polite" hidden /></div>
         <span id="replica-metrics" hidden>Building 200-cell grid…</span>
       </main>
 
