@@ -1,0 +1,1051 @@
+{"name": "Napoleon", "slug": "napoleon", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.0832, "minutes": 3.4}
+{"name": "Isaac Newton", "slug": "isaacnewton", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.0835, "minutes": 3.4}
+{"name": "William Shakespeare", "slug": "williamshakespea", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.0843, "minutes": 3.4}
+{"name": "Cleopatra", "slug": "cleopatra", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6407, "minutes": 3.5}
+{"name": "Stan Lee", "slug": "stanlee", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6406, "minutes": 3.5}
+{"name": "King Henry the Eighth", "slug": "kinghenrytheeigh", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6421, "minutes": 3.6}
+{"name": "Frida Kahlo", "slug": "fridakahlo", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6263, "minutes": 3.6}
+{"name": "Wolfgang Amadeus Mozart", "slug": "wolfgangamadeusm", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6556, "minutes": 3.8}
+{"name": "Pope Francis", "slug": "popefrancis", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.641, "minutes": 3.9}
+{"name": "Winston Churchill", "slug": "winstonchurchill", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.627, "minutes": 3.9}
+{"name": "Clint Eastwood", "slug": "clinteastwood", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.634, "minutes": 4.4}
+{"name": "Tupac Shakur", "slug": "tupacshakur", "outcome": "failed", "kind": "moderation-input", "stage": "portrait", "detail": "input", "attempts": [{"kind": "moderation-input", "stage": "portrait", "detail": "input"}], "cost_usd": 0.5658, "minutes": 2.1}
+{"name": "Conor McGregor", "slug": "conormcgregor", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6267, "minutes": 2.7}
+{"name": "Robin Williams", "slug": "robinwilliams", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6412, "minutes": 3.1}
+{"name": "Dario Amodei", "slug": "darioamodei", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6338, "minutes": 2.7}
+{"name": "Anthony Bourdain", "slug": "anthonybourdain", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6415, "minutes": 3.2}
+{"name": "IShowSpeed", "slug": "ishowspeed", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6468, "minutes": 3.0}
+{"name": "The Loch Ness Monster", "slug": "thelochnessmonst", "outcome": "ok", "attempts": 2, "retries": {"moderation": 1}, "cost_usd": 0.6274, "minutes": 3.0}
+{"name": "Dolly Parton", "slug": "dollyparton", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6338, "minutes": 4.1}
+{"name": "Don Quixote", "slug": "donquixote", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6337, "minutes": 2.6}
+{"name": "The Statue of Liberty", "slug": "thestatueofliber", "outcome": "failed", "kind": "other", "stage": "convert", "detail": "", "attempts": [{"kind": "other", "stage": "convert", "detail": ""}], "cost_usd": 0.5658, "minutes": 2.0}
+{"name": "Sylvester Stallone", "slug": "sylvesterstallon", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6343, "minutes": 2.5}
+{"name": "Popeye", "slug": "popeye", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6477, "minutes": 2.7}
+{"name": "Babe Ruth", "slug": "baberuth", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6262, "minutes": 2.5}
+{"name": "Victor Wembanyama", "slug": "victorwembanyama", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6476, "minutes": 3.3}
+{"name": "The Statue of Liberty", "slug": "thestatueofliber", "outcome": "failed", "kind": "other", "stage": "variants", "detail": "", "attempts": [{"kind": "other", "stage": "variants", "detail": ""}], "cost_usd": 0.5658, "minutes": 0.0}
+{"name": "Mahatma Gandhi", "slug": "mahatmagandhi", "outcome": "failed", "kind": "moderation-input", "stage": "tpose", "detail": "input", "attempts": [{"kind": "moderation-input", "stage": "tpose", "detail": "input"}], "cost_usd": 0.0003, "minutes": 0.1}
+{"name": "Tupac Shakur", "slug": "tupacshakur", "outcome": "failed", "kind": "moderation-input", "stage": "emblem", "detail": "input", "attempts": [{"kind": "moderation-input", "stage": "emblem", "detail": "input"}], "cost_usd": 0.6121, "minutes": 0.5}
+{"name": "Anna Wintour", "slug": "annawintour", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6336, "minutes": 2.7}
+{"name": "Lady Gaga", "slug": "ladygaga", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6333, "minutes": 2.9}
+{"name": "Kim Jong Un", "slug": "kimjongun", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6469, "minutes": 3.1}
+{"name": "Zlatan Ibrahimović", "slug": "zlatanibrahimovi", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6416, "minutes": 3.2}
+{"name": "Daft Punk", "slug": "daftpunk", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6334, "minutes": 3.2}
+{"name": "Blackbeard", "slug": "blackbeard", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6336, "minutes": 3.2}
+{"name": "Tonya Harding", "slug": "tonyaharding", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6544, "minutes": 3.4}
+{"name": "Santa Claus", "slug": "santaclaus", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6409, "minutes": 3.4}
+{"name": "Kim Kardashian", "slug": "kimkardashian", "outcome": "failed", "kind": "moderation-input", "stage": "tpose", "detail": "input", "attempts": [{"kind": "moderation-input", "stage": "tpose", "detail": "input"}], "cost_usd": 0.0003, "minutes": 0.1}
+{"name": "Michael Jackson", "slug": "michaeljackson", "outcome": "failed", "kind": "moderation-input", "stage": "tpose", "detail": "input", "attempts": [{"kind": "moderation-input", "stage": "tpose", "detail": "input"}], "cost_usd": 0.0003, "minutes": 0.0}
+{"name": "Medusa", "slug": "medusa", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6258, "minutes": 3.5}
+{"name": "Keanu Reeves", "slug": "keanureeves", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6543, "minutes": 3.6}
+{"name": "Nikola Tesla", "slug": "nikolatesla", "outcome": "ok", "attempts": 3, "retries": {"transient": 2}, "cost_usd": 0.6265, "minutes": 3.4}
+{"name": "David Lynch", "slug": "davidlynch", "outcome": "ok", "attempts": 4, "retries": {"transient": 3}, "cost_usd": 0.6336, "minutes": 4.7}
+{"name": "Mother Teresa", "slug": "motherteresa", "outcome": "ok", "attempts": 4, "retries": {"transient": 3}, "cost_usd": 0.6337, "minutes": 4.7}
+{"name": "Deion Sanders", "slug": "deionsanders", "outcome": "ok", "attempts": 4, "retries": {"transient": 3}, "cost_usd": 0.6544, "minutes": 5.1}
+{"name": "Yayoi Kusama", "slug": "yayoikusama", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6337, "minutes": 2.7}
+{"name": "George Washington", "slug": "georgewashington", "outcome": "ok", "attempts": 4, "retries": {"transient": 3}, "cost_usd": 0.6342, "minutes": 5.5}
+{"name": "Friedrich Nietzsche", "slug": "friedrichnietzsc", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6491, "minutes": 2.7}
+{"name": "Ludwig van Beethoven", "slug": "ludwigvanbeethov", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6346, "minutes": 2.7}
+{"name": "Gabe Newell", "slug": "gabenewell", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6336, "minutes": 3.2}
+{"name": "Marilyn Monroe", "slug": "marilynmonroe", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6339, "minutes": 3.2}
+{"name": "MrBeast", "slug": "mrbeast", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6392, "minutes": 3.1}
+{"name": "John Cena", "slug": "johncena", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6395, "minutes": 3.2}
+{"name": "Sherlock Holmes", "slug": "sherlockholmes", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6266, "minutes": 2.8}
+{"name": "Sacha Baron Cohen", "slug": "sachabaroncohen", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6694, "minutes": 3.5}
+{"name": "Andre Agassi", "slug": "andreagassi", "outcome": "ok", "attempts": 4, "retries": {"transient": 3}, "cost_usd": 0.641, "minutes": 6.8}
+{"name": "Eminem", "slug": "eminem", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6331, "minutes": 3.5}
+{"name": "Bigfoot", "slug": "bigfoot", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6466, "minutes": 3.6}
+{"name": "Mona Lisa", "slug": "monalisa", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6261, "minutes": 2.5}
+{"name": "Betty Boop", "slug": "bettyboop", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6263, "minutes": 2.7}
+{"name": "Jaromir Jagr", "slug": "jaromirjagr", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6264, "minutes": 2.6}
+{"name": "Uncle Sam", "slug": "unclesam", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6334, "minutes": 2.5}
+{"name": "Michael Jordan", "slug": "michaeljordan", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6485, "minutes": 2.9}
+{"name": "Arnold Schwarzenegger", "slug": "arnoldschwarzene", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6626, "minutes": 3.4}
+{"name": "The Minotaur", "slug": "theminotaur", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6411, "minutes": 2.7}
+{"name": "Alfred Hitchcock", "slug": "alfredhitchcock", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6414, "minutes": 2.7}
+{"name": "Karl Lagerfeld", "slug": "karllagerfeld", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6339, "minutes": 2.6}
+{"name": "Diego Maradona", "slug": "diegomaradona", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6618, "minutes": 3.1}
+{"name": "Usain Bolt", "slug": "usainbolt", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6408, "minutes": 2.8}
+{"name": "Marshawn Lynch", "slug": "marshawnlynch", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6339, "minutes": 2.9}
+{"name": "Billie Eilish", "slug": "billieeilish", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6338, "minutes": 2.9}
+{"name": "Nicolas Cage", "slug": "nicolascage", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6483, "minutes": 2.9}
+{"name": "Skrillex", "slug": "skrillex", "outcome": "ok", "attempts": 2, "retries": {"transient": 1}, "cost_usd": 0.6539, "minutes": 3.3}
+{"name": "Queen Elizabeth the First", "slug": "queenelizabethth", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6343, "minutes": 3.0}
+{"name": "Theodore Roosevelt", "slug": "theodoreroosevel", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.627, "minutes": 2.8}
+{"name": "Julius Caesar", "slug": "juliuscaesar", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6338, "minutes": 3.3}
+{"name": "Dalai Lama", "slug": "dalailama", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6262, "minutes": 2.7}
+{"name": "Boris Johnson", "slug": "borisjohnson", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6411, "minutes": 3.1}
+{"name": "Vincent van Gogh", "slug": "vincentvangogh", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6267, "minutes": 2.8}
+{"name": "Edgar Allan Poe", "slug": "edgarallanpoe", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6268, "minutes": 2.8}
+{"name": "Sigmund Freud", "slug": "sigmundfreud", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6411, "minutes": 3.1}
+{"name": "Oswald the Lucky Rabbit", "slug": "oswaldtheluckyra", "outcome": "failed", "kind": "moderation-output", "stage": "tpose", "detail": "output", "attempts": [{"kind": "moderation-output", "stage": "tpose", "detail": "output"}, {"kind": "moderation-output", "stage": "tpose", "detail": "output"}, {"kind": "moderation-output", "stage": "tpose", "detail": "output"}], "cost_usd": 0.0003, "minutes": 1.0}
+{"name": "William Shatner", "slug": "williamshatner", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6268, "minutes": 2.7}
+{"name": "Liberace", "slug": "liberace", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6612, "minutes": 3.2}
+{"name": "Madonna", "slug": "madonna", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6259, "minutes": 2.7}
+{"name": "Jim Henson", "slug": "jimhenson", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6334, "minutes": 3.1}
+{"name": "Jim Carrey", "slug": "jimcarrey", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6481, "minutes": 2.9}
+{"name": "Diddy", "slug": "diddy", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6257, "minutes": 2.8}
+{"name": "Gordon Ramsay", "slug": "gordonramsay", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6544, "minutes": 3.3}
+{"name": "Khaby Lame", "slug": "khabylame", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6335, "minutes": 2.7}
+{"name": "Muhammad Ali", "slug": "muhammadali", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.641, "minutes": 2.9}
+{"name": "Ilya Sutskever", "slug": "ilyasutskever", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6413, "minutes": 3.0}
+{"name": "Cthulhu", "slug": "cthulhu", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6405, "minutes": 2.9}
+{"name": "Terracotta Warrior", "slug": "terracottawarrio", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6344, "minutes": 2.8}
+{"name": "Mark Zuckerberg", "slug": "markzuckerberg", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6267, "minutes": 2.5}
+{"name": "Shaquille O'Neal", "slug": "shaquilleoneal", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6475, "minutes": 3.1}
+{"name": "Bruce Lee", "slug": "brucelee", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6334, "minutes": 3.8}
+{"name": "Ronaldinho", "slug": "ronaldinho", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6395, "minutes": 3.1}
+{"name": "Joey Chestnut", "slug": "joeychestnut", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6265, "minutes": 2.8}
+{"name": "John Waters", "slug": "johnwaters", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6263, "minutes": 3.2}
+{"name": "The Grim Reaper", "slug": "thegrimreaper", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6268, "minutes": 3.6}
+{"name": "Post Malone", "slug": "postmalone", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6262, "minutes": 2.9}
+{"name": "Sun Wukong the Monkey King", "slug": "sunwukongthemonk", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6559, "minutes": 3.6}
+{"name": "Buddha", "slug": "buddha", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6259, "minutes": 3.0}
+{"name": "Steve Aoki", "slug": "steveaoki", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6262, "minutes": 3.6}
+{"name": "Rob Gronkowski", "slug": "robgronkowski", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6411, "minutes": 3.6}
+{"name": "Abraham Lincoln", "slug": "abrahamlincoln", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.634, "minutes": 3.0}
+{"name": "Charles Darwin", "slug": "charlesdarwin", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.634, "minutes": 2.6}
+{"name": "Dwayne The Rock Johnson", "slug": "dwaynetherockjoh", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6554, "minutes": 3.6}
+{"name": "Andy Warhol", "slug": "andywarhol", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6409, "minutes": 2.7}
+{"name": "Karl Marx", "slug": "karlmarx", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6335, "minutes": 3.4}
+{"name": "Luciano Pavarotti", "slug": "lucianopavarotti", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6488, "minutes": 3.2}
+{"name": "Mark Twain", "slug": "marktwain", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6262, "minutes": 3.5}
+{"name": "Hideo Kojima", "slug": "hideokojima", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6264, "minutes": 3.3}
+{"name": "Elvis Presley", "slug": "elvispresley", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6265, "minutes": 2.9}
+{"name": "Charlie Chaplin", "slug": "charliechaplin", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.634, "minutes": 3.2}
+{"name": "Paris Hilton", "slug": "parishilton", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6337, "minutes": 3.1}
+{"name": "Genghis Khan", "slug": "genghiskhan", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6483, "minutes": 5.5}
+{"name": "The Scream", "slug": "thescream", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6263, "minutes": 2.5}
+{"name": "Eddie Murphy", "slug": "eddiemurphy", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6542, "minutes": 3.4}
+{"name": "Snoop Dogg", "slug": "snoopdogg", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6542, "minutes": 3.2}
+{"name": "Count Dracula", "slug": "countdracula", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6483, "minutes": 2.9}
+{"name": "Khabib Nurmagomedov", "slug": "khabibnurmagomed", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6406, "minutes": 3.3}
+{"name": "Geoffrey Hinton", "slug": "geoffreyhinton", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.634, "minutes": 3.2}
+{"name": "MySpace Tom", "slug": "myspacetom", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6542, "minutes": 3.7}
+{"name": "Jensen Huang", "slug": "jensenhuang", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6336, "minutes": 2.9}
+{"name": "Felix the Cat", "slug": "felixthecat", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6472, "minutes": 3.2}
+{"name": "Krampus", "slug": "krampus", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.626, "minutes": 3.6}
+{"name": "Chuck Norris", "slug": "chucknorris", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.641, "minutes": 3.8}
+{"name": "Bo Jackson", "slug": "bojackson", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6262, "minutes": 3.5}
+{"name": "Anubis", "slug": "anubis", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6331, "minutes": 3.6}
+{"name": "Dennis Rodman", "slug": "dennisrodman", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6397, "minutes": 3.7}
+{"name": "Deadmau5", "slug": "deadmau5", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6333, "minutes": 3.5}
+{"name": "John Daly", "slug": "johndaly", "outcome": "ok", "attempts": 2, "retries": {"transient": 1}, "cost_usd": 0.6407, "minutes": 3.6}
+{"name": "Jason Momoa", "slug": "jasonmomoa", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6336, "minutes": 3.5}
+{"name": "Mario Balotelli", "slug": "mariobalotelli", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6474, "minutes": 3.9}
+{"name": "Lizzo", "slug": "lizzo", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.633, "minutes": 4.2}
+{"name": "Johann Sebastian Bach", "slug": "johannsebastianb", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6346, "minutes": 4.5}
+{"name": "Benjamin Franklin", "slug": "benjaminfranklin", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6269, "minutes": 5.0}
+{"name": "Shigeru Miyamoto", "slug": "shigerumiyamoto", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6414, "minutes": 4.3}
+{"name": "Pablo Picasso", "slug": "pablopicasso", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6338, "minutes": 5.1}
+{"name": "Marie Antoinette", "slug": "marieantoinette", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6269, "minutes": 5.6}
+{"name": "Tutankhamun", "slug": "tutankhamun", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6409, "minutes": 6.4}
+{"name": "John Wayne", "slug": "johnwayne", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6262, "minutes": 3.7}
+{"name": "Steve Irwin", "slug": "steveirwin", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6263, "minutes": 3.8}
+{"name": "Rowan Atkinson", "slug": "rowanatkinson", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6412, "minutes": 4.2}
+{"name": "Biggie Smalls", "slug": "biggiesmalls", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6339, "minutes": 4.2}
+{"name": "Andrej Karpathy", "slug": "andrejkarpathy", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6413, "minutes": 3.9}
+{"name": "Freddie Mercury", "slug": "freddiemercury", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6339, "minutes": 4.2}
+{"name": "Pikotaro", "slug": "pikotaro", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6479, "minutes": 4.1}
+{"name": "Easter Island Moai", "slug": "easterislandmoai", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6477, "minutes": 4.4}
+{"name": "Humpty Dumpty", "slug": "humptydumpty", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6472, "minutes": 4.9}
+{"name": "Tintin", "slug": "tintin", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6467, "minutes": 3.4}
+{"name": "Hulk Hogan", "slug": "hulkhogan", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6335, "minutes": 5.6}
+{"name": "Mister Rogers", "slug": "misterrogers", "outcome": "failed", "kind": "moderation-input", "stage": "tpose", "detail": "input", "attempts": [{"kind": "moderation-input", "stage": "tpose", "detail": "input"}], "cost_usd": 0.0003, "minutes": 0.1}
+{"name": "Colonel Sanders", "slug": "colonelsanders", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6486, "minutes": 3.8}
+{"name": "Yao Ming", "slug": "yaoming", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6393, "minutes": 3.6}
+{"name": "Ruud Gullit", "slug": "ruudgullit", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6542, "minutes": 3.8}
+{"name": "Refrigerator Perry", "slug": "refrigeratorperr", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6343, "minutes": 3.0}
+{"name": "Marshmello", "slug": "marshmello", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6395, "minutes": 2.9}
+{"name": "Psy", "slug": "psy", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6255, "minutes": 2.5}
+{"name": "Attila the Hun", "slug": "attilathehun", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.634, "minutes": 2.6}
+{"name": "Joan of Arc", "slug": "joanofarc", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6337, "minutes": 2.7}
+{"name": "Jackie Chan", "slug": "jackiechan", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6615, "minutes": 4.7}
+{"name": "Eddie the Eagle", "slug": "eddietheeagle", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6547, "minutes": 3.2}
+{"name": "Pinocchio", "slug": "pinocchio", "outcome": "failed", "kind": "moderation-output", "stage": "tpose", "detail": "output", "attempts": [{"kind": "moderation-output", "stage": "tpose", "detail": "output"}, {"kind": "moderation-output", "stage": "tpose", "detail": "output"}, {"kind": "moderation-output", "stage": "tpose", "detail": "output"}], "cost_usd": 0.0003, "minutes": 1.0}
+{"name": "Dolph Lundgren", "slug": "dolphlundgren", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6691, "minutes": 3.2}
+{"name": "Bob Ross", "slug": "bobross", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6406, "minutes": 3.2}
+{"name": "Jeff Goldblum", "slug": "jeffgoldblum", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6338, "minutes": 2.6}
+{"name": "Masahiro Sakurai", "slug": "masahirosakurai", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6268, "minutes": 3.0}
+{"name": "Prince", "slug": "prince", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6331, "minutes": 2.7}
+{"name": "Jack Black", "slug": "jackblack", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6334, "minutes": 3.1}
+{"name": "Mike Tyson", "slug": "miketyson", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6335, "minutes": 2.6}
+{"name": "Vanilla Ice", "slug": "vanillaice", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6336, "minutes": 2.8}
+{"name": "Yann LeCun", "slug": "yannlecun", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6408, "minutes": 2.7}
+{"name": "Venus de Milo", "slug": "venusdemilo", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6339, "minutes": 2.7}
+{"name": "Steve Ballmer", "slug": "steveballmer", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6338, "minutes": 2.6}
+{"name": "Steven Seagal", "slug": "stevenseagal", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6339, "minutes": 2.7}
+{"name": "Takeru Kobayashi", "slug": "takerukobayashi", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6342, "minutes": 2.6}
+{"name": "Muggsy Bogues", "slug": "muggsybogues", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6545, "minutes": 3.0}
+{"name": "Troy Polamalu", "slug": "troypolamalu", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6339, "minutes": 3.2}
+{"name": "Moses", "slug": "moses", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6257, "minutes": 2.8}
+{"name": "Willem Dafoe", "slug": "willemdafoe", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6337, "minutes": 2.9}
+{"name": "Vlad the Impaler", "slug": "vladtheimpaler", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6487, "minutes": 3.0}
+{"name": "Salvador Dalí", "slug": "salvadordal", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6472, "minutes": 3.1}
+{"name": "Reggie Fils-Aimé", "slug": "reggiefilsaim", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6414, "minutes": 2.8}
+{"name": "Betty White", "slug": "bettywhite", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6482, "minutes": 3.1}
+{"name": "David Bowie", "slug": "davidbowie", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6481, "minutes": 2.8}
+{"name": "DJ Khaled", "slug": "djkhaled", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6334, "minutes": 2.7}
+{"name": "Tyson Fury", "slug": "tysonfury", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6335, "minutes": 2.8}
+{"name": "Lex Fridman", "slug": "lexfridman", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6263, "minutes": 2.6}
+{"name": "Ebenezer Scrooge", "slug": "ebenezerscrooge", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6269, "minutes": 2.6}
+{"name": "RuPaul", "slug": "rupaul", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6404, "minutes": 3.4}
+{"name": "Jean-Claude Van Damme", "slug": "jeanclaudevandam", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6347, "minutes": 4.3}
+{"name": "Dave Bautista", "slug": "davebautista", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6545, "minutes": 4.2}
+{"name": "Leonidas", "slug": "leonidas", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6333, "minutes": 4.0}
+{"name": "Rasputin", "slug": "rasputin", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6333, "minutes": 4.0}
+{"name": "Lucille Ball", "slug": "lucilleball", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6268, "minutes": 4.1}
+{"name": "Pee-wee Herman", "slug": "peeweeherman", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.634, "minutes": 3.8}
+{"name": "Manute Bol", "slug": "manutebol", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6335, "minutes": 4.7}
+{"name": "Cher", "slug": "cher", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6475, "minutes": 3.4}
+{"name": "Judge Judy", "slug": "judgejudy", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6334, "minutes": 3.5}
+{"name": "Brock Lesnar", "slug": "brocklesnar", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6337, "minutes": 3.3}
+{"name": "Ol' Dirty Bastard", "slug": "oldirtybastard", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6416, "minutes": 3.4}
+{"name": "Samuel L. Jackson", "slug": "samuelljackson", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6415, "minutes": 3.0}
+{"name": "Mr. T", "slug": "mrt", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.633, "minutes": 3.2}
+{"name": "Frankenstein's Monster", "slug": "frankensteinsmon", "outcome": "ok", "attempts": 2, "retries": {"moderation": 1}, "cost_usd": 0.6421, "minutes": 3.6}
+{"name": "Henry Winkler", "slug": "henrywinkler", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6544, "minutes": 3.5}
+{"name": "Chris Farley", "slug": "chrisfarley", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6543, "minutes": 3.5}
+{"name": "Ozzy Osbourne", "slug": "ozzyosbourne", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6338, "minutes": 2.7}
+{"name": "Richard Simmons", "slug": "richardsimmons", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6412, "minutes": 3.0}
+{"name": "Count Orlok", "slug": "countorlok", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6409, "minutes": 2.7}
+{"name": "Andre the Giant", "slug": "andrethegiant", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6412, "minutes": 3.2}
+{"name": "Peter Sellers", "slug": "petersellers", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.641, "minutes": 2.9}
+{"name": "Bear Grylls", "slug": "beargrylls", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6336, "minutes": 3.1}
+{"name": "Tommy Chong", "slug": "tommychong", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6263, "minutes": 3.0}
+{"name": "Jerry Springer", "slug": "jerryspringer", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6266, "minutes": 2.6}
+{"name": "Peter Dinklage", "slug": "peterdinklage", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.634, "minutes": 3.2}
+{"name": "Quasimodo", "slug": "quasimodo", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6262, "minutes": 2.6}
+{"name": "George Foreman", "slug": "georgeforeman", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6339, "minutes": 3.0}
+{"name": "Elton John", "slug": "eltonjohn", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6335, "minutes": 3.4}
+{"name": "Danny DeVito", "slug": "dannydevito", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6264, "minutes": 3.0}
+{"name": "David Hasselhoff", "slug": "davidhasselhoff", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6342, "minutes": 2.9}
+{"name": "Flavor Flav", "slug": "flavorflav", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6336, "minutes": 3.8}
+{"name": "MC Hammer", "slug": "mchammer", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6471, "minutes": 4.7}
+{"name": "Cheech Marin", "slug": "cheechmarin", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6264, "minutes": 3.2}
+{"name": "Lil Jon", "slug": "liljon", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6332, "minutes": 2.8}
+{"name": "Guy Fieri", "slug": "guyfieri", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6334, "minutes": 3.3}
+{"name": "Christopher Walken", "slug": "christopherwalke", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.627, "minutes": 2.7}
+{"name": "Kurt Cobain", "slug": "kurtcobain", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6336, "minutes": 3.2}
+{"name": "Ric Flair", "slug": "ricflair", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6407, "minutes": 2.9}
+{"name": "The Wicked Witch of the West", "slug": "thewickedwitchof", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6353, "minutes": 2.9}
+{"name": "Larry the Cable Guy", "slug": "larrythecableguy", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6623, "minutes": 3.0}
+{"name": "Adam West", "slug": "adamwest", "outcome": "failed", "kind": "moderation-output", "stage": "emblem", "detail": "output", "attempts": [{"kind": "moderation-output", "stage": "tpose", "detail": "output"}, {"kind": "moderation-output", "stage": "emblem", "detail": "output"}, {"kind": "moderation-output", "stage": "emblem", "detail": "output"}], "cost_usd": 0.6267, "minutes": 3.4}
+{"name": "Dr. Phil", "slug": "drphil", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6332, "minutes": 3.3}
+{"name": "The Undertaker", "slug": "theundertaker", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6339, "minutes": 3.3}
+{"name": "The Tin Man", "slug": "thetinman", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6336, "minutes": 3.3}
+{"name": "Sir Mix-a-Lot", "slug": "sirmixalot", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6338, "minutes": 3.5}
+{"name": "Rajinikanth", "slug": "rajinikanth", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6336, "minutes": 3.2}
+{"name": "Bob Marley", "slug": "bobmarley", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6408, "minutes": 4.0}
+{"name": "Groucho Marx", "slug": "grouchomarx", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6409, "minutes": 3.2}
+{"name": "Benny Hill", "slug": "bennyhill", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6408, "minutes": 3.0}
+{"name": "Elvira", "slug": "elvira", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6331, "minutes": 3.0}
+{"name": "Gallagher", "slug": "gallagher", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6261, "minutes": 2.9}
+{"name": "Snooki", "slug": "snooki", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6258, "minutes": 2.9}
+{"name": "Rey Mysterio", "slug": "reymysterio", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6337, "minutes": 3.1}
+{"name": "Toshiro Mifune", "slug": "toshiromifune", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6413, "minutes": 3.1}
+{"name": "Alice Cooper", "slug": "alicecooper", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6337, "minutes": 2.8}
+{"name": "Boy George", "slug": "boygeorge", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6541, "minutes": 3.6}
+{"name": "Carrot Top", "slug": "carrottop", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6335, "minutes": 2.9}
+{"name": "Macho Man Randy Savage", "slug": "machomanrandysav", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6481, "minutes": 3.4}
+{"name": "Salt Bae", "slug": "saltbae", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6333, "minutes": 2.9}
+{"name": "Gene Simmons", "slug": "genesimmons", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6337, "minutes": 3.0}
+{"name": "Hafthor Björnsson", "slug": "hafthorbjrnsson", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6414, "minutes": 2.9}
+{"name": "Slash", "slug": "slash", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6329, "minutes": 2.9}
+{"name": "Ronnie Coleman", "slug": "ronniecoleman", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6339, "minutes": 3.0}
+{"name": "Jack LaLanne", "slug": "jacklalanne", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6337, "minutes": 3.7}
+{"name": "Grace Jones", "slug": "gracejones", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6469, "minutes": 3.0}
+{"name": "Stone Cold Steve Austin", "slug": "stonecoldsteveau", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6275, "minutes": 3.0}
+{"name": "Eddie Hall", "slug": "eddiehall", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6262, "minutes": 3.0}
+{"name": "Sid Vicious", "slug": "sidvicious", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6336, "minutes": 3.1}
+{"name": "Charles Manson", "slug": "charlesmanson", "outcome": "failed", "kind": "moderation-input", "stage": "tpose", "detail": "input", "attempts": [{"kind": "moderation-input", "stage": "tpose", "detail": "input"}], "cost_usd": 0.0003, "minutes": 0.1}
+{"name": "Butterbean", "slug": "butterbean", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6262, "minutes": 3.1}
+{"name": "Lemmy", "slug": "lemmy", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.633, "minutes": 3.3}
+{"name": "Louis Armstrong", "slug": "louisarmstrong", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6413, "minutes": 3.7}
+{"name": "Charles Atlas", "slug": "charlesatlas", "outcome": "failed", "kind": "other", "stage": "mesh-upload", "detail": "", "attempts": [{"kind": "other", "stage": "mesh-upload", "detail": ""}], "cost_usd": 0.023, "minutes": 0.9}
+{"name": "Kenny G", "slug": "kennyg", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6405, "minutes": 3.0}
+{"name": "Rowdy Roddy Piper", "slug": "rowdyroddypiper", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6269, "minutes": 3.3}
+{"name": "Kimbo Slice", "slug": "kimboslice", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6263, "minutes": 3.3}
+{"name": "LeBron James", "slug": "lebronjames", "outcome": "failed", "kind": "moderation-input", "stage": "tpose", "detail": "input", "attempts": [{"kind": "moderation-input", "stage": "tpose", "detail": "input"}], "cost_usd": 0.0003, "minutes": 0.1}
+{"name": "Bill Goldberg", "slug": "billgoldberg", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6338, "minutes": 3.1}
+{"name": "Mick Foley", "slug": "mickfoley", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6469, "minutes": 3.2}
+{"name": "Ultimate Warrior", "slug": "ultimatewarrior", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6414, "minutes": 3.2}
+{"name": "Bob Sapp", "slug": "bobsapp", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6406, "minutes": 3.0}
+{"name": "Jake the Snake Roberts", "slug": "jakethesnakerobe", "outcome": "ok", "attempts": 2, "retries": {"transient": 1}, "cost_usd": 0.6275, "minutes": 3.2}
+{"name": "Hakuho", "slug": "hakuho", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6331, "minutes": 2.9}
+{"name": "Edward Snowden", "slug": "edwardsnowden", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6266, "minutes": 2.6}
+{"name": "Christopher Columbus", "slug": "christophercolum", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6491, "minutes": 3.4}
+{"name": "Zendaya", "slug": "zendaya", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6332, "minutes": 2.8}
+{"name": "Amelia Earhart", "slug": "ameliaearhart", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6412, "minutes": 3.3}
+{"name": "Bruce Willis", "slug": "brucewillis", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.641, "minutes": 3.2}
+{"name": "Jeff Bezos", "slug": "jeffbezos", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6541, "minutes": 3.4}
+{"name": "Narendra Modi", "slug": "narendramodi", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6544, "minutes": 3.8}
+{"name": "Shania Twain", "slug": "shaniatwain", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6337, "minutes": 3.1}
+{"name": "Homer", "slug": "homer", "outcome": "failed", "kind": "moderation-output", "stage": "tpose", "detail": "output", "attempts": [{"kind": "moderation-output", "stage": "tpose", "detail": "output"}, {"kind": "moderation-output", "stage": "tpose", "detail": "output"}, {"kind": "moderation-output", "stage": "tpose", "detail": "output"}], "cost_usd": 0.0003, "minutes": 0.9}
+{"name": "Shakira", "slug": "shakira", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6611, "minutes": 3.5}
+{"name": "Baba Yaga", "slug": "babayaga", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6334, "minutes": 2.7}
+{"name": "Shohei Ohtani", "slug": "shoheiohtani", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6411, "minutes": 2.9}
+{"name": "Travis Kelce", "slug": "traviskelce", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6336, "minutes": 3.1}
+{"name": "Erling Haaland", "slug": "erlinghaaland", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6472, "minutes": 3.1}
+{"name": "Robin Hood", "slug": "robinhood", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6408, "minutes": 2.9}
+{"name": "King Lear", "slug": "kinglear", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6334, "minutes": 3.0}
+{"name": "Odysseus", "slug": "odysseus", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6261, "minutes": 4.1}
+{"name": "Winnie the Pooh", "slug": "winniethepooh", "outcome": "failed", "kind": "moderation-output", "stage": "tpose", "detail": "output", "attempts": [{"kind": "moderation-output", "stage": "tpose", "detail": "output"}, {"kind": "moderation-output", "stage": "tpose", "detail": "output"}, {"kind": "moderation-output", "stage": "tpose", "detail": "output"}], "cost_usd": 0.0003, "minutes": 1.0}
+{"name": "Novak Djokovic", "slug": "novakdjokovic", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6266, "minutes": 4.6}
+{"name": "David Attenborough", "slug": "davidattenboroug", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6415, "minutes": 3.1}
+{"name": "Michelangelo's David", "slug": "michelangelosdav", "outcome": "failed", "kind": "moderation-output", "stage": "tpose", "detail": "output", "attempts": [{"kind": "moderation-output", "stage": "tpose", "detail": "output"}, {"kind": "moderation-output", "stage": "tpose", "detail": "output"}, {"kind": "moderation-output", "stage": "tpose", "detail": "output"}], "cost_usd": 0.0003, "minutes": 1.1}
+{"name": "Che Guevara", "slug": "cheguevara", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6263, "minutes": 3.4}
+{"name": "Steven Spielberg", "slug": "stevenspielberg", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6415, "minutes": 2.9}
+{"name": "Adam Sandler", "slug": "adamsandler", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6263, "minutes": 2.6}
+{"name": "Martin Luther", "slug": "martinluther", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6338, "minutes": 2.9}
+{"name": "Daniela Amodei", "slug": "danielaamodei", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6339, "minutes": 2.5}
+{"name": "George R. R. Martin", "slug": "georgerrmartin", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6769, "minutes": 3.3}
+{"name": "Robert De Niro", "slug": "robertdeniro", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6339, "minutes": 3.0}
+{"name": "Mothman", "slug": "mothman", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6333, "minutes": 2.9}
+{"name": "Travis Scott", "slug": "travisscott", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6543, "minutes": 3.8}
+{"name": "Kai Cenat", "slug": "kaicenat", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.654, "minutes": 3.2}
+{"name": "Kylie Jenner", "slug": "kyliejenner", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6264, "minutes": 3.4}
+{"name": "Leonardo da Vinci", "slug": "leonardodavinci", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6415, "minutes": 2.9}
+{"name": "Olive Oyl", "slug": "oliveoyl", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6334, "minutes": 2.7}
+{"name": "Anne Boleyn", "slug": "anneboleyn", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6409, "minutes": 3.0}
+{"name": "Jon Jones", "slug": "jonjones", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6334, "minutes": 2.8}
+{"name": "Billy the Kid", "slug": "billythekid", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6338, "minutes": 2.7}
+{"name": "Paul McCartney", "slug": "paulmccartney", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6485, "minutes": 3.0}
+{"name": "Andrea Bocelli", "slug": "andreabocelli", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6266, "minutes": 3.2}
+{"name": "Matt Groening", "slug": "mattgroening", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6399, "minutes": 2.9}
+{"name": "Heidi Klum", "slug": "heidiklum", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6408, "minutes": 3.0}
+{"name": "King Charles the Third", "slug": "kingcharlestheth", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6347, "minutes": 2.8}
+{"name": "O.J. Simpson", "slug": "ojsimpson", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6544, "minutes": 3.1}
+{"name": "Javier Milei", "slug": "javiermilei", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6337, "minutes": 3.1}
+{"name": "Neil Armstrong", "slug": "neilarmstrong", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6342, "minutes": 2.7}
+{"name": "Malcolm X", "slug": "malcolmx", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6406, "minutes": 2.9}
+{"name": "Timothée Chalamet", "slug": "timothechalamet", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6342, "minutes": 2.8}
+{"name": "Mel Gibson", "slug": "melgibson", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6408, "minutes": 2.8}
+{"name": "Caitlin Clark", "slug": "caitlinclark", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6472, "minutes": 2.8}
+{"name": "Johnny Cash", "slug": "johnnycash", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6263, "minutes": 3.0}
+{"name": "Lewis Hamilton", "slug": "lewishamilton", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6266, "minutes": 2.6}
+{"name": "Lionel Messi", "slug": "lionelmessi", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6397, "minutes": 2.9}
+{"name": "Tom Brady", "slug": "tombrady", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6334, "minutes": 3.3}
+{"name": "Jackie Robinson", "slug": "jackierobinson", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6267, "minutes": 3.7}
+{"name": "King Arthur", "slug": "kingarthur", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6263, "minutes": 3.7}
+{"name": "Achilles", "slug": "achilles", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6334, "minutes": 3.8}
+{"name": "Rumpelstiltskin", "slug": "rumpelstiltskin", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.634, "minutes": 3.9}
+{"name": "Alexander the Great", "slug": "alexanderthegrea", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6418, "minutes": 3.5}
+{"name": "Falstaff", "slug": "falstaff", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6333, "minutes": 3.6}
+{"name": "John F. Kennedy", "slug": "johnfkennedy", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6267, "minutes": 3.5}
+{"name": "Robert Oppenheimer", "slug": "robertoppenheime", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6343, "minutes": 3.3}
+{"name": "Mel Brooks", "slug": "melbrooks", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6408, "minutes": 3.1}
+{"name": "Joseph Stalin", "slug": "josephstalin", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6557, "minutes": 3.7}
+{"name": "Jelly Roll", "slug": "jellyroll", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6335, "minutes": 2.8}
+{"name": "J. R. R. Tolkien", "slug": "jrrtolkien", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6342, "minutes": 4.2}
+{"name": "Pope John Paul the Second", "slug": "popejohnpaulthes", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6416, "minutes": 3.2}
+{"name": "Will Ferrell", "slug": "willferrell", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.641, "minutes": 2.9}
+{"name": "Dick Van Dyke", "slug": "dickvandyke", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6338, "minutes": 3.6}
+{"name": "Caitlyn Jenner", "slug": "caitlynjenner", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6618, "minutes": 3.4}
+{"name": "KSI", "slug": "ksi", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6328, "minutes": 2.7}
+{"name": "Xi Jinping", "slug": "xijinping", "outcome": "failed", "kind": "other", "stage": "mesh-upload", "detail": "", "attempts": [{"kind": "other", "stage": "mesh-upload", "detail": ""}], "cost_usd": 0.0157, "minutes": 0.4}
+{"name": "Demis Hassabis", "slug": "demishassabis", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6266, "minutes": 2.7}
+{"name": "Walt Disney", "slug": "waltdisney", "outcome": "failed", "kind": "moderation-input", "stage": "tpose", "detail": "input", "attempts": [{"kind": "moderation-input", "stage": "tpose", "detail": "input"}], "cost_usd": 0.0003, "minutes": 0.1}
+{"name": "The Chupacabra", "slug": "thechupacabra", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.634, "minutes": 2.8}
+{"name": "Mr. Hyde", "slug": "mrhyde", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6333, "minutes": 2.7}
+{"name": "Jean-Michel Basquiat", "slug": "jeanmichelbasqui", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6346, "minutes": 2.8}
+{"name": "Girl with a Pearl Earring", "slug": "girlwithapearlea", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6423, "minutes": 2.8}
+{"name": "Mary, Queen of Scots", "slug": "maryqueenofscots", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6273, "minutes": 2.8}
+{"name": "Frédéric Chopin", "slug": "frdricchopin", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6341, "minutes": 3.0}
+{"name": "Bob Dylan", "slug": "bobdylan", "outcome": "ok", "attempts": 2, "retries": {"moderation": 1}, "cost_usd": 0.6261, "minutes": 3.5}
+{"name": "Coco Chanel", "slug": "cocochanel", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6335, "minutes": 2.9}
+{"name": "Batista", "slug": "batista", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6405, "minutes": 3.4}
+{"name": "Akira Toriyama", "slug": "akiratoriyama", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6412, "minutes": 3.0}
+{"name": "Wyatt Earp", "slug": "wyattearp", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6262, "minutes": 2.9}
+{"name": "Pablo Escobar", "slug": "pabloescobar", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6338, "minutes": 3.8}
+{"name": "Martin Luther King Jr.", "slug": "martinlutherking", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6419, "minutes": 3.6}
+{"name": "Queen Victoria", "slug": "queenvictoria", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6339, "minutes": 3.7}
+{"name": "Ariana Grande", "slug": "arianagrande", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6337, "minutes": 3.3}
+{"name": "Buzz Aldrin", "slug": "buzzaldrin", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6339, "minutes": 3.6}
+{"name": "Millie Bobby Brown", "slug": "milliebobbybrown", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6404, "minutes": 3.5}
+{"name": "Carl Weathers", "slug": "carlweathers", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6339, "minutes": 3.5}
+{"name": "Giannis Antetokounmpo", "slug": "giannisantetokou", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.648, "minutes": 3.5}
+{"name": "Patrick Mahomes", "slug": "patrickmahomes", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6486, "minutes": 3.4}
+{"name": "Willie Nelson", "slug": "willienelson", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6337, "minutes": 3.6}
+{"name": "Serena Williams", "slug": "serenawilliams", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6339, "minutes": 3.3}
+{"name": "Polyphemus the Cyclops", "slug": "polyphemusthecyc", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6348, "minutes": 3.5}
+{"name": "The Pied Piper", "slug": "thepiedpiper", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6412, "minutes": 3.6}
+{"name": "Wayne Gretzky", "slug": "waynegretzky", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6339, "minutes": 4.3}
+{"name": "Merlin", "slug": "merlin", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6258, "minutes": 3.5}
+{"name": "Hamlet", "slug": "hamlet", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6464, "minutes": 4.7}
+{"name": "Nero", "slug": "nero", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6256, "minutes": 4.0}
+{"name": "Martin Scorsese", "slug": "martinscorsese", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.634, "minutes": 3.5}
+{"name": "Margaret Thatcher", "slug": "margaretthatcher", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6415, "minutes": 3.7}
+{"name": "Larry David", "slug": "larrydavid", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6336, "minutes": 3.7}
+{"name": "Stephen Hawking", "slug": "stephenhawking", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6559, "minutes": 4.0}
+{"name": "Ernest Hemingway", "slug": "ernesthemingway", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6341, "minutes": 4.0}
+{"name": "Francis of Assisi", "slug": "francisofassisi", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.627, "minutes": 3.9}
+{"name": "Drake", "slug": "drake", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6608, "minutes": 4.1}
+{"name": "Harrison Ford", "slug": "harrisonford", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6411, "minutes": 4.1}
+{"name": "Joe Biden", "slug": "joebiden", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.641, "minutes": 4.8}
+{"name": "Logan Paul", "slug": "loganpaul", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6262, "minutes": 4.7}
+{"name": "Aravind Srinivas", "slug": "aravindsrinivas", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6341, "minutes": 4.7}
+{"name": "Faust", "slug": "faust", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6536, "minutes": 4.6}
+{"name": "Joe Rogan", "slug": "joerogan", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6334, "minutes": 5.5}
+{"name": "The Yeti", "slug": "theyeti", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6334, "minutes": 5.1}
+{"name": "Vitruvian Man", "slug": "vitruvianman", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6411, "minutes": 3.7}
+{"name": "Osamu Tezuka", "slug": "osamutezuka", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6411, "minutes": 3.0}
+{"name": "Naomi Campbell", "slug": "naomicampbell", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6339, "minutes": 3.0}
+{"name": "Janet Jackson", "slug": "janetjackson", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6471, "minutes": 3.2}
+{"name": "Roman Reigns", "slug": "romanreigns", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6338, "minutes": 3.1}
+{"name": "Richard Wagner", "slug": "richardwagner", "outcome": "ok", "attempts": 3, "retries": {"moderation": 2}, "cost_usd": 0.6339, "minutes": 3.5}
+{"name": "Marina Abramović", "slug": "marinaabramovi", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6268, "minutes": 3.7}
+{"name": "Davy Crockett", "slug": "davycrockett", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6338, "minutes": 3.1}
+{"name": "Princess Diana", "slug": "princessdiana", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6339, "minutes": 2.7}
+{"name": "King Louis the Fourteenth", "slug": "kinglouisthefour", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6267, "minutes": 3.8}
+{"name": "El Chapo", "slug": "elchapo", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6406, "minutes": 3.4}
+{"name": "Paul Bunyan", "slug": "paulbunyan", "outcome": "failed", "kind": "moderation-output", "stage": "tpose", "detail": "output", "attempts": [{"kind": "moderation-output", "stage": "tpose", "detail": "output"}, {"kind": "moderation-output", "stage": "tpose", "detail": "output"}, {"kind": "moderation-output", "stage": "tpose", "detail": "output"}], "cost_usd": 0.0003, "minutes": 1.1}
+{"name": "Yuri Gagarin", "slug": "yurigagarin", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6337, "minutes": 3.0}
+{"name": "Harry Styles", "slug": "harrystyles", "outcome": "failed", "kind": "moderation-input", "stage": "stock", "detail": "input", "attempts": [{"kind": "moderation-input", "stage": "stock", "detail": "input"}], "cost_usd": 0.6015, "minutes": 2.5}
+{"name": "Warren Buffett", "slug": "warrenbuffett", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6485, "minutes": 3.2}
+{"name": "Tom Cruise", "slug": "tomcruise", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6334, "minutes": 3.0}
+{"name": "Jesse Ventura", "slug": "jesseventura", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6265, "minutes": 3.4}
+{"name": "Kylian Mbappé", "slug": "kylianmbapp", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6338, "minutes": 2.8}
+{"name": "Avicii", "slug": "avicii", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6331, "minutes": 3.1}
+{"name": "Ken Griffey Jr.", "slug": "kengriffeyjr", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.634, "minutes": 3.2}
+{"name": "Kobe Bryant", "slug": "kobebryant", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6614, "minutes": 3.6}
+{"name": "Little Red Riding Hood", "slug": "littleredridingh", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6481, "minutes": 3.4}
+{"name": "Zeus", "slug": "zeus", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6329, "minutes": 3.5}
+{"name": "Rafael Nadal", "slug": "rafaelnadal", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6474, "minutes": 3.6}
+{"name": "Peyton Manning", "slug": "peytonmanning", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6339, "minutes": 3.9}
+{"name": "Caliban", "slug": "caliban", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.626, "minutes": 3.4}
+{"name": "Caligula", "slug": "caligula", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6406, "minutes": 2.7}
+{"name": "Pocahontas", "slug": "pocahontas", "outcome": "ok", "attempts": 3, "retries": {"moderation": 2}, "cost_usd": 0.6336, "minutes": 5.4}
+{"name": "Franklin Roosevelt", "slug": "franklinroosevel", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6343, "minutes": 2.6}
+{"name": "Alan Turing", "slug": "alanturing", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6337, "minutes": 2.8}
+{"name": "Stephen King", "slug": "stephenking", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6337, "minutes": 2.8}
+{"name": "Jay-Z", "slug": "jayz", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6257, "minutes": 3.0}
+{"name": "Quentin Tarantino", "slug": "quentintarantino", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6341, "minutes": 3.2}
+{"name": "Saint Patrick", "slug": "saintpatrick", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6338, "minutes": 2.9}
+{"name": "Al Pacino", "slug": "alpacino", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6334, "minutes": 2.9}
+{"name": "Benito Mussolini", "slug": "benitomussolini", "outcome": "ok", "attempts": 3, "retries": {"moderation": 2}, "cost_usd": 0.6268, "minutes": 4.1}
+{"name": "Conan O'Brien", "slug": "conanobrien", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6266, "minutes": 2.8}
+{"name": "Palmer Luckey", "slug": "palmerluckey", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6266, "minutes": 2.8}
+{"name": "Grimes", "slug": "grimes", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6258, "minutes": 3.0}
+{"name": "The Jersey Devil", "slug": "thejerseydevil", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6269, "minutes": 2.7}
+{"name": "Hercule Poirot", "slug": "herculepoirot", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6412, "minutes": 2.9}
+{"name": "Kelsey Grammer", "slug": "kelseygrammer", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6546, "minutes": 3.4}
+{"name": "Rosie the Riveter", "slug": "rosietheriveter", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6415, "minutes": 2.9}
+{"name": "Michelangelo", "slug": "michelangelo", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6337, "minutes": 2.8}
+{"name": "Catherine the Great", "slug": "catherinethegrea", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.649, "minutes": 2.9}
+{"name": "Leonard Bernstein", "slug": "leonardbernstein", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6342, "minutes": 2.7}
+{"name": "Mick Jagger", "slug": "mickjagger", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6336, "minutes": 2.7}
+{"name": "CM Punk", "slug": "cmpunk", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6404, "minutes": 2.9}
+{"name": "Tyra Banks", "slug": "tyrabanks", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6335, "minutes": 2.8}
+{"name": "Ned Kelly", "slug": "nedkelly", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6261, "minutes": 2.7}
+{"name": "John Romero", "slug": "johnromero", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6512, "minutes": 2.9}
+{"name": "King George the Third", "slug": "kinggeorgethethi", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6347, "minutes": 3.0}
+{"name": "Al Capone", "slug": "alcapone", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6334, "minutes": 3.3}
+{"name": "Javier Bardem", "slug": "javierbardem", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6338, "minutes": 2.8}
+{"name": "Greta Thunberg", "slug": "gretathunberg", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6473, "minutes": 3.1}
+{"name": "Katy Perry", "slug": "katyperry", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6481, "minutes": 2.8}
+{"name": "Howard Hughes", "slug": "howardhughes", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6411, "minutes": 3.2}
+{"name": "Bill Belichick", "slug": "billbelichick", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6339, "minutes": 2.6}
+{"name": "Stephen Curry", "slug": "stephencurry", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6471, "minutes": 3.1}
+{"name": "Morgan Wallen", "slug": "morganwallen", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6617, "minutes": 3.3}
+{"name": "Lou Ferrigno", "slug": "louferrigno", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6543, "minutes": 3.6}
+{"name": "Neymar", "slug": "neymar", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6403, "minutes": 2.9}
+{"name": "Ichiro", "slug": "ichiro", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6258, "minutes": 2.7}
+{"name": "Ellen DeGeneres", "slug": "ellendegeneres", "outcome": "failed", "kind": "moderation-input", "stage": "tpose", "detail": "input", "attempts": [{"kind": "moderation-input", "stage": "tpose", "detail": "input"}], "cost_usd": 0.0003, "minutes": 0.1}
+{"name": "William Tell", "slug": "williamtell", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6409, "minutes": 3.0}
+{"name": "Hercules the Greek Hero", "slug": "herculesthegreek", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6348, "minutes": 3.0}
+{"name": "The Flying Dutchman", "slug": "theflyingdutchma", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6344, "minutes": 3.2}
+{"name": "Roger Federer", "slug": "rogerfederer", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6337, "minutes": 3.3}
+{"name": "Iago", "slug": "iago", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.633, "minutes": 3.3}
+{"name": "Socrates", "slug": "socrates", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6334, "minutes": 3.3}
+{"name": "Oscar Wilde", "slug": "oscarwilde", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6336, "minutes": 3.3}
+{"name": "Ronald Reagan", "slug": "ronaldreagan", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6341, "minutes": 3.7}
+{"name": "Marie Curie", "slug": "mariecurie", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6263, "minutes": 3.3}
+{"name": "PewDiePie", "slug": "pewdiepie", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6334, "minutes": 2.7}
+{"name": "Stanley Kubrick", "slug": "stanleykubrick", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6267, "minutes": 3.1}
+{"name": "Cardi B", "slug": "cardib", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6477, "minutes": 3.1}
+{"name": "Elizabeth Taylor", "slug": "elizabethtaylor", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6268, "minutes": 3.1}
+{"name": "Muammar Gaddafi", "slug": "muammargaddafi", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.662, "minutes": 3.9}
+{"name": "Professor Moriarty", "slug": "professormoriart", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6343, "minutes": 2.7}
+{"name": "Claude Monet", "slug": "claudemonet", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6265, "minutes": 2.7}
+{"name": "Charlemagne", "slug": "charlemagne", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6408, "minutes": 3.3}
+{"name": "Terence Tao", "slug": "terencetao", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6409, "minutes": 5.4}
+{"name": "John Lennon", "slug": "johnlennon", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6264, "minutes": 3.7}
+{"name": "Antonio Vivaldi", "slug": "antoniovivaldi", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6341, "minutes": 3.9}
+{"name": "Julian Assange", "slug": "julianassange", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6339, "minutes": 3.5}
+{"name": "Seth Rogen", "slug": "sethrogen", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6335, "minutes": 6.4}
+{"name": "Satoru Iwata", "slug": "satoruiwata", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.641, "minutes": 3.8}
+{"name": "The American Gothic Farmer", "slug": "theamericangothi", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6351, "minutes": 5.1}
+{"name": "Marco Polo", "slug": "marcopolo", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6334, "minutes": 3.7}
+{"name": "Bernie Madoff", "slug": "berniemadoff", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6472, "minutes": 4.0}
+{"name": "Jennifer Lopez", "slug": "jenniferlopez", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6339, "minutes": 3.7}
+{"name": "Martha Stewart", "slug": "marthastewart", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6546, "minutes": 4.2}
+{"name": "Jet Li", "slug": "jetli", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6331, "minutes": 3.4}
+{"name": "Miley Cyrus", "slug": "mileycyrus", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6262, "minutes": 3.7}
+{"name": "Floyd Mayweather", "slug": "floydmayweather", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6341, "minutes": 5.3}
+{"name": "Twiggy", "slug": "twiggy", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6259, "minutes": 5.3}
+{"name": "Toby Keith", "slug": "tobykeith", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6335, "minutes": 3.6}
+{"name": "Kareem Abdul-Jabbar", "slug": "kareemabduljabba", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6478, "minutes": 3.3}
+{"name": "Zinedine Zidane", "slug": "zinedinezidane", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.634, "minutes": 3.3}
+{"name": "Alex Ovechkin", "slug": "alexovechkin", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6265, "minutes": 3.1}
+{"name": "Colin Kaepernick", "slug": "colinkaepernick", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6475, "minutes": 3.5}
+{"name": "Beowulf", "slug": "beowulf", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6332, "minutes": 3.1}
+{"name": "Virat Kohli", "slug": "viratkohli", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6263, "minutes": 3.2}
+{"name": "Hannibal", "slug": "hannibal", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6333, "minutes": 3.0}
+{"name": "John Henry the Steel-Driving Man", "slug": "johnhenrythestee", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6357, "minutes": 3.3}
+{"name": "Puck from A Midsummer Night's Dream", "slug": "puckfromamidsumm", "outcome": "ok", "attempts": 2, "retries": {"moderation": 1}, "cost_usd": 0.6256, "minutes": 3.3}
+{"name": "The Boogeyman", "slug": "theboogeyman", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6473, "minutes": 3.6}
+{"name": "Alexander Hamilton", "slug": "alexanderhamilto", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6343, "minutes": 3.0}
+{"name": "Mao Zedong", "slug": "maozedong", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6481, "minutes": 3.0}
+{"name": "50 Cent", "slug": "50cent", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6404, "minutes": 3.0}
+{"name": "Franz Kafka", "slug": "franzkafka", "outcome": "ok", "attempts": 2, "retries": {"moderation": 1}, "cost_usd": 0.6264, "minutes": 3.1}
+{"name": "Spike Lee", "slug": "spikelee", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6467, "minutes": 3.1}
+{"name": "Audrey Hepburn", "slug": "audreyhepburn", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6412, "minutes": 2.7}
+{"name": "Alexandr Wang", "slug": "alexandrwang", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6265, "minutes": 2.5}
+{"name": "Tyler Ninja Blevins", "slug": "tylerninjablevin", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6345, "minutes": 2.6}
+{"name": "Steve Harvey", "slug": "steveharvey", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6264, "minutes": 2.8}
+{"name": "Tim Allen", "slug": "timallen", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6467, "minutes": 3.3}
+{"name": "King Richard the Third", "slug": "kingrichardtheth", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.642, "minutes": 2.7}
+{"name": "Rembrandt", "slug": "rembrandt", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6335, "minutes": 3.3}
+{"name": "Botticelli's Venus", "slug": "botticellisvenus", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6405, "minutes": 3.9}
+{"name": "Franz Liszt", "slug": "franzliszt", "outcome": "ok", "attempts": 2, "retries": {"moderation": 1}, "cost_usd": 0.6336, "minutes": 3.6}
+{"name": "Robinson Crusoe", "slug": "robinsoncrusoe", "outcome": "ok", "attempts": 2, "retries": {"moderation": 1}, "cost_usd": 0.6486, "minutes": 4.1}
+{"name": "Stevie Nicks", "slug": "stevienicks", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6337, "minutes": 3.8}
+{"name": "Donatella Versace", "slug": "donatellaversace", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.627, "minutes": 3.4}
+{"name": "Michael Schumacher", "slug": "michaelschumache", "outcome": "failed", "kind": "moderation-input", "stage": "tpose", "detail": "input", "attempts": [{"kind": "moderation-input", "stage": "tpose", "detail": "input"}], "cost_usd": 0.0003, "minutes": 0.1}
+{"name": "Cody Rhodes", "slug": "codyrhodes", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6482, "minutes": 3.9}
+{"name": "Todd Howard", "slug": "toddhoward", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6409, "minutes": 3.4}
+{"name": "Sitting Bull", "slug": "sittingbull", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6264, "minutes": 3.2}
+{"name": "Calamity Jane", "slug": "calamityjane", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6339, "minutes": 3.4}
+{"name": "Elizabeth Holmes", "slug": "elizabethholmes", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6548, "minutes": 3.8}
+{"name": "Saddam Hussein", "slug": "saddamhussein", "outcome": "failed", "kind": "moderation-input", "stage": "tpose", "detail": "input", "attempts": [{"kind": "moderation-input", "stage": "tpose", "detail": "input"}], "cost_usd": 0.0003, "minutes": 0.1}
+{"name": "Bruno Mars", "slug": "brunomars", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6408, "minutes": 2.8}
+{"name": "Brad Pitt", "slug": "bradpitt", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.626, "minutes": 2.8}
+{"name": "Donnie Yen", "slug": "donnieyen", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6335, "minutes": 2.9}
+{"name": "Henry Ford", "slug": "henryford", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6408, "minutes": 3.2}
+{"name": "Waylon Jennings", "slug": "waylonjennings", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6413, "minutes": 2.7}
+{"name": "Magic Johnson", "slug": "magicjohnson", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6544, "minutes": 3.0}
+{"name": "Chad Ochocinco", "slug": "chadochocinco", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6266, "minutes": 2.7}
+{"name": "David Beckham", "slug": "davidbeckham", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.647, "minutes": 2.9}
+{"name": "Davy Jones", "slug": "davyjones", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6262, "minutes": 2.6}
+{"name": "Yogi Berra", "slug": "yogiberra", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6396, "minutes": 3.0}
+{"name": "Lancelot", "slug": "lancelot", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6333, "minutes": 2.8}
+{"name": "Odin", "slug": "odin", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6329, "minutes": 3.1}
+{"name": "Lady Macbeth", "slug": "ladymacbeth", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6411, "minutes": 2.9}
+{"name": "Bill Clinton", "slug": "billclinton", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6337, "minutes": 2.9}
+{"name": "Plato", "slug": "plato", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.633, "minutes": 3.0}
+{"name": "Nicki Minaj", "slug": "nickiminaj", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6336, "minutes": 2.8}
+{"name": "Thomas Edison", "slug": "thomasedison", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6265, "minutes": 3.0}
+{"name": "Charles Dickens", "slug": "charlesdickens", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6486, "minutes": 3.0}
+{"name": "Kurt Russell", "slug": "kurtrussell", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6337, "minutes": 2.7}
+{"name": "Kevin Hart", "slug": "kevinhart", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6335, "minutes": 2.9}
+{"name": "George Lucas", "slug": "georgelucas", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6337, "minutes": 3.5}
+{"name": "Johnny Carson", "slug": "johnnycarson", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6337, "minutes": 2.6}
+{"name": "Claude Shannon", "slug": "claudeshannon", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6473, "minutes": 4.1}
+{"name": "The Thinker", "slug": "thethinker", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6337, "minutes": 3.7}
+{"name": "Zorro", "slug": "zorro", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6476, "minutes": 3.8}
+{"name": "Keith Haring", "slug": "keithharing", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6337, "minutes": 3.6}
+{"name": "Yo-Yo Ma", "slug": "yoyoma", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6479, "minutes": 3.4}
+{"name": "Canelo Álvarez", "slug": "canelolvarez", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6339, "minutes": 3.1}
+{"name": "Lawrence of Arabia", "slug": "lawrenceofarabia", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6343, "minutes": 3.6}
+{"name": "Frank Sinatra", "slug": "franksinatra", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6338, "minutes": 3.2}
+{"name": "Vivienne Westwood", "slug": "viviennewestwood", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6415, "minutes": 3.2}
+{"name": "Sam Bankman-Fried", "slug": "sambankmanfried", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6343, "minutes": 2.9}
+{"name": "Pancho Villa", "slug": "panchovilla", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.641, "minutes": 3.0}
+{"name": "Jason Statham", "slug": "jasonstatham", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6265, "minutes": 2.9}
+{"name": "Crazy Horse", "slug": "crazyhorse", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6409, "minutes": 3.0}
+{"name": "Rihanna", "slug": "rihanna", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6259, "minutes": 2.6}
+{"name": "Ip Man", "slug": "ipman", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6331, "minutes": 2.9}
+{"name": "Fatboy Slim", "slug": "fatboyslim", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6482, "minutes": 2.7}
+{"name": "Niki Lauda", "slug": "nikilauda", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6336, "minutes": 3.1}
+{"name": "Terry Bradshaw", "slug": "terrybradshaw", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6412, "minutes": 3.2}
+{"name": "Brittney Griner", "slug": "brittneygriner", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6486, "minutes": 3.3}
+{"name": "Friar Tuck", "slug": "friartuck", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6262, "minutes": 3.1}
+{"name": "Pelé", "slug": "pel", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6463, "minutes": 3.3}
+{"name": "Leprechaun", "slug": "leprechaun", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6263, "minutes": 3.4}
+{"name": "Gilgamesh", "slug": "gilgamesh", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6334, "minutes": 3.6}
+{"name": "Neil deGrasse Tyson", "slug": "neildegrassetyso", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6271, "minutes": 3.2}
+{"name": "Xerxes", "slug": "xerxes", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6331, "minutes": 3.6}
+{"name": "Juliet Capulet", "slug": "julietcapulet", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6473, "minutes": 3.7}
+{"name": "Tim Burton", "slug": "timburton", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6262, "minutes": 4.0}
+{"name": "Lil Wayne", "slug": "lilwayne", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6406, "minutes": 4.0}
+{"name": "Richard Nixon", "slug": "richardnixon", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6338, "minutes": 4.5}
+{"name": "Vladimir Lenin", "slug": "vladimirlenin", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6339, "minutes": 4.7}
+{"name": "Jack Nicholson", "slug": "jacknicholson", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6266, "minutes": 4.1}
+{"name": "Dante Alighieri", "slug": "dantealighieri", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6267, "minutes": 5.0}
+{"name": "Jon Stewart", "slug": "jonstewart", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6263, "minutes": 3.2}
+{"name": "The Winged Victory of Samothrace", "slug": "thewingedvictory", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6285, "minutes": 3.1}
+{"name": "Oliver Twist", "slug": "olivertwist", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6337, "minutes": 3.2}
+{"name": "Mike Myers", "slug": "mikemyers", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6263, "minutes": 3.7}
+{"name": "Donatello", "slug": "donatello", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6335, "minutes": 3.6}
+{"name": "Marc Andreessen", "slug": "marcandreessen", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6412, "minutes": 3.9}
+{"name": "Saladin", "slug": "saladin", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6392, "minutes": 3.5}
+{"name": "Jake Paul", "slug": "jakepaul", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6334, "minutes": 3.5}
+{"name": "Buffalo Bill", "slug": "buffalobill", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6264, "minutes": 3.8}
+{"name": "George Michael", "slug": "georgemichael", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6558, "minutes": 3.9}
+{"name": "Loki the Norse God", "slug": "lokithenorsegod", "outcome": "failed", "kind": "moderation-output", "stage": "tpose", "detail": "output", "attempts": [{"kind": "moderation-output", "stage": "tpose", "detail": "output"}, {"kind": "moderation-output", "stage": "tpose", "detail": "output"}, {"kind": "moderation-output", "stage": "tpose", "detail": "output"}], "cost_usd": 0.0003, "minutes": 1.1}
+{"name": "Martin Shkreli", "slug": "martinshkreli", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6267, "minutes": 3.8}
+{"name": "Geronimo", "slug": "geronimo", "outcome": "ok", "attempts": 2, "retries": {"transient": 1}, "cost_usd": 0.6407, "minutes": 4.3}
+{"name": "Chow Yun-fat", "slug": "chowyunfat", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6337, "minutes": 4.4}
+{"name": "Ryan Reynolds", "slug": "ryanreynolds", "outcome": "failed", "kind": "moderation-output", "stage": "emblem", "detail": "output", "attempts": [{"kind": "moderation-output", "stage": "emblem", "detail": "output"}, {"kind": "moderation-output", "stage": "emblem", "detail": "output"}, {"kind": "moderation-output", "stage": "emblem", "detail": "output"}], "cost_usd": 0.6193, "minutes": 4.7}
+{"name": "Calvin Harris", "slug": "calvinharris", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6411, "minutes": 4.3}
+{"name": "Justin Bieber", "slug": "justinbieber", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6617, "minutes": 4.7}
+{"name": "Joe Namath", "slug": "joenamath", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6335, "minutes": 3.7}
+{"name": "Larry Bird", "slug": "larrybird", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6541, "minutes": 3.8}
+{"name": "John McEnroe", "slug": "johnmcenroe", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6265, "minutes": 3.7}
+{"name": "José Mourinho", "slug": "josmourinho", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6398, "minutes": 4.2}
+{"name": "Pecos Bill", "slug": "pecosbill", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6408, "minutes": 3.9}
+{"name": "Cupid", "slug": "cupid", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6257, "minutes": 4.3}
+{"name": "Qin Shi Huang", "slug": "qinshihuang", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6411, "minutes": 3.8}
+{"name": "Ulysses S. Grant", "slug": "ulyssessgrant", "outcome": "ok", "attempts": 2, "retries": {"transient": 1}, "cost_usd": 0.6269, "minutes": 4.4}
+{"name": "Mikhail Gorbachev", "slug": "mikhailgorbachev", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6342, "minutes": 3.9}
+{"name": "Carl Sagan", "slug": "carlsagan", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6335, "minutes": 3.9}
+{"name": "Prospero", "slug": "prospero", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.626, "minutes": 6.0}
+{"name": "Dr. Seuss", "slug": "drseuss", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6334, "minutes": 4.4}
+{"name": "Wes Anderson", "slug": "wesanderson", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6411, "minutes": 4.2}
+{"name": "Ian McKellen", "slug": "ianmckellen", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6337, "minutes": 3.9}
+{"name": "Steve Martin", "slug": "stevemartin", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6336, "minutes": 3.9}
+{"name": "Mephistopheles", "slug": "mephistopheles", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6267, "minutes": 3.8}
+{"name": "Mira Murati", "slug": "miramurati", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6263, "minutes": 4.2}
+{"name": "Ice-T", "slug": "icet", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6537, "minutes": 4.7}
+{"name": "Lady Justice", "slug": "ladyjustice", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.641, "minutes": 3.8}
+{"name": "Ringo Starr", "slug": "ringostarr", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6263, "minutes": 3.1}
+{"name": "Richard the Lionheart", "slug": "richardthelionhe", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6419, "minutes": 3.5}
+{"name": "Dana White", "slug": "danawhite", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6542, "minutes": 4.8}
+{"name": "Kurt Angle", "slug": "kurtangle", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6262, "minutes": 3.8}
+{"name": "Tony Jaa", "slug": "tonyjaa", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.626, "minutes": 3.0}
+{"name": "Jacques Cousteau", "slug": "jacquescousteau", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6475, "minutes": 3.4}
+{"name": "Angelina Jolie", "slug": "angelinajolie", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6266, "minutes": 3.3}
+{"name": "Thor the Norse God", "slug": "thorthenorsegod", "outcome": "failed", "kind": "moderation-output", "stage": "tpose", "detail": "output", "attempts": [{"kind": "moderation-output", "stage": "tpose", "detail": "output"}, {"kind": "moderation-output", "stage": "tpose", "detail": "output"}, {"kind": "moderation-output", "stage": "tpose", "detail": "output"}], "cost_usd": 0.0003, "minutes": 1.2}
+{"name": "Britney Spears", "slug": "britneyspears", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6269, "minutes": 3.0}
+{"name": "Hank Williams", "slug": "hankwilliams", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6265, "minutes": 3.1}
+{"name": "John Madden", "slug": "johnmadden", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6263, "minutes": 3.0}
+{"name": "Luis Suárez", "slug": "luissurez", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6469, "minutes": 3.6}
+{"name": "Tiger Woods", "slug": "tigerwoods", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6263, "minutes": 3.5}
+{"name": "Wilt Chamberlain", "slug": "wiltchamberlain", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6547, "minutes": 4.2}
+{"name": "The Headless Horseman", "slug": "theheadlesshorse", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6274, "minutes": 3.6}
+{"name": "Confucius", "slug": "confucius", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6335, "minutes": 3.5}
+{"name": "Romeo Montague", "slug": "romeomontague", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6412, "minutes": 3.6}
+{"name": "Fidel Castro", "slug": "fidelcastro", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6471, "minutes": 3.4}
+{"name": "Leo Tolstoy", "slug": "leotolstoy", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6336, "minutes": 3.0}
+{"name": "Ice Cube", "slug": "icecube", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6259, "minutes": 3.0}
+{"name": "Galileo Galilei", "slug": "galileogalilei", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6267, "minutes": 3.2}
+{"name": "Hayao Miyazaki", "slug": "hayaomiyazaki", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6485, "minutes": 3.4}
+{"name": "Bernie Sanders", "slug": "berniesanders", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6339, "minutes": 4.1}
+{"name": "Sean Connery", "slug": "seanconnery", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6398, "minutes": 3.8}
+{"name": "Pete Davidson", "slug": "petedavidson", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6399, "minutes": 3.2}
+{"name": "Lisa Su", "slug": "lisasu", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6332, "minutes": 2.9}
+{"name": "Evel Knievel", "slug": "evelknievel", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6483, "minutes": 3.2}
+{"name": "Liberty Leading the People", "slug": "libertyleadingth", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6352, "minutes": 2.7}
+{"name": "Robert Smith", "slug": "robertsmith", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6264, "minutes": 2.7}
+{"name": "William Wallace", "slug": "williamwallace", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6474, "minutes": 2.9}
+{"name": "Tarzan", "slug": "tarzan", "outcome": "ok", "attempts": 2, "retries": {"moderation": 1}, "cost_usd": 0.6404, "minutes": 3.4}
+{"name": "Annie Oakley", "slug": "annieoakley", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.641, "minutes": 3.0}
+{"name": "Henry Cavill", "slug": "henrycavill", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6337, "minutes": 2.7}
+{"name": "Beyoncé", "slug": "beyonc", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6404, "minutes": 2.7}
+{"name": "Sonny Chiba", "slug": "sonnychiba", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6409, "minutes": 2.8}
+{"name": "Georges St-Pierre", "slug": "georgesstpierre", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.627, "minutes": 3.2}
+{"name": "Garth Brooks", "slug": "garthbrooks", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6409, "minutes": 2.7}
+{"name": "Mike Ditka", "slug": "mikeditka", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6336, "minutes": 2.8}
+{"name": "Stephen Colbert", "slug": "stephencolbert", "outcome": "failed", "kind": "other", "stage": "mesh-upload", "detail": "", "attempts": [{"kind": "other", "stage": "mesh-upload", "detail": ""}], "cost_usd": 0.0157, "minutes": 0.4}
+{"name": "Charles Barkley", "slug": "charlesbarkley", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.64, "minutes": 3.3}
+{"name": "Ayrton Senna", "slug": "ayrtonsenna", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6337, "minutes": 2.7}
+{"name": "The Tooth Fairy", "slug": "thetoothfairy", "outcome": "failed", "kind": "moderation-output", "stage": "portrait", "detail": "output", "attempts": [{"kind": "moderation-output", "stage": "portrait", "detail": "output"}, {"kind": "moderation-output", "stage": "portrait", "detail": "output"}, {"kind": "moderation-output", "stage": "portrait", "detail": "output"}], "cost_usd": 0.5731, "minutes": 2.9}
+{"name": "The Golem of Prague", "slug": "thegolemofprague", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6478, "minutes": 2.9}
+{"name": "Wayne Rooney", "slug": "waynerooney", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.647, "minutes": 3.3}
+{"name": "Macbeth", "slug": "macbeth", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6333, "minutes": 2.9}
+{"name": "Kaiser Wilhelm", "slug": "kaiserwilhelm", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6339, "minutes": 2.9}
+{"name": "Jane Goodall", "slug": "janegoodall", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6264, "minutes": 2.8}
+{"name": "Andrew Jackson", "slug": "andrewjackson", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6339, "minutes": 3.0}
+{"name": "Spartacus", "slug": "spartacus", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6334, "minutes": 3.3}
+{"name": "Marlon Brando", "slug": "marlonbrando", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6338, "minutes": 2.9}
+{"name": "Werner Herzog", "slug": "wernerherzog", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6411, "minutes": 3.1}
+{"name": "Jerry Seinfeld", "slug": "jerryseinfeld", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6338, "minutes": 3.1}
+{"name": "Carmen", "slug": "carmen", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6258, "minutes": 2.7}
+{"name": "Kendrick Lamar", "slug": "kendricklamar", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6473, "minutes": 3.4}
+{"name": "Whistler's Mother", "slug": "whistlersmother", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6342, "minutes": 2.9}
+{"name": "Billy Joel", "slug": "billyjoel", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.648, "minutes": 2.9}
+{"name": "Leonardo DiCaprio", "slug": "leonardodicaprio", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6269, "minutes": 3.2}
+{"name": "Manny Pacquiao", "slug": "mannypacquiao", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6412, "minutes": 3.6}
+{"name": "The Weeknd", "slug": "theweeknd", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6408, "minutes": 3.0}
+{"name": "Mansa Musa", "slug": "mansamusa", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6262, "minutes": 4.5}
+{"name": "Sammo Hung", "slug": "sammohung", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6408, "minutes": 3.4}
+{"name": "Jeff Dean", "slug": "jeffdean", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6394, "minutes": 5.6}
+{"name": "Tiësto", "slug": "tisto", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6477, "minutes": 3.5}
+{"name": "Vince Lombardi", "slug": "vincelombardi", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6339, "minutes": 3.4}
+{"name": "Sachin Tendulkar", "slug": "sachintendulkar", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6342, "minutes": 3.2}
+{"name": "Jürgen Klopp", "slug": "jrgenklopp", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6543, "minutes": 3.7}
+{"name": "Jack Frost", "slug": "jackfrost", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6262, "minutes": 3.5}
+{"name": "Allen Iverson", "slug": "alleniverson", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6471, "minutes": 4.0}
+{"name": "Valkyrie", "slug": "valkyrie", "outcome": "ok", "attempts": 2, "retries": {"moderation": 1}, "cost_usd": 0.6333, "minutes": 3.5}
+{"name": "Othello", "slug": "othello", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6332, "minutes": 3.9}
+{"name": "Nefertiti", "slug": "nefertiti", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6262, "minutes": 3.5}
+{"name": "George Patton", "slug": "georgepatton", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6269, "minutes": 3.2}
+{"name": "Eva Perón", "slug": "evapern", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6335, "minutes": 2.7}
+{"name": "Linus Torvalds", "slug": "linustorvalds", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6339, "minutes": 2.8}
+{"name": "Dr. Dre", "slug": "drdre", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6259, "minutes": 2.8}
+{"name": "Guillermo del Toro", "slug": "guillermodeltoro", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6416, "minutes": 3.0}
+{"name": "Judy Garland", "slug": "judygarland", "outcome": "ok", "attempts": 2, "retries": {"moderation": 1}, "cost_usd": 0.6338, "minutes": 3.0}
+{"name": "David Letterman", "slug": "davidletterman", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.634, "minutes": 2.6}
+{"name": "Rip Van Winkle", "slug": "ripvanwinkle", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6266, "minutes": 2.8}
+{"name": "Richard Pryor", "slug": "richardpryor", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6544, "minutes": 3.0}
+{"name": "Greg Brockman", "slug": "gregbrockman", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6411, "minutes": 2.9}
+{"name": "The Discus Thrower", "slug": "thediscusthrower", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6417, "minutes": 2.7}
+{"name": "Tina Turner", "slug": "tinaturner", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6336, "minutes": 2.7}
+{"name": "Johnny Depp", "slug": "johnnydepp", "outcome": "failed", "kind": "moderation-input", "stage": "stock", "detail": "input", "attempts": [{"kind": "moderation-input", "stage": "stock", "detail": "input"}], "cost_usd": 0.6015, "minutes": 2.2}
+{"name": "Miyamoto Musashi", "slug": "miyamotomusashi", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6414, "minutes": 3.2}
+{"name": "Bolo Yeung", "slug": "boloyeung", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6336, "minutes": 2.7}
+{"name": "Triple H", "slug": "tripleh", "outcome": "ok", "attempts": 3, "retries": {"moderation": 2}, "cost_usd": 0.6406, "minutes": 3.4}
+{"name": "Bad Bunny", "slug": "badbunny", "outcome": "ok", "attempts": 2, "retries": {"transient": 1}, "cost_usd": 0.654, "minutes": 3.1}
+{"name": "Nikola Jokić", "slug": "nikolajoki", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.647, "minutes": 3.3}
+{"name": "Paul Gascoigne", "slug": "paulgascoigne", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6472, "minutes": 3.2}
+{"name": "Carrie Fisher", "slug": "carriefisher", "outcome": "failed", "kind": "moderation-output", "stage": "tpose", "detail": "output", "attempts": [{"kind": "moderation-output", "stage": "tpose", "detail": "output"}, {"kind": "moderation-output", "stage": "tpose", "detail": "output"}, {"kind": "moderation-output", "stage": "tpose", "detail": "output"}], "cost_usd": 0.0003, "minutes": 1.3}
+{"name": "Lance Armstrong", "slug": "lancearmstrong", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.64, "minutes": 2.8}
+{"name": "John Bull", "slug": "johnbull", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6261, "minutes": 2.9}
+{"name": "Shylock", "slug": "shylock", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6406, "minutes": 2.9}
+{"name": "Sun Tzu", "slug": "suntzu", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6332, "minutes": 2.6}
+{"name": "The Sphinx", "slug": "thesphinx", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6481, "minutes": 3.0}
+{"name": "Ho Chi Minh", "slug": "hochiminh", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6337, "minutes": 2.7}
+{"name": "Douglas MacArthur", "slug": "douglasmacarthur", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6415, "minutes": 2.8}
+{"name": "The Cheshire Cat", "slug": "thecheshirecat", "outcome": "failed", "kind": "moderation-output", "stage": "tpose", "detail": "output", "attempts": [{"kind": "moderation-output", "stage": "tpose", "detail": "output"}, {"kind": "moderation-output", "stage": "tpose", "detail": "output"}, {"kind": "moderation-output", "stage": "tpose", "detail": "output"}], "cost_usd": 0.0003, "minutes": 1.2}
+{"name": "Akira Kurosawa", "slug": "akirakurosawa", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6339, "minutes": 3.1}
+{"name": "Tyler the Creator", "slug": "tylerthecreator", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6622, "minutes": 3.3}
+{"name": "Steve Wozniak", "slug": "stevewozniak", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6411, "minutes": 3.5}
+{"name": "Jonah Hill", "slug": "jonahhill", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6469, "minutes": 3.6}
+{"name": "Eliezer Yudkowsky", "slug": "eliezeryudkowsky", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6269, "minutes": 3.1}
+{"name": "Harry Houdini", "slug": "harryhoudini", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6411, "minutes": 3.5}
+{"name": "Dikembe Mutombo", "slug": "dikembemutombo", "outcome": "failed", "kind": "moderation-input", "stage": "stock", "detail": "input", "attempts": [{"kind": "moderation-input", "stage": "stock", "detail": "input"}], "cost_usd": 0.5943, "minutes": 2.1}
+{"name": "Bruce Springsteen", "slug": "brucespringsteen", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6342, "minutes": 2.8}
+{"name": "Suleiman the Magnificent", "slug": "suleimanthemagni", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6276, "minutes": 3.0}
+{"name": "Ronda Rousey", "slug": "rondarousey", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6337, "minutes": 2.8}
+{"name": "Ed Sheeran", "slug": "edsheeran", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6262, "minutes": 2.6}
+{"name": "Eric Cantona", "slug": "ericcantona", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6264, "minutes": 2.6}
+{"name": "Michael Phelps", "slug": "michaelphelps", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6267, "minutes": 2.8}
+{"name": "The Big Bad Wolf", "slug": "thebigbadwolf", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6341, "minutes": 2.7}
+{"name": "Sinbad the Sailor", "slug": "sinbadthesailor", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6343, "minutes": 2.9}
+{"name": "Laozi", "slug": "laozi", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6257, "minutes": 2.9}
+{"name": "Robert Downey Jr.", "slug": "robertdowneyjr", "outcome": "ok", "attempts": 3, "retries": {"moderation": 2}, "cost_usd": 0.6343, "minutes": 3.9}
+{"name": "Otto von Bismarck", "slug": "ottovonbismarck", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6343, "minutes": 2.7}
+{"name": "Sarah Palin", "slug": "sarahpalin", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6482, "minutes": 2.9}
+{"name": "Bill Nye", "slug": "billnye", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6333, "minutes": 2.9}
+{"name": "Patrick Stewart", "slug": "patrickstewart", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6413, "minutes": 2.8}
+{"name": "Kevin Smith", "slug": "kevinsmith", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6338, "minutes": 3.0}
+{"name": "Eazy-E", "slug": "eazye", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.633, "minutes": 3.0}
+{"name": "Howard Stern", "slug": "howardstern", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6483, "minutes": 2.9}
+{"name": "Long John Silver", "slug": "longjohnsilver", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6341, "minutes": 2.7}
+{"name": "Stephen Wolfram", "slug": "stephenwolfram", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6413, "minutes": 2.8}
+{"name": "Kevin James", "slug": "kevinjames", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6469, "minutes": 3.0}
+{"name": "Robespierre", "slug": "robespierre", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6336, "minutes": 2.7}
+{"name": "Chyna", "slug": "chyna", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.633, "minutes": 2.9}
+{"name": "Hugh Jackman", "slug": "hughjackman", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6336, "minutes": 2.6}
+{"name": "Stevie Wonder", "slug": "steviewonder", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6484, "minutes": 3.2}
+{"name": "Jungkook", "slug": "jungkook", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6333, "minutes": 2.7}
+{"name": "Simone Biles", "slug": "simonebiles", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6337, "minutes": 2.7}
+{"name": "Mother Goose", "slug": "mothergoose", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6337, "minutes": 3.0}
+{"name": "Lu Bu", "slug": "lubu", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.633, "minutes": 3.1}
+{"name": "Erwin Schrödinger", "slug": "erwinschrdinger", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6269, "minutes": 2.9}
+{"name": "Rob Ford", "slug": "robford", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6406, "minutes": 3.2}
+{"name": "Fei-Fei Li", "slug": "feifeili", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6263, "minutes": 2.7}
+{"name": "Michael Moore", "slug": "michaelmoore", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6471, "minutes": 3.0}
+{"name": "Anthony Hopkins", "slug": "anthonyhopkins", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6412, "minutes": 3.1}
+{"name": "LL Cool J", "slug": "llcoolj", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6541, "minutes": 3.1}
+{"name": "Julia Child", "slug": "juliachild", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6469, "minutes": 3.2}
+{"name": "Kristen Wiig", "slug": "kristenwiig", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6483, "minutes": 3.3}
+{"name": "Peter the Great", "slug": "peterthegreat", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6268, "minutes": 2.8}
+{"name": "Jon Bon Jovi", "slug": "jonbonjovi", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6265, "minutes": 3.0}
+{"name": "Van Helsing", "slug": "vanhelsing", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6336, "minutes": 3.4}
+{"name": "James Gandolfini", "slug": "jamesgandolfini", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6487, "minutes": 2.8}
+{"name": "Chappell Roan", "slug": "chappellroan", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6412, "minutes": 3.3}
+{"name": "Captain Hook", "slug": "captainhook", "outcome": "failed", "kind": "moderation-output", "stage": "tpose", "detail": "output", "attempts": [{"kind": "moderation-output", "stage": "tpose", "detail": "output"}, {"kind": "moderation-output", "stage": "tpose", "detail": "output"}, {"kind": "moderation-output", "stage": "tpose", "detail": "output"}], "cost_usd": 0.0003, "minutes": 1.1}
+{"name": "Father Time", "slug": "fathertime", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6337, "minutes": 2.9}
+{"name": "Kappa the Yokai", "slug": "kappatheyokai", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6341, "minutes": 3.0}
+{"name": "Seth Rollins", "slug": "sethrollins", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6264, "minutes": 5.0}
+{"name": "Tony Hawk", "slug": "tonyhawk", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6334, "minutes": 3.6}
+{"name": "Imelda Marcos", "slug": "imeldamarcos", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6266, "minutes": 3.6}
+{"name": "Ed Wood", "slug": "edwood", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6405, "minutes": 3.4}
+{"name": "Isambard Kingdom Brunel", "slug": "isambardkingdomb", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6421, "minutes": 3.5}
+{"name": "Burt Reynolds", "slug": "burtreynolds", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6338, "minutes": 3.3}
+{"name": "Don Rickles", "slug": "donrickles", "outcome": "ok", "attempts": 2, "retries": {"transient": 1}, "cost_usd": 0.6264, "minutes": 3.3}
+{"name": "Guan Yu", "slug": "guanyu", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6259, "minutes": 4.1}
+{"name": "Ray Kurzweil", "slug": "raykurzweil", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6338, "minutes": 3.0}
+{"name": "Bob Barker", "slug": "bobbarker", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6408, "minutes": 3.1}
+{"name": "Coolio", "slug": "coolio", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6477, "minutes": 3.9}
+{"name": "Oni Demon", "slug": "onidemon", "outcome": "ok", "attempts": 2, "retries": {"transient": 1}, "cost_usd": 0.6407, "minutes": 8.5}
+{"name": "Ragnar Lothbrok", "slug": "ragnarlothbrok", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6487, "minutes": 2.9}
+{"name": "Jimi Hendrix", "slug": "jimihendrix", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.641, "minutes": 2.8}
+{"name": "Francis Ngannou", "slug": "francisngannou", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.634, "minutes": 2.8}
+{"name": "Denzel Washington", "slug": "denzelwashington", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6487, "minutes": 3.0}
+{"name": "Björn Borg", "slug": "bjrnborg", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6335, "minutes": 2.6}
+{"name": "Billy Ray Cyrus", "slug": "billyraycyrus", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6267, "minutes": 2.9}
+{"name": "Kid Rock", "slug": "kidrock", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6333, "minutes": 2.6}
+{"name": "Tycho Brahe", "slug": "tychobrahe", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.641, "minutes": 2.8}
+{"name": "The Easter Bunny", "slug": "theeasterbunny", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6341, "minutes": 3.0}
+{"name": "Scheherazade", "slug": "scheherazade", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6264, "minutes": 3.0}
+{"name": "Chris Hemsworth", "slug": "chrishemsworth", "outcome": "failed", "kind": "moderation-output", "stage": "tpose", "detail": "output", "attempts": [{"kind": "moderation-output", "stage": "tpose", "detail": "output"}, {"kind": "moderation-output", "stage": "tpose", "detail": "output"}, {"kind": "moderation-output", "stage": "tpose", "detail": "output"}], "cost_usd": 0.0003, "minutes": 1.3}
+{"name": "Tom Selleck", "slug": "tomselleck", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6482, "minutes": 2.9}
+{"name": "John Belushi", "slug": "johnbelushi", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6338, "minutes": 2.9}
+{"name": "Andrew Ng", "slug": "andrewng", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6405, "minutes": 2.9}
+{"name": "Jay Leno", "slug": "jayleno", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6406, "minutes": 3.1}
+{"name": "Miss Marple", "slug": "missmarple", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6336, "minutes": 3.0}
+{"name": "Ivan the Terrible", "slug": "ivantheterrible", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6342, "minutes": 2.9}
+{"name": "Yoko Ono", "slug": "yokoono", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6405, "minutes": 2.7}
+{"name": "Anderson Silva", "slug": "andersonsilva", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6339, "minutes": 2.9}
+{"name": "Jesse Owens", "slug": "jesseowens", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6482, "minutes": 3.3}
+{"name": "Doja Cat", "slug": "dojacat", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6612, "minutes": 3.7}
+{"name": "RZA", "slug": "rza", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6255, "minutes": 3.1}
+{"name": "Alex Trebek", "slug": "alextrebek", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6336, "minutes": 2.9}
+{"name": "Dan Aykroyd", "slug": "danaykroyd", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.641, "minutes": 3.1}
+{"name": "Guido van Rossum", "slug": "guidovanrossum", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6268, "minutes": 2.9}
+{"name": "Tengu", "slug": "tengu", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.633, "minutes": 3.3}
+{"name": "Don Juan", "slug": "donjuan", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.626, "minutes": 2.9}
+{"name": "Christopher Lee", "slug": "christopherlee", "outcome": "ok", "attempts": 2, "retries": {"moderation": 1}, "cost_usd": 0.6341, "minutes": 3.2}
+{"name": "Courtney Love", "slug": "courtneylove", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6338, "minutes": 2.7}
+{"name": "Guy Fawkes", "slug": "guyfawkes", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6335, "minutes": 2.8}
+{"name": "Jack the Giant Killer", "slug": "jackthegiantkill", "outcome": "ok", "attempts": 2, "retries": {"moderation": 1}, "cost_usd": 0.6347, "minutes": 3.8}
+{"name": "Big Show", "slug": "bigshow", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6332, "minutes": 2.9}
+{"name": "Pedro Pascal", "slug": "pedropascal", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6337, "minutes": 3.2}
+{"name": "Peter Pan", "slug": "peterpan", "outcome": "failed", "kind": "moderation-output", "stage": "tpose", "detail": "output", "attempts": [{"kind": "moderation-output", "stage": "tpose", "detail": "output"}, {"kind": "moderation-output", "stage": "tpose", "detail": "output"}, {"kind": "moderation-output", "stage": "tpose", "detail": "output"}], "cost_usd": 0.0003, "minutes": 1.0}
+{"name": "Dale Earnhardt", "slug": "daleearnhardt", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6339, "minutes": 3.0}
+{"name": "Christopher Reeve", "slug": "christopherreeve", "outcome": "failed", "kind": "moderation-output", "stage": "tpose", "detail": "output", "attempts": [{"kind": "moderation-output", "stage": "tpose", "detail": "output"}, {"kind": "moderation-output", "stage": "tpose", "detail": "output"}, {"kind": "moderation-output", "stage": "tpose", "detail": "output"}], "cost_usd": 0.0003, "minutes": 1.2}
+{"name": "Burna Boy", "slug": "burnaboy", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.648, "minutes": 3.3}
+{"name": "Ali Baba", "slug": "alibaba", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6333, "minutes": 2.9}
+{"name": "Michael Buffer", "slug": "michaelbuffer", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6339, "minutes": 2.8}
+{"name": "Ricky Gervais", "slug": "rickygervais", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.641, "minutes": 3.0}
+{"name": "Eddie Guerrero", "slug": "eddieguerrero", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.634, "minutes": 2.9}
+{"name": "Tom Hardy", "slug": "tomhardy", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6394, "minutes": 2.9}
+{"name": "Kublai Khan", "slug": "kublaikhan", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6336, "minutes": 3.1}
+{"name": "Lil Nas X", "slug": "lilnasx", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6467, "minutes": 3.5}
+{"name": "Gwen Stefani", "slug": "gwenstefani", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6337, "minutes": 3.3}
+{"name": "Donald Knuth", "slug": "donaldknuth", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6544, "minutes": 3.4}
+{"name": "Sha'Carri Richardson", "slug": "shacarririchards", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6418, "minutes": 3.1}
+{"name": "Carlos Santana", "slug": "carlossantana", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6558, "minutes": 3.2}
+{"name": "John Cleese", "slug": "johncleese", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6336, "minutes": 2.8}
+{"name": "Anansi", "slug": "anansi", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6331, "minutes": 3.0}
+{"name": "Ice Spice", "slug": "icespice", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6333, "minutes": 2.9}
+{"name": "Michael Keaton", "slug": "michaelkeaton", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6266, "minutes": 3.9}
+{"name": "Larry King", "slug": "larryking", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6335, "minutes": 3.7}
+{"name": "Captain Nemo", "slug": "captainnemo", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6265, "minutes": 2.9}
+{"name": "Tom Jones", "slug": "tomjones", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6334, "minutes": 2.7}
+{"name": "Horatio Nelson", "slug": "horationelson", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6267, "minutes": 3.0}
+{"name": "Valentino Rossi", "slug": "valentinorossi", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.634, "minutes": 2.9}
+{"name": "Evander Holyfield", "slug": "evanderholyfield", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6342, "minutes": 3.3}
+{"name": "Ricky Martin", "slug": "rickymartin", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6483, "minutes": 3.3}
+{"name": "Idris Elba", "slug": "idriselba", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6335, "minutes": 3.6}
+{"name": "André 3000", "slug": "andr3000", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6408, "minutes": 3.3}
+{"name": "Yoshua Bengio", "slug": "yoshuabengio", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6338, "minutes": 2.8}
+{"name": "Nezha", "slug": "nezha", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.633, "minutes": 3.7}
+{"name": "Liza Minnelli", "slug": "lizaminnelli", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6544, "minutes": 3.6}
+{"name": "Bill Murray", "slug": "billmurray", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6542, "minutes": 3.2}
+{"name": "Bruce Buffer", "slug": "brucebuffer", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.641, "minutes": 3.5}
+{"name": "Cyrano de Bergerac", "slug": "cyranodebergerac", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6417, "minutes": 2.7}
+{"name": "Wu Zetian", "slug": "wuzetian", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.648, "minutes": 3.0}
+{"name": "Aretha Franklin", "slug": "arethafranklin", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6341, "minutes": 2.8}
+{"name": "Morgan Freeman", "slug": "morganfreeman", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6339, "minutes": 3.0}
+{"name": "Pitbull", "slug": "pitbull", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6332, "minutes": 2.7}
+{"name": "Florence Griffith Joyner", "slug": "florencegriffith", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.635, "minutes": 2.8}
+{"name": "Rocky Marciano", "slug": "rockymarciano", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6619, "minutes": 3.4}
+{"name": "Shirley Temple", "slug": "shirleytemple", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6265, "minutes": 2.5}
+{"name": "George Carlin", "slug": "georgecarlin", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6265, "minutes": 2.9}
+{"name": "Grendel", "slug": "grendel", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.626, "minutes": 3.4}
+{"name": "Method Man", "slug": "methodman", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6468, "minutes": 3.3}
+{"name": "Marvin Minsky", "slug": "marvinminsky", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6483, "minutes": 2.9}
+{"name": "Victor Frankenstein", "slug": "victorfrankenste", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6417, "minutes": 2.9}
+{"name": "Oda Nobunaga", "slug": "odanobunaga", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6338, "minutes": 2.7}
+{"name": "Jamie Oliver", "slug": "jamieoliver", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6264, "minutes": 3.4}
+{"name": "Shawn Michaels", "slug": "shawnmichaels", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6339, "minutes": 2.6}
+{"name": "Dave Grohl", "slug": "davegrohl", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6407, "minutes": 3.2}
+{"name": "Dwarkesh Patel", "slug": "dwarkeshpatel", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6485, "minutes": 9.4}
+{"name": "G-Dragon", "slug": "gdragon", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6333, "minutes": 3.0}
+{"name": "Jane Fonda", "slug": "janefonda", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6408, "minutes": 3.6}
+{"name": "Danica Patrick", "slug": "danicapatrick", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6339, "minutes": 3.2}
+{"name": "Momotaro", "slug": "momotaro", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6333, "minutes": 3.0}
+{"name": "Farrah Fawcett", "slug": "farrahfawcett", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.634, "minutes": 2.9}
+{"name": "Busta Rhymes", "slug": "bustarhymes", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6264, "minutes": 3.1}
+{"name": "Tracy Morgan", "slug": "tracymorgan", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.641, "minutes": 3.3}
+{"name": "Lee Sedol", "slug": "leesedol", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6408, "minutes": 3.6}
+{"name": "Jim Morrison", "slug": "jimmorrison", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6263, "minutes": 3.5}
+{"name": "d'Artagnan", "slug": "dartagnan", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6336, "minutes": 3.7}
+{"name": "Mata Hari", "slug": "matahari", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6335, "minutes": 3.7}
+{"name": "David Copperfield", "slug": "davidcopperfield", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6415, "minutes": 3.9}
+{"name": "Shane Warne", "slug": "shanewarne", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6263, "minutes": 3.0}
+{"name": "Randy Orton", "slug": "randyorton", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6336, "minutes": 3.6}
+{"name": "Julie Andrews", "slug": "julieandrews", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6338, "minutes": 3.5}
+{"name": "Missy Elliott", "slug": "missyelliott", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6338, "minutes": 3.1}
+{"name": "Nostradamus", "slug": "nostradamus", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6336, "minutes": 3.3}
+{"name": "Eddie Izzard", "slug": "eddieizzard", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6556, "minutes": 4.3}
+{"name": "Penn Jillette", "slug": "pennjillette", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6338, "minutes": 4.4}
+{"name": "Humphrey Bogart", "slug": "humphreybogart", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6486, "minutes": 4.5}
+{"name": "Captain Ahab", "slug": "captainahab", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6338, "minutes": 4.5}
+{"name": "Bryan Cranston", "slug": "bryancranston", "outcome": "failed", "kind": "moderation-input", "stage": "tpose", "detail": "input", "attempts": [{"kind": "moderation-input", "stage": "tpose", "detail": "input"}], "cost_usd": 0.0003, "minutes": 0.1}
+{"name": "Neil Young", "slug": "neilyoung", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6335, "minutes": 4.3}
+{"name": "Jonah Lomu", "slug": "jonahlomu", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6468, "minutes": 3.7}
+{"name": "David Blaine", "slug": "davidblaine", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.641, "minutes": 3.5}
+{"name": "John Candy", "slug": "johncandy", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6335, "minutes": 3.7}
+{"name": "Brunhilde", "slug": "brunhilde", "outcome": "ok", "attempts": 3, "retries": {"moderation": 2}, "cost_usd": 0.6334, "minutes": 5.8}
+{"name": "Chris Rock", "slug": "chrisrock", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6408, "minutes": 3.7}
+{"name": "Fedor Emelianenko", "slug": "fedoremelianenko", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6271, "minutes": 4.1}
+{"name": "Ichabod Crane", "slug": "ichabodcrane", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6339, "minutes": 4.5}
+{"name": "Master P", "slug": "masterp", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6611, "minutes": 4.9}
+{"name": "Gary Oldman", "slug": "garyoldman", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6409, "minutes": 5.0}
+{"name": "Leif Erikson", "slug": "leiferikson", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6338, "minutes": 3.7}
+{"name": "Robert Plant", "slug": "robertplant", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6264, "minutes": 3.2}
+{"name": "Chris Jericho", "slug": "chrisjericho", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6339, "minutes": 3.1}
+{"name": "Lil Kim", "slug": "lilkim", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6405, "minutes": 3.1}
+{"name": "Shaun White", "slug": "shaunwhite", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6409, "minutes": 3.2}
+{"name": "James Dean", "slug": "jamesdean", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6469, "minutes": 3.3}
+{"name": "Zach Galifianakis", "slug": "zachgalifianakis", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6343, "minutes": 2.8}
+{"name": "Yasuke", "slug": "yasuke", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6259, "minutes": 2.9}
+{"name": "Criss Angel", "slug": "crissangel", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6409, "minutes": 3.0}
+{"name": "The Invisible Man", "slug": "theinvisibleman", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6342, "minutes": 3.0}
+{"name": "Dean Martin", "slug": "deanmartin", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6483, "minutes": 3.1}
+{"name": "Will Smith", "slug": "willsmith", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6408, "minutes": 3.3}
+{"name": "Nate Diaz", "slug": "natediaz", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.654, "minutes": 3.4}
+{"name": "Dorothy Gale", "slug": "dorothygale", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6337, "minutes": 3.0}
+{"name": "James Earl Jones", "slug": "jamesearljones", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6341, "minutes": 3.1}
+{"name": "Billy Blanks", "slug": "billyblanks", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6337, "minutes": 3.2}
+{"name": "Rodney Dangerfield", "slug": "rodneydangerfiel", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6416, "minutes": 3.5}
+{"name": "Chuck D", "slug": "chuckd", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6612, "minutes": 3.5}
+{"name": "Bret Hart", "slug": "brethart", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6261, "minutes": 3.2}
+{"name": "Giancarlo Esposito", "slug": "giancarloesposit", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6416, "minutes": 3.3}
+{"name": "Keith Richards", "slug": "keithrichards", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6339, "minutes": 3.5}
+{"name": "Casanova", "slug": "casanova", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6407, "minutes": 3.8}
+{"name": "Mark Hamill", "slug": "markhamill", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6408, "minutes": 3.2}
+{"name": "Dave Chappelle", "slug": "davechappelle", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6339, "minutes": 3.2}
+{"name": "Grandmaster Flash", "slug": "grandmasterflash", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6269, "minutes": 3.5}
+{"name": "Baron Munchausen", "slug": "baronmunchausen", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6342, "minutes": 3.3}
+{"name": "Marie Kondo", "slug": "mariekondo", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6409, "minutes": 3.5}
+{"name": "Shaka Zulu", "slug": "shakazulu", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6335, "minutes": 3.3}
+{"name": "Daniel Radcliffe", "slug": "danielradcliffe", "outcome": "failed", "kind": "moderation-output", "stage": "tpose", "detail": "output", "attempts": [{"kind": "moderation-output", "stage": "tpose", "detail": "output"}, {"kind": "moderation-output", "stage": "tpose", "detail": "output"}, {"kind": "moderation-output", "stage": "tpose", "detail": "output"}], "cost_usd": 0.0003, "minutes": 1.1}
+{"name": "Becky Lynch", "slug": "beckylynch", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6336, "minutes": 3.0}
+{"name": "Vin Diesel", "slug": "vindiesel", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6262, "minutes": 3.2}
+{"name": "Barry Manilow", "slug": "barrymanilow", "outcome": "ok", "attempts": 2, "retries": {"transient": 1}, "cost_usd": 0.6338, "minutes": 3.9}
+{"name": "Rick Moranis", "slug": "rickmoranis", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.647, "minutes": 3.6}
+{"name": "Jerry Lewis", "slug": "jerrylewis", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6408, "minutes": 3.5}
+{"name": "Huckleberry Finn", "slug": "huckleberryfinn", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6342, "minutes": 3.5}
+{"name": "Montezuma", "slug": "montezuma", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6262, "minutes": 3.3}
+{"name": "Janis Joplin", "slug": "janisjoplin", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6338, "minutes": 3.4}
+{"name": "Booker T", "slug": "bookert", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.626, "minutes": 3.6}
+{"name": "Fred Astaire", "slug": "fredastaire", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6265, "minutes": 3.5}
+{"name": "Hattori Hanzo", "slug": "hattorihanzo", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6266, "minutes": 3.4}
+{"name": "Eddie Van Halen", "slug": "eddievanhalen", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6267, "minutes": 3.4}
+{"name": "The Phantom of the Opera", "slug": "thephantomoftheo", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6483, "minutes": 3.8}
+{"name": "Howie Mandel", "slug": "howiemandel", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6544, "minutes": 4.1}
+{"name": "Pamela Anderson", "slug": "pamelaanderson", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.634, "minutes": 3.4}
+{"name": "Antonio Inoki", "slug": "antonioinoki", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6339, "minutes": 3.7}
+{"name": "Leslie Nielsen", "slug": "leslienielsen", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6473, "minutes": 3.7}
+{"name": "Joan Rivers", "slug": "joanrivers", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6409, "minutes": 3.8}
+{"name": "Royce Gracie", "slug": "roycegracie", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.641, "minutes": 3.6}
+{"name": "Axl Rose", "slug": "axlrose", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6467, "minutes": 3.7}
+{"name": "The Count of Monte Cristo", "slug": "thecountofmontec", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6278, "minutes": 4.9}
+{"name": "Jenna Ortega", "slug": "jennaortega", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6336, "minutes": 3.5}
+{"name": "Date Masamune", "slug": "datemasamune", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6412, "minutes": 4.4}
+{"name": "Charlton Heston", "slug": "charltonheston", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6267, "minutes": 3.4}
+{"name": "Kenan Thompson", "slug": "kenanthompson", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6473, "minutes": 3.4}
+{"name": "The Mad Hatter", "slug": "themadhatter", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6267, "minutes": 3.5}
+{"name": "Steven Tyler", "slug": "steventyler", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.641, "minutes": 3.3}
+{"name": "Shinsuke Nakamura", "slug": "shinsukenakamura", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6415, "minutes": 3.5}
+{"name": "Leonard Nimoy", "slug": "leonardnimoy", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6483, "minutes": 3.5}
+{"name": "Billy Connolly", "slug": "billyconnolly", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6473, "minutes": 3.3}
+{"name": "Tom Sawyer", "slug": "tomsawyer", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6408, "minutes": 3.4}
+{"name": "Uma Thurman", "slug": "umathurman", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6469, "minutes": 3.9}
+{"name": "Jimmy Page", "slug": "jimmypage", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6262, "minutes": 3.7}
+{"name": "Shah Rukh Khan", "slug": "shahrukhkhan", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6266, "minutes": 4.0}
+{"name": "Eartha Kitt", "slug": "earthakitt", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6337, "minutes": 3.8}
+{"name": "Andy Kaufman", "slug": "andykaufman", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6337, "minutes": 3.7}
+{"name": "John Carter of Mars", "slug": "johncarterofmars", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6271, "minutes": 3.5}
+{"name": "Ray Charles", "slug": "raycharles", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6335, "minutes": 3.5}
+{"name": "Don Knotts", "slug": "donknotts", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6408, "minutes": 3.4}
+{"name": "Elijah Wood", "slug": "elijahwood", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6336, "minutes": 3.6}
+{"name": "Tigger", "slug": "tigger", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6258, "minutes": 3.1}
+{"name": "Katt Williams", "slug": "kattwilliams", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6411, "minutes": 3.6}
+{"name": "Debbie Harry", "slug": "debbieharry", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6264, "minutes": 3.2}
+{"name": "Adam Driver", "slug": "adamdriver", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6542, "minutes": 3.7}
+{"name": "Lynda Carter", "slug": "lyndacarter", "outcome": "failed", "kind": "moderation-output", "stage": "tpose", "detail": "output", "attempts": [{"kind": "moderation-output", "stage": "tpose", "detail": "output"}, {"kind": "moderation-output", "stage": "tpose", "detail": "output"}, {"kind": "moderation-output", "stage": "tpose", "detail": "output"}], "cost_usd": 0.0003, "minutes": 1.2}
+{"name": "Sancho Panza", "slug": "sanchopanza", "outcome": "ok", "attempts": 2, "retries": {"moderation": 1}, "cost_usd": 0.6411, "minutes": 4.2}
+{"name": "Anthony Kiedis", "slug": "anthonykiedis", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6546, "minutes": 4.2}
+{"name": "George Lopez", "slug": "georgelopez", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6543, "minutes": 4.5}
+{"name": "Jackie Gleason", "slug": "jackiegleason", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6484, "minutes": 4.8}
+{"name": "Benedict Cumberbatch", "slug": "benedictcumberba", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6418, "minutes": 3.8}
+{"name": "Buster Keaton", "slug": "busterkeaton", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6265, "minutes": 3.5}
+{"name": "Bob Hope", "slug": "bobhope", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6333, "minutes": 3.4}
+{"name": "The Scarecrow", "slug": "thescarecrow", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6265, "minutes": 3.4}
+{"name": "Bono", "slug": "bono", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6329, "minutes": 3.2}
+{"name": "Andy Serkis", "slug": "andyserkis", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6263, "minutes": 3.1}
+{"name": "Sam Kinison", "slug": "samkinison", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6409, "minutes": 3.0}
+{"name": "Alice in Wonderland", "slug": "aliceinwonderlan", "outcome": "failed", "kind": "moderation-output", "stage": "portrait", "detail": "output", "attempts": [{"kind": "moderation-output", "stage": "tpose", "detail": "output"}, {"kind": "moderation-output", "stage": "portrait", "detail": "output"}, {"kind": "moderation-output", "stage": "portrait", "detail": "output"}], "cost_usd": 0.5658, "minutes": 2.9}
+{"name": "Brian May", "slug": "brianmay", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6479, "minutes": 3.0}
+{"name": "Amitabh Bachchan", "slug": "amitabhbachchan", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6476, "minutes": 3.1}
+{"name": "Eric Idle", "slug": "ericidle", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6334, "minutes": 2.7}
+{"name": "George Takei", "slug": "georgetakei", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6337, "minutes": 2.9}
+{"name": "Buddy Holly", "slug": "buddyholly", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6336, "minutes": 2.9}
+{"name": "The Queen of Hearts", "slug": "thequeenofhearts", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6344, "minutes": 3.0}
+{"name": "Steve Buscemi", "slug": "stevebuscemi", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6339, "minutes": 3.1}
+{"name": "Curly Howard", "slug": "curlyhoward", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6336, "minutes": 2.9}
+{"name": "Moe Howard", "slug": "moehoward", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6262, "minutes": 2.6}
+{"name": "Phileas Fogg", "slug": "phileasfogg", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6411, "minutes": 2.9}
+{"name": "Whoopi Goldberg", "slug": "whoopigoldberg", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.634, "minutes": 2.8}
+{"name": "Gabriel Iglesias", "slug": "gabrieliglesias", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6548, "minutes": 3.5}
+{"name": "The Cowardly Lion", "slug": "thecowardlylion", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6415, "minutes": 3.1}
+{"name": "Morrissey", "slug": "morrissey", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6407, "minutes": 3.1}
+{"name": "Dana Carvey", "slug": "danacarvey", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6542, "minutes": 3.4}
+{"name": "James Brown", "slug": "jamesbrown", "outcome": "ok", "attempts": 2, "retries": {"moderation": 1}, "cost_usd": 0.6542, "minutes": 3.7}
+{"name": "Figaro", "slug": "figaro", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6331, "minutes": 2.9}
+{"name": "Lucy Liu", "slug": "lucyliu", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6466, "minutes": 3.3}
+{"name": "James Hetfield", "slug": "jameshetfield", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6411, "minutes": 2.8}
+{"name": "Mae West", "slug": "maewest", "outcome": "ok", "attempts": 2, "retries": {"moderation": 1}, "cost_usd": 0.626, "minutes": 3.4}
+{"name": "Stan Laurel", "slug": "stanlaurel", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6336, "minutes": 2.7}
+{"name": "Mads Mikkelsen", "slug": "madsmikkelsen", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.64, "minutes": 2.8}
+{"name": "Lemuel Gulliver", "slug": "lemuelgulliver", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6268, "minutes": 2.6}
+{"name": "Miles Davis", "slug": "milesdavis", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6408, "minutes": 2.7}
+{"name": "Oliver Hardy", "slug": "oliverhardy", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6264, "minutes": 2.7}
+{"name": "Oprah Winfrey", "slug": "oprahwinfrey", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6338, "minutes": 2.8}
+{"name": "Joe Pesci", "slug": "joepesci", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6334, "minutes": 2.8}
+{"name": "Cyndi Lauper", "slug": "cyndilauper", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6337, "minutes": 3.0}
+{"name": "Lou Reed", "slug": "loureed", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6333, "minutes": 2.9}
+{"name": "Tilda Swinton", "slug": "tildaswinton", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6264, "minutes": 3.3}
+{"name": "Michael Cera", "slug": "michaelcera", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6264, "minutes": 2.7}
+{"name": "Flea", "slug": "flea", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6329, "minutes": 3.2}
+{"name": "Corey Taylor", "slug": "coreytaylor", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.641, "minutes": 2.9}
+{"name": "Michelle Yeoh", "slug": "michelleyeoh", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6339, "minutes": 3.2}
+{"name": "Billy Idol", "slug": "billyidol", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6407, "minutes": 3.2}
+{"name": "Warwick Davis", "slug": "warwickdavis", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6472, "minutes": 3.4}
+{"name": "Iggy Pop", "slug": "iggypop", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6334, "minutes": 2.7}
+{"name": "Gwendoline Christie", "slug": "gwendolinechrist", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6345, "minutes": 2.9}
+{"name": "Stephen Chow", "slug": "stephenchow", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6337, "minutes": 2.8}
+{"name": "Jean Reno", "slug": "jeanreno", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6261, "minutes": 2.6}
+{"name": "Angus Young", "slug": "angusyoung", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.647, "minutes": 3.1}
+{"name": "Kate Bush", "slug": "katebush", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.648, "minutes": 2.7}
+{"name": "Ken Watanabe", "slug": "kenwatanabe", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6338, "minutes": 2.8}
+{"name": "Sammy Davis Jr.", "slug": "sammydavisjr", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.634, "minutes": 3.0}
+{"name": "Annie Lennox", "slug": "annielennox", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6264, "minutes": 3.0}
+{"name": "Billie Joe Armstrong", "slug": "billiejoearmstro", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6272, "minutes": 3.2}
+{"name": "Chuck Berry", "slug": "chuckberry", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6337, "minutes": 3.2}
+{"name": "Little Richard", "slug": "littlerichard", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6485, "minutes": 3.4}
+{"name": "Liam Gallagher", "slug": "liamgallagher", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6339, "minutes": 3.4}
+{"name": "Fred Durst", "slug": "freddurst", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6263, "minutes": 3.7}
+{"name": "Joan Jett", "slug": "joanjett", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6334, "minutes": 3.5}
+{"name": "Trent Reznor", "slug": "trentreznor", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6338, "minutes": 3.2}
+{"name": "Noel Gallagher", "slug": "noelgallagher", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6338, "minutes": 3.2}
+{"name": "Jerry Garcia", "slug": "jerrygarcia", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.634, "minutes": 3.4}
+{"name": "Chad Kroeger", "slug": "chadkroeger", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.641, "minutes": 3.4}
+{"name": "Wayne Newton", "slug": "waynenewton", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6336, "minutes": 3.5}
+{"name": "Nina Simone", "slug": "ninasimone", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6409, "minutes": 3.4}
+{"name": "Edith Piaf", "slug": "edithpiaf", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6335, "minutes": 3.0}
+{"name": "Billy Corgan", "slug": "billycorgan", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6337, "minutes": 4.6}
+{"name": "Johnny Rotten", "slug": "johnnyrotten", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6545, "minutes": 3.4}
+{"name": "Rob Zombie", "slug": "robzombie", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6408, "minutes": 4.9}
+{"name": "Siouxsie Sioux", "slug": "siouxsiesioux", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6266, "minutes": 3.1}
+{"name": "Marc Bolan", "slug": "marcbolan", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6262, "minutes": 3.2}
+{"name": "Barry White", "slug": "barrywhite", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6397, "minutes": 3.2}
+{"name": "Ella Fitzgerald", "slug": "ellafitzgerald", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6267, "minutes": 2.7}
+{"name": "Adam Ant", "slug": "adamant", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.626, "minutes": 2.8}
+{"name": "Joey Ramone", "slug": "joeyramone", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6408, "minutes": 3.0}
+{"name": "Fela Kuti", "slug": "felakuti", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6261, "minutes": 2.7}
+{"name": "Dizzy Gillespie", "slug": "dizzygillespie", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.634, "minutes": 3.4}
+{"name": "Xi Jinping", "slug": "xijinping", "outcome": "failed", "kind": "moderation-input", "stage": "mesh-upload", "detail": "tripo", "attempts": [{"kind": "moderation-input", "stage": "mesh-upload", "detail": "tripo"}], "cost_usd": 0.0157, "minutes": 0.2}
+{"name": "Ryan Reynolds", "slug": "ryanreynolds", "outcome": "failed", "kind": "moderation-output", "stage": "emblem", "detail": "output", "attempts": [{"kind": "moderation-output", "stage": "emblem", "detail": "output"}, {"kind": "moderation-output", "stage": "emblem", "detail": "output"}, {"kind": "moderation-output", "stage": "emblem", "detail": "output"}], "cost_usd": 0.6193, "minutes": 0.9}
+{"name": "The Tooth Fairy", "slug": "thetoothfairy", "outcome": "failed", "kind": "moderation-output", "stage": "portrait", "detail": "output", "attempts": [{"kind": "moderation-output", "stage": "portrait", "detail": "output"}, {"kind": "moderation-output", "stage": "portrait", "detail": "output"}, {"kind": "moderation-output", "stage": "portrait", "detail": "output"}], "cost_usd": 0.5731, "minutes": 1.0}
+{"name": "Adam West", "slug": "adamwest", "outcome": "failed", "kind": "moderation-output", "stage": "emblem", "detail": "output", "attempts": [{"kind": "moderation-output", "stage": "emblem", "detail": "output"}, {"kind": "moderation-output", "stage": "emblem", "detail": "output"}, {"kind": "moderation-output", "stage": "emblem", "detail": "output"}], "cost_usd": 0.6267, "minutes": 1.0}
+{"name": "Johnny Depp", "slug": "johnnydepp", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6408, "minutes": 1.4}
+{"name": "Dikembe Mutombo", "slug": "dikembemutombo", "outcome": "ok", "attempts": 1, "retries": {}, "cost_usd": 0.6547, "minutes": 1.5}
+{"name": "Alice in Wonderland", "slug": "aliceinwonderlan", "outcome": "ok", "attempts": 3, "retries": {"moderation": 2}, "cost_usd": 0.6344, "minutes": 2.4}
