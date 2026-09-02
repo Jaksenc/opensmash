@@ -19,6 +19,7 @@ import {
   FLOW_MUSIC_MAX_VOLUME,
   transitionMediaVolume,
 } from "./audio-envelope.js";
+import { useUiSounds } from "./ui-sounds.js";
 import {
   BOOT_MODES,
   CHARACTER_MESHES,
@@ -439,6 +440,7 @@ export default function App() {
   const devMenuRef = useRef(null);
   const announcerRef = useRef(null);
   const visualBridgeRef = useRef({});
+  useUiSounds(soundOn);
   const startFlowMusic = useFlowMusic(flowMusicActive && !engine, soundOn);
   useEffect(() => {
     const syncFlowMusic = (event) => {
@@ -981,6 +983,7 @@ export default function App() {
             className={`sound-button ${soundOn ? "is-on" : ""}`}
             type="button"
             aria-pressed={soundOn}
+            data-ui-sound-toggle
             onClick={toggleSound}
           >
             <i /> Sound {soundOn ? "on" : "off"}

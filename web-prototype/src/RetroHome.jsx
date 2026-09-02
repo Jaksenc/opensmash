@@ -47,19 +47,11 @@ export function LaunchFlow() {
   return (
     <div id="launch-flow-overlay" className="launch-flow-overlay" data-step="upload" data-mode="launch" hidden>
       <canvas id="launch-flow-canvas" className="launch-flow-canvas" aria-hidden="true" />
-      <section className="launch-flow-step launch-flow-upload" role="dialog" aria-modal="true" aria-labelledby="launch-flow-title" aria-describedby="launch-flow-copy rom-filename-hint">
+      <section className="launch-flow-step launch-flow-upload" role="dialog" aria-modal="true" aria-labelledby="launch-flow-title" aria-describedby="launch-flow-copy">
         <h2 id="launch-flow-title" className="visually-hidden">Play Smash the Weights</h2>
         <p id="launch-flow-copy" className="launch-flow-copy">
           To play Smash the Weights, upload your legally obtained Super Smash Bros. 64 ROM.
         </p>
-        <div id="rom-filename-hint" className="launch-flow-rom-hint">
-          <span className="launch-flow-rom-hint-label">These ROMs are normally named</span>
-          <span className="launch-flow-rom-filenames">
-            <code>Super Smash Bros. (USA).z64</code>
-            <code>Super Smash Bros. (Europe) (En,Fr,De).z64</code>
-            <code>Nintendo All-Star! Dairantou Smash Brothers (Japan).z64</code>
-          </span>
-        </div>
         <input id="rom-file-input" className="launch-flow-file-input" type="file" hidden accept=".zip,.z64,.n64,.v64,.rom,application/zip,application/octet-stream" />
         <FlameAction id="rom-upload-button" type="button">Upload ROM</FlameAction>
         <button id="launch-cancel-button" className="launch-flow-action launch-flow-cancel" type="button">Cancel</button>
@@ -142,6 +134,7 @@ export default function RetroHome({
   const [menuOpen, setMenuOpen] = useState(false);
   const aboutCancelRef = useRef(null);
   const introVideoRef = useRef(null);
+  const moreMenuRef = useRef(null);
   const [introVideoPlaying, setIntroVideoPlaying] = useState(false);
   const [mobileLayout, setMobileLayout] = useState(() => (
     mobileControlsRequested() || window.matchMedia(MOBILE_CONTROLS_MEDIA).matches
@@ -200,6 +193,25 @@ export default function RetroHome({
     if (!engine) setMobileControlsPreview((visible) => !visible);
   }
 
+  function closeMoreMenu() {
+    moreMenuRef.current?.removeAttribute("open");
+  }
+
+  function openControlsFromMore() {
+    closeMoreMenu();
+    document.getElementById("controls-menu-button")?.click();
+  }
+
+  function openAdvancedFromMore() {
+    closeMoreMenu();
+    onAdvanced();
+  }
+
+  function resetRomFromMore() {
+    closeMoreMenu();
+    onResetRom();
+  }
+
   function toggleSurfacePower() {
     const video = introVideoRef.current;
     if (engine) {
@@ -254,7 +266,17 @@ export default function RetroHome({
             >
               Controls
             </button>
-            <button className={`retro-site-link ${advancedActive ? "is-active" : ""}`} type="button" aria-haspopup="dialog" onClick={onAdvanced}>Advanced</button>
+            <button className={`retro-site-link retro-site-advanced-button ${advancedActive ? "is-active" : ""}`} type="button" aria-haspopup="dialog" onClick={onAdvanced}>Advanced</button>
+            <details className="retro-site-more" ref={moreMenuRef}>
+              <summary className="retro-site-link">More</summary>
+              <div className="retro-site-more-menu" role="menu">
+                <button className="retro-site-link" type="button" role="menuitem" onClick={openControlsFromMore}>Controls</button>
+                <button className={`retro-site-link ${advancedActive ? "is-active" : ""}`} type="button" role="menuitem" onClick={openAdvancedFromMore}>Advanced</button>
+                {developmentMode && authorized && (
+                  <button className="retro-site-link retro-site-dev-link" type="button" role="menuitem" onClick={resetRomFromMore}>Reset ROM</button>
+                )}
+              </div>
+            </details>
             {developmentMode && authorized && (
               <button
                 className="retro-site-link retro-site-dev-link"
@@ -331,6 +353,7 @@ export default function RetroHome({
                   type="button"
                   aria-label={soundOn ? "Mute audio" : "Unmute audio"}
                   aria-pressed={soundOn}
+                  data-ui-sound-toggle
                   title={soundOn ? "Mute audio" : "Unmute audio"}
                   onClick={onSound}
                 >

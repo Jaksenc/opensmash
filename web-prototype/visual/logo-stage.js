@@ -15,126 +15,6 @@ if (stage && canvas) {
   });
   renderer.setClearColor(0x000000, 0);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
-  renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.18;
-
-  // Match the hand cursor's low-resolution N64-style post-process. The hand
-  // owns the live tuning object once its module has loaded; these defaults
-  // cover the title's first frame and keep it usable as a standalone scene.
-  const RETRO_SHADER_DEFAULTS = Object.freeze({
-    enabled: true,
-    pixelSize: 2,
-    colorSteps: 12,
-    posterize: 0.5,
-    dither: 1,
-    outlineWidth: 1,
-    outlineStrength: 0.7,
-    outlineColor: '#383838',
-    gamma: 2.5,
-  });
-  const SHADER_STORAGE_KEY = 'opensmash.shader-tuning.v3';
-
-  function loadRetroShaderSettings() {
-    let stored = {};
-    try { stored = JSON.parse(localStorage.getItem(SHADER_STORAGE_KEY) || '{}'); }
-    catch (_) { /* Use the hand shader defaults if storage is unavailable. */ }
-    const settings = { ...RETRO_SHADER_DEFAULTS };
-    for (const key of ['pixelSize', 'colorSteps', 'posterize', 'dither',
-                       'outlineWidth', 'outlineStrength', 'gamma']) {
-      if (Number.isFinite(Number(stored[key]))) settings[key] = Number(stored[key]);
-    }
-    if (typeof stored.enabled === 'boolean') settings.enabled = stored.enabled;
-    if (/^#[0-9a-f]{6}$/i.test(stored.outlineColor || '')) {
-      settings.outlineColor = stored.outlineColor;
-    }
-    return settings;
-  }
-
-  function shaderColor(hex) {
-    const value = Number.parseInt(hex.slice(1), 16);
-    return new THREE.Vector3(
-      ((value >> 16) & 255) / 255,
-      ((value >> 8) & 255) / 255,
-      (value & 255) / 255,
-    );
-  }
-
-  const fallbackShaderSettings = loadRetroShaderSettings();
-  const logoTarget = new THREE.WebGLRenderTarget(4, 4, {
-    minFilter: THREE.NearestFilter,
-    magFilter: THREE.NearestFilter,
-    generateMipmaps: false,
-  });
-  const postScene = new THREE.Scene();
-  const postCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-  const postMaterial = new THREE.ShaderMaterial({
-    transparent: true,
-    uniforms: {
-      tex: { value: logoTarget.texture },
-      res: { value: new THREE.Vector2(4, 4) },
-      colorSteps: { value: fallbackShaderSettings.colorSteps },
-      posterize: { value: fallbackShaderSettings.posterize },
-      dither: { value: fallbackShaderSettings.dither },
-      outlineWidth: { value: fallbackShaderSettings.outlineWidth },
-      outlineStrength: { value: fallbackShaderSettings.outlineStrength },
-      outlineColor: { value: shaderColor(fallbackShaderSettings.outlineColor) },
-      gamma: { value: fallbackShaderSettings.gamma },
-    },
-    vertexShader: `varying vec2 vUv;
-      void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }`,
-    fragmentShader: `
-      uniform sampler2D tex; uniform vec2 res; varying vec2 vUv;
-      uniform float colorSteps, posterize, dither, outlineWidth, outlineStrength, gamma;
-      uniform vec3 outlineColor;
-      float bayer4(vec2 p) {
-        int x = int(mod(p.x, 4.0)), y = int(mod(p.y, 4.0));
-        int m[16]; m[0]=0; m[1]=8; m[2]=2; m[3]=10; m[4]=12; m[5]=4; m[6]=14; m[7]=6;
-        m[8]=3; m[9]=11; m[10]=1; m[11]=9; m[12]=15; m[13]=7; m[14]=13; m[15]=5;
-        return (float(m[y*4+x]) + 0.5) / 16.0;
-      }
-      bool solidAt(vec2 t) {
-        float threshold = mix(0.5, bayer4(t), dither);
-        return texture2D(tex, (t + 0.5) / res).a >= threshold;
-      }
-      void main() {
-        vec2 texel = floor(vUv * res);
-        if (!solidAt(texel)) discard;
-        vec4 c = texture2D(tex, (texel + 0.5) / res);
-        vec3 col = pow(clamp(c.rgb, 0.0, 1.0), vec3(1.0 / gamma));
-        vec3 stepped = floor(col * colorSteps + 0.5) / colorSteps;
-        col = mix(col, stepped, posterize);
-        bool edge = false;
-        if (outlineWidth >= 0.5) {
-          edge = !solidAt(texel + vec2(1.0, 0.0)) || !solidAt(texel - vec2(1.0, 0.0))
-              || !solidAt(texel + vec2(0.0, 1.0)) || !solidAt(texel - vec2(0.0, 1.0));
-        }
-        if (outlineWidth >= 1.5) {
-          edge = edge || !solidAt(texel + vec2(2.0, 0.0)) || !solidAt(texel - vec2(2.0, 0.0))
-              || !solidAt(texel + vec2(0.0, 2.0)) || !solidAt(texel - vec2(0.0, 2.0));
-        }
-        if (outlineWidth >= 2.5) {
-          edge = edge || !solidAt(texel + vec2(3.0, 0.0)) || !solidAt(texel - vec2(3.0, 0.0))
-              || !solidAt(texel + vec2(0.0, 3.0)) || !solidAt(texel - vec2(0.0, 3.0));
-        }
-        if (edge) col = mix(col, min(col, outlineColor), outlineStrength);
-        gl_FragColor = vec4(col, 1.0);
-      }`,
-  });
-  postScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), postMaterial));
-
-  function currentShaderSettings() {
-    return window.__shaderSettings || fallbackShaderSettings;
-  }
-
-  function syncPostMaterial(settings) {
-    postMaterial.uniforms.colorSteps.value = settings.colorSteps;
-    postMaterial.uniforms.posterize.value = settings.posterize;
-    postMaterial.uniforms.dither.value = settings.dither;
-    postMaterial.uniforms.outlineWidth.value = settings.outlineWidth;
-    postMaterial.uniforms.outlineStrength.value = settings.outlineStrength;
-    postMaterial.uniforms.outlineColor.value.copy(shaderColor(settings.outlineColor));
-    postMaterial.uniforms.gamma.value = settings.gamma;
-  }
 
   const scene = new THREE.Scene();
   const camera = new THREE.OrthographicCamera(-5.45, 5.45, 2, -2, 0.1, 40);
@@ -237,14 +117,6 @@ if (stage && canvas) {
     if (canvas.width !== outputWidth || canvas.height !== outputHeight) {
       renderer.setPixelRatio(pixelRatio);
       renderer.setSize(width, height, false);
-    }
-
-    const pixelSize = Math.max(1, currentShaderSettings().pixelSize);
-    const lowWidth = Math.max(4, Math.round(width / pixelSize));
-    const lowHeight = Math.max(4, Math.round(height / pixelSize));
-    if (logoTarget.width !== lowWidth || logoTarget.height !== lowHeight) {
-      logoTarget.setSize(lowWidth, lowHeight);
-      postMaterial.uniforms.res.value.set(lowWidth, lowHeight);
     }
 
     halfViewWidth = 5.45;
@@ -362,19 +234,8 @@ if (stage && canvas) {
     logoRoot.position.set(0, bob, -pressAmount * 0.16);
     logoRoot.scale.setScalar(LOGO_SCALE * pulse);
 
-    const shaderSettings = currentShaderSettings();
-    if (!shaderSettings.enabled || location.hash.includes('raw')) {
-      renderer.setRenderTarget(null);
-      renderer.render(scene, camera);
-    } else {
-      syncPostMaterial(shaderSettings);
-      renderer.setRenderTarget(logoTarget);
-      renderer.setClearColor(0x000000, 0);
-      renderer.clear();
-      renderer.render(scene, camera);
-      renderer.setRenderTarget(null);
-      renderer.render(postScene, postCamera);
-    }
+    renderer.setRenderTarget(null);
+    renderer.render(scene, camera);
 
     // Keep the fallback above the canvas until a correctly sized model frame
     // has actually been drawn. This makes loading a cross-fade, not a snap.
