@@ -25,3 +25,42 @@ batch-state/*.log
 batch-state/*.glb
 batch-state/*.patch
 batch-state-pilot.log
+
+# The engine checkout is a sibling symlink here (pipeline/BattleShip -> ../BattleShip).
+BattleShip
+# Session scratch and one-off local artifacts at the repo root.
+scratchpad/
+/eval-tour-*.rpl
+/eval-tour-*.rpl.json
+/hand-cursor-meshy*
+/queen-postsmooth.osb
+# Reference photos of real people used for local fixtures; never commit them.
+refs/
+# Generated evaluation output (cells, engine builds, per-experiment sweeps).
+eval/*/cells/
+eval/*/build/
+eval/*/buildworker*/
+eval/announcer_*/
+eval/canonfinal/
+eval/canonll/
+eval/canonsamus/
+eval/freeze/
+eval/gradedarm/
+eval/overnight/
+eval/pose_check/
+eval/samus_check/
+eval/shipcheck/
+eval/skirtclaim/
+eval/smoothing/
+eval/streams/
+eval/tail_attach/
+eval/yawcal/
+eval/*/judge_batch_*.json
+eval/*/judge_prompt_*.txt
+eval/*/*.log
+eval/*/state*.json
+# Local experiment workspaces (artifacts/experiments stays tracked).
+artifacts/accessory-stow/
+artifacts/item-mvp/
+artifacts/portrait-reference-ab/
+artifacts/portrait-style-study/

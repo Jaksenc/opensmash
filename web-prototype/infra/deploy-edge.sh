@@ -24,12 +24,14 @@ if [[ -z "$zone_id" ]]; then
   exit 2
 fi
 
-upsert_shell_cache_rule() {
-  local description="OpenSmash application shell"
-  local expression rulesets_response ruleset_id rule_payload ruleset_response rule_id response
-  expression="(http.host in {\"${DOMAIN}\" \"www.${DOMAIN}\"} and http.request.method in {\"GET\" \"HEAD\"} and http.request.uri.path in {\"/\" \"/create\" \"/create/\" \"/index.html\"})"
-  rule_payload="$(jq -nc --arg description "$description" --arg expression "$expression" \
-    '{action:"set_cache_settings", action_parameters:{cache:true, browser_ttl:{mode:"override_origin", default:15}}, description:$description, enabled:true, expression:$expression}')"
+# upsert_cache_rule DESCRIPTION EXPRESSION ACTION_PARAMETERS_JSON
+upsert_cache_rule() {
+  local description="$1"
+  local expression="$2"
+  local action_parameters="$3"
+  local rulesets_response ruleset_id rule_payload ruleset_response rule_id response
+  rule_payload="$(jq -nc --arg description "$description" --arg expression "$expression" --argjson action_parameters "$action_parameters" \
+    '{action:"set_cache_settings", action_parameters:$action_parameters, description:$description, enabled:true, expression:$expression}')"
   rulesets_response="$(curl -fsS \
     "https://api.cloudflare.com/client/v4/zones/${zone_id}/rulesets" \
     -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}")"
@@ -74,7 +76,18 @@ printf '%s' "$COOKIE_SECRET_PREVIOUS" | \
     --config "$SCRIPT_DIR/wrangler.jsonc"
 
 echo "==> Enabling short edge caching for the shared application shell"
-upsert_shell_cache_rule
+upsert_cache_rule "OpenSmash application shell" \
+  "(http.host in {\"${DOMAIN}\" \"www.${DOMAIN}\"} and http.request.method in {\"GET\" \"HEAD\"} and http.request.uri.path in {\"/\" \"/create\" \"/create/\" \"/index.html\"})" \
+  '{cache:true, browser_ttl:{mode:"override_origin", default:15}}'
+
+# Portraits and announcer clips of baked fighters. PNGs already fall under
+# Cloudflare's default extension list, but .wav does not, so without this
+# rule every announcer play reaches the origin. The origin sends
+# "public, max-age=3600" and a deploy purges the zone.
+echo "==> Enabling edge caching for baked character assets"
+upsert_cache_rule "OpenSmash baked character assets" \
+  "(http.host in {\"${DOMAIN}\" \"www.${DOMAIN}\"} and http.request.method in {\"GET\" \"HEAD\"} and starts_with(http.request.uri.path, \"/character-assets/\"))" \
+  '{cache:true, edge_ttl:{mode:"respect_origin"}, browser_ttl:{mode:"respect_origin"}}'
 
 for hostname in "$DOMAIN" "www.${DOMAIN}"; do
   record_response="$(curl -fsS -G \

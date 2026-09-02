@@ -114,9 +114,13 @@ CLOUDFLARE_API_TOKEN=... \
 The main `deploy.sh` command also deploys the engine worker after Cloud Run. It
 validates the existing ROM-session cookie before looking up shared `/engine/*`
 runtime files in Cloudflare's cache, then enables proxying for the apex and
-`www` records. Private-capable `/engine/bundles/*` requests always bypass the
-shared cache. Public content-hashed Vite assets use Cloudflare's normal static
-cache.
+`www` records. Under `/engine/bundles/*` the origin decides per response:
+baked roster bundles are sent `public` and are shared at the edge, while
+owner-scoped fighter-lab bundles are `private` and always bypass the shared
+cache. Public content-hashed Vite assets use Cloudflare's normal static
+cache, and a second Cache Rule covers `/character-assets/*` (portrait tiles
+and announcer `.wav` clips, which are outside Cloudflare's default cacheable
+extensions).
 
 ```bash
 CLOUDFLARE_API_TOKEN=... \

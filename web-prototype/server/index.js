@@ -112,6 +112,7 @@ const MIME_TYPES = {
   ".ttf": "font/ttf",
   ".wasm": "application/wasm",
   ".wav": "audio/wav",
+  ".webmanifest": "application/manifest+json",
   ".webp": "image/webp",
 };
 
@@ -256,17 +257,44 @@ function safeFile(root, relativePath) {
   return resolved === root || resolved.startsWith(`${root}${path.sep}`) ? resolved : null;
 }
 
+// Every static file carries a validator so "no-cache" policies cost a 304
+// instead of a re-download. Size + mtime is enough: deploys rebuild the image
+// (new mtimes) and purge the edge, so a validator never outlives its bytes.
+function etagFor(info) {
+  return `"${info.size.toString(16)}-${Math.floor(info.mtimeMs).toString(16)}"`;
+}
+
+function notModified(req, etag) {
+  const header = req.headers["if-none-match"];
+  if (!header) return false;
+  return header.split(",").some((candidate) => {
+    const value = candidate.trim();
+    return value === "*" || value === etag || value === `W/${etag}`;
+  });
+}
+
 async function serveFile(req, res, filePath, cacheControl = "no-store", extraHeaders = {}) {
   try {
     const info = await stat(filePath);
     if (!info.isFile()) return false;
     const pathname = new URL(req.url, "http://localhost").pathname;
+    const etag = etagFor(info);
+    const headers = {
+      "Cache-Control": cacheControlForEnvironment(cacheControl, IS_PRODUCTION),
+      ETag: etag,
+      "Last-Modified": new Date(info.mtimeMs).toUTCString(),
+      ...securityHeaders(pathname),
+      ...extraHeaders,
+    };
+    if (notModified(req, etag)) {
+      res.writeHead(304, headers);
+      res.end();
+      return true;
+    }
     res.writeHead(200, {
       "Content-Type": MIME_TYPES[path.extname(filePath).toLowerCase()] || "application/octet-stream",
       "Content-Length": info.size,
-      "Cache-Control": cacheControlForEnvironment(cacheControl, IS_PRODUCTION),
-      ...securityHeaders(pathname),
-      ...extraHeaders,
+      ...headers,
     });
     if (req.method === "HEAD") {
       res.end();
@@ -279,16 +307,54 @@ async function serveFile(req, res, filePath, cacheControl = "no-store", extraHea
   }
 }
 
+// Engine caching policy. package_web.sh stamps one content-derived build
+// version (?v=) onto every runtime URL it controls, and the rules below make
+// a stale/new mismatch impossible rather than merely unlikely:
+//  - versioned and matching the deployed build: immutable for a year;
+//  - versioned for any other build: 404 (engineBuildVersion). The origin
+//    used to ignore ?v and would hand out new bytes under an old immutable
+//    URL after a deploy, which is how a cached JS glue could meet a fresh
+//    wasm;
+//  - unversioned (index.html, manifest.json, and any file a future change
+//    forgets to stamp): always revalidate. serveFile answers 304 to a
+//    matching ETag, and the Cloudflare worker answers those from the edge;
+//  - baked bundles: public (the worker may share them, keyed on this
+//    marker) and revalidated, since their URLs carry no version. Anything
+//    else under bundles/ may be owner-scoped and stays private.
+const ENGINE_REVALIDATE_CACHE_CONTROL = "private, no-cache";
+const ENGINE_IMMUTABLE_CACHE_CONTROL = "private, max-age=31536000, immutable";
+const BAKED_BUNDLE_CACHE_CONTROL = "public, no-cache";
+
 function engineCacheControl(relative, searchParams) {
-  if (relative === "index.html") {
-    return "private, max-age=300";
+  if (searchParams.has("v") && relative !== "index.html" && !relative.startsWith("bundles/")) {
+    return ENGINE_IMMUTABLE_CACHE_CONTROL;
   }
-  if (searchParams.has("v") && !relative.startsWith("bundles/")) {
-    return "private, max-age=31536000, immutable";
+  return ENGINE_REVALIDATE_CACHE_CONTROL;
+}
+
+// The deployed engine build version, read from the ?v= the package stamped
+// into manifest.json. null when the package is unversioned (no manifest).
+let engineVersionCache = { mtime: null, version: null };
+
+async function engineBuildVersion() {
+  const manifestPath = path.join(ENGINE_ROOT, "manifest.json");
+  let mtime;
+  try {
+    mtime = (await stat(manifestPath)).mtimeMs;
+  } catch {
+    return null;
   }
-  if (relative === "manifest.json") return "private, max-age=300";
-  if (relative.startsWith("bundles/")) return "private, max-age=300";
-  return "private, max-age=3600";
+  if (engineVersionCache.mtime !== mtime) {
+    let version = null;
+    try {
+      const match = (await readFile(manifestPath, "utf8")).match(/[?&]v=([A-Za-z0-9._-]+)/);
+      version = match ? match[1] : null;
+    } catch {
+      // Unreadable manifest: treat the package as unversioned.
+    }
+    engineVersionCache = { mtime, version };
+  }
+  return engineVersionCache.version;
 }
 
 async function readJsonBody(req, limit = MAX_JSON_BODY) {
@@ -767,6 +833,12 @@ async function handleRequest(req, res, vite) {
     if (!validSession(req)) return json(res, 401, { error: "ROM validation required" });
     const relative = pathname.slice("/engine/".length) || "index.html";
     const bundleMatch = relative.match(/^bundles\/([a-z0-9]+)(?:-|\.)/);
+    if (!bundleMatch && url.searchParams.has("v")) {
+      const current = await engineBuildVersion();
+      if (current && url.searchParams.get("v") !== current) {
+        return json(res, 404, { error: "That engine file belongs to a different build. Reload the page." });
+      }
+    }
     const bakedFile = bundleMatch ? await bakedEngineFile(relative) : null;
     const visibleDynamicBundle = bundleMatch && fighterJobs
       .listVisible(user?.uid)
@@ -775,7 +847,7 @@ async function handleRequest(req, res, vite) {
       return json(res, 404, { error: "Engine file not found" });
     }
     if (bakedFile) {
-      if (await serveFile(req, res, bakedFile, engineCacheControl(relative, url.searchParams))) return;
+      if (await serveFile(req, res, bakedFile, BAKED_BUNDLE_CACHE_CONTROL)) return;
       return json(res, 404, { error: "Engine file not found" });
     }
     const filePath = safeFile(ENGINE_ROOT, relative);
