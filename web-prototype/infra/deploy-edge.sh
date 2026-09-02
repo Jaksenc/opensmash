@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-required=(CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID COOKIE_SECRET)
+required=(CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID)
 for name in "${required[@]}"; do
   if [[ -z "${!name:-}" ]]; then
     echo "$name is required" >&2
@@ -11,8 +11,6 @@ done
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DOMAIN="${DOMAIN:-smashtheweights.com}"
-WRANGLER_VERSION="${WRANGLER_VERSION:-4.34.0}"
-COOKIE_SECRET_PREVIOUS="${COOKIE_SECRET_PREVIOUS:-$COOKIE_SECRET}"
 export CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID
 
 zone_response="$(curl -fsS -G "https://api.cloudflare.com/client/v4/zones" \
@@ -66,19 +64,19 @@ upsert_cache_rule() {
   printf '%s' "$response" | jq -e '.success == true' >/dev/null
 }
 
-echo "==> Deploying authenticated engine cache worker"
-npx --yes "wrangler@${WRANGLER_VERSION}" deploy --config "$SCRIPT_DIR/wrangler.jsonc"
-printf '%s' "$COOKIE_SECRET" | \
-  npx --yes "wrangler@${WRANGLER_VERSION}" secret put COOKIE_SECRET \
-    --config "$SCRIPT_DIR/wrangler.jsonc"
-printf '%s' "$COOKIE_SECRET_PREVIOUS" | \
-  npx --yes "wrangler@${WRANGLER_VERSION}" secret put COOKIE_SECRET_PREVIOUS \
-    --config "$SCRIPT_DIR/wrangler.jsonc"
-
 echo "==> Enabling short edge caching for the shared application shell"
 upsert_cache_rule "OpenSmash application shell" \
   "(http.host in {\"${DOMAIN}\" \"www.${DOMAIN}\"} and http.request.method in {\"GET\" \"HEAD\"} and http.request.uri.path in {\"/\" \"/create\" \"/create/\" \"/index.html\"})" \
   '{cache:true, browser_ttl:{mode:"override_origin", default:15}}'
+
+# The origin marks generic, baked engine files public and owner-scoped files
+# private/no-store. Making the route cache-eligible while respecting those
+# headers lets Cloudflare cache JS, wasm, JSON, audio, and custom bundle
+# extensions without putting a Worker in the request path.
+echo "==> Enabling origin-controlled caching for engine assets"
+upsert_cache_rule "OpenSmash public engine assets" \
+  "(http.host in {\"${DOMAIN}\" \"www.${DOMAIN}\"} and http.request.method in {\"GET\" \"HEAD\"} and starts_with(http.request.uri.path, \"/engine/\"))" \
+  '{cache:true, edge_ttl:{mode:"respect_origin"}, browser_ttl:{mode:"respect_origin"}}'
 
 # Portraits and announcer clips of baked fighters. PNGs already fall under
 # Cloudflare's default extension list, but .wav does not, so without this
@@ -113,9 +111,4 @@ curl -fsS -X PATCH \
   -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
   -H "Content-Type: application/json" --data '{"value":"strict"}' >/dev/null
 
-curl -fsS -X POST \
-  "https://api.cloudflare.com/client/v4/zones/${zone_id}/purge_cache" \
-  -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
-  -H "Content-Type: application/json" --data '{"purge_everything":true}' >/dev/null
-
-echo "Cloudflare proxy and authenticated engine cache are active for $DOMAIN."
+echo "Cloudflare proxy and origin-controlled cache rules are active for $DOMAIN."

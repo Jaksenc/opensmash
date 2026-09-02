@@ -41,7 +41,7 @@ test("SSE payloads are versioned snapshots", () => {
   assert.equal(event.job.status, "complete");
 });
 
-test("private jobs use owner-checked asset URLs without exposing uploader identifiers", () => {
+test("existing private jobs are backfilled with cacheable capability URLs", () => {
   const result = publicJob({
     ...completeJob,
     visibility: "private",
@@ -58,8 +58,38 @@ test("private jobs use owner-checked asset URLs without exposing uploader identi
 
   assert.equal(result.visibility, "private");
   assert.deepEqual(result.uploader, { displayName: "Uploader" });
-  assert.match(result.character.bundleUrl, /\/api\/fighters\/.+\/assets\/bundle$/);
+  assert.match(result.character.bundleUrl, /^\/engine\/bundles\/testfighter-[A-Za-z0-9]{16}\.osb6$/);
+  assert.match(result.character.portraitFull, /^\/engine\/fighters\/testfighter-[A-Za-z0-9]{16}\/portrait\.png$/);
   assert.equal("ownerId" in result, false);
   assert.equal(JSON.stringify(result).includes("private@example.com"), false);
   assert.equal(JSON.stringify(result).includes("firebase-uid"), false);
+});
+
+test("private jobs with an asset capability expose conventional immutable bundle names", () => {
+  const result = publicJob({
+    ...completeJob,
+    visibility: "private",
+    ownerId: "firebase-uid",
+    assetCapability: "Ab3Def4Gh5Jk6Lm7",
+    artifacts: Object.fromEntries(
+      Object.entries(completeJob.artifacts).map(([name, artifact]) => [name, { ...artifact, url: null }]),
+    ),
+  });
+
+  assert.equal(
+    result.character.bundleUrl,
+    "/engine/bundles/testfighter-Ab3Def4Gh5Jk6Lm7.osb6",
+  );
+  assert.equal(
+    result.character.uiUrl,
+    "/engine/bundles/testfighter-Ab3Def4Gh5Jk6Lm7.osbui",
+  );
+  assert.equal(
+    result.character.voiceUrl,
+    "/engine/bundles/testfighter-Ab3Def4Gh5Jk6Lm7.wav",
+  );
+  assert.equal(
+    result.character.portraitFull,
+    "/engine/fighters/testfighter-Ab3Def4Gh5Jk6Lm7/portrait.png",
+  );
 });

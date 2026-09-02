@@ -88,10 +88,11 @@ REGION=us-central1 \
 PUBLIC_ORIGIN=https://example.com \
 FIREBASE_API_KEY=your-public-web-api-key \
 FIREBASE_APP_ID=1:123456789:web:abcdef \
-CLOUDFLARE_API_TOKEN=... \
-CLOUDFLARE_ACCOUNT_ID=... \
 ./infra/deploy.sh
 ```
+
+Set `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` too when the deploy
+should reconcile the existing Cloudflare DNS, TLS, and Cache Rules.
 
 Run from clean commits in both the `pipeline` and sibling `BattleShip`
 repositories. The first deploy creates `opensmash-cookie-secret-previous` by
@@ -176,34 +177,37 @@ only refuses new work: jobs the worker already picked up run to completion.
 
 ## Cloudflare edge cache
 
-The main `deploy.sh` command also deploys the engine worker after Cloud Run. It
-validates the existing ROM-session cookie before looking up shared `/engine/*`
-runtime files in Cloudflare's cache, then enables proxying for the apex and
-`www` records. Under `/engine/bundles/*` the origin decides per response:
-baked roster bundles are sent `public` and are shared at the edge, while
-owner-scoped fighter-lab bundles are `private` and always bypass the shared
-cache. Public content-hashed Vite assets use Cloudflare's normal static
-cache, and a second Cache Rule covers `/character-assets/*` (portrait tiles
-and announcer `.wav` clips, which are outside Cloudflare's default cacheable
-extensions).
+The generic `/engine/*` runtime is public. Cloudflare uses an ordinary Cache
+Rule that respects the origin's cache headers: build-versioned JS, wasm,
+extraction recipes, and runtime files are immutable for a year; unversioned
+entry points revalidate. There is no request Worker and no edge copy of the
+ROM-session signing key. ROM selection, hashing, and asset extraction still
+happen locally in the browser before the engine launches.
+
+Under `/engine/bundles/*` the origin still decides per response. Baked roster
+bundles are public. New private fighter-lab bundles use immutable capability
+names such as `fighter-Ab3Def4Gh5Jk6Lm7.osb6`; the 16-character case-sensitive
+alphanumeric suffix is generated with cryptographic randomness, so Cloudflare
+can cache the URL without making it enumerable. Existing private jobs get a
+stable capability derived from their random job ID, so there are no legacy
+authenticated asset URLs. A separate Cache Rule covers
+`/character-assets/*` (portrait tiles and announcer `.wav` clips, which are
+outside Cloudflare's default cacheable extensions).
 
 ```bash
 CLOUDFLARE_API_TOKEN=... \
 CLOUDFLARE_ACCOUNT_ID=... \
-COOKIE_SECRET=... \
-COOKIE_SECRET_PREVIOUS=... \
 ./infra/deploy-edge.sh
 ```
 
 `deploy-edge.sh` remains useful for an edge-only repair. Normally use
 `deploy.sh`, which refuses uncommitted build inputs, regenerates the engine
-package, synchronizes both cookie verification keys, and purges the previous
-edge objects after the new application and Worker versions are active.
+package, and deploys Cloud Run. If Cloudflare credentials are present it also
+reconciles DNS, TLS, and Cache Rules; otherwise it leaves Cloudflare alone.
 
-The worker stores engine responses at the edge for 24 hours. The engine build
-stamps one content-derived version across its manifest, JS, WASM, and runtime
-file URLs, so browsers can keep those URLs for one year with `immutable` while
-a changed build gets a new URL.
+The engine build stamps one content-derived version across its manifest, JS,
+WASM, and runtime file URLs, so browsers and Cloudflare can keep those URLs for
+one year with `immutable` while a changed build gets a new URL.
 
 The same script installs a Cache Rule for the shared application shell at `/`
 and `/create`. Browsers keep that HTML for 15 seconds, while Cloudflare keeps it

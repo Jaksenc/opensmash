@@ -30,6 +30,11 @@ COPY BattleShip/web-dist/files /workspace/BattleShip/web-dist/files
 COPY BattleShip/web-dist/torch /workspace/BattleShip/web-dist/torch
 COPY BattleShip/web-dist/rom-extract.js BattleShip/web-dist/torch-worker.js /workspace/BattleShip/web-dist/
 
+# Defense in depth: deploy.sh checks this before Cloud Build, and the image
+# build independently rejects a ROM-derived archive if another build path
+# ever includes one in the Docker context.
+RUN test ! -e /workspace/BattleShip/web-dist/files/BattleShip.o2r
+RUN chmod -R a+rX /workspace
 USER node
 EXPOSE 8080
 CMD ["node", "server/index.js"]

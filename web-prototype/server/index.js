@@ -11,7 +11,11 @@ import { createAuthService } from "./auth.js";
 import { createJobDatabase } from "./job-database.js";
 import { createJobDispatcher } from "./job-dispatcher.js";
 import { createObjectStore } from "./object-store.js";
-import { cacheControlForEnvironment, edgeCacheHeaders } from "./cache-policy.js";
+import {
+  cacheControlForEnvironment,
+  edgeCacheHeaders,
+  engineCacheControl,
+} from "./cache-policy.js";
 import { CREATION_DISABLED_MESSAGE, creationEnabled } from "./creation-switch.js";
 import { withInitialState } from "./html-state.js";
 import { resolveProjectPaths } from "./project-paths.js";
@@ -321,20 +325,11 @@ async function serveFile(req, res, filePath, cacheControl = "no-store", extraHea
 //    wasm;
 //  - unversioned (index.html, manifest.json, and any file a future change
 //    forgets to stamp): always revalidate. serveFile answers 304 to a
-//    matching ETag, and the Cloudflare worker answers those from the edge;
-//  - baked bundles: public (the worker may share them, keyed on this
-//    marker) and revalidated, since their URLs carry no version. Anything
-//    else under bundles/ may be owner-scoped and stays private.
-const ENGINE_REVALIDATE_CACHE_CONTROL = "private, no-cache";
-const ENGINE_IMMUTABLE_CACHE_CONTROL = "private, max-age=31536000, immutable";
+//    matching ETag;
+//  - baked bundles: public and revalidated, since their URLs carry no
+//    version. Anything else under bundles/ may be owner-scoped and is
+//    private/no-store.
 const BAKED_BUNDLE_CACHE_CONTROL = "public, no-cache";
-
-function engineCacheControl(relative, searchParams) {
-  if (searchParams.has("v") && relative !== "index.html" && !relative.startsWith("bundles/")) {
-    return ENGINE_IMMUTABLE_CACHE_CONTROL;
-  }
-  return ENGINE_REVALIDATE_CACHE_CONTROL;
-}
 
 // The deployed engine build version, read from the ?v= the package stamped
 // into manifest.json. null when the package is unversioned (no manifest).
@@ -628,14 +623,7 @@ async function handleRequest(req, res, vite) {
     });
   }
 
-  const fighterAssetMatch = pathname.match(
-    /^\/api\/fighters\/([a-f0-9-]+)\/(?:portrait|announcer|assets(?:\/|$))/,
-  );
-  const accessibleFighterAsset =
-    (req.method === "GET" || req.method === "HEAD") &&
-    fighterAssetMatch &&
-    fighterJobs.isAccessible(fighterAssetMatch[1], user?.uid);
-  if (pathname.startsWith("/api/fighters") && !accessibleFighterAsset) {
+  if (pathname.startsWith("/api/fighters")) {
     if (!romSession) return json(res, 401, { error: "ROM validation required" });
     if (!user) return json(res, 401, { error: "Sign in to use the fighter lab." });
   }
@@ -714,63 +702,6 @@ async function handleRequest(req, res, vite) {
     } catch (error) {
       return json(res, error.status || 400, { error: error.message || "Could not cancel fighter." });
     }
-  }
-
-  const fighterArtifactMatch = pathname.match(
-    /^\/api\/fighters\/([a-f0-9-]+)\/assets\/(portrait|portraitTile|portraitMedium|announcer|bundle|ui|manifest|stock|emblem)\/?$/,
-  );
-  const fighterVariantMatch = pathname.match(
-    /^\/api\/fighters\/([a-f0-9-]+)\/assets\/variants\/([a-z0-9]+)\/?$/,
-  );
-  if ((req.method === "GET" || req.method === "HEAD") && (fighterArtifactMatch || fighterVariantMatch)) {
-    const id = (fighterArtifactMatch || fighterVariantMatch)[1];
-    const artifact = fighterArtifactMatch
-      ? fighterJobs.artifact(id, user?.uid, fighterArtifactMatch[2])
-      : fighterJobs.artifact(id, user?.uid, "variants", fighterVariantMatch[2]);
-    if (!artifact) return json(res, 404, { error: "Fighter asset not found." });
-    // Stream from the object store: bundles are ~1.6 MB each and the API
-    // runs on one small instance, so buffering whole objects per request
-    // (x concurrency) was the largest memory risk in the service.
-    let object;
-    try {
-      object = await objectStore.readStream(artifact.key, { public: artifact.public });
-    } catch {
-      return json(res, 404, { error: "Fighter asset not found." });
-    }
-    res.writeHead(200, {
-      "Content-Type": artifact.contentType || "application/octet-stream",
-      "Content-Length": object.size,
-      "Cache-Control": cacheControlForEnvironment(
-        artifact.public
-          ? "public, max-age=31536000, immutable"
-          : "private, no-store",
-        IS_PRODUCTION,
-      ),
-      Vary: "Cookie",
-    });
-    if (req.method === "HEAD") {
-      object.stream.destroy();
-      return res.end();
-    }
-    object.stream.on("error", (error) => {
-      console.error(`Fighter asset stream failed for ${artifact.key}:`, error);
-      res.destroy();
-    });
-    return object.stream.pipe(res);
-  }
-
-  const fighterPortraitMatch = pathname.match(/^\/api\/fighters\/([a-f0-9-]+)\/portrait$/);
-  if ((req.method === "GET" || req.method === "HEAD") && fighterPortraitMatch) {
-    const filePath = fighterJobs.portraitPath(fighterPortraitMatch[1], user?.uid);
-    if (filePath && (await serveFile(req, res, filePath, "public, max-age=60"))) return;
-    return json(res, 404, { error: "Fighter portrait is not ready." });
-  }
-
-  const fighterAnnouncerMatch = pathname.match(/^\/api\/fighters\/([a-f0-9-]+)\/announcer$/);
-  if ((req.method === "GET" || req.method === "HEAD") && fighterAnnouncerMatch) {
-    const filePath = fighterJobs.announcerPath(fighterAnnouncerMatch[1], user?.uid);
-    if (filePath && (await serveFile(req, res, filePath, "public, max-age=60"))) return;
-    return json(res, 404, { error: "Fighter announcer clip is not ready." });
   }
 
   // ROM handoff signalling (shared/rom-handoff.js, server/handoff-rooms.js).
@@ -862,8 +793,53 @@ async function handleRequest(req, res, vite) {
   }
 
   if (pathname.startsWith("/engine/")) {
-    if (!validSession(req)) return json(res, 401, { error: "ROM validation required" });
     const relative = pathname.slice("/engine/".length) || "index.html";
+    const capabilityMatch = relative.match(
+      /^bundles\/([a-z0-9]+)-([A-Za-z0-9]{16})\.(osb6|osbui|wav)$/,
+    );
+    const capabilityAssetMatch = relative.match(
+      /^fighters\/([a-z0-9]+)-([A-Za-z0-9]{16})\/(portrait|portrait-tile|portrait-medium|announcer|manifest)\.(png|wav|json)$/,
+    );
+    if (capabilityMatch || capabilityAssetMatch) {
+      const [, slug, capability, requestedName, requestedType] = capabilityMatch || capabilityAssetMatch;
+      const artifactName = capabilityMatch
+        ? requestedName === "osb6" ? "bundle" : requestedName === "osbui" ? "ui" : "announcer"
+        : ({
+            portrait: "portrait",
+            "portrait-tile": "portraitTile",
+            "portrait-medium": "portraitMedium",
+            announcer: "announcer",
+            manifest: "manifest",
+          })[requestedName];
+      if (capabilityAssetMatch) {
+        const expectedType = requestedName === "announcer" ? "wav" : requestedName === "manifest" ? "json" : "png";
+        if (requestedType !== expectedType) return json(res, 404, { error: "Engine file not found" });
+      }
+      const artifact = fighterJobs.capabilityArtifact(slug, capability, artifactName);
+      if (!artifact) return json(res, 404, { error: "Engine file not found" });
+      let object;
+      try {
+        object = await objectStore.readStream(artifact.key, { public: artifact.public });
+      } catch {
+        return json(res, 404, { error: "Engine file not found" });
+      }
+      res.writeHead(200, {
+        "Content-Type": artifact.contentType || "application/octet-stream",
+        "Content-Length": object.size,
+        "Cache-Control": "public, max-age=31536000, immutable",
+        "Cloudflare-CDN-Cache-Control": "public, max-age=31536000, immutable",
+        ...ENGINE_SECURITY_HEADERS,
+      });
+      if (req.method === "HEAD") {
+        object.stream.destroy();
+        return res.end();
+      }
+      object.stream.on("error", (error) => {
+        console.error(`Capability asset stream failed for ${artifact.key}:`, error);
+        res.destroy();
+      });
+      return object.stream.pipe(res);
+    }
     const bundleMatch = relative.match(/^bundles\/([a-z0-9]+)(?:-|\.)/);
     if (!bundleMatch && url.searchParams.has("v")) {
       const current = await engineBuildVersion();
@@ -883,21 +859,27 @@ async function handleRequest(req, res, vite) {
       return json(res, 404, { error: "Engine file not found" });
     }
     const filePath = safeFile(ENGINE_ROOT, relative);
-    if (filePath && (await serveFile(req, res, filePath, engineCacheControl(relative, url.searchParams)))) return;
+    const cacheControl = engineCacheControl(relative, url.searchParams);
+    if (filePath && (await serveFile(
+      req,
+      res,
+      filePath,
+      cacheControl,
+      edgeCacheHeaders(cacheControl, IS_PRODUCTION),
+    ))) return;
     return json(res, 404, { error: "Engine file not found" });
   }
 
   if (pathname === "/bundles.json" || pathname === "/roster.json") {
-    if (!validSession(req)) return json(res, 401, { error: "ROM validation required" });
     if (pathname === "/bundles.json") {
       const names = (await engineRoster()).flatMap((character) => [
         `${character.slug}.osb6`,
         ...(character.ui ? [`${character.slug}.osbui`] : []),
         ...(character.voice ? [`${character.slug}.wav`] : []),
       ]).sort();
-      return json(res, 200, names);
+      return json(res, 200, names, { "Cache-Control": "public, no-cache" });
     }
-    return json(res, 200, await engineRoster());
+    return json(res, 200, await engineRoster(), { "Cache-Control": "public, no-cache" });
   }
 
   if (pathname.startsWith("/character-assets/")) {

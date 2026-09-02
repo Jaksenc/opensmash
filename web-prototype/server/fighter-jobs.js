@@ -1,5 +1,5 @@
 import Busboy from "busboy";
-import { createHash, randomUUID } from "node:crypto";
+import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { createWriteStream } from "node:fs";
 import {
   access,
@@ -16,12 +16,26 @@ import { execFile, spawn } from "node:child_process";
 import { EventEmitter } from "node:events";
 import { pipeline } from "node:stream/promises";
 import { promisify } from "node:util";
-import { ACTIVE_JOB_STATUSES, jobSnapshot, publicJob } from "./job-protocol.js";
+import { ACTIVE_JOB_STATUSES, capabilityFor, jobSnapshot, publicJob } from "./job-protocol.js";
 import { QuotaError, assertQuota, quotaLimits, quotaUsage } from "./job-quota.js";
 import { readOsb6Targets } from "./roster.js";
 import { moderateFighterSubmission } from "./submission-moderation.js";
 
 const execFileAsync = promisify(execFile);
+const CAPABILITY_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+function randomCapability(length = 16) {
+  let value = "";
+  while (value.length < length) {
+    for (const byte of randomBytes(length)) {
+      // Rejection sampling avoids modulo bias across the 62-character alphabet.
+      if (byte >= 248) continue;
+      value += CAPABILITY_ALPHABET[byte % CAPABILITY_ALPHABET.length];
+      if (value.length === length) break;
+    }
+  }
+  return value;
+}
 
 const MAX_PHOTO_BYTES = 12 * 1024 * 1024;
 const PHOTO_TYPES = new Map([
@@ -487,6 +501,9 @@ export function createFighterJobs({
         job.displayName = metadata.display || job.name;
         job.short = metadata.short || job.displayName;
         job.costUsd = cost?.total_usd ?? null;
+        // A retry publishes different immutable bytes, so it also gets a new
+        // capability URL instead of reusing a potentially cached response.
+        job.assetCapability = randomCapability();
         const version = `${job.id}-${job.attempt}`;
         const versionRoot = `characters/${job.slug}/versions/${version}`;
         const isPublic = job.visibility !== "private";
@@ -1009,6 +1026,7 @@ export function createFighterJobs({
         },
         name,
         slug,
+        assetCapability: randomCapability(),
         emblem,
         visibility,
         rightsAttestedAt: now,
@@ -1169,6 +1187,15 @@ export function createFighterJobs({
       const artifact = variant
         ? job.artifacts?.variants?.[variant]
         : job.artifacts?.[name];
+      return artifact ? { ...artifact, public: job.visibility !== "private" } : null;
+    },
+    capabilityArtifact(slug, capability, name) {
+      const job = [...jobs.values()].find((candidate) =>
+        candidate.status === "complete" &&
+        candidate.slug === slug &&
+        capabilityFor(candidate) === capability
+      );
+      const artifact = job?.artifacts?.[name];
       return artifact ? { ...artifact, public: job.visibility !== "private" } : null;
     },
     subscribe(id, ownerId, listener) {

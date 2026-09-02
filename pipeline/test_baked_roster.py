@@ -28,6 +28,7 @@ class BakedRosterTest(unittest.TestCase):
             self.assertFalse(publish_character(slug, root, manifest_path))
             with open(manifest_path, encoding="utf-8") as source:
                 self.assertEqual(json.load(source), [{"slug": "queen"}, {"slug": slug}])
+            self.assertEqual(os.stat(manifest_path).st_mode & 0o777, 0o644)
 
 
 if __name__ == "__main__":

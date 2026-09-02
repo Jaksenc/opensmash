@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-required=(PROJECT_ID REGION PUBLIC_ORIGIN FIREBASE_API_KEY FIREBASE_APP_ID CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID)
+required=(PROJECT_ID REGION PUBLIC_ORIGIN FIREBASE_API_KEY FIREBASE_APP_ID)
 for name in "${required[@]}"; do
   if [[ -z "${!name:-}" ]]; then
     echo "$name is required" >&2
@@ -219,11 +219,10 @@ gcloud run deploy "$SERVICE_NAME" \
   --set-env-vars "JOB_DATABASE=firestore,OBJECT_STORE=gcs,FIGHTER_JOBS_ROOT=/tmp/fighter-jobs,FIGHTER_EXECUTION_MODE=cloud-run,GOOGLE_CLOUD_PROJECT=${PROJECT_ID},CLOUD_RUN_REGION=${REGION},CLOUD_RUN_WORKER_JOB=${WORKER_JOB},GCS_PRIVATE_BUCKET=${PRIVATE_BUCKET},GCS_PUBLIC_BUCKET=${PUBLIC_BUCKET},ASSET_BASE_URL=${ASSET_BASE_URL},ALLOWED_ORIGINS=${PUBLIC_ORIGIN},FIREBASE_AUTH_ENABLED=1,FIREBASE_PROJECT_ID=${PROJECT_ID},FIREBASE_API_KEY=${FIREBASE_API_KEY},FIREBASE_AUTH_DOMAIN=${FIREBASE_AUTH_DOMAIN},FIREBASE_APP_ID=${FIREBASE_APP_ID},FIREBASE_AUTH_PROVIDERS=google|apple|email,FIGHTER_MODERATION_ENABLED=1,CREATION_ENABLED=${CREATION_ENABLED:-1}" \
   --set-secrets "COOKIE_SECRET=${COOKIE_SECRET_NAME}:latest,COOKIE_SECRET_PREVIOUS=${COOKIE_SECRET_PREVIOUS_NAME}:latest,OPENAI_API_KEY=opensmash-openai-api-key:latest${API_TURN_SECRETS}"
 
-cookie_secret="$(gcloud secrets versions access latest --secret "$COOKIE_SECRET_NAME")"
-cookie_secret_previous="$(gcloud secrets versions access latest --secret "$COOKIE_SECRET_PREVIOUS_NAME")"
-COOKIE_SECRET="$cookie_secret" \
-COOKIE_SECRET_PREVIOUS="$cookie_secret_previous" \
-DOMAIN="$DOMAIN" \
-  "$SCRIPT_DIR/deploy-edge.sh"
+if [[ -n "${CLOUDFLARE_API_TOKEN:-}" && -n "${CLOUDFLARE_ACCOUNT_ID:-}" ]]; then
+  DOMAIN="$DOMAIN" "$SCRIPT_DIR/deploy-edge.sh"
+else
+  echo "Cloudflare credentials not provided; leaving existing DNS and Cache Rules unchanged."
+fi
 
-echo "Deployed ${SERVICE_NAME}, ${WORKER_JOB}, and Cloudflare edge at version ${VERSION}."
+echo "Deployed ${SERVICE_NAME} and ${WORKER_JOB} at version ${VERSION}."

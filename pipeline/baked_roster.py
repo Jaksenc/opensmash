@@ -55,6 +55,7 @@ def publish_character(slug, pipeline_root=PIPELINE_ROOT, manifest_path=DEFAULT_M
         output.write("\n")
         temporary = output.name
     os.replace(temporary, manifest_path)
+    os.chmod(manifest_path, 0o644)
     return True
 
 
