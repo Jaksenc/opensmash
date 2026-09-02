@@ -309,29 +309,65 @@ def main():
 
     # 3. mesh + rig ------------------------------------------------------
     if stage_needed(F("rigged.glb"), force, "mesh"):
-        log("mesh: uploading to Tripo")
-        tok = tripo_json(sh(["python3", pipeline_script("tripo.py"), "upload", F("tpose.png")], timeout=300))["image_token"]
-        task = tripo_json(sh(["python3", pipeline_script("tripo.py"), "img3d", tok], timeout=120))["task_id"]
-        log(f"mesh: img3d task {task}")
-        for _ in range(90):
-            st = tripo_json(sh(["python3", pipeline_script("tripo.py"), "status", task], timeout=60))
-            if st["status"] in ("success", "failed", "banned"):
-                break
-            time.sleep(10)
+        # Tripo task IDs are persisted the moment they exist so an interrupted
+        # container (SIGTERM, lease loss) resumes polling the paid task instead
+        # of buying the mesh again. --force-stage mesh deliberately starts over.
+        tasks_path = F("tripo_tasks.json")
+        tasks = {}
+        if force != "mesh" and os.path.exists(tasks_path):
+            try:
+                tasks = json.loads(open(tasks_path).read())
+            except json.JSONDecodeError:
+                tasks = {}
+
+        def remember(key, task_id):
+            tasks[key] = task_id
+            json.dump(tasks, open(tasks_path, "w"), indent=1)
+
+        def forget():
+            tasks.clear()
+            if os.path.exists(tasks_path):
+                os.remove(tasks_path)
+
+        def wait_task(task_id):
+            st = {"status": "unknown"}
+            for _ in range(90):
+                st = tripo_json(sh(["python3", pipeline_script("tripo.py"), "status", task_id], timeout=60))
+                if st["status"] in ("success", "failed", "banned"):
+                    break
+                time.sleep(10)
+            return st
+
+        task = tasks.get("img3d")
+        if task:
+            log(f"mesh: img3d task {task} (resumed)")
+        else:
+            log("mesh: uploading to Tripo")
+            tok = tripo_json(sh(["python3", pipeline_script("tripo.py"), "upload", F("tpose.png")], timeout=300))["image_token"]
+            task = tripo_json(sh(["python3", pipeline_script("tripo.py"), "img3d", tok], timeout=120))["task_id"]
+            remember("img3d", task)
+            log(f"mesh: img3d task {task}")
+        st = wait_task(task)
         if st["status"] != "success":
+            forget()
             raise RuntimeError(f"img3d {st['status']}")
         model_credits = st.get("consumed_credit")
-        rig = tripo_json(sh(["python3", pipeline_script("tripo.py"), "rig", task], timeout=120))["task_id"]
-        log(f"mesh: rig task {rig}")
-        for _ in range(90):
-            st = tripo_json(sh(["python3", pipeline_script("tripo.py"), "status", rig], timeout=60))
-            if st["status"] in ("success", "failed", "banned"):
-                break
-            time.sleep(10)
+        rig = tasks.get("rig")
+        if rig:
+            log(f"mesh: rig task {rig} (resumed)")
+        else:
+            rig = tripo_json(sh(["python3", pipeline_script("tripo.py"), "rig", task], timeout=120))["task_id"]
+            remember("rig", rig)
+            log(f"mesh: rig task {rig}")
+        st = wait_task(rig)
         if st["status"] != "success":
+            forget()
             raise RuntimeError(f"rig {st['status']}")
         rig_credits = st.get("consumed_credit")
-        sh(["python3", pipeline_script("tripo.py"), "download", rig, F("rigged.glb")], timeout=600)
+        # Download to a side file so a kill mid-transfer never leaves a
+        # truncated rigged.glb that the resume logic would treat as complete.
+        sh(["python3", pipeline_script("tripo.py"), "download", rig, F("rigged.glb.part")], timeout=600)
+        os.replace(F("rigged.glb.part"), F("rigged.glb"))
         if model_credits is None or rig_credits is None:
             log("mesh: Tripo did not report per-task credits")
         else:

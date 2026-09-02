@@ -93,9 +93,11 @@ characters/{slug}/
   "lease": { "executionId": "...", "expiresAt": "..." },
   "retry": {
     "automaticCounts": { "moderation": 1, "transient": 0 },
+    "manualRetriesAt": ["ISO-8601"],
     "nextAttemptAt": null,
     "label": null
   },
+  "checkpoint": { "savedAt": "ISO-8601", "files": [{ "scope": "output", "name": "rigged.glb", "key": "..." }] },
   "input": { "key": "characters/.../sources/.../photo.jpg", "contentType": "image/jpeg" },
   "artifacts": {
     "manifest": { "key": "characters/.../manifest.json", "url": "https://assets..." },
@@ -112,7 +114,22 @@ characters/{slug}/
 
 Only the server/worker may mutate a job. A write increments `revision`; clients
 discard snapshots older than the revision they already hold. Terminal states
-are immutable except for an explicit retry, which creates a new attempt.
+are immutable except for an explicit retry, which creates a new attempt, and
+`POST /api/fighters/{id}/cancel`, which moves any non-complete job to
+`cancelled` (a cancelled job can still be retried).
+
+Every worker write is conditional on the stored `lease.executionId` still
+naming that worker. The API clears the lease when it reconciles a silent job
+or cancels one, so a worker that outlived its lease fails its next write,
+kills the pipeline, and publishes nothing. `claim` refuses `running` and
+`retrying` jobs outright, so two containers can never share an attempt.
+
+Public `manifest.json` identifies the uploader only by an opaque
+`uploader.id` (a salted SHA-256 of the account uid, `UPLOADER_TOKEN_SALT`),
+and the published `character.json` carries only `display`, `short`, and
+`emblem`; the model's description of the photographed person stays in the
+worker's private output. Objects published before this change are immutable
+at the edge and need a one-time cleanup if that matters.
 
 ## Retry policy
 
@@ -120,16 +137,23 @@ are immutable except for an explicit retry, which creates a new attempt.
 - Provider 429, 5xx, timeout, or connection reset: exponential retry at most
   three times for inexpensive stages.
 - Mesh generation/rigging: never automatically restart an expensive provider
-  call unless its provider task ID is persisted and polling can resume.
+  call. Tripo task ids are written to `tripo_tasks.json` the moment they
+  exist and checkpointed, so a resumed attempt polls the paid task instead
+  of buying it again.
 - Invalid input and deterministic conversion failures: fail for user action.
-- An orderly pipeline failure saves completed files to a private checkpoint;
-  manual retry restores them in a fresh worker container.
-- An infrastructure interruption expires its lease and becomes retryable. The
-  deployed Cloud Run Job uses zero platform retries to avoid silently buying a
-  second expensive mesh after an abrupt container loss.
-
-Persist provider task IDs before polling them. Without that checkpoint, a
-container interruption can spend twice for the same mesh.
+- Manual retries: at most `MAX_MANUAL_RETRIES_PER_JOB` (default 3) per job,
+  each counted against the owner's daily limit. Automatic budgets do not
+  reset on a manual retry.
+- Completed stage outputs are checkpointed to the private bucket as each
+  stage boundary is reached, on an orderly failure, and on SIGTERM; a retry
+  restores them in a fresh worker container. Unchanged files are skipped.
+- The worker renews its lease on a timer (one third of
+  `FIGHTER_LEASE_SECONDS`) independent of pipeline output. A job whose lease
+  still expires, or that stays `queued` past `FIGHTER_QUEUE_TIMEOUT_SECONDS`
+  without a dispatch record, is marked interrupted and retryable.
+- Cloud Run sends SIGTERM ten seconds before the task timeout. The worker
+  stops the pipeline, checkpoints, marks the job resumable, and exits. The
+  deployed Cloud Run Job uses zero platform retries.
 
 ## Security and abuse controls
 
@@ -144,17 +168,15 @@ Implemented controls include Firebase uploader identity and account disabling,
 one active job per owner, per-user daily and global queue limits, rights
 attestation, pre-dispatch text/image moderation, same-origin mutation checks,
 ROM-validation throttling, separate private/public buckets, Firestore worker
-leases, and Secret Manager injection. The deploy starts with one API instance
-so quota checks cannot race.
+leases, and Secret Manager injection. Quota is reserved synchronously in
+memory before the upload is read, so parallel requests from one account
+cannot all observe zero active jobs, and re-checked inside the Firestore
+insert transaction so the limit also holds across API instances.
 
-Before raising that instance cap or treating the site as an unrestricted paid
-public service:
+Before treating the site as an unrestricted paid public service:
 
-- move quota reservation into a Firestore transaction;
 - add a payment/invite boundary if account creation becomes an abuse vector;
-- add a hard project billing alert and daily provider-spend kill switch;
-- persist Tripo task IDs before polling so abrupt mesh-stage interruption can
-  resume the provider task instead of requiring an explicit rerun.
+- add a hard project billing alert and daily provider-spend kill switch.
 
 ## Search
 

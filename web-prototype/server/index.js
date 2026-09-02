@@ -527,6 +527,15 @@ async function handleRequest(req, res, vite) {
     }
   }
 
+  const fighterCancelMatch = pathname.match(/^\/api\/fighters\/([a-f0-9-]+)\/cancel$/);
+  if (req.method === "POST" && fighterCancelMatch) {
+    try {
+      return json(res, 200, { job: await fighterJobs.cancel(fighterCancelMatch[1], user.uid) });
+    } catch (error) {
+      return json(res, error.status || 400, { error: error.message || "Could not cancel fighter." });
+    }
+  }
+
   const fighterArtifactMatch = pathname.match(
     /^\/api\/fighters\/([a-f0-9-]+)\/assets\/(portrait|announcer|bundle|ui|manifest|stock|emblem)\/?$/,
   );
