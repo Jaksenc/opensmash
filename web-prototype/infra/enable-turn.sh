@@ -3,17 +3,28 @@
 # values in Secret Manager, and attach them to the running Cloud Run API.
 # Idempotent: re-running adds new secret versions and re-points the service.
 #
-#   CLOUDFLARE_API_TOKEN=... CLOUDFLARE_ACCOUNT_ID=... ./infra/enable-turn.sh
+#   CLOUDFLARE_API_TOKEN=... ./infra/enable-turn.sh            # scoped token (Calls: Edit)
+#   CLOUDFLARE_API_KEY=... CLOUDFLARE_EMAIL=... ./infra/enable-turn.sh   # legacy Global API Key
 #
-# The API token needs the "Calls: Edit" (Realtime) permission. TURN must be
-# enabled for the account first (dashboard → Realtime → TURN). After this,
-# https://<domain>/healthz should report "handoffIce":"cloudflare".
+# CLOUDFLARE_ACCOUNT_ID is optional when the credential sees exactly one
+# account. TURN must be enabled for the account first (dashboard → Realtime →
+# TURN). After this, https://<domain>/healthz should report
+# "handoffIce":"cloudflare".
 set -euo pipefail
 
-required=(CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID)
-for name in "${required[@]}"; do
-  [[ -n "${!name:-}" ]] || { echo "missing $name" >&2; exit 1; }
-done
+cf_auth=()
+if [[ -n "${CLOUDFLARE_API_TOKEN:-}" ]]; then
+  cf_auth=(-H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}")
+elif [[ -n "${CLOUDFLARE_API_KEY:-}" && -n "${CLOUDFLARE_EMAIL:-}" ]]; then
+  cf_auth=(-H "X-Auth-Email: ${CLOUDFLARE_EMAIL}" -H "X-Auth-Key: ${CLOUDFLARE_API_KEY}")
+else
+  echo "set CLOUDFLARE_API_TOKEN, or CLOUDFLARE_API_KEY + CLOUDFLARE_EMAIL" >&2
+  exit 1
+fi
+if [[ -z "${CLOUDFLARE_ACCOUNT_ID:-}" ]]; then
+  CLOUDFLARE_ACCOUNT_ID="$(curl -fsS "https://api.cloudflare.com/client/v4/accounts?per_page=5" "${cf_auth[@]}" |
+    python3 -c 'import json,sys; r=json.load(sys.stdin)["result"]; assert len(r)==1, f"{len(r)} accounts visible; set CLOUDFLARE_ACCOUNT_ID"; print(r[0]["id"])')"
+fi
 PROJECT_ID="${PROJECT_ID:-$(gcloud config get-value project 2>/dev/null)}"
 REGION="${REGION:-us-central1}"
 SERVICE_NAME="${SERVICE_NAME:-opensmash-web}"
@@ -24,11 +35,11 @@ TOKEN_SECRET=opensmash-cloudflare-turn-key-token
 echo "Creating TURN key '${KEY_NAME}' on Cloudflare account ${CLOUDFLARE_ACCOUNT_ID}…"
 response="$(curl -fsS -X POST \
   "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/calls/turn_keys" \
-  -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+  "${cf_auth[@]}" \
   -H "Content-Type: application/json" \
   --data "{\"name\":\"${KEY_NAME}\"}")"
 key_id="$(printf '%s' "$response" | python3 -c 'import json,sys; r=json.load(sys.stdin); assert r.get("success"), r; print(r["result"]["uid"])')"
-key_token="$(printf '%s' "$response" | python3 -c 'import json,sys; print(json.load(sys.stdin)["result"]["key"])')"
+key_token="$(printf '%s' "$response" | python3 -c 'import json,sys; print(json.load(sys.stdin)["result"]["secret"])')"
 echo "TURN key id: ${key_id}"
 
 store() {
