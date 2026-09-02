@@ -20,6 +20,7 @@ import { CREATION_DISABLED_MESSAGE, creationEnabled } from "./creation-switch.js
 import { withInitialState } from "./html-state.js";
 import { resolveProjectPaths } from "./project-paths.js";
 import { assignRosterBases, bundleForBase, FIGHTERS, readOsb6Targets } from "./roster.js";
+import { characterAssetKind, engineBundleAssetKind, loadRemoteBakedRoster } from "./baked-remote.js";
 import { matchesCharacterSearch } from "../shared/character-search.js";
 import { bakedRosterEntries } from "../shared/baked-roster.js";
 import { ROMS_BY_SHA1, UNSUPPORTED_ROMS_BY_SHA1 } from "../shared/rom-catalog.js";
@@ -62,6 +63,30 @@ function securityHeaders(pathname) {
 const PIPELINE_PLAY_ROOT = path.join(PIPELINE_PROJECT_ROOT, "play");
 const SITE_ASSETS_ROOT = path.join(APP_ROOT, "visual", "assets");
 const CHARACTERS_CONFIG = path.join(APP_ROOT, "config", "characters.json");
+const BAKED_ASSETS_MANIFEST = path.join(APP_ROOT, "config", "baked-assets.json");
+// Where the baked fighters' bytes live:
+//  - local (default, development): play/ and play/ui/<slug> on this disk;
+//  - remote (production): nothing on disk. The roster is built from the
+//    checksum manifest and every asset request is answered with the
+//    content-addressed object URL in the public bucket (server/baked-remote.js),
+//    so the container image carries no fighters at all.
+const BAKED_ASSET_SOURCE = process.env.BAKED_ASSET_SOURCE || "local";
+if (!["local", "remote"].includes(BAKED_ASSET_SOURCE)) {
+  throw new Error(`BAKED_ASSET_SOURCE must be 'local' or 'remote', got '${BAKED_ASSET_SOURCE}'`);
+}
+const BAKED_ASSETS_REMOTE = BAKED_ASSET_SOURCE === "remote";
+const BAKED_ASSET_BASE_URL = (
+  process.env.ASSET_BASE_URL ||
+  (process.env.GCS_PUBLIC_BUCKET ? `https://storage.googleapis.com/${process.env.GCS_PUBLIC_BUCKET}` : "")
+).replace(/\/+$/, "");
+if (BAKED_ASSETS_REMOTE && !/^https?:\/\//.test(BAKED_ASSET_BASE_URL)) {
+  throw new Error("BAKED_ASSET_SOURCE=remote needs ASSET_BASE_URL or GCS_PUBLIC_BUCKET");
+}
+// A redirect maps a mutable name (bundles/<slug>.osb6) to an immutable object
+// URL. The target is cached for a year by construction; the redirect itself
+// can only go stale when the roster is republished, and a deploy purges the
+// edge, so an hour is safe.
+const BAKED_REDIRECT_CACHE_CONTROL = "public, max-age=3600";
 const objectStore = createObjectStore({ appRoot: APP_ROOT });
 const dispatcher = createJobDispatcher();
 const jobDatabase = createJobDatabase({
@@ -123,6 +148,16 @@ const MIME_TYPES = {
   ".webmanifest": "application/manifest+json",
   ".webp": "image/webp",
 };
+
+function redirectToBakedAsset(res, pathname, location) {
+  res.writeHead(302, {
+    Location: location,
+    "Cache-Control": BAKED_REDIRECT_CACHE_CONTROL,
+    "Cloudflare-CDN-Cache-Control": BAKED_REDIRECT_CACHE_CONTROL,
+    ...securityHeaders(pathname),
+  });
+  res.end();
+}
 
 function json(res, status, data, headers = {}) {
   const body = Buffer.from(JSON.stringify(data));
@@ -326,9 +361,10 @@ async function serveFile(req, res, filePath, cacheControl = "no-store", extraHea
 //  - unversioned (index.html, manifest.json, and any file a future change
 //    forgets to stamp): always revalidate. serveFile answers 304 to a
 //    matching ETag;
-//  - baked bundles: public and revalidated, since their URLs carry no
-//    version. Anything else under bundles/ may be owner-scoped and is
-//    private/no-store.
+//  - baked bundles served from disk (local mode): public and revalidated,
+//    since their URLs carry no version. In remote mode they are a cacheable
+//    302 to a content-addressed object instead (redirectToBakedAsset).
+//    Anything else under bundles/ may be owner-scoped and is private/no-store.
 const BAKED_BUNDLE_CACHE_CONTROL = "public, no-cache";
 
 // The deployed engine build version, read from the ?v= the package stamped
@@ -392,10 +428,13 @@ let bakedRosterBuild = null;
 
 async function bakedRoster() {
   let mtime = 0;
-  try {
-    mtime = (await stat(CHARACTERS_CONFIG)).mtimeMs;
-  } catch {
-    // A missing manifest means an empty baked roster; keep any prior cache.
+  const inputs = BAKED_ASSETS_REMOTE ? [CHARACTERS_CONFIG, BAKED_ASSETS_MANIFEST] : [CHARACTERS_CONFIG];
+  for (const input of inputs) {
+    try {
+      mtime = Math.max(mtime, (await stat(input)).mtimeMs);
+    } catch {
+      // A missing manifest means an empty baked roster; keep any prior cache.
+    }
   }
   if (bakedRosterCache && bakedRosterCache.mtime === mtime) return bakedRosterCache;
   bakedRosterBuild ||= buildBakedRoster(mtime).finally(() => { bakedRosterBuild = null; });
@@ -405,6 +444,16 @@ async function bakedRoster() {
 async function buildBakedRoster(mtime) {
   const started = Date.now();
   const entries = bakedRosterEntries(JSON.parse(await readFile(CHARACTERS_CONFIG, "utf8")));
+  if (BAKED_ASSETS_REMOTE) {
+    const remote = await loadRemoteBakedRoster({
+      manifestPath: BAKED_ASSETS_MANIFEST,
+      entries,
+      assetBaseUrl: BAKED_ASSET_BASE_URL,
+    });
+    bakedRosterCache = { mtime, ...remote };
+    console.log(`Baked roster (remote): ${remote.characters.length} characters in ${Date.now() - started} ms`);
+    return bakedRosterCache;
+  }
   const roster = await scanEngineRoster(entries);
   const characters = [];
   for (const character of roster) {
@@ -513,7 +562,17 @@ async function scanEngineRoster(entries) {
   return assignRosterBases(characters);
 }
 
+// Remote mode: the immutable object URL for bundles/<slug>.<osb6|osbui|wav>.
+async function bakedEngineRedirect(relative) {
+  if (!BAKED_ASSETS_REMOTE) return null;
+  const match = relative.match(/^bundles\/([^/]+)$/);
+  const parsed = match && engineBundleAssetKind(match[1]);
+  if (!parsed) return null;
+  return (await bakedRoster()).assetUrl(parsed.slug, parsed.kind);
+}
+
 async function bakedEngineFile(relative) {
+  if (BAKED_ASSETS_REMOTE) return null;
   const match = relative.match(/^bundles\/([a-z0-9]+)\.(osb6|osbui|wav)$/);
   if (!match) return null;
   const [, slug, extension] = match;
@@ -849,12 +908,14 @@ async function handleRequest(req, res, vite) {
       }
     }
     const bakedFile = bundleMatch ? await bakedEngineFile(relative) : null;
+    const bakedRedirect = bundleMatch ? await bakedEngineRedirect(relative) : null;
     const visibleDynamicBundle = bundleMatch && fighterJobs
       .listVisible(user?.uid)
       .some((job) => job.slug === bundleMatch[1]);
-    if (bundleMatch && !bakedFile && !visibleDynamicBundle) {
+    if (bundleMatch && !bakedFile && !bakedRedirect && !visibleDynamicBundle) {
       return json(res, 404, { error: "Engine file not found" });
     }
+    if (bakedRedirect) return redirectToBakedAsset(res, pathname, bakedRedirect);
     if (bakedFile) {
       if (await serveFile(req, res, bakedFile, BAKED_BUNDLE_CACHE_CONTROL)) return;
       return json(res, 404, { error: "Engine file not found" });
@@ -890,6 +951,11 @@ async function handleRequest(req, res, vite) {
     if (!match) return json(res, 404, { error: "Character asset not found" });
     if (!(await bakedRoster()).slugs.has(match[1])) {
       return json(res, 404, { error: "Character asset not found" });
+    }
+    if (BAKED_ASSETS_REMOTE) {
+      const location = (await bakedRoster()).assetUrl(match[1], characterAssetKind(match[2]));
+      if (!location) return json(res, 404, { error: "Character asset not found" });
+      return redirectToBakedAsset(res, pathname, location);
     }
     const fileName = match[2] === "portrait.png" ? "portrait_raw.png" : match[2];
     const filePath = path.join(PIPELINE_UI_ROOT, match[1], fileName);

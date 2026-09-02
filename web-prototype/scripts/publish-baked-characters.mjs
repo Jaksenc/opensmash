@@ -7,12 +7,15 @@ import { fileURLToPath } from "node:url";
 import { Storage } from "@google-cloud/storage";
 import { bakedRosterSlugs } from "../shared/baked-roster.js";
 import {
+  BAKED_ASSET_CACHE_CONTROL,
   BAKED_ASSET_KINDS,
   BAKED_ASSET_SCHEMA_VERSION,
   bakedAssetFiles,
   bakedAssetObjectKey,
+  bakedCharacterMetadata,
   validateBakedAssetManifest,
 } from "../shared/baked-assets.js";
+import { readOsb6Targets } from "../server/roster.js";
 
 const APP_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const PIPELINE_ROOT = path.resolve(APP_ROOT, "..");
@@ -83,11 +86,26 @@ const assets = await mapLimit(pending, concurrency, async (asset) => {
   };
 });
 
+// Everything the production roster needs beyond the files themselves: the
+// OSB6 target list (which the API used to read from the bundle header) and
+// the character.json fields the roster consumes.
 const bySlug = new Map(slugs.map((slug) => [slug, {}]));
 for (const asset of assets) bySlug.get(asset.slug)[asset.kind] = { sha256: asset.sha256, size: asset.size };
+const characters = await mapLimit(slugs, concurrency, async (slug) => {
+  const files = bakedAssetFiles(slug);
+  const variants = (await readOsb6Targets(path.join(PIPELINE_ROOT, files.bundle))).sort();
+  if (!variants.length) throw new Error(`${files.bundle} carries no fighter targets`);
+  let metadata = {};
+  try {
+    metadata = JSON.parse(await readFile(path.join(PIPELINE_ROOT, files.metadata), "utf8"));
+  } catch (error) {
+    throw new Error(`${files.metadata}: ${error.message}`);
+  }
+  return { slug, assets: bySlug.get(slug), variants, metadata: bakedCharacterMetadata(metadata) };
+});
 const manifest = validateBakedAssetManifest({
   schemaVersion: BAKED_ASSET_SCHEMA_VERSION,
-  characters: slugs.map((slug) => ({ slug, assets: bySlug.get(slug) })),
+  characters,
 }, slugs);
 const totalBytes = assets.reduce((sum, asset) => sum + asset.size, 0);
 
@@ -100,11 +118,24 @@ const storage = new Storage();
 const bucket = storage.bucket(bucketName);
 let uploaded = 0;
 let reused = 0;
+let repaired = 0;
 await mapLimit(assets, concurrency, async (asset) => {
   const remote = bucket.file(asset.key);
-  const [exists] = await remote.exists();
-  if (exists) {
+  let existing = null;
+  try {
+    [existing] = await remote.getMetadata();
+  } catch (error) {
+    if (error.code !== 404) throw error;
+  }
+  if (existing) {
     reused += 1;
+    // Browsers and the edge are told to keep these for a year; an object
+    // published by an older tool without that header would be re-fetched
+    // on every visit, so repair it in place.
+    if (existing.cacheControl !== BAKED_ASSET_CACHE_CONTROL) {
+      await remote.setMetadata({ cacheControl: BAKED_ASSET_CACHE_CONTROL });
+      repaired += 1;
+    }
     return;
   }
   await bucket.upload(asset.sourcePath, {
@@ -112,7 +143,7 @@ await mapLimit(assets, concurrency, async (asset) => {
     resumable: false,
     metadata: {
       contentType: contentType(asset.relativePath),
-      cacheControl: "public, max-age=31536000, immutable",
+      cacheControl: BAKED_ASSET_CACHE_CONTROL,
       metadata: { sha256: asset.sha256 },
     },
   });
@@ -128,11 +159,11 @@ const manifestDigest = createHash("sha256").update(body).digest("hex");
 await bucket.file(`baked/v1/manifests/${manifestDigest}.json`).save(body, {
   resumable: false,
   contentType: "application/json",
-  metadata: { cacheControl: "public, max-age=31536000, immutable" },
+  metadata: { cacheControl: BAKED_ASSET_CACHE_CONTROL },
 });
 
 console.log(
   `Published ${assets.length} objects (${(totalBytes / 1073741824).toFixed(2)} GiB): ` +
-  `${uploaded} uploaded, ${reused} reused.`,
+  `${uploaded} uploaded, ${reused} reused, ${repaired} cache headers repaired.`,
 );
 console.log(`Wrote ${path.relative(PIPELINE_ROOT, manifestPath)} (${manifestDigest}).`);

@@ -219,12 +219,21 @@ never includes cookie-derived/private fighters; after session discovery, a
 signed-in browser refreshes the roster through the no-store characters API and
 reconciles any additional fighters into the live grid.
 
-Before Cloud Build, deployment reads `config/characters.json` and the committed
-`config/baked-assets.json` checksum manifest, then materializes exactly those
-baked runtime files from the public GCS bucket. The API image never copies the
-git-ignored local `pipeline/play` workspace or character bundles from ignored
-`BattleShip/web-dist`, so identical Git commits produce identical baked rosters
-and bundle bytes.
+The baked fighters are never inside the API image. `config/baked-assets.json`
+pins every runtime file of every fighter in `config/characters.json` by SHA-256
+(plus the OSB6 target list and the roster fields from `character.json`), and
+the objects live in the public bucket under `baked/v1/objects/<sha256>/<name>`.
+The API runs with `BAKED_ASSET_SOURCE=remote`: it builds the roster from the
+manifest alone, `/api/characters` carries the object URLs directly, and the
+engine's relative `bundles/<slug>.*` and `/character-assets/*` requests get a
+302 to the object. The URL changes whenever the bytes change, so objects are
+uploaded with `public, max-age=31536000, immutable` and browsers and the edge
+keep them for a year; the redirects themselves cache for an hour. Deployment
+validates the manifest against `config/characters.json` and refreshes the
+bucket CORS rule (the engine fetch becomes cross-origin after the redirect).
+The image is therefore only the app, its dependencies and the engine package,
+which is what keeps Cloud Build, the registry push and Cloud Run cold starts
+short.
 
 Publish a new baked roster only after reviewing the generated local `play/`
 outputs. Object keys contain the SHA-256 digest, so publishing is additive and
@@ -235,7 +244,8 @@ PUBLIC_BUCKET="${PROJECT_ID}-fighter-assets" pnpm assets:publish
 git add config/baked-assets.json
 ```
 
-To verify or materialize the committed roster without deploying:
+To verify or materialize the committed roster locally (local mode reads
+`pipeline/play`; the fetched copy lands in `.baked-characters/`):
 
 ```bash
 PUBLIC_BUCKET="${PROJECT_ID}-fighter-assets" pnpm assets:fetch

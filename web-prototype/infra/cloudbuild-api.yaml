@@ -7,9 +7,8 @@ steps:
       - .
 images:
   - ${_IMAGE}
-# The image carries ~1000 baked fighters (a few GB); the default 10-minute
-# build timeout is not enough to copy and push it.
-timeout: 2400s
+# The image holds only the app, node_modules and the engine package (tens of
+# MB); baked fighters are served from the bucket (docker/api.Dockerfile).
+timeout: 1200s
 options:
   machineType: E2_HIGHCPU_8
-  diskSizeGb: 100

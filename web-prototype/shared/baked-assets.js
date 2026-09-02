@@ -1,6 +1,10 @@
 import path from "node:path";
 
-export const BAKED_ASSET_SCHEMA_VERSION = 1;
+// Schema 2 adds `variants` (OSB6 target names) and `metadata` (the fields the
+// roster reads from play/ui/<slug>/character.json) to every character, so a
+// production API can build the whole baked roster from this manifest alone
+// and never needs the fighter files on its own disk.
+export const BAKED_ASSET_SCHEMA_VERSION = 2;
 
 export const BAKED_ASSET_KINDS = Object.freeze([
   "bundle",
@@ -12,7 +16,11 @@ export const BAKED_ASSET_KINDS = Object.freeze([
   "announcer",
 ]);
 
+// Objects are content addressed, so every URL is immutable by construction.
+export const BAKED_ASSET_CACHE_CONTROL = "public, max-age=31536000, immutable";
+
 const SHA256_PATTERN = /^[a-f0-9]{64}$/;
+const FIGHTER_PATTERN = /^[a-z]+$/;
 
 export function bakedAssetFiles(slug) {
   if (!/^[a-z0-9]+$/.test(slug || "")) throw new Error(`Invalid baked fighter slug '${slug}'`);
@@ -33,9 +41,34 @@ export function bakedAssetObjectKey(filePath, sha256) {
   return `baked/v1/objects/${sha256}/${path.posix.basename(filePath)}`;
 }
 
+export function bakedAssetUrl(assetBaseUrl, filePath, sha256) {
+  const base = String(assetBaseUrl || "").replace(/\/+$/, "");
+  if (!/^https?:\/\//.test(base)) throw new Error(`Invalid baked asset base URL '${assetBaseUrl}'`);
+  return `${base}/${bakedAssetObjectKey(filePath, sha256).split("/").map(encodeURIComponent).join("/")}`;
+}
+
+// The subset of play/ui/<slug>/character.json the roster consumes.
+export function bakedCharacterMetadata(source) {
+  const metadata = source && typeof source === "object" ? source : {};
+  const text = (value) => (typeof value === "string" && value.trim() ? value.trim() : null);
+  const preferred = Array.isArray(metadata.preferred_bases)
+    ? metadata.preferred_bases.filter((base) => FIGHTER_PATTERN.test(base || ""))
+    : null;
+  return {
+    display: text(metadata.display),
+    nameFull: text(metadata.name_full),
+    short: text(metadata.short),
+    base: FIGHTER_PATTERN.test(metadata.base || "") ? metadata.base : null,
+    preferredBases: preferred && preferred.length ? preferred : null,
+  };
+}
+
 export function validateBakedAssetManifest(manifest, expectedSlugs = null) {
   if (!manifest || manifest.schemaVersion !== BAKED_ASSET_SCHEMA_VERSION) {
-    throw new Error(`Unsupported baked asset manifest schema '${manifest?.schemaVersion}'`);
+    throw new Error(
+      `Unsupported baked asset manifest schema '${manifest?.schemaVersion}' ` +
+      `(expected ${BAKED_ASSET_SCHEMA_VERSION}; run pnpm assets:publish)`,
+    );
   }
   if (!Array.isArray(manifest.characters)) throw new Error("Baked asset manifest needs characters");
 
@@ -53,6 +86,12 @@ export function validateBakedAssetManifest(manifest, expectedSlugs = null) {
         throw new Error(`Invalid ${kind} asset for '${character.slug}'`);
       }
       bakedAssetObjectKey(files[kind], asset.sha256);
+    }
+    if (!Array.isArray(character.variants) || !character.variants.every((name) => FIGHTER_PATTERN.test(name))) {
+      throw new Error(`Invalid variants for '${character.slug}'`);
+    }
+    if (!character.metadata || typeof character.metadata !== "object") {
+      throw new Error(`Missing metadata for '${character.slug}'`);
     }
   }
 

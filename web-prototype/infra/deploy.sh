@@ -175,10 +175,30 @@ for secret in opensmash-openai-api-key opensmash-tripo-api-key opensmash-fal-key
     --member "serviceAccount:${WORKER_IDENTITY}" --role roles/secretmanager.secretAccessor >/dev/null
 done
 
-# Materialize the content-addressed, checksum-pinned baked roster from GCS.
-# Generated play/ outputs are deliberately absent from Git and the build context.
-PUBLIC_BUCKET="$PUBLIC_BUCKET" \
-  node "$WORKSPACE_ROOT/pipeline/web-prototype/scripts/fetch-baked-characters.mjs"
+# The baked roster is never copied into the image. The API serves it from the
+# committed config/baked-assets.json manifest (BAKED_ASSET_SOURCE=remote) and
+# browsers fetch the content-addressed objects straight from the public
+# bucket, so check the manifest is the current schema and matches
+# config/characters.json before anything is built.
+(cd "$WORKSPACE_ROOT/pipeline/web-prototype" && node --input-type=module -e '
+import { readFile } from "node:fs/promises";
+import { bakedRosterSlugs } from "./shared/baked-roster.js";
+import { validateBakedAssetManifest } from "./shared/baked-assets.js";
+const slugs = bakedRosterSlugs(JSON.parse(await readFile("config/characters.json", "utf8")));
+const manifest = validateBakedAssetManifest(JSON.parse(await readFile("config/baked-assets.json", "utf8")), slugs);
+console.log(`Baked manifest: ${manifest.characters.length} fighters pinned by digest.`);
+')
+# The engine fetches bundles/<slug>.osb6 relative to /engine/ and follows the
+# API'"'"'s redirect to the bucket, which makes it a cross-origin request.
+cors_file="$(mktemp)"
+cat > "$cors_file" <<EOF
+[{"origin": ["${PUBLIC_ORIGIN}", "https://www.${DOMAIN}", "http://localhost:4174", "http://localhost:4180"],
+  "method": ["GET", "HEAD"],
+  "responseHeader": ["Content-Type", "Content-Length", "Range", "Cache-Control", "ETag"],
+  "maxAgeSeconds": 3600}]
+EOF
+gcloud storage buckets update "gs://${PUBLIC_BUCKET}" --cors-file="$cors_file"
+rm -f "$cors_file"
 
 cd "$WORKSPACE_ROOT"
 gcloud builds submit . \
@@ -216,7 +236,7 @@ gcloud run deploy "$SERVICE_NAME" \
   --ingress internal-and-cloud-load-balancing \
   --port 8080 --cpu 2 --memory 2Gi --concurrency 500 --cpu-boost \
   --min-instances 3 --max-instances 6 --timeout 3600 \
-  --set-env-vars "JOB_DATABASE=firestore,OBJECT_STORE=gcs,FIGHTER_JOBS_ROOT=/tmp/fighter-jobs,FIGHTER_EXECUTION_MODE=cloud-run,GOOGLE_CLOUD_PROJECT=${PROJECT_ID},CLOUD_RUN_REGION=${REGION},CLOUD_RUN_WORKER_JOB=${WORKER_JOB},GCS_PRIVATE_BUCKET=${PRIVATE_BUCKET},GCS_PUBLIC_BUCKET=${PUBLIC_BUCKET},ASSET_BASE_URL=${ASSET_BASE_URL},ALLOWED_ORIGINS=${PUBLIC_ORIGIN},FIREBASE_AUTH_ENABLED=1,FIREBASE_PROJECT_ID=${PROJECT_ID},FIREBASE_API_KEY=${FIREBASE_API_KEY},FIREBASE_AUTH_DOMAIN=${FIREBASE_AUTH_DOMAIN},FIREBASE_APP_ID=${FIREBASE_APP_ID},FIREBASE_AUTH_PROVIDERS=google|apple|email,FIGHTER_MODERATION_ENABLED=1,CREATION_ENABLED=${CREATION_ENABLED:-1}" \
+  --set-env-vars "JOB_DATABASE=firestore,OBJECT_STORE=gcs,FIGHTER_JOBS_ROOT=/tmp/fighter-jobs,FIGHTER_EXECUTION_MODE=cloud-run,BAKED_ASSET_SOURCE=remote,GOOGLE_CLOUD_PROJECT=${PROJECT_ID},CLOUD_RUN_REGION=${REGION},CLOUD_RUN_WORKER_JOB=${WORKER_JOB},GCS_PRIVATE_BUCKET=${PRIVATE_BUCKET},GCS_PUBLIC_BUCKET=${PUBLIC_BUCKET},ASSET_BASE_URL=${ASSET_BASE_URL},ALLOWED_ORIGINS=${PUBLIC_ORIGIN},FIREBASE_AUTH_ENABLED=1,FIREBASE_PROJECT_ID=${PROJECT_ID},FIREBASE_API_KEY=${FIREBASE_API_KEY},FIREBASE_AUTH_DOMAIN=${FIREBASE_AUTH_DOMAIN},FIREBASE_APP_ID=${FIREBASE_APP_ID},FIREBASE_AUTH_PROVIDERS=google|apple|email,FIGHTER_MODERATION_ENABLED=1,CREATION_ENABLED=${CREATION_ENABLED:-1}" \
   --set-secrets "COOKIE_SECRET=${COOKIE_SECRET_NAME}:latest,COOKIE_SECRET_PREVIOUS=${COOKIE_SECRET_PREVIOUS_NAME}:latest,OPENAI_API_KEY=opensmash-openai-api-key:latest${API_TURN_SECRETS}"
 
 if [[ -n "${CLOUDFLARE_API_TOKEN:-}" && -n "${CLOUDFLARE_ACCOUNT_ID:-}" ]]; then

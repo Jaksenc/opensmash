@@ -18,9 +18,13 @@ COPY pipeline/web-prototype/server ./server
 COPY pipeline/web-prototype/shared ./shared
 COPY pipeline/web-prototype/config ./config
 COPY pipeline/web-prototype/visual ./visual
-# Downloaded and checksum-verified from the content-addressed GCS manifest
-# immediately before Cloud Build. No local generated play/ state enters the image.
-COPY pipeline/web-prototype/.baked-characters/play /workspace/pipeline/play
+# The baked fighters are NOT in the image. config/baked-assets.json (copied
+# with config/ above) pins every runtime file by SHA-256, and the API runs with
+# BAKED_ASSET_SOURCE=remote so it serves the roster from that manifest and
+# points browsers at the immutable objects in the public bucket. Keeping the
+# ~3 GB roster out of the image is what makes builds, pushes and cold starts
+# fast. play/ exists only so local-mode code paths never trip on a missing dir.
+RUN mkdir -p /workspace/pipeline/play/ui
 COPY BattleShip/web-dist/index.html BattleShip/web-dist/BattleShip.js BattleShip/web-dist/BattleShip.wasm BattleShip/web-dist/manifest.json /workspace/BattleShip/web-dist/
 COPY BattleShip/web-dist/files /workspace/BattleShip/web-dist/files
 # In-browser asset extraction (BattleShip/docs/web_rom_extraction.md): Torch

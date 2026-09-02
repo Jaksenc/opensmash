@@ -4,6 +4,8 @@ import {
   BAKED_ASSET_KINDS,
   bakedAssetFiles,
   bakedAssetObjectKey,
+  bakedAssetUrl,
+  bakedCharacterMetadata,
   validateBakedAssetManifest,
 } from "./baked-assets.js";
 
@@ -11,10 +13,12 @@ const digest = "a".repeat(64);
 
 function manifest(slug = "testfighter") {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     characters: [{
       slug,
       assets: Object.fromEntries(BAKED_ASSET_KINDS.map((kind) => [kind, { sha256: digest, size: 42 }])),
+      variants: ["mario", "fox"],
+      metadata: bakedCharacterMetadata({ display: "Test", preferred_bases: ["fox"] }),
     }],
   };
 }
@@ -35,6 +39,25 @@ test("baked manifests require every runtime asset and exact roster order", () =>
   delete incomplete.characters[0].assets.announcer;
   assert.throws(() => validateBakedAssetManifest(incomplete), /Invalid announcer asset/);
   assert.throws(() => validateBakedAssetManifest(manifest(), ["otherfighter"]), /does not match/);
+  const legacy = manifest();
+  legacy.schemaVersion = 1;
+  assert.throws(() => validateBakedAssetManifest(legacy), /schema '1'/);
+  const noVariants = manifest();
+  noVariants.characters[0].variants = ["../x"];
+  assert.throws(() => validateBakedAssetManifest(noVariants), /Invalid variants/);
+});
+
+test("baked asset URLs are content addressed and metadata keeps only roster fields", () => {
+  assert.equal(
+    bakedAssetUrl("https://cdn.example/", "play/testfighter.osb6", digest),
+    `https://cdn.example/baked/v1/objects/${digest}/testfighter.osb6`,
+  );
+  assert.throws(() => bakedAssetUrl("", "play/testfighter.osb6", digest), /Invalid baked asset base URL/);
+  assert.deepEqual(
+    bakedCharacterMetadata({ display: " Cleo ", name_full: "Cleopatra VII", base: "fox", description: "secret", preferred_bases: ["kirby", "../x"] }),
+    { display: "Cleo", nameFull: "Cleopatra VII", short: null, base: "fox", preferredBases: ["kirby"] },
+  );
+  assert.deepEqual(bakedCharacterMetadata(null), { display: null, nameFull: null, short: null, base: null, preferredBases: null });
 });
 
 test("baked asset paths reject unsafe slugs and digests", () => {
