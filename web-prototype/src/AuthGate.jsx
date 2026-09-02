@@ -12,6 +12,7 @@ import {
   signInWithPopup,
   signOut,
 } from "firebase/auth";
+import FlameAction from "./FlameAction.jsx";
 
 const EMAIL_KEY = "opensmash-sign-in-email";
 
@@ -26,7 +27,13 @@ function firebaseAuth(config) {
   return getAuth(app);
 }
 
-export default function AuthGate({ onAuthenticated }) {
+export default function AuthGate({
+  accountOnly = false,
+  cancelButtonRef,
+  cancelLabel = "Cancel",
+  onAuthenticated,
+  onCancel,
+}) {
   const [config, setConfig] = useState(null);
   const [email, setEmail] = useState(() => localStorage.getItem(EMAIL_KEY) || "");
   const [status, setStatus] = useState("loading");
@@ -53,6 +60,10 @@ export default function AuthGate({ onAuthenticated }) {
         if (cancelled) return;
         setConfig(loaded);
         if (!loaded.enabled) {
+          if (accountOnly) {
+            setStatus("unavailable");
+            return;
+          }
           const session = await readResult(await fetch("/api/session", { cache: "no-store" }));
           if (!cancelled) {
             onAuthenticated(session.user || {
@@ -85,7 +96,7 @@ export default function AuthGate({ onAuthenticated }) {
         }
       });
     return () => { cancelled = true; };
-  }, []);
+  }, [accountOnly]);
 
   async function providerSignIn(providerName) {
     setStatus("signing-in");
@@ -132,52 +143,92 @@ export default function AuthGate({ onAuthenticated }) {
     }
   }
 
-  const providers = new Set(config?.providers || []);
+  const providers = new Set(config?.enabled ? config.providers : []);
+  const hasSocialProvider = providers.has("google") || providers.has("apple");
+  const busy = status === "loading" || status === "signing-in";
 
   return (
     <section className="auth-gate" aria-labelledby="auth-title">
-      <p className="eyebrow">Uploader account</p>
-      <h2 id="auth-title">Sign in to create</h2>
-      <p>
-        Sign-in keeps fighter uploads accountable and lets you return to private builds.
-        Playing and browsing public fighters stay open to everyone.
-      </p>
-      <div className="auth-options" aria-busy={status === "loading" || status === "signing-in"}>
+      <header className="creator-intro auth-heading">
+        {!accountOnly && <p className="eyebrow">Uploader account</p>}
+        <h2 id="auth-title">{accountOnly ? "Log In" : "Sign in to Create"}</h2>
+        <p>{accountOnly
+          ? "Log in to save the fighters you've created"
+          : "Sign-in keeps fighter uploads accountable and lets you return to private builds. Playing and browsing public fighters stay open to everyone."}
+        </p>
+      </header>
+
+      <div className="auth-options" aria-busy={busy}>
         {providers.has("google") && (
-          <button type="button" disabled={status !== "idle"} onClick={() => providerSignIn("google")}>
+          <button
+            className="launch-flow-action auth-provider-button"
+            type="button"
+            disabled={status !== "idle"}
+            onClick={() => providerSignIn("google")}
+          >
             Continue with Google
           </button>
         )}
         {providers.has("apple") && (
-          <button type="button" disabled={status !== "idle"} onClick={() => providerSignIn("apple")}>
+          <button
+            className="launch-flow-action auth-provider-button"
+            type="button"
+            disabled={status !== "idle"}
+            onClick={() => providerSignIn("apple")}
+          >
             Continue with Apple
           </button>
         )}
         {providers.has("email") && (
           <form onSubmit={emailSignIn}>
-            <label htmlFor="sign-in-email">Or continue with email</label>
-            <div>
-              <input
-                id="sign-in-email"
-                type="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                placeholder="you@example.com"
-                autoComplete="email"
-                required
-                disabled={status === "loading" || status === "signing-in"}
-              />
-              <button type="submit" disabled={!email.trim() || status === "loading" || status === "signing-in"}>
-                Email a link
-              </button>
+            {hasSocialProvider && <p className="auth-divider">Or continue with email</p>}
+            <div className="fighter-fields auth-email-field">
+              <label htmlFor="sign-in-email">
+                <span>Email address</span>
+                <input
+                  id="sign-in-email"
+                  type="email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  placeholder="you@example.com"
+                  autoComplete="email"
+                  required
+                  disabled={busy}
+                />
+              </label>
             </div>
+            <FlameAction
+              cellClassName="auth-email-action"
+              className="auth-email-button"
+              type="submit"
+              disabled={!email.trim() || busy}
+            >
+              Email a link
+            </FlameAction>
           </form>
         )}
+        {status === "loading" && <p className="auth-message" role="status">Loading sign-in…</p>}
+        {status === "signing-in" && <p className="auth-message" role="status">Signing you in…</p>}
+        {status === "unavailable" && (
+          <p className="auth-message auth-unavailable" role="status">
+            Account login is disabled for this local server. Restart it with{" "}
+            <code>FIREBASE_AUTH_ENABLED=1</code> and the Firebase web app settings from{" "}
+            <code>.env.example</code> to test a real sign-in.
+          </p>
+        )}
+        {message && <p className="auth-message" role="status">{message}</p>}
+        {error && <p className="creator-error" role="alert">{error}</p>}
+        {onCancel && (
+          <button
+            ref={cancelButtonRef}
+            className="launch-flow-action auth-cancel-button"
+            type="button"
+            onClick={onCancel}
+          >
+            {cancelLabel}
+          </button>
+        )}
       </div>
-      {status === "loading" && <p className="auth-message">Loading sign-in…</p>}
-      {status === "signing-in" && <p className="auth-message">Signing you in…</p>}
-      {message && <p className="auth-message">{message}</p>}
-      {error && <p className="creator-error">{error}</p>}
     </section>
   );
 }

@@ -121,11 +121,14 @@ const cancelButton = document.getElementById('launch-cancel-button');
 const formError = document.getElementById('rom-form-error');
 // Alternative ROM source: receive from another device (src/rom-handoff-client.js).
 const moreOptionsButton = document.getElementById('rom-more-options-button');
-const moreOptions = document.getElementById('rom-more-options');
+const handoffPage = document.getElementById('rom-handoff-page');
 const handoffPanel = document.getElementById('rom-handoff-panel');
 const handoffCodeInput = document.getElementById('rom-handoff-code');
 const handoffConnectButton = document.getElementById('rom-handoff-connect');
+const handoffBackButton = document.getElementById('rom-handoff-back');
 const handoffStatus = document.getElementById('rom-handoff-status');
+const handoffError = document.getElementById('rom-handoff-error');
+const handoffUnavailable = document.getElementById('rom-handoff-unavailable');
 let activeHandoff = null;
 const controllerStep = document.getElementById('launch-flow-controller-step');
 const controlsMenuButton = document.getElementById('controls-menu-button');
@@ -150,6 +153,7 @@ let previousFocus = null;
 let flowSequence = 0;
 let flowTimer = 0;
 let releaseLaunchFlowScrollLock = null;
+let scrollToPageTopAfterUnlock = false;
 let controllerTutorialCompletedThisSession = false;
 let controlCheckComplete = false;
 let controlExitPending = false;
@@ -161,12 +165,18 @@ const heldControlKeys = new Set();
 const launchSoundTemplates = new Map();
 
 function lockLaunchFlowScroll() {
-  releaseLaunchFlowScrollLock ||= lockPageScroll();
+  if (releaseLaunchFlowScrollLock) return;
+  scrollToPageTopAfterUnlock = false;
+  releaseLaunchFlowScrollLock = lockPageScroll();
 }
 
 function unlockLaunchFlowScroll() {
-  releaseLaunchFlowScrollLock?.();
+  const releaseScrollLock = releaseLaunchFlowScrollLock;
   releaseLaunchFlowScrollLock = null;
+  releaseScrollLock?.();
+  const shouldScrollToPageTop = scrollToPageTopAfterUnlock;
+  scrollToPageTopAfterUnlock = false;
+  return shouldScrollToPageTop;
 }
 
 function soundEnabled() {
@@ -321,6 +331,10 @@ function engineUrl(fighter) {
 }
 
 function scrollToPageTop() {
+  if (releaseLaunchFlowScrollLock) {
+    scrollToPageTopAfterUnlock = true;
+    return;
+  }
   const behavior = matchMedia('(prefers-reduced-motion: reduce)').matches
     ? 'auto'
     : 'smooth';
@@ -2028,41 +2042,40 @@ function setStatusLine(element, text) {
 function setAlternativesDisabled(disabled) {
   if (moreOptionsButton) moreOptionsButton.disabled = disabled;
   if (handoffConnectButton) handoffConnectButton.disabled = disabled;
+  if (handoffBackButton) handoffBackButton.disabled = disabled;
   if (handoffCodeInput) handoffCodeInput.disabled = disabled;
 }
 
-function setMoreOptionsOpen(open, { focusCode = false } = {}) {
-  if (!moreOptions || !moreOptionsButton) return;
-  moreOptions.hidden = !open;
-  moreOptionsButton.setAttribute('aria-expanded', String(open));
-  // The upload step is a centred flex column, so extra height would pull the
-  // copy up under the cartridge. Shift the step down by half the panel height
-  // so the panel appears to grow downward.
-  const step = moreOptions.closest('.launch-flow-upload');
-  if (step) {
-    let shift = 0;
-    let sceneLift = 0;
-    if (open) {
-      step.style.setProperty('--rom-options-shift', '0px');
-      const rect = moreOptions.getBoundingClientRect();
-      const overflow = Math.ceil(rect.bottom + 12 - window.innerHeight);
-      if (getComputedStyle(moreOptions).position === 'absolute') {
-        // Wide layout: the panel hangs below the link. If it runs off the
-        // bottom, lift the whole scene — copy, buttons and the 3D cartridge
-        // canvas together — by exactly that amount.
-        sceneLift = Math.max(0, overflow);
-        shift = -sceneLift;
-      } else {
-        // Narrow layout: grow downward, but never push the panel's bottom
-        // edge off-screen; there the copy is allowed to creep up instead.
-        const available = window.innerHeight - 12 - rect.bottom;
-        shift = Math.max(0, Math.min(Math.round(rect.height / 2), Math.round(available)));
-      }
-    }
-    step.style.setProperty('--rom-options-shift', `${shift}px`);
-    setSceneLift(sceneLift);
+function showHandoffPage({ focusCode = true } = {}) {
+  if (!overlay || overlay.hidden || overlay.dataset.step !== 'upload') return;
+  if (formError) {
+    formError.hidden = true;
+    formError.textContent = '';
   }
-  if (open && focusCode) requestAnimationFrame(() => handoffCodeInput?.focus());
+  overlay.dataset.step = 'handoff';
+  if (focusCode) {
+    requestAnimationFrame(() => {
+      if (handoffPanel?.hidden) handoffBackButton?.focus();
+      else handoffCodeInput?.focus();
+    });
+  } else {
+    requestAnimationFrame(() => handoffPage?.focus());
+  }
+}
+
+function showUploadPage() {
+  if (!overlay || overlay.hidden || overlay.dataset.step !== 'handoff' || validationBusy || activeHandoff) return;
+  if (handoffError) {
+    handoffError.hidden = true;
+    handoffError.textContent = '';
+  }
+  setStatusLine(handoffStatus, '');
+  // The direct Settings/deep-link entry can skip the upload step before the
+  // cartridge entrance has had a chance to reveal it. Make it available when
+  // Back explicitly returns there.
+  overlay.classList.add('is-upload-revealed');
+  overlay.dataset.step = 'upload';
+  requestAnimationFrame(() => moreOptionsButton?.focus());
 }
 
 function setSceneLift(pixels) {
@@ -2073,19 +2086,23 @@ function setSceneLift(pixels) {
 function resetAlternativeSources() {
   activeHandoff?.cancel();
   activeHandoff = null;
-  if (moreOptionsButton) moreOptionsButton.textContent = 'Other options';
+  if (moreOptionsButton) moreOptionsButton.textContent = 'Get ROM from another device';
   if (handoffPanel) handoffPanel.hidden = !isHandoffSupported();
+  if (handoffUnavailable) handoffUnavailable.hidden = isHandoffSupported();
   if (handoffConnectButton) handoffConnectButton.textContent = 'Connect';
   if (handoffCodeInput) handoffCodeInput.value = '';
   setStatusLine(handoffStatus, '');
-  setMoreOptionsOpen(false);
+  if (handoffError) {
+    handoffError.hidden = true;
+    handoffError.textContent = '';
+  }
   setAlternativesDisabled(false);
 }
 
-function showRomError(message) {
-  if (!formError) return;
-  formError.hidden = false;
-  formError.textContent = message;
+function showRomError(message, target = formError) {
+  if (!target) return;
+  target.hidden = false;
+  target.textContent = message;
 }
 
 async function connectHandoff(code) {
@@ -2127,14 +2144,14 @@ async function connectHandoff(code) {
     if (handoffConnectButton) handoffConnectButton.textContent = 'Connect';
     setStatusLine(handoffStatus, '');
     if (error?.name !== 'HandoffCancelled') {
-      showRomError(error?.message || 'Could not receive the ROM from the other device.');
+      showRomError(error?.message || 'Could not receive the ROM from the other device.', handoffError);
       handoffCodeInput?.focus();
     }
   }
 }
 
-// Advanced → "Receive from another device": open the play flow with the
-// alternative-source panel already expanded and the code field focused.
+// Settings → "Receive from another device": open the dedicated receiver page
+// with the code field focused.
 function openRomOptions() {
   if (hasVerifiedRom()) return;
   if (overlay?.hidden) {
@@ -2148,7 +2165,7 @@ function openRomOptions() {
   } else if (overlay?.dataset.step !== 'upload') {
     return;
   }
-  setMoreOptionsOpen(true, { focusCode: true });
+  showHandoffPage({ focusCode: true });
 }
 
 // Entry point for /?handoff=CODE (scanned QR): open the play flow in receive
@@ -2166,7 +2183,7 @@ function receiveHandoffFromLink(code) {
       bundle: null,
     });
   }
-  setMoreOptionsOpen(true);
+  showHandoffPage({ focusCode: false });
   if (handoffCodeInput) handoffCodeInput.value = code;
   connectHandoff(code);
 }
@@ -2392,7 +2409,10 @@ function showLaunchFlow(fighter, { create = false } = {}) {
   showFlowModel('cartridge');
   requestAnimationFrame(() => {
     overlay.classList.add('is-visible');
-    flowTimer = window.setTimeout(() => uploadButton?.focus(), 1250);
+    flowTimer = window.setTimeout(() => {
+      if (overlay.dataset.step === 'upload') uploadButton?.focus();
+      else if (overlay.dataset.step === 'handoff' && !activeHandoff) handoffCodeInput?.focus();
+    }, 1250);
   });
 }
 
@@ -2408,7 +2428,7 @@ function finishClosingFlow(sequence, restoreFocus) {
   overlay.dataset.mode = 'launch';
   overlay.dataset.step = 'upload';
   document.body.classList.remove('is-launch-flow-open');
-  unlockLaunchFlowScroll();
+  const shouldScrollToPageTop = unlockLaunchFlowScroll();
   setLaunchFlowOpen(false);
   requestedModelKind = 'none';
   if (activeModel) activeModel.visible = false;
@@ -2420,6 +2440,11 @@ function finishClosingFlow(sequence, restoreFocus) {
   resetControlCheck();
   if (restoreFocus && previousFocus instanceof HTMLElement) previousFocus.focus();
   previousFocus = null;
+  // A launch can begin while the overlay still has the body fixed. In that
+  // case the scroll-lock cleanup restores the character grid's old position.
+  // Scroll only after releasing the lock and restoring any previous focus so
+  // neither operation can move the page away from the game again.
+  if (shouldScrollToPageTop) scrollToPageTop();
 }
 
 function closeLaunchFlow(immediate = false) {
@@ -2482,6 +2507,7 @@ function transitionToController() {
 
 async function validateRom(file) {
   if (!file || !pendingFighter || validationBusy) return;
+  const receivedFromHandoff = overlay?.dataset.step === 'handoff';
   validationBusy = true;
   if (formError) {
     formError.hidden = true;
@@ -2492,6 +2518,10 @@ async function validateRom(file) {
   if (uploadButton) {
     uploadButton.disabled = true;
     uploadButton.textContent = 'Checking ROM…';
+  }
+  if (receivedFromHandoff) {
+    setAlternativesDisabled(true);
+    if (handoffConnectButton) handoffConnectButton.textContent = 'Checking ROM…';
   }
 
   try {
@@ -2546,11 +2576,15 @@ async function validateRom(file) {
       uploadButton.textContent = 'Choose ROM';
     }
     if (cancelButton) cancelButton.disabled = false;
-    if (formError) {
-      formError.hidden = false;
-      formError.textContent = error?.message || 'Could not validate that file.';
+    if (receivedFromHandoff) {
+      setAlternativesDisabled(false);
+      if (handoffConnectButton) handoffConnectButton.textContent = 'Connect';
+      showRomError(error?.message || 'Could not validate that file.', handoffError);
+      handoffCodeInput?.focus();
+    } else {
+      showRomError(error?.message || 'Could not validate that file.');
+      uploadButton?.focus();
     }
-    uploadButton?.focus();
   }
 }
 
@@ -2590,12 +2624,13 @@ cancelButton?.addEventListener('click', () => {
   if (!validationBusy) cancelLaunchFlow();
 });
 moreOptionsButton?.addEventListener('click', () => {
-  setMoreOptionsOpen(Boolean(moreOptions?.hidden));
+  showHandoffPage();
 });
 handoffPanel?.addEventListener('submit', event => {
   event.preventDefault();
   connectHandoff(handoffCodeInput?.value || '');
 });
+handoffBackButton?.addEventListener('click', showUploadPage);
 handoffCodeInput?.addEventListener('input', () => {
   // Mirror what the code alphabet accepts so the field shows the canonical form.
   const canonical = handoffCodeInput.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -2678,6 +2713,11 @@ window.addEventListener('keydown', event => {
   if (registerControlKey(event)) return;
   const dismissibleUpload = overlay?.dataset.step === 'upload' && !validationBusy;
   const dismissibleControls = controlsPreviewMode && overlay?.dataset.step === 'controller';
+  if (event.key === 'Escape' && overlay?.dataset.step === 'handoff' &&
+      !validationBusy && !activeHandoff) {
+    showUploadPage();
+    return;
+  }
   if (event.key === 'Escape' && overlay && !overlay.hidden &&
       (dismissibleUpload || dismissibleControls)) {
     cancelLaunchFlow();

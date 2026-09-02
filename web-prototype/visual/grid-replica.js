@@ -7,7 +7,6 @@
 
 import {
   rosterGridDimensions,
-  rosterReserveHeight,
 } from '../shared/roster-layout.js';
 import { formatFighterJobCellError } from '../shared/fighter-job-ui.js';
 
@@ -677,16 +676,20 @@ CELL_IDS.forEach((id, index) => {
   else if (!isSearch) {
     setNativePortrait(button, character);
   }
-  grid.append(button);
+  // Search and Create contain the live input/navigation controls, so keep
+  // those two cells mounted. Fighter cells are attached only near the
+  // viewport once their logical rows have been calculated below.
+  if (isSearch || isCreate) grid.append(button);
   cells.set(id, button);
 });
 
+const actionCells = [...cells.values()].filter(button =>
+  button.dataset.kind === 'search' || button.dataset.kind === 'create'
+);
 setInterval(() => {
   if (document.hidden) return;
-  cells.forEach(button => {
-    if (button.dataset.kind === 'search' || button.dataset.kind === 'create') {
-      paintActionStatic(button, button.dataset.kind);
-    }
+  actionCells.forEach(button => {
+    paintActionStatic(button, button.dataset.kind);
   });
 }, 1000 / 12);
 
@@ -696,8 +699,11 @@ ruleCanvas.setAttribute('aria-hidden', 'true');
 grid.append(ruleCanvas);
 
 let currentGridLayout;
+let currentVisibleCells = [];
 let introVideoRuleSignature = '';
 let siteMenuRuleSignature = '';
+const mountedCells = new Set(actionCells);
+let cellWindowFrame = 0;
 
 function paintIntroVideoRule() {
   if (!currentGridLayout || !introVideoFrame || !introVideoRuleCanvas) return;
@@ -755,9 +761,11 @@ function columnsForContainer() {
 }
 
 function reserveRosterFootprint(layout) {
-  const renderedWidth = arenaSurface.clientWidth || window.innerWidth;
-  const reserveHeight = rosterReserveHeight(layout, renderedWidth);
-  arenaShell.style.setProperty('--roster-layout-reserve', `${reserveHeight}px`);
+  // Percentage padding is resolved against the arena shell's width. Expressing
+  // the offscreen rows this way lets CSS track live resizes without a JS
+  // measurement/write cycle (which otherwise forces layout for every tile).
+  const reservePercent = 100 * (layout.reservedHeight - layout.height) / layout.width;
+  arenaShell.style.setProperty('--roster-layout-reserve', `${reservePercent}%`);
 }
 
 function visibleCellsInDisplayOrder() {
@@ -787,7 +795,62 @@ function rulesForBoard(width, height, columns, cellCount) {
   return pixels;
 }
 
-function applyGridLayout(columns = columnsForContainer()) {
+function updateMountedCellWindow() {
+  cellWindowFrame = 0;
+  if (!currentGridLayout || !currentVisibleCells.length) return;
+
+  const gridRect = grid.getBoundingClientRect();
+  const renderedScale = gridRect.width / currentGridLayout.width;
+  if (!(renderedScale > 0)) return;
+
+  const rowHeight = (CELL_H + RULE) * renderedScale;
+  // One viewport of overscan keeps fast wheel/touch scrolling filled without
+  // returning to a roster-sized DOM during resize.
+  const overscan = window.innerHeight;
+  const firstRow = Math.max(0, Math.floor((-gridRect.top - overscan) / rowHeight));
+  const lastRow = Math.min(
+    currentGridLayout.rows - 1,
+    Math.floor((window.innerHeight - gridRect.top + overscan) / rowHeight)
+  );
+  const firstIndex = Math.max(0, firstRow * currentGridLayout.columns);
+  const lastIndex = Math.min(
+    currentVisibleCells.length,
+    (lastRow + 1) * currentGridLayout.columns
+  );
+  const desiredCells = new Set(actionCells);
+  if (lastRow >= firstRow) {
+    currentVisibleCells.slice(firstIndex, lastIndex).forEach(button => {
+      desiredCells.add(button);
+    });
+  }
+
+  for (const button of mountedCells) {
+    if (desiredCells.has(button)) continue;
+    button.remove();
+    mountedCells.delete(button);
+  }
+  for (const button of desiredCells) {
+    if (mountedCells.has(button) || button.hidden) continue;
+    grid.append(button);
+    mountedCells.add(button);
+  }
+}
+
+function scheduleMountedCellWindowUpdate() {
+  if (cellWindowFrame) return;
+  cellWindowFrame = requestAnimationFrame(updateMountedCellWindow);
+}
+
+function applyGridLayout(columns = columnsForContainer(), force = false) {
+  // Live resize normally stays within the same breakpoint. Do not rebuild a
+  // roster-sized array/signature until filtering, reconciliation, or a column
+  // breakpoint actually changes the logical layout.
+  if (!force && currentGridLayout?.columns === columns &&
+      currentGridLayout.reservedCellCount === cells.size) {
+    scheduleMountedCellWindowUpdate();
+    return currentGridLayout;
+  }
+
   const visibleCells = visibleCellsInDisplayOrder();
   const visibleSignature = visibleCells.map(button => button.dataset.character).join(',');
   // Job cells arrive after the static roster. Keep the unfiltered footprint in
@@ -797,7 +860,7 @@ function applyGridLayout(columns = columnsForContainer()) {
   if (currentGridLayout?.columns === columns &&
       currentGridLayout.visibleSignature === visibleSignature &&
       currentGridLayout.reservedCellCount === reservedCellCount) {
-    reserveRosterFootprint(currentGridLayout);
+    scheduleMountedCellWindowUpdate();
     return currentGridLayout;
   }
 
@@ -819,15 +882,15 @@ function applyGridLayout(columns = columnsForContainer()) {
     visibleCount: visibleCells.length,
     visibleSignature
   });
+  currentVisibleCells = visibleCells;
 
   arenaShell.style.setProperty(
     '--shared-rule-overlap', `${100 * RULE / width}%`
   );
   // Filtering compacts the visible tiles, but keep the roster's original page
   // footprint so a focused search field does not trigger scroll anchoring.
-  // Apply the reserve before contracting the surface: reserveRosterFootprint()
-  // reads clientWidth and therefore forces layout. Reversing these assignments
-  // briefly makes sparse searches shorter than the viewport and clamps scrollY.
+  // Apply the percentage reserve before contracting the surface so sparse
+  // searches never briefly become shorter than the viewport and clamp scrollY.
   reserveRosterFootprint(currentGridLayout);
   arenaSurface.style.aspectRatio = `${width} / ${height}`;
   grid.setAttribute('aria-colcount', String(columns));
@@ -861,15 +924,20 @@ function applyGridLayout(columns = columnsForContainer()) {
   metrics.textContent =
     `${visibleCells.length}/${cells.size} targetable cells · ${columns}×${rows} · ${width}×${height} native`;
 
+  updateMountedCellWindow();
   return currentGridLayout;
 }
 
 applyGridLayout();
 
+let resizeSettleTimer = 0;
 function syncLayoutToVideoWidth() {
   applyGridLayout(columnsForContainer());
-  paintIntroVideoRule();
-  paintSiteMenuRule();
+  scheduleMountedCellWindowUpdate();
+  // Keep the existing border stretched during live resize, then regenerate
+  // its exact native sampling once the resize gesture settles.
+  window.clearTimeout(resizeSettleTimer);
+  resizeSettleTimer = window.setTimeout(paintIntroVideoRule, 120);
 }
 
 if (introVideoFrame && 'ResizeObserver' in window) {
@@ -877,6 +945,7 @@ if (introVideoFrame && 'ResizeObserver' in window) {
   videoWidthObserver.observe(introVideoFrame);
 }
 window.addEventListener('resize', syncLayoutToVideoWidth);
+window.addEventListener('scroll', scheduleMountedCellWindowUpdate, { passive: true });
 
 const fighterSearch = document.getElementById('fighter-search');
 const fighterEmptyState = document.getElementById('fighter-empty-state');
@@ -895,6 +964,7 @@ function updateSearchTile(query = '') {
   const caption = fitCaption(value || 'SEARCH');
   const caretX = value ? Math.min(CELL_W - 2, (caption.condensed ? CAPTION_ORIGIN.condensed : CAPTION_ORIGIN.regular) + caption.width + 1) : 3;
   searchCell.classList.toggle('is-searching', active);
+  searchCell.classList.toggle('is-search-placeholder', active && !value);
   searchCell.style.setProperty('--search-caret-left', `${100 * caretX / CELL_W}%`);
   if (fighterSearch && fighterSearch.value !== value) fighterSearch.value = value;
   const searchIcon = searchCell.querySelector('.replica-action-icon');
@@ -926,7 +996,7 @@ function filterRoster(query = '') {
   });
 
   updateSearchTile(query);
-  applyGridLayout(columnsForContainer());
+  applyGridLayout(columnsForContainer(), true);
   if (fighterEmptyState) {
     fighterEmptyState.hidden = visibleCount > 0;
     fighterEmptyState.textContent = visibleCount
@@ -946,12 +1016,6 @@ grid.addEventListener('pointerdown', event => {
     ? selectableRosterCell(event.target)
     : null;
 }, { capture: true });
-searchCell?.addEventListener('pointerdown', event => {
-  // Mouse users expect the field to focus as soon as they press. Touch input
-  // waits for click so a scroll gesture that begins here does not activate it.
-  if (!event.isPrimary || event.button !== 0 || event.pointerType !== 'mouse') return;
-  fighterSearch?.focus({ preventScroll: true });
-});
 fighterSearch?.addEventListener('focus', event => filterRoster(event.currentTarget.value));
 fighterSearch?.addEventListener('blur', event => {
   // Pointer-down blurs the input before click selects the fighter. Keep the
@@ -1024,7 +1088,6 @@ function createRosterCell(character) {
   button.setAttribute('aria-pressed', 'false');
   setNativePortrait(button, character);
   attachCellActivation(button);
-  grid.append(button);
   cells.set(id, button);
   return button;
 }
@@ -1129,7 +1192,6 @@ function createJobCell(job) {
       requestSelection(button.dataset.rosterCharacter);
     }
   });
-  grid.append(button);
   cells.set(id, button);
   jobCells.set(job.id, button);
   return button;
@@ -1344,12 +1406,25 @@ window.__replicaMetrics = Object.freeze({
   get rows() { return currentGridLayout.rows; },
   cellInterior: CELL_W + 'x' + CELL_H,
   get cellElements() { return cells.size; },
+  get mountedCellElements() { return mountedCells.size; },
   sharedRule: RULE + 'px',
   captionRendering: 'viewport-lazy extracted SSB bitmap',
   runtimeFontAssetRequests: 0,
-  get renderedCaptions() { return grid.querySelectorAll('.replica-caption-layer').length; },
-  get characterPortraits() { return grid.querySelectorAll('.replica-portrait-layer').length; },
-  get runtimePortraitAssetRequests() { return grid.querySelectorAll('.replica-portrait-layer[src]').length; },
+  get renderedCaptions() {
+    return [...cells.values()].filter(cell =>
+      cell.querySelector('.replica-caption-layer')
+    ).length;
+  },
+  get characterPortraits() {
+    return [...cells.values()].filter(cell =>
+      cell.querySelector('.replica-portrait-layer')
+    ).length;
+  },
+  get runtimePortraitAssetRequests() {
+    return [...cells.values()].filter(cell =>
+      cell.querySelector('.replica-portrait-layer[src]')
+    ).length;
+  },
   portraitSource: 'native HTML image elements',
   portraitPreprocessing: false,
   portraitsGraded: false

@@ -255,6 +255,9 @@
   .replica-search-input::placeholder {
     color: transparent;
   }
+  .replica-cell.is-search-placeholder:focus-within .replica-caption-layer {
+    opacity: .5;
+  }
   .replica-search-input::-webkit-search-cancel-button { display: none; }
   .replica-search-caret {
     position: absolute;
@@ -410,9 +413,9 @@
     position: relative;
     flex: 0 0 auto;
     display: block;
-    width: 152px;
+    width: 148px;
     aspect-ratio: 3 / 1;
-    transform: translateY(3px);
+    transform: translate(-4px, 3px);
     filter: none;
     isolation: isolate;
     pointer-events: auto;
@@ -487,6 +490,12 @@
     .retro-site-advanced-button,
     .retro-site-nav > .retro-site-dev-link { display: none; }
     .retro-site-more { display: block; }
+  }
+  @media (max-width: 360px) {
+    .retro-site-header { gap: 8px; }
+    .retro-site-logo { width: 112px; }
+    .retro-site-nav { gap: 8px; }
+    .retro-social-links { gap: 6px; }
   }
   @media (min-width: 601px) and (hover: none) and (pointer: coarse) {
     #controls-menu-button,
@@ -666,17 +675,60 @@
     opacity: 1;
     pointer-events: auto;
   }
+  .launch-flow-overlay[data-step="handoff"] .launch-flow-handoff-page {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transition: opacity 260ms ease, visibility 0s;
+  }
   .launch-flow-upload {
     --launch-control-width: clamp(210px, 23vw, 300px);
     z-index: 1;
     justify-content: center;
     padding: 0 24px;
-    /* --rom-options-shift is half the height of the expanded "Can't find your
-       ROM?" panel (set by game-launcher.js) so opening it grows downward
-       instead of re-centring the copy up into the cartridge model. */
-    transform: translateY(calc(clamp(78px, 13vh, 120px) + var(--rom-options-shift, 0px)));
+    transform: translateY(clamp(78px, 13vh, 120px));
     overflow-y: auto;
     transition: transform 180ms ease-out, opacity 120ms ease-out, visibility 0s;
+  }
+  .launch-flow-handoff-page {
+    z-index: 4;
+    justify-content: center;
+    padding: 24px;
+    overflow-y: auto;
+    background: #000;
+  }
+  .launch-flow-handoff-page:focus { outline: 0; }
+  .launch-flow-handoff-content {
+    --launch-control-width: min(100%, 440px);
+    display: flex;
+    width: min(760px, 100%);
+    flex-direction: column;
+    align-items: center;
+  }
+  .launch-flow-handoff-content .launch-flow-title { margin: 0; }
+  .launch-flow-handoff-copy { width: min(620px, 88vw); }
+  .launch-flow-handoff-copy strong { color: #fff2d6; }
+  .launch-flow-handoff-form {
+    display: grid;
+    width: var(--launch-control-width);
+    justify-items: stretch;
+    gap: 11px;
+    margin-top: clamp(24px, 4vh, 36px);
+  }
+  .launch-flow-handoff-form .launch-flow-handoff-input,
+  .launch-flow-handoff-form .launch-flow-fire-cell,
+  .launch-flow-handoff-form .launch-flow-cancel {
+    box-sizing: border-box;
+    width: var(--launch-control-width);
+    min-width: var(--launch-control-width);
+    height: 56px;
+    min-height: 56px;
+    margin: 0;
+  }
+  .launch-flow-handoff-form .launch-flow-fire-cell .launch-flow-action {
+    height: 100%;
+    min-height: 0;
+    padding: 11px 18px;
   }
   .launch-flow-controller {
     justify-content: center;
@@ -908,51 +960,6 @@
   .launch-flow-text-link:hover,
   .launch-flow-text-link:focus-visible { color: #fff2d6; text-decoration-color: #fff2d6; outline: 0; }
   .launch-flow-text-link:disabled { opacity: .45; cursor: default; }
-  .launch-flow-more-anchor { width: 100%; }
-  /* Wide viewports have little vertical headroom, so the panel hangs below the
-     link without taking part in the centred layout (see setMoreOptionsOpen,
-     which skips the downward shift when the panel is absolutely positioned). */
-  @media (min-width: 700px) {
-    .launch-flow-more-anchor { position: relative; height: 0; }
-    .launch-flow-more-options {
-      position: absolute;
-      top: 8px;
-      left: 50%;
-      transform: translateX(-50%);
-      margin: 0;
-    }
-  }
-  .launch-flow-more-options {
-    box-sizing: border-box;
-    width: min(540px, 92vw);
-    margin: 8px auto 0;
-    padding: 10px 16px 12px;
-    border: 1px solid rgba(255, 240, 181, .22);
-    background: rgba(5, 3, 3, .82);
-    text-align: center;
-  }
-  .launch-flow-more-copy {
-    margin: 0;
-    color: #f2d9b1;
-    filter: none;
-    font: 500 clamp(12px, 1.1vw, 14px)/1.35 "Kanit", sans-serif;
-    text-shadow: 0 2px 0 #260500;
-    text-wrap: balance;
-    -webkit-font-smoothing: none;
-  }
-  .launch-flow-more-copy strong { color: #fff2d6; }
-  .launch-flow-more-copy code { color: #fff2d6; font-family: inherit; }
-  .launch-flow-option { margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(255, 240, 181, .12); }
-  .launch-flow-more-options > .launch-flow-option:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
-  .launch-flow-secondary {
-    box-sizing: border-box;
-    min-width: 0;
-    min-height: 34px;
-    margin-top: 6px;
-    padding: 6px 18px;
-    background: #050303;
-    font-size: clamp(13px, 1.15vw, 16px) !important;
-  }
   .launch-flow-status {
     width: 100%;
     margin: 8px auto 0;
@@ -963,19 +970,12 @@
     text-wrap: balance;
     -webkit-font-smoothing: none;
   }
-  .launch-flow-handoff-row {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: flex-end;
-    gap: 8px 12px;
-  }
   .launch-flow-handoff-input {
     box-sizing: border-box;
-    width: clamp(140px, 15vw, 180px);
-    min-height: 34px;
-    margin-top: 6px;
-    padding: 5px 12px;
+    width: 100%;
+    min-height: 48px;
+    margin: 0 0 2px;
+    padding: 8px 14px;
     border: 1px solid #5d3a2b;
     border-radius: 0;
     background: #120b08;
@@ -1128,7 +1128,7 @@
     from { opacity: 0; transform: translate(-50%, -5px); }
   }
   @media (max-width: 600px) {
-    .launch-flow-upload { transform: translateY(calc(clamp(72px, 12vh, 96px) + var(--rom-options-shift, 0px))); }
+    .launch-flow-upload { transform: translateY(clamp(72px, 12vh, 96px)); }
     .launch-flow-title { font-size: clamp(23px, 7vw, 34px); }
     .launch-flow-rom-hint { margin-top: 9px; }
     .launch-flow-rom-copy code { white-space: normal; }
@@ -1219,6 +1219,7 @@
   .arena-surface {
     position: relative;
     z-index: 3;
+    contain: layout paint style;
     width: 100%;
     height: auto;
     margin-top: calc(-1 * var(--shared-rule-overlap));
@@ -1248,6 +1249,7 @@
     pointer-events: none;
   }
   .arena-shell .replica-cell {
+    contain: layout paint style;
     left: var(--cell-left);
     top: var(--cell-top);
     width: var(--cell-width);

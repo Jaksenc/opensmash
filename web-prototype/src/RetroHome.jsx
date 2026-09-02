@@ -95,35 +95,54 @@ export function LaunchFlow() {
         <input id="rom-file-input" className="launch-flow-file-input" type="file" hidden accept=".z64,.n64,.v64,.rom,.zip" />
         <FlameAction id="rom-upload-button" type="button">Choose ROM</FlameAction>
         <button id="launch-cancel-button" className="launch-flow-action launch-flow-cancel" type="button">Cancel</button>
-        <button id="rom-more-options-button" className="launch-flow-text-link" type="button" aria-expanded="false" aria-controls="rom-more-options">Other options</button>
-        <div className="launch-flow-more-anchor">
-        <div id="rom-more-options" className="launch-flow-more-options" hidden>
-          <form id="rom-handoff-panel" className="launch-flow-option launch-flow-handoff">
-            <p className="launch-flow-more-copy">
-              Have the ROM on your computer or another device? Open this site there, choose
-              {" "}<strong>Advanced → Send ROM to another device</strong>, and enter the code it shows here.
-            </p>
-            <div className="launch-flow-handoff-row">
-              <input
-                id="rom-handoff-code"
-                className="launch-flow-handoff-input"
-                type="text"
-                inputMode="text"
-                autoComplete="one-time-code"
-                autoCapitalize="characters"
-                autoCorrect="off"
-                spellCheck="false"
-                maxLength="8"
-                placeholder="CODE"
-                aria-label="Handoff code from the other device"
-              />
-              <button id="rom-handoff-connect" className="launch-flow-action launch-flow-secondary" type="submit">Connect</button>
-            </div>
-            <p id="rom-handoff-status" className="launch-flow-status" aria-live="polite" hidden />
-          </form>
-        </div>
-        </div>
+        <button
+          id="rom-more-options-button"
+          className="launch-flow-text-link"
+          type="button"
+          aria-controls="rom-handoff-page"
+        >
+          Get ROM from another device
+        </button>
         <p id="rom-form-error" className="launch-flow-error" role="alert" hidden />
+      </section>
+      <section
+        id="rom-handoff-page"
+        className="launch-flow-step launch-flow-handoff-page"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="rom-handoff-title"
+        aria-describedby="rom-handoff-copy"
+        tabIndex="-1"
+      >
+        <div className="launch-flow-handoff-content">
+          <h2 id="rom-handoff-title" className="launch-flow-title">Get ROM from another device</h2>
+          <p id="rom-handoff-copy" className="launch-flow-copy launch-flow-handoff-copy">
+            Open Smash.fun from a device with the ROM uploaded and navigate to
+            {" "}<strong>Settings &gt; Share ROM with another device</strong> and then enter the code below.
+          </p>
+          <form id="rom-handoff-panel" className="launch-flow-handoff-form">
+            <input
+              id="rom-handoff-code"
+              className="launch-flow-handoff-input"
+              type="text"
+              inputMode="text"
+              autoComplete="one-time-code"
+              autoCapitalize="characters"
+              autoCorrect="off"
+              spellCheck="false"
+              maxLength="8"
+              placeholder="CODE"
+              aria-label="Code from the other device"
+            />
+            <FlameAction id="rom-handoff-connect" type="submit">Connect</FlameAction>
+            <button id="rom-handoff-back" className="launch-flow-action launch-flow-cancel" type="button">Back</button>
+            <p id="rom-handoff-status" className="launch-flow-status" aria-live="polite" hidden />
+            <p id="rom-handoff-error" className="launch-flow-error" role="alert" hidden />
+          </form>
+          <p id="rom-handoff-unavailable" className="launch-flow-error" role="alert" hidden>
+            This browser cannot connect directly to another device.
+          </p>
+        </div>
       </section>
       <section id="launch-flow-controller-step" className="launch-flow-step launch-flow-controller" role="dialog" aria-modal="true" aria-labelledby="how-to-play-title" aria-describedby="launch-control-prompt" tabIndex="-1">
         <div className="launch-flow-controller-instructions">
@@ -335,8 +354,8 @@ export default function RetroHome({
       {pageError && <p className="retro-page-error" role="alert">{pageError}</p>}
       <main className="arena-shell" aria-label="OpenSmash character grid">
         <header className="retro-site-header">
-          <div id="hero-logo-stage" className="retro-site-logo" aria-label="Smash the Weights">
-            <img className="hero-logo-fallback" src={logoFallbackUrl} alt="Smash the Weights" draggable="false" />
+          <div id="hero-logo-stage" className="retro-site-logo" aria-label="Smash.fun">
+            <img className="hero-logo-fallback" src={logoFallbackUrl} alt="Smash.fun" draggable="false" />
             <canvas id="hero-logo-canvas" className="hero-logo-canvas" aria-hidden="true" />
           </div>
           <nav className="retro-site-nav" aria-label="Site information and settings">
@@ -400,18 +419,34 @@ export default function RetroHome({
                 Reset ROM
               </button>
             )}
-            <a
-              className="retro-site-link retro-discord-link"
-              href="https://discord.gg/qYBbGmwBhr"
-              target="_blank"
-              rel="noreferrer"
-              aria-label="Join the OpenSmash community on Discord"
-            >
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M19.6 5.3A18 18 0 0 0 15.3 4l-.5 1a14.7 14.7 0 0 0-5.6 0l-.5-1a18 18 0 0 0-4.3 1.3C1.7 9.4 1 13.4 1.4 17.4a17.3 17.3 0 0 0 5.3 2.7l1.3-1.8a10.8 10.8 0 0 1-2-1l.5-.4a12.6 12.6 0 0 0 11 0l.5.4a11 11 0 0 1-2 1l1.3 1.8a17.3 17.3 0 0 0 5.3-2.7c.5-4.6-.8-8.5-3-12.1ZM8.5 15.2c-1.3 0-2.3-1.2-2.3-2.7s1-2.7 2.3-2.7 2.3 1.2 2.3 2.7-1 2.7-2.3 2.7Zm7 0c-1.3 0-2.3-1.2-2.3-2.7s1-2.7 2.3-2.7 2.3 1.2 2.3 2.7-1 2.7-2.3 2.7Z" />
-              </svg>
-              <span>Join Discord</span>
-            </a>
+            <div className="retro-social-links">
+              <a
+                className="retro-site-link retro-social-link retro-github-link"
+                href="https://github.com/turtlesoupy/opensmash"
+                target="_blank"
+                rel="noreferrer"
+                aria-label="View OpenSmash on GitHub"
+                title="GitHub"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 .7a11.6 11.6 0 0 0-3.7 22.6c.6.1.8-.3.8-.6v-2.2c-3.3.7-4-1.4-4-1.4-.5-1.4-1.3-1.7-1.3-1.7-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1.1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-5.8 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.2 1.2a11 11 0 0 1 5.8 0C15.7 5 16.7 5.3 16.7 5.3c.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.5-2.8 5.5-5.5 5.8.4.4.8 1.1.8 2.2v3.2c0 .3.2.7.8.6A11.6 11.6 0 0 0 12 .7Z" />
+                </svg>
+                <span>Github</span>
+              </a>
+              <a
+                className="retro-site-link retro-social-link retro-discord-link"
+                href="https://discord.gg/qYBbGmwBhr"
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Join the OpenSmash community on Discord"
+                title="Discord"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M19.6 5.3A18 18 0 0 0 15.3 4l-.5 1a14.7 14.7 0 0 0-5.6 0l-.5-1a18 18 0 0 0-4.3 1.3C1.7 9.4 1 13.4 1.4 17.4a17.3 17.3 0 0 0 5.3 2.7l1.3-1.8a10.8 10.8 0 0 1-2-1l.5-.4a12.6 12.6 0 0 0 11 0l.5.4a11 11 0 0 1-2 1l1.3 1.8a17.3 17.3 0 0 0 5.3-2.7c.5-4.6-.8-8.5-3-12.1ZM8.5 15.2c-1.3 0-2.3-1.2-2.3-2.7s1-2.7 2.3-2.7 2.3 1.2 2.3 2.7-1 2.7-2.3 2.7Zm7 0c-1.3 0-2.3-1.2-2.3-2.7s1-2.7 2.3-2.7 2.3 1.2 2.3 2.7-1 2.7-2.3 2.7Z" />
+                </svg>
+                <span>Discord</span>
+              </a>
+            </div>
           </nav>
         </header>
         <section className="intro-video-stage" aria-label="Intro video">

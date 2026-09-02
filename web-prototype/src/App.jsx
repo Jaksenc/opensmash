@@ -6,7 +6,6 @@ import CreateVisualShell from "./CreateVisualShell.jsx";
 import FighterCreator from "./FighterCreator.jsx";
 import ModalPage from "./ModalPage.jsx";
 import RetroHome from "./RetroHome.jsx";
-import RomHandoffModal from "./RomHandoffModal.jsx";
 import SettingsModal from "./SettingsModal.jsx";
 import { matchesCharacterSearch } from "../shared/character-search.js";
 import { mergeCharactersBySlug } from "../shared/character-roster.js";
@@ -292,12 +291,7 @@ function CreateExperienceOverlay({ onAuthenticated, onClose, onCreated, onPlay, 
           role="dialog"
           tabIndex="-1"
         >
-          {stage === "auth" && (
-            <button className="create-experience-close" type="button" onClick={() => close()} aria-label="Back to fighters">
-              ×
-            </button>
-          )}
-          {stage === "auth" && <AuthGate onAuthenticated={onAuthenticated} />}
+          {stage === "auth" && <AuthGate onAuthenticated={onAuthenticated} onCancel={() => close()} />}
           {stage === "creator" && user && (
             <FighterCreator
               onCancel={() => close()}
@@ -330,7 +324,6 @@ export default function App() {
   const [advancedOptions, setAdvancedOptions] = useState(loadAdvancedOptions);
   const gamepads = useGamepads();
   const [advancedOpen, setAdvancedOpen] = useState(false);
-  const [handoffOpen, setHandoffOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [createStage, setCreateStage] = useState(null);
   const [flowMusicActive, setFlowMusicActive] = useState(false);
@@ -756,6 +749,11 @@ export default function App() {
     await loadCharacters().catch((error) => setPageError(error.message));
   }
 
+  async function authenticatedFromSettings(nextUser) {
+    setUser(nextUser);
+    await loadCharacters().catch((error) => setPageError(error.message));
+  }
+
   function playCreatedCharacter(character) {
     setCreateStage(null);
     announceCharacter(character);
@@ -1054,22 +1052,23 @@ export default function App() {
           user={user}
         />
         <SettingsModal
+          accountConnected={Boolean(user)}
           authorized={authorized}
           debugMode={new URLSearchParams(window.location.search).get("debug") === "1"}
           gamepads={gamepads}
           open={advancedOpen}
           options={advancedOptions}
           soundOn={soundOn}
+          onAuthenticated={authenticatedFromSettings}
           onCancel={() => setAdvancedOpen(false)}
+          onLogOut={signOutUser}
           onOptionsChange={updateAdvancedOptions}
           onRestoreDefaults={restoreDefaultSettings}
           onResetControllerTutorial={resetControllerTutorialFromAdvanced}
           onResetRom={resetRomFromAdvanced}
-          onSendRom={() => { setAdvancedOpen(false); setHandoffOpen(true); }}
-          onReceiveRom={() => { setAdvancedOpen(false); window.gameLauncher?.openRomOptions?.(); }}
+          onReceiveRom={validateVisualRom}
           onSound={toggleSound}
         />
-        <RomHandoffModal open={handoffOpen} onClose={() => setHandoffOpen(false)} />
       </>
     );
   }
@@ -1249,22 +1248,23 @@ export default function App() {
       </footer>
 
       <SettingsModal
+        accountConnected={Boolean(user)}
         authorized={authorized}
         debugMode={new URLSearchParams(window.location.search).get("debug") === "1"}
         gamepads={gamepads}
         open={advancedOpen}
         options={advancedOptions}
         soundOn={soundOn}
+        onAuthenticated={authenticatedFromSettings}
         onCancel={() => setAdvancedOpen(false)}
+        onLogOut={signOutUser}
         onOptionsChange={updateAdvancedOptions}
         onRestoreDefaults={restoreDefaultSettings}
         onResetControllerTutorial={resetControllerTutorialFromAdvanced}
         onResetRom={resetRomFromAdvanced}
-        onSendRom={() => { setAdvancedOpen(false); setHandoffOpen(true); }}
-        onReceiveRom={() => { setAdvancedOpen(false); window.gameLauncher?.openRomOptions?.(); }}
+        onReceiveRom={validateVisualRom}
         onSound={toggleSound}
       />
-      <RomHandoffModal open={handoffOpen} onClose={() => setHandoffOpen(false)} />
 
       {pendingAction && pendingAction.type !== "create" && (
         <RomModal

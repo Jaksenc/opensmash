@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from "react";
+import AuthGate from "./AuthGate.jsx";
 import ModalPage from "./ModalPage.jsx";
+import RomHandoffModal from "./RomHandoffModal.jsx";
+import RomHandoffReceiver from "./RomHandoffReceiver.jsx";
 import { choiceForEntry, portOptions } from "../shared/controller-ports.js";
 import {
   BOOT_MODES,
@@ -12,18 +15,20 @@ import {
 } from "./launch-options.js";
 
 export default function SettingsModal({
+  accountConnected = false,
   authorized,
   debugMode,
   gamepads = [],
   open,
   options,
   soundOn,
+  onAuthenticated,
   onCancel,
+  onLogOut,
   onOptionsChange,
   onRestoreDefaults,
   onResetControllerTutorial,
   onResetRom,
-  onSendRom,
   onReceiveRom,
   onSound,
 }) {
@@ -32,6 +37,9 @@ export default function SettingsModal({
   const mainFirstRef = useRef(null);
   const gameplayFirstRef = useRef(null);
   const controllersFirstRef = useRef(null);
+  const loginBackRef = useRef(null);
+  const receiveFirstRef = useRef(null);
+  const sendBackRef = useRef(null);
   const portPlan = controllerPlan(draft, gamepads);
   const humanPorts = portPlan.filter((entry) => entry && entry.kind !== "none").length;
 
@@ -47,6 +55,9 @@ export default function SettingsModal({
     const focusFrame = window.requestAnimationFrame(() => {
       if (page === "gameplay") gameplayFirstRef.current?.focus();
       else if (page === "controllers") controllersFirstRef.current?.focus();
+      else if (page === "login") loginBackRef.current?.focus();
+      else if (page === "receive") receiveFirstRef.current?.focus();
+      else if (page === "send") sendBackRef.current?.focus();
       else mainFirstRef.current?.focus();
     });
     return () => window.cancelAnimationFrame(focusFrame);
@@ -75,6 +86,7 @@ export default function SettingsModal({
   const title = page === "gameplay"
     ? "Gameplay Options"
     : page === "controllers" ? "Keyboard & Controllers" : "Settings";
+  const handoffPage = page === "receive" || page === "send";
 
   return (
     <ModalPage
@@ -91,9 +103,13 @@ export default function SettingsModal({
           className="modal-page-surface advanced-screen"
           role="dialog"
           aria-modal="true"
-          aria-labelledby="settings-title"
+          aria-labelledby={page === "login"
+            ? "auth-title"
+            : page === "receive"
+              ? "settings-receive-handoff-title"
+              : page === "send" ? "handoff-title" : "settings-title"}
         >
-          <header className="advanced-heading">
+          <header className="advanced-heading" hidden={page === "login" || handoffPage}>
             <h2 id="settings-title">{title}</h2>
             {page === "controllers" && (
               <p className="settings-subtitle">Connect a controller for multiplayer</p>
@@ -122,25 +138,60 @@ export default function SettingsModal({
               <button
                 className="launch-flow-action settings-menu-button advanced-handoff-action"
                 type="button"
-                onClick={() => close(onSendRom)}
+                onClick={() => setPage("send")}
               >
-                <span>Send ROM to another device</span>
+                <span>Share ROM with another device</span>
               </button>
             ) : (
               <button
                 className="launch-flow-action settings-menu-button advanced-handoff-action"
                 type="button"
-                onClick={() => close(onReceiveRom)}
+                onClick={() => setPage("receive")}
               >
-                <span>Receive ROM from another device</span>
+                <span>Get ROM from another device</span>
               </button>
             )}
-            <button className="launch-flow-action settings-menu-button" type="button" onClick={restoreDefaults}>
-              Restore Defaults
+            <button
+              className="launch-flow-action settings-menu-button"
+              type="button"
+              onClick={() => accountConnected ? close(onLogOut) : setPage("login")}
+            >
+              {accountConnected ? "Log Out" : "Log In"}
             </button>
             <button className="launch-flow-action settings-menu-button" type="button" onClick={() => close()}>
               Cancel
             </button>
+          </div>
+
+          <div className="settings-subpage settings-login-page" hidden={page !== "login"}>
+            <AuthGate
+              accountOnly
+              cancelButtonRef={loginBackRef}
+              cancelLabel="Back"
+              onAuthenticated={(nextUser) => {
+                onAuthenticated(nextUser);
+                setPage("main");
+              }}
+              onCancel={() => setPage("main")}
+            />
+          </div>
+
+          <div className="settings-subpage settings-handoff-page" hidden={page !== "receive"}>
+            <RomHandoffReceiver
+              active={page === "receive"}
+              codeInputRef={receiveFirstRef}
+              onBack={() => setPage("main")}
+              onReceiveRom={onReceiveRom}
+            />
+          </div>
+
+          <div className="settings-subpage settings-handoff-page" hidden={page !== "send"}>
+            <RomHandoffModal
+              backButtonRef={sendBackRef}
+              embedded
+              open={page === "send"}
+              onClose={() => setPage("main")}
+            />
           </div>
 
           <div className="advanced-form settings-subpage" hidden={page !== "gameplay"}>
@@ -190,7 +241,14 @@ export default function SettingsModal({
                 </span>
               </label>
             </div>
-            <BackButton onClick={() => setPage("main")} />
+            <div className="advanced-actions">
+              <button className="launch-flow-action" type="button" onClick={restoreDefaults}>
+                Restore Defaults
+              </button>
+              <button className="launch-flow-action settings-back-button" type="button" onClick={() => setPage("main")}>
+                Back
+              </button>
+            </div>
           </div>
 
           <div className="advanced-form settings-subpage" hidden={page !== "controllers"}>

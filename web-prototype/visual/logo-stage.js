@@ -155,7 +155,7 @@ if (stage && canvas) {
     undefined,
     error => {
       stage.dataset.modelState = 'fallback';
-      console.error('Could not load the Smash the Weights logo GLB', error);
+      console.error('Could not load the Smash.fun logo GLB', error);
     },
   );
 
@@ -220,7 +220,7 @@ if (stage && canvas) {
     let pulse = 1;
     if (!reducedMotion.matches) {
       pitch += Math.sin(seconds * 0.78) * 0.018 - pointerY * 0.075 * pointerProximity;
-      yaw += Math.sin(seconds * 0.57 + 1.1) * 0.035 +
+      yaw += Math.sin(seconds * 0.57 + 1.1) * 0.035 -
         pointerX * 0.11 * pointerProximity;
       roll = Math.sin(seconds * 0.43 + 0.5) * 0.014;
       bob = Math.sin(seconds * 1.1) * 0.045 + Math.sin(seconds * 0.51) * 0.018;
