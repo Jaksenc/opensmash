@@ -79,11 +79,16 @@ create_dns_authorization() {
 create_dns_authorization "${CERT_PREFIX}-apex-auth" "$DOMAIN"
 create_dns_authorization "${CERT_PREFIX}-www-auth" "$WWW_DOMAIN"
 
-if ! gcloud certificate-manager certificates describe "${PREFIX}-cert-dns" \
+if ! gcloud certificate-manager certificates describe "${CERT_PREFIX}-apex-cert-dns" \
   --location=global --project "$PROJECT_ID" >/dev/null 2>&1; then
-  gcloud certificate-manager certificates create "${PREFIX}-cert-dns" \
-    --domains="$DOMAIN,$WWW_DOMAIN" \
-    --dns-authorizations="${CERT_PREFIX}-apex-auth,${CERT_PREFIX}-www-auth" \
+  gcloud certificate-manager certificates create "${CERT_PREFIX}-apex-cert-dns" \
+    --domains="$DOMAIN" --dns-authorizations="${CERT_PREFIX}-apex-auth" \
+    --scope=default --location=global --project "$PROJECT_ID"
+fi
+if ! gcloud certificate-manager certificates describe "${CERT_PREFIX}-www-cert-dns" \
+  --location=global --project "$PROJECT_ID" >/dev/null 2>&1; then
+  gcloud certificate-manager certificates create "${CERT_PREFIX}-www-cert-dns" \
+    --domains="$WWW_DOMAIN" --dns-authorizations="${CERT_PREFIX}-www-auth" \
     --scope=default --location=global --project "$PROJECT_ID"
 fi
 if ! gcloud certificate-manager maps describe "${PREFIX}-cert-map" \
@@ -94,13 +99,13 @@ fi
 if ! gcloud certificate-manager maps entries describe "${CERT_PREFIX}-apex-entry" \
   --map="${PREFIX}-cert-map" --location=global --project "$PROJECT_ID" >/dev/null 2>&1; then
   gcloud certificate-manager maps entries create "${CERT_PREFIX}-apex-entry" \
-    --map="${PREFIX}-cert-map" --certificates="${PREFIX}-cert-dns" \
+    --map="${PREFIX}-cert-map" --certificates="${CERT_PREFIX}-apex-cert-dns" \
     --hostname="$DOMAIN" --location=global --project "$PROJECT_ID"
 fi
 if ! gcloud certificate-manager maps entries describe "${CERT_PREFIX}-www-entry" \
   --map="${PREFIX}-cert-map" --location=global --project "$PROJECT_ID" >/dev/null 2>&1; then
   gcloud certificate-manager maps entries create "${CERT_PREFIX}-www-entry" \
-    --map="${PREFIX}-cert-map" --certificates="${PREFIX}-cert-dns" \
+    --map="${PREFIX}-cert-map" --certificates="${CERT_PREFIX}-www-cert-dns" \
     --hostname="$WWW_DOMAIN" --location=global --project "$PROJECT_ID"
 fi
 
@@ -124,7 +129,9 @@ if ! gcloud compute url-maps describe "${PREFIX}-map" --global --project "$PROJE
     --default-service="${PREFIX}-backend" --project "$PROJECT_ID"
 fi
 elapsed=0
-while [[ "$(gcloud certificate-manager certificates describe "${PREFIX}-cert-dns" \
+while [[ "$(gcloud certificate-manager certificates describe "${CERT_PREFIX}-apex-cert-dns" \
+  --location=global --project "$PROJECT_ID" --format='value(managed.state)')" != ACTIVE ||
+  "$(gcloud certificate-manager certificates describe "${CERT_PREFIX}-www-cert-dns" \
   --location=global --project "$PROJECT_ID" --format='value(managed.state)')" != ACTIVE ]]; do
   if (( elapsed >= CERT_WAIT_SECONDS )); then
     echo "Certificate did not become ACTIVE within ${CERT_WAIT_SECONDS}s; HTTPS proxy was not changed" >&2
