@@ -339,7 +339,7 @@ async function engineRoster(config = null) {
     characters.push({
       slug,
       display,
-      short: entry.short || metadata.short || display.toUpperCase().replace(/[^A-Z]/g, "").slice(0, 7),
+      short: entry.short || metadata.short || display.toUpperCase().replace(/[^A-Z]/g, "").slice(0, 10),
       base: entry.base ?? metadata.base ?? null,
       preferredBases: entry.preferredBases || metadata.preferred_bases,
       variants,
