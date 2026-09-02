@@ -50,7 +50,10 @@ for (const { slug } of manifest) {
   if (!bundles.length) throw new Error(`Missing play/${slug}.osb6`);
 
   const uiRoot = path.join(PLAY_ROOT, "ui", slug);
-  const requiredUi = ["character.json", "portrait_raw.png", `${slug}.osbui`, "announcer.wav"];
+  const requiredUi = [
+    "character.json", "portrait_raw.png", "portrait_tile.png", "portrait_medium.png",
+    `${slug}.osbui`, "announcer.wav",
+  ];
   for (const name of requiredUi) {
     const file = path.join(uiRoot, name);
     if (!(await stat(file)).isFile()) throw new Error(`Missing play/ui/${slug}/${name}`);

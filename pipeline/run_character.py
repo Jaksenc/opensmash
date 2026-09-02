@@ -443,6 +443,10 @@ def main():
         bill("portrait", gen_cost(sh(["python3", pipeline_script("gen.py"), "image"] + refs
              + ["--ref", F("tpose.png"), PORTRAIT_TEMPLATE, F("portrait_raw.png")],
              timeout=600)))
+    # Site derivatives of the portrait (grid tile + thumbnail); the 1024 raw
+    # stays for the .osbui pack and anywhere a large portrait is shown.
+    sh(["python3", pipeline_script("portrait_tiles.py"), out], timeout=120)
+
     if stage_needed(F("stock_raw.png"), force, "stock"):
         log("stock: generating icon art")
         bill("stock", gen_cost(sh(

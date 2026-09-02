@@ -1341,7 +1341,7 @@ export default function App() {
               onClick={() => selectCharacter(character)}
             >
               <span className="portrait-wrap">
-                <img src={character.portrait} alt="" />
+                <img src={character.portraitMedium || character.portrait} alt="" loading="lazy" />
               </span>
               <span className="character-number">{String(index + 1).padStart(2, "0")}</span>
               {character.generated && <span className="generated-label">Fighter Lab</span>}
