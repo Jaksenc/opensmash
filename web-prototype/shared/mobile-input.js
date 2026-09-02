@@ -1,7 +1,7 @@
 // Engine keyboard map: WASD stick, J=A, K=B, L=Z, I=L, O=R, Space=Start,
-// ArrowUp=C-up (jump in Smash 64).
+// U=C-up (jump in Smash 64). Arrows are a stick fallback, so the overlay's
+// Jump must send KeyU rather than ArrowUp.
 export const MOBILE_KEY_VALUES = Object.freeze({
-  ArrowUp: "ArrowUp",
   KeyA: "a",
   KeyD: "d",
   KeyI: "i",
@@ -10,6 +10,7 @@ export const MOBILE_KEY_VALUES = Object.freeze({
   KeyL: "l",
   KeyO: "o",
   KeyS: "s",
+  KeyU: "u",
   KeyW: "w",
   Space: " ",
 });

@@ -283,7 +283,7 @@ export default function MobileControls({ active, frameRef, preview = false }) {
       </button>
 
       <div className="mobile-action-controls" role="group" aria-label="Action buttons">
-        <MobileButton {...buttonProps("ArrowUp")} label="↑" description="Jump" caption="Jump" className="is-action is-jump" />
+        <MobileButton {...buttonProps("KeyU")} label="↑" description="Jump" caption="Jump" className="is-action is-jump" />
         <MobileButton {...buttonProps("KeyK")} label="B" description="B special" caption="Special" className="is-action is-b" />
         <MobileButton {...buttonProps("KeyJ")} label="A" description="A attack" caption="Attack" className="is-action is-a" />
         <MobileButton {...buttonProps("KeyL")} label="Z" description="Z shield" caption="Shield" className="is-z" />
