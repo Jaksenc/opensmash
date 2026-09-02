@@ -93,6 +93,10 @@ gcloud services enable \
   storage.googleapis.com
 
 gcloud firestore databases describe --database='(default)' >/dev/null
+# ROM-handoff signalling rooms live in Firestore so every API replica can serve
+# either side of a handoff; a TTL policy on expireAt sweeps stale rooms.
+gcloud firestore fields ttls update expireAt \
+  --collection-group=handoffRooms --enable-ttl --quiet >/dev/null 2>&1 || true
 
 if ! gcloud artifacts repositories describe "$ARTIFACT_REPOSITORY" --location "$REGION" >/dev/null 2>&1; then
   gcloud artifacts repositories create "$ARTIFACT_REPOSITORY" \

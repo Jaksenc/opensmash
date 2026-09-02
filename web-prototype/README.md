@@ -81,8 +81,10 @@ cookie cannot tell them apart.
   stored ROM over a WebRTC data channel to the device that scans it
   (`src/rom-handoff-client.js`, protocol in `shared/rom-handoff.js`). The
   server relays only SDP and ICE candidates (`server/handoff-rooms.js`,
-  in-memory, 10-minute rooms — move to Firestore before scaling the API past
-  one instance). STUN only; devices should share a Wi-Fi network. On the phone
+  10-minute rooms). Rooms live in memory locally and in the Firestore
+  `handoffRooms` collection whenever `JOB_DATABASE=firestore` (override with
+  `HANDOFF_ROOMS`), so the API can run on any number of replicas; the deploy
+  enables a TTL policy on `expireAt`. STUN only; devices should share a Wi-Fi network. On the phone
   the play flow's **Can't find your ROM?** panel (worded "Have it on your
   computer? Send it to this phone" on touch devices) or opening
   `/?handoff=CODE` receives it. Both ends hold a screen wake lock while a
