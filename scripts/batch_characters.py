@@ -93,12 +93,20 @@ def is_done(slug):
     return all(os.path.exists(p) for p in outputs(slug))
 
 
+NOTES = {}   # name -> per-character expander notes (optional TAB-separated second column)
+
+
 def read_names(path):
     names = []
     for line in open(path, encoding="utf-8"):
         line = line.split("#", 1)[0].strip() if line.lstrip().startswith("#") else line.strip()
-        if line:
-            names.append(line)
+        if not line:
+            continue
+        name, _, notes = line.partition("\t")
+        name = name.strip()
+        names.append(name)
+        if notes.strip():
+            NOTES[name] = notes.strip()
     return names
 
 
@@ -161,7 +169,7 @@ def load_results(path):
 
 def run_once(args, name, slug, extra_args, procs):
     """One run_character invocation. Returns (returncode, combined log)."""
-    cmd = [sys.executable, args.runner, name] + extra_args
+    cmd = [sys.executable, args.runner, name] + (["--notes", NOTES[name]] if name in NOTES else []) + extra_args
     ui = os.path.join(PLAY, "ui", slug)
     os.makedirs(ui, exist_ok=True)
     proc = subprocess.Popen(cmd, cwd=HERE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)

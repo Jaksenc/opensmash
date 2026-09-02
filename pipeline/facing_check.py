@@ -55,7 +55,9 @@ def main():
              {"model": a.model, "input": [{"role": "user", "content": content}],
               "reasoning": {"effort": "low"},
               "text": {"format": {"type": "json_schema", "name": "facing", "strict": True, "schema": SCHEMA}},
-              "max_output_tokens": 300, "store": False})
+              "max_output_tokens": 2000, "store": False})
+    if r.get("status") == "incomplete":
+        raise RuntimeError(f"model response incomplete ({r.get('incomplete_details')}) — no verdict")
     text = r.get("output_text") or "".join(p.get("text", "") for it in r.get("output", []) if it.get("type") == "message"
                                           for p in it.get("content", []) if p.get("type") == "output_text")
     ans = json.loads(text)

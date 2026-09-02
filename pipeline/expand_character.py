@@ -49,6 +49,8 @@ The description is a single sentence (60-110 words) starting with the character'
 HARD RULES:
 - Worn or attached items are allowed (hats, glasses, watches, jewelry, belts, badges, headphones, capes that are part of the outfit).
 - The character must hold NOTHING and nothing may hang from the arms or hands: no handbags, purses, bags, canes, walking sticks, swords, umbrellas, staffs, weapons, phones, cups, books, instruments. Hands are empty and bare or gloved.
+- No free-hanging cloth: no capes, cloaks, trailing scarves, long open coats, flowing gowns or flared/pleated skirts — thin loose sheets tear when the mesh is animated. Describe fitted equivalents instead (a fitted knee-length dress, a cropped or buttoned jacket, a tunic over trousers). Any skirt or dress is worn over opaque tights or leggings so no bare skin is under it.
+- No pure-black outfits and no mirror or metallic surfaces: use charcoal grey with visible seams, matte finishes.
 - No text, logos or fine patterns; no fabric texture; mouth closed; age and build stated.
 - If the name is ambiguous or fictional, describe the most widely recognized depiction.
 - If the name is a duo, band, group or team, describe exactly ONE member (the most iconic one) as a single figure; never two figures.
