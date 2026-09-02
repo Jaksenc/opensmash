@@ -14,7 +14,6 @@ import {
 import { lockPageScroll } from '../shared/page-scroll-lock.js';
 
 import { holdScreenAwake, isHandoffSupported, receiveRomHandoff } from '../src/rom-handoff-client.js';
-import { isFolderScanSupported, scanFolderForRom } from '../src/rom-folder-scan.js';
 import cartridgeChunkUrl from './assets/cartridge-chunk.wav?url';
 import cartridgeLabelUrl from './assets/cartridge-label-art.png?url';
 import cartridgeModelUrl from './assets/n64-cartridge-tripo.glb?url';
@@ -115,18 +114,14 @@ const fileInput = document.getElementById('rom-file-input');
 const uploadButton = document.getElementById('rom-upload-button');
 const cancelButton = document.getElementById('launch-cancel-button');
 const formError = document.getElementById('rom-form-error');
-// Alternative ROM sources (see src/rom-folder-scan.js and src/rom-handoff-client.js).
+// Alternative ROM source: receive from another device (src/rom-handoff-client.js).
 const moreOptionsButton = document.getElementById('rom-more-options-button');
 const moreOptions = document.getElementById('rom-more-options');
-const scanOption = document.getElementById('rom-scan-option');
-const scanButton = document.getElementById('rom-scan-button');
-const scanStatus = document.getElementById('rom-scan-status');
 const handoffPanel = document.getElementById('rom-handoff-panel');
 const handoffCodeInput = document.getElementById('rom-handoff-code');
 const handoffConnectButton = document.getElementById('rom-handoff-connect');
 const handoffStatus = document.getElementById('rom-handoff-status');
 let activeHandoff = null;
-let activeScanAbort = null;
 const controllerStep = document.getElementById('launch-flow-controller-step');
 const controlsMenuButton = document.getElementById('controls-menu-button');
 const controlsCloseButton = document.getElementById('controls-close-button');
@@ -2026,7 +2021,6 @@ function setStatusLine(element, text) {
 }
 
 function setAlternativesDisabled(disabled) {
-  if (scanButton) scanButton.disabled = disabled;
   if (moreOptionsButton) moreOptionsButton.disabled = disabled;
   if (handoffConnectButton) handoffConnectButton.disabled = disabled;
   if (handoffCodeInput) handoffCodeInput.disabled = disabled;
@@ -2042,34 +2036,42 @@ function setMoreOptionsOpen(open, { focusCode = false } = {}) {
   const step = moreOptions.closest('.launch-flow-upload');
   if (step) {
     let shift = 0;
+    let sceneLift = 0;
     if (open) {
       step.style.setProperty('--rom-options-shift', '0px');
       const rect = moreOptions.getBoundingClientRect();
-      // Grow downward, but never push the panel's bottom edge off-screen on a
-      // short viewport; there the copy is allowed to creep up instead.
-      const available = window.innerHeight - 12 - rect.bottom;
-      shift = Math.max(0, Math.min(Math.round(rect.height / 2), Math.round(available)));
+      const overflow = Math.ceil(rect.bottom + 12 - window.innerHeight);
+      if (getComputedStyle(moreOptions).position === 'absolute') {
+        // Wide layout: the panel hangs below the link. If it runs off the
+        // bottom, lift the whole scene — copy, buttons and the 3D cartridge
+        // canvas together — by exactly that amount.
+        sceneLift = Math.max(0, overflow);
+        shift = -sceneLift;
+      } else {
+        // Narrow layout: grow downward, but never push the panel's bottom
+        // edge off-screen; there the copy is allowed to creep up instead.
+        const available = window.innerHeight - 12 - rect.bottom;
+        shift = Math.max(0, Math.min(Math.round(rect.height / 2), Math.round(available)));
+      }
     }
     step.style.setProperty('--rom-options-shift', `${shift}px`);
+    setSceneLift(sceneLift);
   }
   if (open && focusCode) requestAnimationFrame(() => handoffCodeInput?.focus());
+}
+
+function setSceneLift(pixels) {
+  if (!flowCanvas) return;
+  flowCanvas.style.transform = pixels ? `translateY(${-pixels}px)` : '';
 }
 
 function resetAlternativeSources() {
   activeHandoff?.cancel();
   activeHandoff = null;
-  activeScanAbort?.abort();
-  activeScanAbort = null;
-  // Folder scanning needs a desktop file picker; a touch layout never has one worth offering.
-  if (scanOption) scanOption.hidden = !isFolderScanSupported() || usesMobileControls();
-  if (moreOptionsButton) {
-    moreOptionsButton.textContent = 'Other options';
-  }
-  if (scanButton) scanButton.textContent = 'Scan a folder for it';
+  if (moreOptionsButton) moreOptionsButton.textContent = 'Other options';
   if (handoffPanel) handoffPanel.hidden = !isHandoffSupported();
   if (handoffConnectButton) handoffConnectButton.textContent = 'Connect';
   if (handoffCodeInput) handoffCodeInput.value = '';
-  setStatusLine(scanStatus, '');
   setStatusLine(handoffStatus, '');
   setMoreOptionsOpen(false);
   setAlternativesDisabled(false);
@@ -2079,40 +2081,6 @@ function showRomError(message) {
   if (!formError) return;
   formError.hidden = false;
   formError.textContent = message;
-}
-
-async function scanFolder() {
-  if (validationBusy || activeScanAbort || !pendingFighter) return;
-  if (formError) { formError.hidden = true; formError.textContent = ''; }
-  activeScanAbort = new AbortController();
-  setAlternativesDisabled(true);
-  if (uploadButton) uploadButton.disabled = true;
-  if (scanButton) scanButton.textContent = 'Scanning…';
-  try {
-    const file = await scanFolderForRom({
-      signal: activeScanAbort.signal,
-      onProgress(progress) {
-        if (progress.phase === 'walking') {
-          setStatusLine(scanStatus, `Looking through ${progress.entries.toLocaleString()} files… ${progress.candidates} likely ROM${progress.candidates === 1 ? '' : 's'} so far`);
-        } else if (progress.phase === 'checking') {
-          setStatusLine(scanStatus, `Checking ${progress.name} (${progress.index} of ${progress.total})…`);
-        }
-      },
-    });
-    setStatusLine(scanStatus, file ? `Found ${file.name}` : '');
-    activeScanAbort = null;
-    setAlternativesDisabled(false);
-    if (uploadButton) uploadButton.disabled = false;
-    if (scanButton) scanButton.textContent = 'Scan a folder for it';
-    if (file) await validateRom(file);
-  } catch (error) {
-    activeScanAbort = null;
-    setAlternativesDisabled(false);
-    if (uploadButton) uploadButton.disabled = false;
-    if (scanButton) scanButton.textContent = 'Scan a folder for it';
-    setStatusLine(scanStatus, '');
-    if (error?.name !== 'ScanCancelled') showRomError(error?.message || 'Could not scan that folder.');
-  }
 }
 
 async function connectHandoff(code) {
@@ -2450,6 +2418,7 @@ function finishClosingFlow(sequence, restoreFocus) {
 }
 
 function closeLaunchFlow(immediate = false) {
+  setSceneLift(0);
   if (!overlay || overlay.hidden) return;
   flowSequence += 1;
   const sequence = flowSequence;
@@ -2488,6 +2457,7 @@ function cancelLaunchFlow() {
 }
 
 function transitionToController() {
+  setSceneLift(0);
   if (!overlay || overlay.hidden) return;
   const sequence = flowSequence;
   controlsPreviewMode = false;
@@ -2614,9 +2584,7 @@ fileInput?.addEventListener('change', () => validateRom(fileInput.files?.[0]));
 cancelButton?.addEventListener('click', () => {
   if (!validationBusy) cancelLaunchFlow();
 });
-scanButton?.addEventListener('click', () => { scanFolder(); });
 moreOptionsButton?.addEventListener('click', () => {
-  if (validationBusy || activeHandoff || activeScanAbort) return;
   setMoreOptionsOpen(Boolean(moreOptions?.hidden));
 });
 handoffPanel?.addEventListener('submit', event => {

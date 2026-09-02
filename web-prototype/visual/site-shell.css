@@ -631,6 +631,7 @@
     width: 100%;
     height: 100%;
     pointer-events: none;
+    transition: transform 180ms ease-out;
     clip-path: none;
     -webkit-mask: none;
     mask: none;
@@ -675,6 +676,7 @@
        instead of re-centring the copy up into the cartridge model. */
     transform: translateY(calc(clamp(78px, 13vh, 120px) + var(--rom-options-shift, 0px)));
     overflow-y: auto;
+    transition: transform 180ms ease-out, opacity 120ms ease-out, visibility 0s;
   }
   .launch-flow-controller {
     justify-content: center;
@@ -906,6 +908,20 @@
   .launch-flow-text-link:hover,
   .launch-flow-text-link:focus-visible { color: #fff2d6; text-decoration-color: #fff2d6; outline: 0; }
   .launch-flow-text-link:disabled { opacity: .45; cursor: default; }
+  .launch-flow-more-anchor { width: 100%; }
+  /* Wide viewports have little vertical headroom, so the panel hangs below the
+     link without taking part in the centred layout (see setMoreOptionsOpen,
+     which skips the downward shift when the panel is absolutely positioned). */
+  @media (min-width: 700px) {
+    .launch-flow-more-anchor { position: relative; height: 0; }
+    .launch-flow-more-options {
+      position: absolute;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      margin: 0;
+    }
+  }
   .launch-flow-more-options {
     box-sizing: border-box;
     width: min(540px, 92vw);
@@ -927,6 +943,7 @@
   .launch-flow-more-copy strong { color: #fff2d6; }
   .launch-flow-more-copy code { color: #fff2d6; font-family: inherit; }
   .launch-flow-option { margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(255, 240, 181, .12); }
+  .launch-flow-more-options > .launch-flow-option:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
   .launch-flow-secondary {
     box-sizing: border-box;
     min-width: 0;

@@ -245,7 +245,7 @@ function RomModal({ action, onCancel, onValidated, onPrewarmError }) {
             <input
               ref={inputRef}
               type="file"
-              accept=".zip,.z64,.n64,.v64,.rom,application/zip,application/octet-stream"
+              accept=".z64,.n64,.v64,.rom,.zip"
               onChange={(event) => {
                 setFile(event.target.files?.[0] || null);
                 setError("");
