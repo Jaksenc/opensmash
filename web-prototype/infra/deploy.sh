@@ -157,10 +157,10 @@ for secret in opensmash-openai-api-key opensmash-tripo-api-key opensmash-fal-key
     --member "serviceAccount:${WORKER_IDENTITY}" --role roles/secretmanager.secretAccessor >/dev/null
 done
 
-# Materialize exactly the committed baked characters named by the manifest.
-# This generated directory is the only character input admitted by the API
-# Docker context; ignored/stale BattleShip/web-dist bundles are never copied.
-node "$WORKSPACE_ROOT/pipeline/web-prototype/scripts/stage-baked-characters.mjs" --require-clean
+# Materialize the content-addressed, checksum-pinned baked roster from GCS.
+# Generated play/ outputs are deliberately absent from Git and the build context.
+PUBLIC_BUCKET="$PUBLIC_BUCKET" \
+  node "$WORKSPACE_ROOT/pipeline/web-prototype/scripts/fetch-baked-characters.mjs"
 
 cd "$WORKSPACE_ROOT"
 gcloud builds submit . \

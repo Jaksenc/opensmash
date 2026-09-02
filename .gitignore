@@ -18,5 +18,6 @@ batch-state/run.log
 batch-state/*.png
 batch-state/*/
 play/ui/*/*.log
-# pipeline intermediates: rebuilt from play/ui/<slug>/bundle.json (osb_merge/convert_rigged); ship files are play/<slug>.osb6
-play/*.osb
+# Generated fighter workspace. Production runtime files are published to GCS
+# and pinned by web-prototype/config/baked-assets.json.
+play/

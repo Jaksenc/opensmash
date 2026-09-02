@@ -144,10 +144,27 @@ never includes cookie-derived/private fighters; after session discovery, a
 signed-in browser refreshes the roster through the no-store characters API and
 reconciles any additional fighters into the live grid.
 
-Before Cloud Build, deployment reads `config/characters.json` and stages exactly
-those baked fighters from committed `pipeline/play` outputs. The API image never
-copies character bundles from ignored `BattleShip/web-dist`, so identical Git
-commits produce identical baked rosters and bundle bytes.
+Before Cloud Build, deployment reads `config/characters.json` and the committed
+`config/baked-assets.json` checksum manifest, then materializes exactly those
+baked runtime files from the public GCS bucket. The API image never copies the
+git-ignored local `pipeline/play` workspace or character bundles from ignored
+`BattleShip/web-dist`, so identical Git commits produce identical baked rosters
+and bundle bytes.
+
+Publish a new baked roster only after reviewing the generated local `play/`
+outputs. Object keys contain the SHA-256 digest, so publishing is additive and
+existing deployments remain reproducible:
+
+```bash
+PUBLIC_BUCKET="${PROJECT_ID}-fighter-assets" pnpm assets:publish
+git add config/baked-assets.json
+```
+
+To verify or materialize the committed roster without deploying:
+
+```bash
+PUBLIC_BUCKET="${PROJECT_ID}-fighter-assets" pnpm assets:fetch
+```
 
 Rotate the shared cookie signing key with overlap after a full deploy has added
 the previous-key secret to both Cloud Run and Cloudflare:

@@ -3,6 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "assets:fetch": "node scripts/fetch-baked-characters.mjs",
+    "assets:publish": "node scripts/publish-baked-characters.mjs",
     "dev": "NODE_ENV=development node server/index.js",
     "dev:safe": "NODE_ENV=development FIGHTER_WORKER_DISABLED=1 node --watch-path=server --watch-path=shared server/index.js",
     "build": "vite build",
