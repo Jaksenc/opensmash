@@ -58,7 +58,9 @@ repositories. The first deploy creates `opensmash-cookie-secret-previous` by
 copying the current signing key; subsequent rotations maintain it.
 
 The API is initially capped at one instance so uploader quotas and
-local upload parsing cannot race across replicas. Firestore leases still make
+local upload parsing cannot race across replicas. (ROM-handoff signalling is
+already replica-safe: rooms live in Firestore under `handoffRooms` with a TTL
+policy on `expireAt` that `deploy.sh` enables.) Firestore leases still make
 worker execution idempotent. Raise the API instance cap only after moving quota
 reservation into a Firestore transaction.
 

@@ -5,7 +5,7 @@ import http from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createFighterJobs } from "./fighter-jobs.js";
-import { HandoffError, createHandoffRooms } from "./handoff-rooms.js";
+import { HandoffError, createHandoffRoomsFromEnv } from "./handoff-rooms.js";
 import { createAuthService } from "./auth.js";
 import { createJobDatabase } from "./job-database.js";
 import { createJobDispatcher } from "./job-dispatcher.js";
@@ -86,7 +86,9 @@ const COOKIE_SECRETS = [
 const MAX_JSON_BODY = 4096;
 // WebRTC offers/answers run a few KiB; the room store caps each message again.
 const MAX_HANDOFF_BODY = 32 * 1024;
-const handoffRooms = createHandoffRooms();
+// Memory locally, Firestore in production (follows JOB_DATABASE) so every API
+// replica sees every room.
+const handoffRooms = await createHandoffRoomsFromEnv();
 const ROM_VALIDATION_WINDOW_MS = 15 * 60 * 1000;
 const ROM_VALIDATION_LIMIT = Number(process.env.ROM_VALIDATION_LIMIT || 10);
 const romValidationAttempts = new Map();
@@ -517,6 +519,7 @@ async function handleRequest(req, res, vite) {
       database: jobDatabase.driver,
       objectStore: objectStore.driver,
       dispatcher: dispatcher.driver,
+      handoffRooms: handoffRooms.driver,
     });
   }
 
@@ -684,21 +687,21 @@ async function handleRequest(req, res, vite) {
         // Hosting requires a validated ROM session: the host is about to
         // stream the ROM it already proved it holds.
         if (!romSession) return json(res, 401, { error: "Validate your ROM on this device before sending it to another." });
-        return json(res, 200, handoffRooms.create({ address: clientAddress(req) }));
+        return json(res, 200, await handoffRooms.create({ address: clientAddress(req) }));
       }
       if (code && verb === "join" && req.method === "POST") {
-        return json(res, 200, handoffRooms.join(code));
+        return json(res, 200, await handoffRooms.join(code));
       }
       if (code && verb === "messages" && req.method === "POST") {
         const body = await readJsonBody(req, MAX_HANDOFF_BODY);
-        return json(res, 200, handoffRooms.post(code, {
+        return json(res, 200, await handoffRooms.post(code, {
           role: String(body.role || ""),
           key: String(body.key || ""),
           message: body.message,
         }));
       }
       if (code && verb === "messages" && req.method === "GET") {
-        return json(res, 200, handoffRooms.poll(code, {
+        return json(res, 200, await handoffRooms.poll(code, {
           role: String(url.searchParams.get("role") || ""),
           key: String(url.searchParams.get("key") || ""),
           after: Number(url.searchParams.get("after") || 0),
@@ -706,7 +709,7 @@ async function handleRequest(req, res, vite) {
       }
       if (code && verb === "close" && req.method === "POST") {
         const body = await readJsonBody(req);
-        return json(res, 200, handoffRooms.close(code, { role: String(body.role || ""), key: String(body.key || "") }));
+        return json(res, 200, await handoffRooms.close(code, { role: String(body.role || ""), key: String(body.key || "") }));
       }
       return json(res, 405, { error: "Method not allowed" });
     } catch (error) {
