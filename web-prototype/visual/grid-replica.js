@@ -89,10 +89,6 @@ const VANILLA_ROSTER = Object.freeze([
   { asset: 'purin', portrait: 'jigglypuff', label: 'JIGGLYPUFF', name: 'Jigglypuff' },
   { asset: 'ness', portrait: 'ness', label: 'NESS', name: 'Ness' }
 ]);
-const ACTION_PORTRAITS = Object.freeze({
-  search: 'action-search',
-  create: 'action-create'
-});
 const APP_BRIDGE = window.openSmashReactBridge;
 function liveRosterCharacter(character) {
   return {
@@ -295,15 +291,6 @@ async function loadFeaturedPortrait(portraitName, portraitUrl = null) {
     pixels: context.getImageData(0, 0, CELL_W, CELL_H).data
   });
 }
-
-await Promise.all(Object.values(ACTION_PORTRAITS).map(async portraitName => {
-  const portraitUrl = BUILD_ASSETS[`./assets/featured-fighters/${portraitName}.png`];
-  if (!portraitUrl) return;
-  CHARACTER_PORTRAITS.set(
-    portraitName,
-    await loadFeaturedPortrait(portraitName, portraitUrl)
-  );
-}));
 
 await Promise.all(LIVE_ROSTER.map(async character => {
   try {
@@ -791,9 +778,9 @@ CELL_IDS.forEach((id, index) => {
   const isSearch = index === 0;
   const isCreate = index === 1;
   const character = isSearch
-    ? { asset: 'search', portrait: ACTION_PORTRAITS.search, label: 'SEARCH', name: 'Search fighters' }
+    ? { asset: 'search', portrait: '', label: 'SEARCH', name: 'Search fighters' }
     : isCreate
-      ? { asset: 'create', portrait: ACTION_PORTRAITS.create, label: 'CREATE', name: 'Create fighter' }
+      ? { asset: 'create', portrait: '', label: 'CREATE', name: 'Create fighter' }
       : rosterCharacterForIndex(index - 2);
   const fkind = character.fkind ?? VANILLA_ROSTER.indexOf(character);
   const label = character.label;
@@ -1043,7 +1030,7 @@ function updateSearchTile(query = '') {
   paintCellCanvas(
     searchCell.querySelector('.replica-texture-layer'),
     displayLabel,
-    ACTION_PORTRAITS.search,
+    null,
     active && !value ? 0.5 : 1,
     ACTION_CELL_BACKGROUND_PIXELS.search
   );
