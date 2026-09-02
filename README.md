@@ -191,25 +191,73 @@ Cloudflare edge cache) is one script; see
 ## Game-derived inputs
 
 A few generator inputs are captured from the game itself rather than
-authored: the twelve skeletons' rest poses and part geometry (`skels/`), the
-character-select sprites the UI packer and portrait tooling use
-(`assets/css-font/`, `web-prototype/visual/assets/ui_refs/`), the announcer
-lines the voice clone is conditioned on, and one stage texture. Two scripts
-rebuild all of them from your own ROM and prove the result byte-identical to
-the committed copies:
+authored, and every one of them can be rebuilt from your own ROM:
+
+| Files | What they are | Rebuilt by |
+|---|---|---|
+| `skels/*.skel`, `skels/fk*-all.log`, `skels/parts/*.json` | The twelve fighters' rest-pose skeletons and part geometry, which the converter fits generated meshes onto | `derive_skeletons.py` (runs the engine) |
+| `assets/css-font/portraits`, `assets/css-font/locked` | Character-select portrait tiles, fire slot, question mark, shadows | `derive_from_rom.py` |
+| `web-prototype/visual/assets/ui_refs/` | Tile and name sprites, stock icon, emblem sheet, and the glyph atlases the UI packer composes names from | `derive_from_rom.py` (four letters need `--skeletons`) |
+| `eval/announcer_conditioning_corrected/` | The announcer lines the voice clone is conditioned on, rendered at in-game pitch | `derive_from_rom.py` |
+| `stone-tile-investigation/source-*` | The character-select stone texture | `derive_from_rom.py` |
+
+Hand-authored files next to them (`skels/*.profile.json`, `skels/VALIDATION.md`,
+`assets/css-font/letters`) are not derived. `skels/reference/mario.skel` is a
+legacy capture from an older engine build that `texture_check.py` still reads;
+it is the one file the scripts report as LEGACY instead of reproducing.
+
+### Prerequisites
+
+- The ROM at `BattleShip/baserom.us.z64` (the script checks its SHA-1).
+- A native engine build, which also extracts the `BattleShip.o2r` asset
+  archive the sprite extraction reads. From `BattleShip/`:
+
+```bash
+cmake -S . -B build-us -GNinja -DSSB64_VERSION=us -DCMAKE_BUILD_TYPE=Release && cmake --build build-us -j
+```
+
+- Python with `numpy` and `Pillow`.
+
+### Verify
 
 ```bash
 python3 tools/derive_from_rom.py --verify --skeletons
 ```
 
-`derive_from_rom.py` reads the ROM and the `BattleShip.o2r` archive a native
-engine build extracted from it (sprites, emblems, stone tile, announcer
-audio). `--skeletons` also runs `tools/derive_skeletons.py`, which boots the
-native `BattleShip/build-us` binary once per fighter with the engine's
-skeleton-dump hook enabled and once on the character-select screen for its
-sprite dump. Drop `--verify` to write the files in place. The only file
-neither script reproduces is `skels/reference/mario.skel`, a legacy capture
-that `texture_check.py` still reads.
+This derives everything into a temporary directory and prints one line per
+file: `IDENTICAL`, `DIFFERS` with a one-line reason (pixel count, which joints
+moved), or `LEGACY`. It exits non-zero on any difference. `--skeletons` boots
+`BattleShip/build-us/BattleShip` thirteen times (once per fighter with
+`SSB64_DUMP_SKELETON`, once on the character-select screen with
+`SSB64_DUMP_SPRITES`); a game window opens and closes each time, about ten
+seconds per launch. Leave it off to check only the archive-based files.
+
+### Regenerate
+
+```bash
+python3 tools/derive_from_rom.py --skeletons
+```
+
+Without `--verify` the scripts write straight into the tracked paths. Use
+`--out DIR` to write a mirror of the repo layout somewhere else instead. Other
+useful forms:
+
+```bash
+python3 tools/derive_skeletons.py --verify --fighters samus,link
+```
+
+```bash
+python3 tools/derive_skeletons.py --verify --from-logs skels
+```
+
+The first limits the engine runs to named fighters (names or fkind numbers).
+The second skips the engine and re-derives from the committed raw dump logs,
+which checks the parsing and the profile-map transform without a ROM. Pass
+`--build-dir` to either script to use a different native build.
+
+The `dl=` field in the skeleton dumps is a host memory address the engine
+prints; the scripts normalize it to its stable low bits so two launches
+produce identical files. The only consumer tests it for zero.
 
 ## More documentation
 
