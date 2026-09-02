@@ -190,13 +190,17 @@ console.log(`Baked manifest: ${manifest.characters.length} fighters pinned by di
 ')
 # The engine fetches bundles/<slug>.osb6 relative to /engine/ and follows the
 # API'"'"'s redirect to the bucket, which makes it a cross-origin request.
+# Origins already on the bucket (older site domains) are kept.
 cors_file="$(mktemp)"
-cat > "$cors_file" <<EOF
-[{"origin": ["${PUBLIC_ORIGIN}", "https://www.${DOMAIN}", "http://localhost:4174", "http://localhost:4180"],
-  "method": ["GET", "HEAD"],
-  "responseHeader": ["Content-Type", "Content-Length", "Range", "Cache-Control", "ETag"],
-  "maxAgeSeconds": 3600}]
-EOF
+gcloud storage buckets describe "gs://${PUBLIC_BUCKET}" --format=json \
+  | PUBLIC_ORIGIN="$PUBLIC_ORIGIN" DOMAIN="$DOMAIN" node -e '
+let raw = ""; process.stdin.on("data", (d) => raw += d).on("end", () => {
+  const existing = (JSON.parse(raw).cors_config || []).flatMap((rule) => rule.origin || []);
+  const origins = [...new Set([...existing, process.env.PUBLIC_ORIGIN, `https://www.${process.env.DOMAIN}`,
+    "http://localhost:4174", "http://localhost:4180"])];
+  console.log(JSON.stringify([{ origin: origins, method: ["GET", "HEAD"],
+    responseHeader: ["Content-Type", "Content-Length", "Range", "Cache-Control", "ETag"], maxAgeSeconds: 3600 }]));
+});' > "$cors_file"
 gcloud storage buckets update "gs://${PUBLIC_BUCKET}" --cors-file="$cors_file"
 rm -f "$cors_file"
 
