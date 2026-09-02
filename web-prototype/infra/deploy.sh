@@ -50,7 +50,6 @@ assert_clean_source() {
 # if a file included by either Docker context could differ from a commit.
 assert_clean_source "$WORKSPACE_ROOT/pipeline" pipeline \
   web-prototype pipeline skels \
-  play/ui/joeyflynn play/ui/barackobama play/ui/queen play/ui/rohansahai \
   artifacts/experiments/vg7-tpose.png
 assert_clean_source "$BATTLESHIP_ROOT" BattleShip web scripts port/css_icons torch
 
@@ -157,6 +156,11 @@ for secret in opensmash-openai-api-key opensmash-tripo-api-key opensmash-fal-key
   gcloud secrets add-iam-policy-binding "$secret" \
     --member "serviceAccount:${WORKER_IDENTITY}" --role roles/secretmanager.secretAccessor >/dev/null
 done
+
+# Materialize exactly the committed baked characters named by the manifest.
+# This generated directory is the only character input admitted by the API
+# Docker context; ignored/stale BattleShip/web-dist bundles are never copied.
+node "$WORKSPACE_ROOT/pipeline/web-prototype/scripts/stage-baked-characters.mjs" --require-clean
 
 cd "$WORKSPACE_ROOT"
 gcloud builds submit . \

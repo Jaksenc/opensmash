@@ -20,7 +20,7 @@ import {
 } from '../src/fonts/ssb-name-font.js';
 
 const BUILD_ASSETS = {
-  ...import.meta.glob('./assets/featured-fighters/*.png', {
+  ...import.meta.glob('./assets/featured-fighters/action-*.png', {
     eager: true,
     query: '?url',
     import: 'default',
@@ -89,28 +89,6 @@ const VANILLA_ROSTER = Object.freeze([
   { asset: 'purin', portrait: 'jigglypuff', label: 'JIGGLYPUFF', name: 'Jigglypuff' },
   { asset: 'ness', portrait: 'ness', label: 'NESS', name: 'Ness' }
 ]);
-const FEATURED_ROSTER = Object.freeze([
-  {
-    asset: 'joeyflynn', portrait: 'joey-flynn', label: 'JFLYNN',
-    name: 'Joey Flynn', source: 'featured', fkind: 7,
-    bundle: 'joeyflynn-captain.osb'
-  },
-  {
-    asset: 'barackobama', portrait: 'barack-obama', label: 'OBAMA',
-    name: 'Barack Obama', source: 'featured', fkind: 1,
-    bundle: 'barackobama-fox.osb'
-  },
-  {
-    asset: 'queen', portrait: 'queen-elizabeth-ii', label: 'QUEEN',
-    name: 'Queen Elizabeth II', source: 'featured', fkind: 8,
-    bundle: 'queen-kirby.osb'
-  },
-  {
-    asset: 'rohansahai', portrait: 'rohan-sahai', label: 'ROHAN',
-    name: 'Rohan Sahai', source: 'featured', fkind: 5,
-    bundle: 'rohansahai-link.osb'
-  }
-]);
 const ACTION_PORTRAITS = Object.freeze({
   search: 'action-search',
   create: 'action-create'
@@ -133,11 +111,10 @@ const INITIAL_FIGHTER_JOBS = APP_BRIDGE?.fighterJobs || [];
 const BAKED_CAPTION_PORTRAITS = new Set(
   VANILLA_ROSTER.map(character => character.portrait)
 );
-// Without a live roster only the featured (generated) fighters render; the
-// vanilla cast has no portrait assets on the site by design.
+// React supplies the manifest-backed roster. If it has not mounted yet the
+// grid starts empty and syncCharacters fills it without a second roster source.
 const ROSTER = Object.freeze([...new Map(
-  (LIVE_ROSTER.length ? LIVE_ROSTER : FEATURED_ROSTER)
-    .map(character => [character.asset, character])
+  LIVE_ROSTER.map(character => [character.asset, character])
 ).values()]);
 const CELL_COUNT = ROSTER.length + 2;
 const CELL_IDS = Object.freeze(Array.from(

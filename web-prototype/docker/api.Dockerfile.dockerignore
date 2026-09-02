@@ -5,16 +5,6 @@
 pipeline/web-prototype/node_modules/
 pipeline/web-prototype/data/
 pipeline/web-prototype/dist/
-!pipeline/play/
-!pipeline/play/ui/
-!pipeline/play/ui/joeyflynn/
-!pipeline/play/ui/joeyflynn/**
-!pipeline/play/ui/barackobama/
-!pipeline/play/ui/barackobama/**
-!pipeline/play/ui/queen/
-!pipeline/play/ui/queen/**
-!pipeline/play/ui/rohansahai/
-!pipeline/play/ui/rohansahai/**
 !BattleShip/
 !BattleShip/web-dist/
 !BattleShip/web-dist/index.html
@@ -28,8 +18,3 @@ pipeline/web-prototype/dist/
 !BattleShip/web-dist/torch/**
 !BattleShip/web-dist/rom-extract.js
 !BattleShip/web-dist/torch-worker.js
-!BattleShip/web-dist/bundles/
-!BattleShip/web-dist/bundles/joeyflynn*
-!BattleShip/web-dist/bundles/barackobama*
-!BattleShip/web-dist/bundles/queen*
-!BattleShip/web-dist/bundles/rohansahai*

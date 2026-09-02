@@ -3,6 +3,7 @@ opensmash/
 .DS_Store
 .env
 web-prototype/visual/assets/generated/
+web-prototype/.baked-characters/
 __pycache__/
 *.pyc
 eval/cells/

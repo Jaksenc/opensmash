@@ -131,6 +131,11 @@ never includes cookie-derived/private fighters; after session discovery, a
 signed-in browser refreshes the roster through the no-store characters API and
 reconciles any additional fighters into the live grid.
 
+Before Cloud Build, deployment reads `config/characters.json` and stages exactly
+those baked fighters from committed `pipeline/play` outputs. The API image never
+copies character bundles from ignored `BattleShip/web-dist`, so identical Git
+commits produce identical baked rosters and bundle bytes.
+
 Rotate the shared cookie signing key with overlap after a full deploy has added
 the previous-key secret to both Cloud Run and Cloudflare:
 
