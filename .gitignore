@@ -21,3 +21,7 @@ play/ui/*/*.log
 # Generated fighter workspace. Production runtime files are published to GCS
 # and pinned by web-prototype/config/baked-assets.json.
 play/
+batch-state/*.log
+batch-state/*.glb
+batch-state/*.patch
+batch-state-pilot.log
