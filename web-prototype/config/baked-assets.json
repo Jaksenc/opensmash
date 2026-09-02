@@ -178,19 +178,19 @@
           "size": 587
         },
         "portrait": {
-          "sha256": "0f1bfd1785d4112be84e308cb426f62393d960aa92930a13bee00be86311b2be",
-          "size": 952042
+          "sha256": "4d83373fe1bf7a8b4880644b3aad66ba6ee20b989c4aacae8aef55fa976340e5",
+          "size": 1040958
         },
         "portraitTile": {
-          "sha256": "41381c8d7738c616b75025c25475a9518ad943f6e2d2e32af54e490a39e69370",
-          "size": 14158
+          "sha256": "d0209e1ea95aad09c6e9ad7b7907242fb5307fcbf942f3c9670a3682f3343218",
+          "size": 13631
         },
         "portraitMedium": {
-          "sha256": "a837ecc4845aaa4153cc13354119959c221e2f8e11335c7a4482540fcc398d14",
-          "size": 80047
+          "sha256": "7a3ed0183baef20620fd0cf8a01882084d8e2f67e04b7b6a7022feb266e9b034",
+          "size": 85785
         },
         "ui": {
-          "sha256": "a682eadd0307d8bf4eda69b3edbae7ff0f6b9ff1b95152112bbd6fc45e822e44",
+          "sha256": "8bd4e212fecb8f3105f28b101c8bac3890f80fb7377d668860000998dfc4fc6c",
           "size": 12852
         },
         "announcer": {
@@ -434,12 +434,12 @@
       "slug": "dollyparton",
       "assets": {
         "bundle": {
-          "sha256": "1e91ff2e09846b540927cf79d875278d1e550f4c6eff113faf7a5e66f8a2642d",
-          "size": 1665876
+          "sha256": "2ed8be002739487c7759d2d308af3926b6eb2a1efa64ce6ac5f6f91e67614b5a",
+          "size": 1595060
         },
         "metadata": {
-          "sha256": "eb081c2482569a69b807c8b0b4201eda5ea60e46600f34615386d51605b911b9",
-          "size": 675
+          "sha256": "acb8491e13045dae1d8f1300a65847c9f1b2fc1922b6cf079cef7d87b9b5cd54",
+          "size": 667
         },
         "portrait": {
           "sha256": "2a817d10be425a05bc7ec84656abe6648484562d360a6b50038a35c70cd1c370",
@@ -1127,12 +1127,12 @@
       "slug": "daftpunk",
       "assets": {
         "bundle": {
-          "sha256": "3afeb56a89f7a3c0adc07c27d5145e80614e7754703ec26d6a55d47da833e368",
-          "size": 1127580
+          "sha256": "3831be171e10b0f408bbe28c5cf6b7263c114cbfeb9e5a967d79a439afed7e59",
+          "size": 1528356
         },
         "metadata": {
-          "sha256": "0382ae8566906713a124eabb586521c0edeea9da0db438671f031a57d5273e23",
-          "size": 630
+          "sha256": "b2f1eca612d3c7dc1efef49e74a3204a8ad2d37539a9088f2305a4e26498875f",
+          "size": 709
         },
         "portrait": {
           "sha256": "e6918ba39083148f1b305c30f73aa4372fcd586cdc094661df4b2ec78649b8fb",
@@ -1622,12 +1622,12 @@
       "slug": "marilynmonroe",
       "assets": {
         "bundle": {
-          "sha256": "73cbd0c12f01c4f8760876d9bf9b208c2f3ae0ca0063ae550d369f6a4cb92fd0",
-          "size": 1566780
+          "sha256": "a8439af9760d2fc57547eb5581ee4fc83965d1f074e17010b20cab465e233706",
+          "size": 1574492
         },
         "metadata": {
-          "sha256": "5da2b54ea7c586115d23cf2e7ccb97ec4634fc2d18dbeae717983f3e927127a6",
-          "size": 647
+          "sha256": "f2b10b2f72de49d81efd5580e705385b5683855cbed24ba34252fd24d5b6b769",
+          "size": 675
         },
         "portrait": {
           "sha256": "85768a41215a612af84c0ef131dfc34d5cee25ef7b291c6013b19d8f35dc1169",
@@ -1919,12 +1919,12 @@
       "slug": "bettyboop",
       "assets": {
         "bundle": {
-          "sha256": "4fc740dab5c5d30cd324e39597d5334585422adec8fc175c12a4c43f8d9d4188",
-          "size": 1587868
+          "sha256": "e26af4b487a40fd79dfc05127221c3bb4050ea36009a19f18219f75ec1d4f250",
+          "size": 1616100
         },
         "metadata": {
-          "sha256": "1a2df80b64543f2730e2477ca2cf0ad624123814e5c2010939d038b8bb6deadb",
-          "size": 650
+          "sha256": "e1fe65554a166747743b37db7243280183ec3b881aad3bbc56c1354673022426",
+          "size": 628
         },
         "portrait": {
           "sha256": "23094d68c370668d6f7a724036452ca86d6365e8615c230738e12cc4113e3221",
@@ -3173,12 +3173,12 @@
       "slug": "thegrimreaper",
       "assets": {
         "bundle": {
-          "sha256": "7630d140751d48bd85fcbf6564c99866f9343173e4f49d777172a67c8e158f4a",
-          "size": 1579300
+          "sha256": "2898b8476d419cfe3a31959c401b87a48b7ffb32645d9d1149fbd68cdb55689e",
+          "size": 1599556
         },
         "metadata": {
-          "sha256": "e327ff26c181726e417da2fc977c212dd60072a184a8e0f23bb176aac39f3ea9",
-          "size": 641
+          "sha256": "3f4fa849f59b9dea41f483329c25d042befbac184635f5ba8f5d052b4edaf7c7",
+          "size": 686
         },
         "portrait": {
           "sha256": "42dd2a1ae42cc1e616eb7317f00af4d393d5d76ce71233a6276d804af5b6f1d0",
@@ -4493,12 +4493,12 @@
       "slug": "tutankhamun",
       "assets": {
         "bundle": {
-          "sha256": "8e09a50b4db05d114b7f2c839e3b3da66f657bce6f23dc1fed357a067ab1db30",
-          "size": 1555988
+          "sha256": "1bd17edc42c80b66ba85d8ead4324c29f1775f9020759c4da3953c66df46c8e6",
+          "size": 1589972
         },
         "metadata": {
-          "sha256": "3d45ab7fe645f559d74f45d022015d5dd20a1f1fb8ed0db852a0f33a3210589e",
-          "size": 624
+          "sha256": "d036a7523ed153f270583b919f88452daa93c52d60c83aa9806b82cf0010edbf",
+          "size": 683
         },
         "portrait": {
           "sha256": "5927e31027bf63644849f384e68120231c1cb5502df2282cdadcb9c83ba67266",
@@ -6473,12 +6473,12 @@
       "slug": "lucilleball",
       "assets": {
         "bundle": {
-          "sha256": "a1c3f60745a7365d986f7470a59856d6b96c195519258bf17337f824896f0bb5",
-          "size": 1587412
+          "sha256": "16ee330f4e36509fd622f523066a435725024b04a96b3c467011af8a90017d1e",
+          "size": 1572588
         },
         "metadata": {
-          "sha256": "29024d2846341dc76f4206cf54cf566d3ba0cf9e5bbd7f23afd2b4ee9c5a20a9",
-          "size": 752
+          "sha256": "f62fbc94320d769946ecb1d73bfcd2cb5d30a6477c6ae7f8cddc27b941180acb",
+          "size": 734
         },
         "portrait": {
           "sha256": "6272a83cdeca543c4a0106aa107ee3a4fe17e16d51eadb0c8a7e641671b47f91",
@@ -6935,12 +6935,12 @@
       "slug": "andrethegiant",
       "assets": {
         "bundle": {
-          "sha256": "04eaf1c2867bb238a0561e90f42e21a35f2167293a05064875f3c8a079a7125d",
-          "size": 1520724
+          "sha256": "053e781886cde842c8233931134b4f78ecfccf499e9697c076a9e9bc8aeb10c5",
+          "size": 1530396
         },
         "metadata": {
-          "sha256": "ad1b80d75e074e93490e80c0296ff0db7b7244ddd7f58ea12eeb8686f91014a5",
-          "size": 617
+          "sha256": "80407f997db7c04d5ae8e46c2e8211c88a3c124c1fe23cd6c741f0282c277d0b",
+          "size": 711
         },
         "portrait": {
           "sha256": "87a511166520137cf433c2efb10b96785c5981771a96926fcf07f31a8553f6bc",
@@ -7529,12 +7529,12 @@
       "slug": "thewickedwitchof",
       "assets": {
         "bundle": {
-          "sha256": "e4c5718a378305397fceaeed6455ed0f95ed8cc01e45e08b00e20dc7346d52f0",
-          "size": 1586772
+          "sha256": "f6b342911d8c4fed88795de3e28546340c67d607fd595d5ef3a823953111e6c5",
+          "size": 1590836
         },
         "metadata": {
-          "sha256": "b1b1441f10d26a587eec97fc8c19294c2fd506e0141463026c837efc493aa37b",
-          "size": 675
+          "sha256": "a73095603a0da5dd4e322a95fd0fe41dd39080e0113779b09368942d3bbfb3c0",
+          "size": 714
         },
         "portrait": {
           "sha256": "ea74ce37fd046ae43841763d4c4b9ff326f683dc6620d2c0089da821825107b4",
@@ -7793,12 +7793,12 @@
       "slug": "rajinikanth",
       "assets": {
         "bundle": {
-          "sha256": "eea0edd5c24e0dc395b02fb3fb5cf7eb3c891836eef272c2088e07a459e59f78",
-          "size": 1587580
+          "sha256": "84da88ced0f4c4bfd501a3ca3bea67b5452622a7f934deb98ebb000bc458148f",
+          "size": 1602484
         },
         "metadata": {
-          "sha256": "13d05e99fe972480c71b84d4a8c67ec31db4045162b93215e250ecfcaef5c00d",
-          "size": 620
+          "sha256": "d6dddf2241c1d9d4655d27ba25ded5675cf8e307255f3ca8570148b97831110b",
+          "size": 671
         },
         "portrait": {
           "sha256": "4a41bda7c2dcaa4f949c3ead6e5b10525413c438a83de5b861352e083346c0b4",
@@ -7859,12 +7859,12 @@
       "slug": "bennyhill",
       "assets": {
         "bundle": {
-          "sha256": "eee7f73f3e8433a2efc422ef314c47440e0509c2fb03388d7ca238152107d4ef",
-          "size": 1565524
+          "sha256": "708660863f6f8369f3d32d8f2154c777e02703d0091d6ebdf4176d673f878d92",
+          "size": 1524020
         },
         "metadata": {
-          "sha256": "6f25cdff4e37e383fc148b5654cc8509059d45276ec36d6280cfd83bc194fede",
-          "size": 631
+          "sha256": "ef1deb9098f644adad267685540ef96d204d792d73cb7e7b22e9abc64b68ac30",
+          "size": 661
         },
         "portrait": {
           "sha256": "f80bbb8bba97d396006a13422212cb67eccbbc14e1631ac185d689b29ca4e0d4",
@@ -7925,27 +7925,27 @@
       "slug": "boygeorge",
       "assets": {
         "bundle": {
-          "sha256": "fa9e1975f631901f29e7b81cf72cd4ebcc660b31cd33cc9823c691d63169b5e6",
-          "size": 1581604
+          "sha256": "649e9187ba11ae8c7ac5d652e179990a80238ff7f8b111a9e81fabf529a90463",
+          "size": 1700620
         },
         "metadata": {
-          "sha256": "da7d3ea36fa78603b8bd009f0ef937120555e019b6b173069017061bbc973fbf",
-          "size": 608
+          "sha256": "6d529bb6815313c7d94d4a7109a3f1d9cf26a5d92264bf456f1088427b1ecc6e",
+          "size": 716
         },
         "portrait": {
-          "sha256": "c6fa4eb4136a01a34e8cac0b6aac3fafcf22bb42ab5358b095dcaed4c3b5ffe4",
-          "size": 942847
+          "sha256": "f8e2d16024a41dd9e9e14064b1a19794c117e9ecb17d296b3c8d637d00249f08",
+          "size": 1080809
         },
         "portraitTile": {
-          "sha256": "3725395c0a9ba466a157853214249caa3b0f953e8ddd4072ac89b91baa44e357",
-          "size": 12256
+          "sha256": "76d2852dc3b63741f64cd9e29d771ba08fdd858f2ba60780aeb1adb86698b096",
+          "size": 13811
         },
         "portraitMedium": {
-          "sha256": "f2d94200ae6fbdd4ed02af18fc1873de672d6dd33b62380e59702f6093a6ce58",
-          "size": 75873
+          "sha256": "f9bef9d4b1bbabaf6932da2a432a912d7f2f41203a9cea0bf60938141962dca0",
+          "size": 90890
         },
         "ui": {
-          "sha256": "39823bcd4a7c2ffb9d7297ae757e064bd0549286fd0e6f991a9fb9c72242be71",
+          "sha256": "6dd90ad53364110ffdbfa5ed6494e744613bace489b72f60a9d444fe9067511e",
           "size": 12852
         },
         "announcer": {
@@ -8552,32 +8552,32 @@
       "slug": "butterbean",
       "assets": {
         "bundle": {
-          "sha256": "ab7e8d725616d551bb7b0d15e5cfd0752717dff9ff8a18185f6e801bb4078987",
-          "size": 1600644
+          "sha256": "70a3c7330a4fb75e2740829fd0e0ce5d22b64a6de71c2de6e0ed502a8eaddd50",
+          "size": 1543800
         },
         "metadata": {
-          "sha256": "aa3202f1e8d5e8236e24c3c7ec77cb166ec8a42f4a214e175b079b27b16a1bcb",
-          "size": 677
+          "sha256": "0621649e9212e2226b4ebef5e85b9d80faeac64b1b540557a57ee2ce0e11ac23",
+          "size": 701
         },
         "portrait": {
-          "sha256": "7b20f6eb3c63d3a811d8f3a44272b9647377d4bc1983d9e48a3e642c1233d580",
-          "size": 1089782
+          "sha256": "04e8860df3a873c3d81e4a51ad873785a18a9342758c038ad09019ad4f04e0fc",
+          "size": 1136302
         },
         "portraitTile": {
-          "sha256": "aa6723f013c862ceadabe6b10664e4f86db74417bee49a14c0ab9378c21ddb74",
-          "size": 14755
+          "sha256": "ad6b7b392a12574b4c8fe7fbf5aa17f1753d2c3bd46befa0320d8cf6af179109",
+          "size": 13927
         },
         "portraitMedium": {
-          "sha256": "647b8274be03f4d1a921e57eeef4f24763736fd6d0d35af41e25d694cdad6c2a",
-          "size": 89531
+          "sha256": "f26e828411d604e9d4088d2e2eb8bb07289cda2a3dbf7f131ecc272eb3fc6685",
+          "size": 94724
         },
         "ui": {
-          "sha256": "56ac8c7fb350cfcdfb1e2291b09a85db8d8efe80c7ce8157873dd598d137efb6",
+          "sha256": "507346f1603fc0634f5b816224a7cc896ddbc5601fee6b6d9fac1a2ed2319135",
           "size": 12852
         },
         "announcer": {
-          "sha256": "0285b3150660fe7e72c0bf10a1a9b35a3159c842d689a04947f3eb907cde068c",
-          "size": 51348
+          "sha256": "21bd910d25c7a9226f5a609a281b5858767dce162b5591c263e40778ca56fe2a",
+          "size": 59522
         }
       }
     },
@@ -10037,12 +10037,12 @@
       "slug": "oliveoyl",
       "assets": {
         "bundle": {
-          "sha256": "04fb002a9ac918e558dc8f6a41823e7199764db6d707b9626354d11cdbb584f8",
-          "size": 1587700
+          "sha256": "f6f2023429143c87003bde07c744c821e3eee2203a05704aeeb12f4bfea15a9e",
+          "size": 1594884
         },
         "metadata": {
-          "sha256": "f2d5dd58de5c8266cef7e996cf8376a1c58c09fa4e502b7a8a2819a772a848a9",
-          "size": 625
+          "sha256": "e7741883501db1b34cde8160a52a754a534d0fbb1085979bb227c0b5f29efadd",
+          "size": 643
         },
         "portrait": {
           "sha256": "f4427c0fa19f048282a5c517ed62566be47557896786d1c0fc0a585970c20803",
@@ -10895,12 +10895,12 @@
       "slug": "falstaff",
       "assets": {
         "bundle": {
-          "sha256": "709907bdaf42159871d89089fa91f622dda9a68825e8ccbf6d46b8aa1801b4de",
-          "size": 1565004
+          "sha256": "7ca112656ec94962615c825f20bcaf460f249083179948fae64d65cefcbc2600",
+          "size": 1584476
         },
         "metadata": {
-          "sha256": "f16ff5f1b318513a50aa5af6587bb4eb238838667120221d4a1c344f96fd4d15",
-          "size": 618
+          "sha256": "d78b21a4e258428aef2473b79046bf8e3b32aa49a528a327913ef1f838b6ac26",
+          "size": 652
         },
         "portrait": {
           "sha256": "d37ccd9db385c0ea49efe86b6208233cb82b56a752b8a2aba52f3cb979fe3e9f",
@@ -11159,12 +11159,12 @@
       "slug": "popejohnpaulthes",
       "assets": {
         "bundle": {
-          "sha256": "a01f2b88e19e32da43595fe252a35691b7a67c5d891b82e5857b03584e54c9e5",
-          "size": 1582772
+          "sha256": "fdf1e673ee4d0b7d4171c28b958d96fb23e76e37acb09ca2646ac4daed38ddfd",
+          "size": 1547808
         },
         "metadata": {
-          "sha256": "f6a803c599aac414f5085fd6f8dec960f24bf3caf6ba175f07ba37a91988e065",
-          "size": 637
+          "sha256": "e2a56543a09952a480a843c976601872c402d00abb81c0d492c61be27dd1327a",
+          "size": 691
         },
         "portrait": {
           "sha256": "4d4c896c03adba4442e3e75be6a3f956f75df1bd6a946ea73ce3b304451a8a07",
@@ -11753,12 +11753,12 @@
       "slug": "queenvictoria",
       "assets": {
         "bundle": {
-          "sha256": "e255ab56296081f70a2c9563c9274d5c1606bf7547755f11b3b2984d5e0b427a",
-          "size": 1552652
+          "sha256": "4b4d57bde22656b8dd1686578f87dd60b2faf23f57d950a600ac9a204c620c70",
+          "size": 1534492
         },
         "metadata": {
-          "sha256": "f20951aa3e95dfb463d4a0c95ee49083df5b744e8e760f16b651ecf72506f247",
-          "size": 658
+          "sha256": "cf37518b6272300ad04b740badf277e004ba93308b8e85514089d4b2f78f12b3",
+          "size": 706
         },
         "portrait": {
           "sha256": "d2b3679572e76811657e3fc2e5d7d17dd14d24252f4a0bd5ffc2766cd18fd38f",
@@ -12017,12 +12017,12 @@
       "slug": "patrickmahomes",
       "assets": {
         "bundle": {
-          "sha256": "d2aad04dc23382f6176e9dcacbf10a3a92d809d1999684f8b03e0a3891b68e73",
-          "size": 1618324
+          "sha256": "d1e5d836008bcd80a924cfedc23e5e8b0d37796559e68117d9d11712e7cf699f",
+          "size": 1649364
         },
         "metadata": {
-          "sha256": "1daf17676b114ea3ee2da920502b8fb14f78905f85592483ac0cc2621a8eec9d",
-          "size": 616
+          "sha256": "069f2a4b9478437035bc785b2cc7b00d3054f1eeb4a25723377bfe6afef0e1d8",
+          "size": 647
         },
         "portrait": {
           "sha256": "eb8a039c8331f2c1602ea001473c9c19acb30835e22ecdbb9db329d77a824927",
@@ -12215,12 +12215,12 @@
       "slug": "merlin",
       "assets": {
         "bundle": {
-          "sha256": "b44ce8eee862d7a463c2d62c3774400beb6f12bc0d04cee52bd4765ead77aaf0",
-          "size": 1587212
+          "sha256": "f93b9b22247825d994c449af3c3b2b46f521753d9f7e831cc670484f39de3638",
+          "size": 1572340
         },
         "metadata": {
-          "sha256": "00e2094664f76cc08565f8b179b2fdc701dc77206daf2ae8e2d808b1cd613303",
-          "size": 660
+          "sha256": "8f812f0850d63c87b134ff21e9bec6c8156c42c0eb4972dd3698fc5fe5e2805b",
+          "size": 653
         },
         "portrait": {
           "sha256": "a37405ca822d5545bc3fcc62fb9a6883e4d163b7fcc187867b8d72d63862e3fd",
@@ -12281,27 +12281,27 @@
       "slug": "nero",
       "assets": {
         "bundle": {
-          "sha256": "58dfed8f43d7e0e47b80a8c909c38fad21dec78dac87c697d539ef62f06d514f",
-          "size": 1599796
+          "sha256": "997d91d0c2f66f9e1bc406d92525a679e55e58b55800a4a34b1e163bd7040334",
+          "size": 1565972
         },
         "metadata": {
-          "sha256": "b7b7b5a310a2fc4b76d2c2f0b176bb3f5819b34330930c518a5380db92a31446",
-          "size": 629
+          "sha256": "0c4168a45c91c6a9e6b708c126f2920274cd7b91c25dafa0e71288b90a46919f",
+          "size": 700
         },
         "portrait": {
-          "sha256": "7d362083ccf4e5240cbc2faba592ae1fbe05121118e15f96c4d9ec8ad0166023",
-          "size": 985798
+          "sha256": "4bf9fcd1a399f1e872667415b99226325981278007cc2a4dbbec13e8055a5bdc",
+          "size": 1221968
         },
         "portraitTile": {
-          "sha256": "e4fec48184b40d35ac120767d6d0e868cdb1c45b14b712b1e57d1e46be00d356",
-          "size": 13412
+          "sha256": "dbad4edbdeb432d45e3102ef5c01d3c8421b5971e309273780f98dbe85881ca1",
+          "size": 15089
         },
         "portraitMedium": {
-          "sha256": "63f51a358f67d55b4e7b569feb91b138f18ca71353b4e9790b609a88e73504ba",
-          "size": 78721
+          "sha256": "92852fa8c0881330855a3689f8d0c6e70a2d6759513a52a1babab73f62500c3d",
+          "size": 91286
         },
         "ui": {
-          "sha256": "29a5a265c2fa7175badc0aec9840c1e8ec5f21735ccd57db618f9332c981fdb1",
+          "sha256": "45d425535cf9d61a0ad3b40cf4d602c59aca2389a4c86741b5a51399ed55cba3",
           "size": 12852
         },
         "announcer": {
@@ -12380,12 +12380,12 @@
       "slug": "stephenhawking",
       "assets": {
         "bundle": {
-          "sha256": "334b08ed59a18299ebfd0619c344797e3555a27ffcd055fc1fc6f0c55a8ecddb",
-          "size": 1064380
+          "sha256": "e47192f8584068aeecdfa1abb9c4ac0bb670e36022942e4fc89009bc8f04d7ba",
+          "size": 1733256
         },
         "metadata": {
-          "sha256": "811e20812b9f27109442eb9ee2074faad0192410b2870f8ce2a471d5e7629dcc",
-          "size": 694
+          "sha256": "ffd380e19f2ec6e2d85fae3fecbf846e82d63b92a6d509c8456d74436cc7302e",
+          "size": 659
         },
         "portrait": {
           "sha256": "f8f1e8d2ff7b408ed79fdceb3c7dba5fc666296c0909a8bbcd83e01ee6345355",
@@ -12446,12 +12446,12 @@
       "slug": "martinscorsese",
       "assets": {
         "bundle": {
-          "sha256": "04844f23bdc54faae858684ff11147fa4cd41c1ed6d525828a289755309212b7",
-          "size": 1602996
+          "sha256": "83c926016100cd4f6639efc6757fa6399f859ca3c98add3c6e3d8cfdf2a47b55",
+          "size": 1589260
         },
         "metadata": {
-          "sha256": "f8f5ad3162932cfdfd8c57eca46b93a71aa0b216d5c06bf1967840269331c7cc",
-          "size": 631
+          "sha256": "92ea306c273ade4215672d872d7da9ff57852425f1b405c864e267dab5b34506",
+          "size": 681
         },
         "portrait": {
           "sha256": "df227a33f1ca83d99c8fd3cf72c5bd1be0b57690263c8e00ba7d9db2478bff3b",
@@ -12743,27 +12743,27 @@
       "slug": "faust",
       "assets": {
         "bundle": {
-          "sha256": "68907d9fbb54721f1e79b3fd9beaf2c398555ec0080110d631eb6c261d70fce8",
-          "size": 1655588
+          "sha256": "5c469144876cafebded68480e83b79b80210dd9978aeee76f03177e19ef91d2c",
+          "size": 1579764
         },
         "metadata": {
-          "sha256": "ed85eba71cb38e04bf2616b5c21cee1b9b47c378f12fd5b453e9a0c909009fda",
-          "size": 649
+          "sha256": "cd710b548b53f94f745adcb1ad39e0b20419bf444dce773bf2f35deeaa81733c",
+          "size": 727
         },
         "portrait": {
-          "sha256": "e67efc6e8a12cf91d2e7e680ad1bee6289ec226c96c97dd439626a0b1360d550",
-          "size": 1064196
+          "sha256": "6f27383551123594ffa7457b0cebc6d337d7e9420a7d52c21544aad6207c3d83",
+          "size": 1122500
         },
         "portraitTile": {
-          "sha256": "1549b78229fe24ac33c9a8f2ab8ccebf5e6ea1292436292dafdfbdb310cb5abe",
-          "size": 14169
+          "sha256": "98e28628a2282447aee82b09674df3990961893ff9179ce08ca66de0dc6af8c6",
+          "size": 12620
         },
         "portraitMedium": {
-          "sha256": "5db88c924e1e308a362957735efd9cd3b894e2c5506dd15ff6485eb20ff9b5af",
-          "size": 90592
+          "sha256": "a364938517906525194ce126e9f1923cb555bf5903bf10b51b4858bb438a5531",
+          "size": 74597
         },
         "ui": {
-          "sha256": "ff92d7147b1661991c16dc4ecc4150931ae2ed82f0b94cd3145ab15985f914d4",
+          "sha256": "fcdc49102739662769f384476276512e4164ddc23987f275b4f1e203293977f4",
           "size": 12852
         },
         "announcer": {
@@ -12776,12 +12776,12 @@
       "slug": "vitruvianman",
       "assets": {
         "bundle": {
-          "sha256": "8f220bf71292f5f577ade874c75a4db6a6701cf806f4ac37ca4b65f24f16c186",
-          "size": 1566980
+          "sha256": "3fdfa11e8430946de5ee6a0beec5149d255af3a2eb6965d8ad629e03ad28905d",
+          "size": 1573100
         },
         "metadata": {
-          "sha256": "ecbd53c403baa596ebeafa04aed8fbb36dd76b114ff701c0108dfb48419d21f5",
-          "size": 729
+          "sha256": "6533fe1afb032970bdacda8bb8b1e2101cb68476ce5129aec1f3597d9045f24e",
+          "size": 721
         },
         "portrait": {
           "sha256": "f80788f089068de5b9e770da4b98e29cc49c9a79798b9e9de536464b551913b6",
@@ -14459,12 +14459,12 @@
       "slug": "alcapone",
       "assets": {
         "bundle": {
-          "sha256": "114dc297970b14dd9de26ac10657ef38ad04413d5be4cd6031537bac956dae77",
-          "size": 1597740
+          "sha256": "391b6345c4b134c775b98021577cdb2e7b7dad410416a37238a8b16974fadae0",
+          "size": 1550612
         },
         "metadata": {
-          "sha256": "2f0f95bb2ff9b46b3e03bf32bae3cf9196c29916fcb36fe34a54333b0f0f1922",
-          "size": 577
+          "sha256": "7f1d99a676da77a60c51b12615b61a61a913fa50b97e6e7d7d95c98fbfef7ea5",
+          "size": 634
         },
         "portrait": {
           "sha256": "02268263018e961e1220871ec55f44eb8caa1074ecd941b0d3dace75e01043a9",
@@ -14987,27 +14987,27 @@
       "slug": "iago",
       "assets": {
         "bundle": {
-          "sha256": "232b8d1f9cd40ab8ac87dfa532f0a69adea99d5061a9fe6b9000d9e015c901bc",
-          "size": 1664420
+          "sha256": "6770fbdd3106fe108a1c3720e960a8269e963931da898dce6f13db7fc36b605d",
+          "size": 1586292
         },
         "metadata": {
-          "sha256": "b15396e32b688f0ef16a5ee6ff608ff28af82495a6cc00f9b07bcf2765f32ae3",
-          "size": 677
+          "sha256": "4961f6afe99df613426dea9017f02845007a0188adf84f1d805c37e154895a33",
+          "size": 678
         },
         "portrait": {
-          "sha256": "ca496dfb9f4ab779cafc9608a60146873c8c2afa30920a8ebe153ff6ffc29261",
-          "size": 1010875
+          "sha256": "cf8aa16b98fb3a7177e2be601e7956e66115501f1eee6e909ed88d616d553595",
+          "size": 1100430
         },
         "portraitTile": {
-          "sha256": "ca3cb3f7820a086df981c10c851d650bc323c827531607abad8d26c5641c32ca",
-          "size": 11894
+          "sha256": "811076f93f13c0af3eefac7fc7c0cbbfd6fd952d730d2028166b7ad1c1d22390",
+          "size": 14276
         },
         "portraitMedium": {
-          "sha256": "d6d2b3e9f3de6796e32eb3f2f253471980c0424d5f36b4748ab6171d1875dd0c",
-          "size": 75563
+          "sha256": "25ad7ffea07fe63f23dcd7d712fbc9cf8657148719f82d2634066073c13eb03f",
+          "size": 87008
         },
         "ui": {
-          "sha256": "c47f005cdba189ba20408a908e9173c67f501079e6134a09681635474c26d5a1",
+          "sha256": "85d8bb12accfc4a4db243a508cc14d09f1be8ee0c007e1318910608f0e683bc5",
           "size": 12852
         },
         "announcer": {
@@ -15053,12 +15053,12 @@
       "slug": "ronaldreagan",
       "assets": {
         "bundle": {
-          "sha256": "1a9100453cafcf3b17bc5319d1258187a0dea8642288fbf1f7cb05a8097a3a24",
-          "size": 1559900
+          "sha256": "95c43ab46e8f41ce98858ee6f048b251485d6ec2598f856f285243e8569355c2",
+          "size": 1513372
         },
         "metadata": {
-          "sha256": "136e1e63d27a00920dac1af62ca137128e537e66942fc86327eab891e8ef65a1",
-          "size": 665
+          "sha256": "3d9ca2546f8900f74502761ba2a2fbe7c481352bbb08ba10767f146fc5ff6545",
+          "size": 712
         },
         "portrait": {
           "sha256": "a7c3233afff93413f348297de3908cf45c0abf8830022d5c5eb0d60f8e69153a",
@@ -15185,12 +15185,12 @@
       "slug": "stanleykubrick",
       "assets": {
         "bundle": {
-          "sha256": "9bdd3e376a33093c4b15d373479100a1aca612b9fc99cf72ed50b1c4bc8cd090",
-          "size": 1552908
+          "sha256": "ec261bd6c43b9d491760665477487a8ea60a36e4ef8b62a1cc302a7e226123b2",
+          "size": 1624212
         },
         "metadata": {
-          "sha256": "30753eec13f1d147ec9be5d70408dc5758b33a05c6e2b19012255fa782788098",
-          "size": 610
+          "sha256": "cfd8689737e3580ccbf9a1a0fd3fb9d77fc777d10833a87b70014e6f90eff3c4",
+          "size": 725
         },
         "portrait": {
           "sha256": "b7a5d9abb304798853ff495cbc5b6acd6666c027a76331c847dde242bb619c27",
@@ -15251,12 +15251,12 @@
       "slug": "elizabethtaylor",
       "assets": {
         "bundle": {
-          "sha256": "5ba13df7f7ec1f93d52b179fe6d2b5c85ac602630d3383c58e4329d2038da104",
-          "size": 1610452
+          "sha256": "0950bb57ea976f0061981123ec6370bfdcc564e4c22a626d7cc7faa9a0183228",
+          "size": 1590752
         },
         "metadata": {
-          "sha256": "e85f1360609f7dfbe28e1a2267a4cd63a337903f18da80ce47ff9bce200966ab",
-          "size": 645
+          "sha256": "7a5ad5ff39c979dd48e0699b532bd4941f90bfc3950665050059f00185225648",
+          "size": 721
         },
         "portrait": {
           "sha256": "7535c9fa1bec2879a54baf4c3903d0f70c7d21d7c0f2b6a1babf92bcdec9bca7",
@@ -16241,27 +16241,27 @@
       "slug": "hannibal",
       "assets": {
         "bundle": {
-          "sha256": "9195280e7826ba911beaf77530a0d3b60f78fd1a05392aad0c05a7bc7e553deb",
-          "size": 1532812
+          "sha256": "af92ae291d8281912eb1b54fbefb81da8f236aad15739880bba51bf84dd84f40",
+          "size": 1569716
         },
         "metadata": {
-          "sha256": "6542d07fcec7a3882fe02a22d22ec79f80179d6199b7af2ccc57c958143953c1",
-          "size": 697
+          "sha256": "ce1739786530263a0161b3c0db85ec25afcb8ee6cf13787488b29f39234c6cca",
+          "size": 715
         },
         "portrait": {
-          "sha256": "e55c2572425e918ab5a93d889681ab4cb45d7c10ae24a6fca1b97d11489ca0af",
-          "size": 1058736
+          "sha256": "ac9c942237b5b65111490db5b151752b22b4e5f407cb21b6e22dcb4db7794d75",
+          "size": 1052522
         },
         "portraitTile": {
-          "sha256": "e283b25b8eeb5224498a107bb3fcb1e3f5a7bef3e7c747a26d259334b2fe56a9",
-          "size": 12472
+          "sha256": "3a18ddc73d7b47a0979ab1932c3545ae06d444009d2cb85f856276400117437f",
+          "size": 13494
         },
         "portraitMedium": {
-          "sha256": "66904d9d7ecda9104ab2d5c789045e48abb12f85083d875e62d0a38f76e9a60d",
-          "size": 74510
+          "sha256": "adddd8f766b8cc41560d7d027543919b7f86d7455cae6a58f77388785d7d21b1",
+          "size": 79870
         },
         "ui": {
-          "sha256": "cbd8227fc2988b34bdfa2068b2ad1c0d384e16797daa54ddffa94a22b800879f",
+          "sha256": "5f386ca1f0593aeb275988d30124b90b7e4628a0fab895755e4ac06a3b4949d4",
           "size": 12852
         },
         "announcer": {
@@ -16670,12 +16670,12 @@
       "slug": "botticellisvenus",
       "assets": {
         "bundle": {
-          "sha256": "01b8033f9c3014b1777be8850bb01571b805423d6d6bea4cd3cac3a97a5f8b08",
-          "size": 1569272
+          "sha256": "c99629aedf6c74403f6ca0035067a4403eed5eb0bbc9f3d72c1b9d60cc60dae9",
+          "size": 1549900
         },
         "metadata": {
-          "sha256": "717572d9a6075b47e7e62ce8205ff2944faaa9920cced9798f9b269c15e8af7c",
-          "size": 684
+          "sha256": "33ba20e3c1cb65b7f4e0933d355d0cb8792547655f130acb1a49ef72697c73cc",
+          "size": 760
         },
         "portrait": {
           "sha256": "064e1d4e39f2f75ae6121201023e055f882cd8c085fa165d0d64caaa8c97524a",
@@ -17528,12 +17528,12 @@
       "slug": "thomasedison",
       "assets": {
         "bundle": {
-          "sha256": "6898c183d6c2c516200baccd71b82a9280dd84e7505f63bfb27fae49a52e9d00",
-          "size": 1574924
+          "sha256": "8f2753d3ad3e25753cb881bfb1cf7d160e6af4cc7d7de127c10e03072df66028",
+          "size": 1524908
         },
         "metadata": {
-          "sha256": "5d70f294e1ba8081e20091263b02dd1549651ad71b96d98d131dc17377352d5e",
-          "size": 642
+          "sha256": "52bad4c76c0ad00165a7e0548f4748ec3894e79967f3a3289ede67cf9d5ab61e",
+          "size": 624
         },
         "portrait": {
           "sha256": "434ee7473780781961ce57fb6123367873c7ceb1eef6e354d04c69e6b5ff23d7",
@@ -18320,27 +18320,27 @@
       "slug": "terrybradshaw",
       "assets": {
         "bundle": {
-          "sha256": "dcc47f40761ba361b3240bc5f8d8e33523ebed892b5a970910edd8e8d240f140",
-          "size": 1602508
+          "sha256": "4a70be8065eea6c7b155bc5d52b4cc12db34ca92d357ce69d8c3c0a4b51cefbb",
+          "size": 1543048
         },
         "metadata": {
-          "sha256": "be02e04b4a0872be5f37df050b5f582b0af9a23eb5ebb7554b2e2c60770508cb",
-          "size": 639
+          "sha256": "b6ef5c16e6976575443236a7d6ca8d810dfe0932a04b9c09713332a540d266a2",
+          "size": 673
         },
         "portrait": {
-          "sha256": "c5b1fe34b75e027681de0c4d5fe87b47f2b145e51083256b40c22caacec3ef10",
-          "size": 1017282
+          "sha256": "143369aa6f8b047eb1ff8aefb28a74e8b3be205dfc28d52b7ff5561f8f7b2373",
+          "size": 1076448
         },
         "portraitTile": {
-          "sha256": "b4383b6981f74afdafda380a7d88299b3002e9304a0d329b4b87fe95d6a190f6",
-          "size": 12940
+          "sha256": "8d9495ed20f442db2c11af7658913a2f2160d0b8c1563c384e34c1f04b2de780",
+          "size": 12221
         },
         "portraitMedium": {
-          "sha256": "da2dc23063aeb3765dd5797f6802108b4732e128d6a234d172a3b88da6d4cc97",
-          "size": 77015
+          "sha256": "25c46716f684f33d98263cc9ced822f33df03cd8d2cd10de1c6bddf6bfe81bd0",
+          "size": 73875
         },
         "ui": {
-          "sha256": "6325a95a57120e4f7b150f277ca8f1bc55c2e22ed971710968aa4b37ff37b69e",
+          "sha256": "26bf0fe1a2ccdef84e06f205cc71aaa78e00928e7bbb7714476d432257f3303d",
           "size": 12852
         },
         "announcer": {
@@ -18386,12 +18386,12 @@
       "slug": "nikilauda",
       "assets": {
         "bundle": {
-          "sha256": "3658191f0783699b1618241da9ca98c58da3494f72b33bc610b419c18b86c948",
-          "size": 1581264
+          "sha256": "a04bf6d8efcb67314e32573ed4457c9c79b31b060da23a72f98ab35652dc8cec",
+          "size": 1582252
         },
         "metadata": {
-          "sha256": "d76da5cba7c6ebaab1328f377d0c1e742423818f074b3768c1e1b4330248fadc",
-          "size": 658
+          "sha256": "dd04ca9bb2f47b90635c7bd601409ef033fde28f52314b98fbe945a27f19e29d",
+          "size": 715
         },
         "portrait": {
           "sha256": "ac1db86d886cc15206b31746233bf781bc5d672d68455fa50929147d80791acb",
@@ -18782,12 +18782,12 @@
       "slug": "jacknicholson",
       "assets": {
         "bundle": {
-          "sha256": "41d88e992883f9553e3ed4e921fa6391fc30ab2d7312564086e488994716e18c",
-          "size": 1606312
+          "sha256": "6322822f9d5cc8653ec4e01f3ec315b3a78f69642a265d2de72eb57c20fd82d6",
+          "size": 1584492
         },
         "metadata": {
-          "sha256": "9c6d6fe3456cab5409c116aaf51e4b80a3e6e2cc6d99349b5deef634527119ba",
-          "size": 692
+          "sha256": "2d58c4d928ae91bdced4609685de240631722b796a43542f00755a737746fea6",
+          "size": 712
         },
         "portrait": {
           "sha256": "990e4275254b905f161bdfcadf6275385d1d2ec2eca7239b6a759c05594f1c8f",
@@ -18947,12 +18947,12 @@
       "slug": "thewingedvictory",
       "assets": {
         "bundle": {
-          "sha256": "b69345c7e8cc73864c3454e5d5552944316056c5ea188441159ad9c0c4a60eca",
-          "size": 1591680
+          "sha256": "c97569412fd404bf5d88b6625693310fbd3284e1dfa072ed448b36ffe8b36365",
+          "size": 1610296
         },
         "metadata": {
-          "sha256": "31eed3de865959428a09c4a895e53e18449322292d5c2818241f263ec216f108",
-          "size": 684
+          "sha256": "38d125811bd62566faaa6e2bca4a17ff966f9622e28913f678a42b9a7ba3ffbe",
+          "size": 738
         },
         "portrait": {
           "sha256": "3e36ce536a595ae56de2502d8007bf6de23f594938140367f92be1a25a422028",
@@ -20498,12 +20498,12 @@
       "slug": "confucius",
       "assets": {
         "bundle": {
-          "sha256": "33e62be1bdff42b077b4271ea5514e30b611842205391b8ed7ad00a75a4106b4",
-          "size": 1574672
+          "sha256": "52897b72aa7319226f85c37edfea7e041fb12e8eed43379dc13c9d41caf4befb",
+          "size": 1558404
         },
         "metadata": {
-          "sha256": "6957191c9f62288cf830d0872b63a0d4a8dbb453373b4f2850b14c0a635cdf58",
-          "size": 675
+          "sha256": "af57b6edfede7081f2ce613b69635f728f12782aa5043955adab9557bc3bada9",
+          "size": 735
         },
         "portrait": {
           "sha256": "a7c7840224a2483ed811c1889f2b27c73a584b6b58b8a0c8ad69dc093b196463",
@@ -21719,12 +21719,12 @@
       "slug": "carmen",
       "assets": {
         "bundle": {
-          "sha256": "c01e6ff21c70c7c5e64194bcb0ac1021040bec6aa5afe66819815856fa89be04",
-          "size": 1578884
+          "sha256": "90614dae0663f5e4e62cbb35ae2f9012fbc98a1480493400381ce397a83d9313",
+          "size": 1564700
         },
         "metadata": {
-          "sha256": "bdc96328bc4bcd1dcf6134e9059feacdc311d92d4823c5bdb82d53e79e7759d9",
-          "size": 661
+          "sha256": "b5b1c1cd0bddb5686b7ad3ce3a4e6578d28f6f522fd4428b1ef3bf1617eb63ea",
+          "size": 681
         },
         "portrait": {
           "sha256": "234022050ed2e14fa84801225fef00d1ee7dda6f9c1aa48d2e41f84aadb9e57f",
@@ -21752,27 +21752,27 @@
       "slug": "whistlersmother",
       "assets": {
         "bundle": {
-          "sha256": "e556d93efa1acd13cd041bf3e99004cddbc0ac00062c384519a9c9dfa77ef8d4",
-          "size": 1536592
+          "sha256": "5cf2a10c2a6fcbd58061e89120d17c98f5eeb25a41055efe82d937d7b1564897",
+          "size": 1524844
         },
         "metadata": {
-          "sha256": "0be48ea1091a5467ba87f5a40a35564d1d234676afcceb8160df96c389cc5c26",
-          "size": 661
+          "sha256": "e9b8903e9f97739ff552180e2ecc79575b38139e08e4926cce3944c715dc1c7c",
+          "size": 705
         },
         "portrait": {
-          "sha256": "31a77fb260eb835e32cda1e67728edd725a796143ad5fe0e2ce5758146a98b0e",
-          "size": 1069148
+          "sha256": "06e1beb5c832888a6c38cbe46c2fc369d136fb4b35bcd60e3b6bc6dfc2addb4f",
+          "size": 1069517
         },
         "portraitTile": {
-          "sha256": "fba96bf58ddbd8162eef57fb6d1330dcf1687fd0cfe771495284e6cbd883d767",
-          "size": 13057
+          "sha256": "3707cfa892079e1706fedcf9cb204807e1ddcbab860e442d7ebb63946b312d98",
+          "size": 13884
         },
         "portraitMedium": {
-          "sha256": "c999e28f7cac857e912d670c6bf1a356dcac3370d5e36a10d0a228ee3bbf6523",
-          "size": 77285
+          "sha256": "e661b5ff2f16ea05dfdeac3ab9f35f89e859adfc0d3edc3591ced6a423801879",
+          "size": 87172
         },
         "ui": {
-          "sha256": "871bc45d5925f2f3d42c80182c2d3682c678806bbee2d3fa592df1d842e86a14",
+          "sha256": "7136387ad0e84fc4b21b8562865cd283551a5f6942fec5fd888e4364191ccd68",
           "size": 12852
         },
         "announcer": {
@@ -21785,12 +21785,12 @@
       "slug": "mansamusa",
       "assets": {
         "bundle": {
-          "sha256": "7a15f09d16a4ae141da2b588cb81a15f9b5b3a35f976757a94b7c28db1cd597b",
-          "size": 1636572
+          "sha256": "d125ecb9bd779032ca95fdc89be0229b6de7bfe8c712a6e987d65940020fb4b5",
+          "size": 1598420
         },
         "metadata": {
-          "sha256": "943d4b896a0d855a2e83fd7bd600b6c2ba69f75802843d3b74d83386413f6b26",
-          "size": 654
+          "sha256": "236fde4caf260f95ba6983d69f1a6cb35ce1c2657c9c7b395dd40c51dccdbaf7",
+          "size": 667
         },
         "portrait": {
           "sha256": "3aef50a5c917ae25efd705d5f1f096858fd3ba86ed3638595f28fee471ffb795",
@@ -22247,12 +22247,12 @@
       "slug": "nefertiti",
       "assets": {
         "bundle": {
-          "sha256": "fd577c0a426a6fb9560be4e68ef6f50d762a3c070f65de85499c7d25da012123",
-          "size": 1567900
+          "sha256": "5b2b7a863923321f7ad308b76a56c31ffc57239478303ff4ced994d80eef1fd1",
+          "size": 1547948
         },
         "metadata": {
-          "sha256": "8807d954bc5fa626a86c6d53aca1987dc1818d9d183bed4373b9f3c67dc9607b",
-          "size": 636
+          "sha256": "a78f8c2282fba26c0999105ad98637a6c6b7c58659b52dc40f2f39247c84d755",
+          "size": 646
         },
         "portrait": {
           "sha256": "ea71bcedfe8947f4eb825d42fdb3ef1ce9a5e6cf0a16e1b7c74b136217b8f84b",
@@ -24392,12 +24392,12 @@
       "slug": "robford",
       "assets": {
         "bundle": {
-          "sha256": "4bf37ef019dfaaf9d22ee1f7cfaa594d6849ab28587fc58517d0dbfebfd31aa9",
-          "size": 1513156
+          "sha256": "f8a5512b9d27a28dff1a61e53c09861bd9529f7fd3678394b26a253bbdd090c5",
+          "size": 1549988
         },
         "metadata": {
-          "sha256": "56218513961b2f14270454087dbd7d33d151b190aef835938623cff4863447a1",
-          "size": 606
+          "sha256": "306f03362a3c953854bf03f5931347987a5320f4857d076a0066f2904650c446",
+          "size": 716
         },
         "portrait": {
           "sha256": "94cab21b9934a449be0f6d3fde1494c0389a302060efedfb9e01f7bfb25e2a1f",
@@ -25976,12 +25976,12 @@
       "slug": "tengu",
       "assets": {
         "bundle": {
-          "sha256": "c256d9c881612146006590c953acd1d708fdf1898ea5ae1e5fe0c83fdc694b20",
-          "size": 1575740
+          "sha256": "4565d642a59bdd7c99a3b61503653a41671a92b83d1ef946b34469518330c5d5",
+          "size": 1612500
         },
         "metadata": {
-          "sha256": "3dbfbdf10e2d661c48082077a998da370a865f353787feafff288b9788eb3fb2",
-          "size": 622
+          "sha256": "3e27a202e01593ac07f37900b83d195cda70f674e11cf303efcfabb65fb0182e",
+          "size": 706
         },
         "portrait": {
           "sha256": "d4dca7b0ea7e2b89ade4d8a0d7a544ee20c9434168a5981306bf36f6b46900f2",
@@ -26801,27 +26801,27 @@
       "slug": "anansi",
       "assets": {
         "bundle": {
-          "sha256": "793f73bcaa80a38863b40bd3701693f9abb67e1b663456c54c4f1c234dbd52f9",
-          "size": 1561540
+          "sha256": "c0e6362f30b6b28a72e64d48cfc25aa4ea5ee363dadeb8ca56fea2a14a3ba9d3",
+          "size": 1603804
         },
         "metadata": {
-          "sha256": "72ead69f73ca0357649a8e1d8c9aae66363a293b18859ba71ff0b9733fab2711",
-          "size": 624
+          "sha256": "9f6db548228b274f0555a544df58d70b2228a6bf613aefb81f476d933ae5ee1d",
+          "size": 700
         },
         "portrait": {
-          "sha256": "f975de6402e260c49b859b648aefaf4fa2cb7d0d0da7826e6b1df4b429d25c6e",
-          "size": 991816
+          "sha256": "27134118527e70839d72f62acba5f8b4b76b69cfcf0aa880d9454552c6109738",
+          "size": 1010957
         },
         "portraitTile": {
-          "sha256": "ae551a3f38e4b85d9be98e9bceaa8baceaa118a4281103c5e76df59b13a1eb59",
-          "size": 12506
+          "sha256": "0c5e655d8a9c053fd1e5cae4a0bd4319c903fc58dea47efebf018a0556bcc83c",
+          "size": 13967
         },
         "portraitMedium": {
-          "sha256": "e8c7d1911a4d5c140210e1b47ebc8b571bc6d4c215025a3727b263979213884d",
-          "size": 79945
+          "sha256": "b4da5f5b72c967795fb5fe634acc2b349bd511f4151a6ec986b69ceb02b7ea1c",
+          "size": 86302
         },
         "ui": {
-          "sha256": "65c01c05a6d1e91a08877ea065d8a707ca6697bebecc0234abad0928617ca668",
+          "sha256": "176915a53e4d8c9a1c348e09c2a1e1e9f384ee8788c8e09503418199dc0d569b",
           "size": 12852
         },
         "announcer": {
@@ -27494,12 +27494,12 @@
       "slug": "arethafranklin",
       "assets": {
         "bundle": {
-          "sha256": "6180908b9b2fc6fd870c6265742ce7d37c7e541750e233dcae1c9351c5f0a07d",
-          "size": 1556844
+          "sha256": "09c7ad4880580712d474d45cbf671b50351fcf5cf6296b834e805f9121a7102f",
+          "size": 1589688
         },
         "metadata": {
-          "sha256": "63f6d9c47764351294f1c4c6941c4ec2960415b358574be64431db5c55a59556",
-          "size": 693
+          "sha256": "2952f1171a62e191e0229ddcc45f9fe93d4e4f01843088297b1dd64221ee6938",
+          "size": 751
         },
         "portrait": {
           "sha256": "d573636cf19e4d093b8ab192fa452d3abd845d28333b818a2818e5f4a78311b1",
@@ -28319,27 +28319,27 @@
       "slug": "matahari",
       "assets": {
         "bundle": {
-          "sha256": "58a7e40c99b0cae8073272191bc9045a7c46d34e92246651e55702468be3f11e",
-          "size": 1607220
+          "sha256": "a3d355b0e038d818e1b4120ffdae00d1493c1232aca8818857246fd5c4615faa",
+          "size": 1587596
         },
         "metadata": {
-          "sha256": "10b5d71c0e4e2a0438e12c07a7d2081eead964df81faf2dfe667e1756f16e847",
-          "size": 697
+          "sha256": "3506cef6e911718b3794acd4206ac73a4c4ce15364f51b7f9a142317e195db1a",
+          "size": 665
         },
         "portrait": {
-          "sha256": "b5eacb6559b8345086db9dbb5f202d782bcdd4f6c2703c7dda6012970a4e6711",
-          "size": 1070815
+          "sha256": "1c4774800a83a114285b1e4f2170921d9760ef1a49b45e3cc1bac8929ce1acef",
+          "size": 1084741
         },
         "portraitTile": {
-          "sha256": "40eb2c98c1228bd7b23e02a7da2af9ba072ce23fe00918512198e50017dff5cf",
-          "size": 12880
+          "sha256": "1df6150607935fcaf9501e4483c5abbe5162711a71e49ebcc4b1d05fcdd30ad9",
+          "size": 14705
         },
         "portraitMedium": {
-          "sha256": "366957fae0081d526787cfe127c395dc55c3277065de1785076fd79c7bbebc2b",
-          "size": 81784
+          "sha256": "f4ebfdd7737b18575e975e168a5bc4acc5adb40cb4ca945095d429b3304bee5a",
+          "size": 91503
         },
         "ui": {
-          "sha256": "7d822508e185eded1296e0276061717a50e48c0b1a782d0aa9048522998ada13",
+          "sha256": "7ee85b3c25268c5a6a7bf5c8a69cb5e26d34f205a0be03b65e97d9dc1c046e5c",
           "size": 12852
         },
         "announcer": {
@@ -28847,12 +28847,12 @@
       "slug": "masterp",
       "assets": {
         "bundle": {
-          "sha256": "6b8ccb9896ce8716ebd185257d534bb7ccf8daba9ebba52dd35e4c044432a5d9",
-          "size": 1536028
+          "sha256": "0de0eb45c80fcee0da0c0053d6f0f9636f418271721b78c67446ac152ac12b57",
+          "size": 1556908
         },
         "metadata": {
-          "sha256": "9643746627d31381dc9a31817bae3152aa100c136169057828f942773c126354",
-          "size": 576
+          "sha256": "f918dab0c39a133c092a85a35068fd6513819baf99982161a6d6c9338988fc15",
+          "size": 627
         },
         "portrait": {
           "sha256": "9ea36b667ed74b6b7d020b4d3b1fabf5efcd175fbf02f625de25f2ec22478a55",
@@ -29804,12 +29804,12 @@
       "slug": "davechappelle",
       "assets": {
         "bundle": {
-          "sha256": "6f65b535ad12f76b3c5fbc4ba753365e85002b29261d4309c58a216ea33c16ea",
-          "size": 1557664
+          "sha256": "7b999c76ae27a8f8649d902a2502cca7700fceeb73fff3d507266190324cd021",
+          "size": 1551588
         },
         "metadata": {
-          "sha256": "9798a37220ea26006699842a6e93c10be8202421bcbf04ca90ed99cffb42358f",
-          "size": 663
+          "sha256": "340d22ef4c557c969d58186d5ed16c817dfa4aadc7b0e0ecae654a0d7d1698c8",
+          "size": 665
         },
         "portrait": {
           "sha256": "8bb6faef664bc9a3ece5a879d22dfb52ca0508c21d85820bc733d1709aade514",
@@ -32411,12 +32411,12 @@
       "slug": "maewest",
       "assets": {
         "bundle": {
-          "sha256": "c2ac0681e0b7e4d21692e5e4a61ab67f6e9d35594be467ba0d48632214997843",
-          "size": 1602596
+          "sha256": "85e970b9ec27b0b42758e98e3542910b6a69b09016cef701178f06aeffd6c931",
+          "size": 1549252
         },
         "metadata": {
-          "sha256": "70ef99ceeaeb879669630131b075fc6750e4e5fba0c30f6f588993d6d9f5f397",
-          "size": 675
+          "sha256": "e47656a57cd5b7f852db61a4b5c6b3445a9af00734ca966533a679052ab772c5",
+          "size": 693
         },
         "portrait": {
           "sha256": "445f321d055787803fdc23cfebe86027bceae1fa877c1e7a5a3bb216b097e83e",
@@ -33830,12 +33830,12 @@
       "slug": "edithpiaf",
       "assets": {
         "bundle": {
-          "sha256": "258d4b0e3540cc35333a02cf940d1cf457242152a828bd9e4821d906afb7958c",
-          "size": 1578036
+          "sha256": "06faadc70574a3e8b66aef0d4b24a2c965c7a7f1ae89539e108f0667a51b9711",
+          "size": 1566252
         },
         "metadata": {
-          "sha256": "520291586fbcd2c79e294afc8cd93f4e068e5667577520623fd157f2b3bb124f",
-          "size": 613
+          "sha256": "89017093edca076cb92279f7afce1da9c089d2f9bdc1f25dd776e003712ef700",
+          "size": 684
         },
         "portrait": {
           "sha256": "99e3e66786c1745c44ec8dd42dd5b30e72fefea8ac217e95634bc7865fb6044e",
