@@ -40,7 +40,15 @@ still never readable by any server.
 
 Cloudflare Realtime TURN is the supported option (pay per GB; a relayed 16 MB
 handoff costs well under a cent). In the Cloudflare dashboard open
-**Realtime → TURN**, create a TURN key, then store its two values:
+**Realtime → TURN** and enable TURN for the account. Then, with an API token
+that has the Calls (Realtime) edit permission, one script creates the key,
+stores both values in Secret Manager, and attaches them to the running API:
+
+```bash
+CLOUDFLARE_API_TOKEN=... CLOUDFLARE_ACCOUNT_ID=... ./infra/enable-turn.sh
+```
+
+Or do it by hand: create the TURN key in the dashboard and store its two values:
 
 ```bash
 printf '%s' "$TURN_KEY_ID" | gcloud secrets create opensmash-cloudflare-turn-key-id --data-file=-
