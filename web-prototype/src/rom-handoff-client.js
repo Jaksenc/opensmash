@@ -87,8 +87,26 @@ async function api(path, { method = "GET", body } = {}) {
   } catch {
     payload = null;
   }
-  if (!response.ok) throw new Error(payload?.error || `Handoff request failed (${response.status}).`);
+  if (!response.ok) {
+    const error = new Error(payload?.error || `Handoff request failed (${response.status}).`);
+    error.status = response.status;
+    throw error;
+  }
   return payload;
+}
+
+/**
+ * Tell the other side why this side is leaving, then tear the room down. The
+ * short delay lets the peer's next poll read the reason instead of a 404.
+ */
+async function farewell(room, role, key, error) {
+  if (!room || !key) return;
+  const reason = error instanceof HandoffCancelled ? "cancelled" : (error?.message || "unknown error");
+  try {
+    await api(`/api/handoff/rooms/${room}/messages`, { method: "POST", body: { role, key, message: { type: "bye", reason } } });
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+  } catch { /* the room may already be gone */ }
+  api(`/api/handoff/rooms/${room}/close`, { method: "POST", body: { role, key } }).catch(() => {});
 }
 
 function sleep(ms, signal) {
@@ -155,9 +173,20 @@ async function runSignalling({ pc, room, role, key, onRemote, until, signal, dea
     if (pc.connectionState === "failed" || pc.iceConnectionState === "failed") {
       throw new Error(`${connectionFailedMessage(relay)} ${describeDiagnostics(pc, diag)}`);
     }
-    const view = await api(`/api/handoff/rooms/${room}/messages?role=${role}&key=${encodeURIComponent(key)}&after=${cursor}`);
+    let view;
+    try {
+      view = await api(`/api/handoff/rooms/${room}/messages?role=${role}&key=${encodeURIComponent(key)}&after=${cursor}`);
+    } catch (error) {
+      if (error.status === 404) throw new Error(`The other device ended the handoff before the connection came up. ${describeDiagnostics(pc, diag)}`);
+      throw error;
+    }
     cursor = view.cursor;
     for (const message of view.messages) {
+      if (message.type === "bye") {
+        throw new Error(message.reason === "cancelled"
+          ? "The other device cancelled the handoff."
+          : `The other device gave up: ${message.reason}`);
+      }
       if (message.type === "candidate") {
         if (remoteDescriptionSet) await addRemote(message.candidate);
         else pendingCandidates.push(message.candidate);
@@ -287,7 +316,7 @@ export function startRomHandoffHost({ loadRom, onState = () => {} }) {
     channel.close();
     pc.close();
   })().catch((error) => {
-    if (roomCode && hostKey) api(`/api/handoff/rooms/${roomCode}/close`, { method: "POST", body: { role: "host", key: hostKey } }).catch(() => {});
+    farewell(roomCode, "host", hostKey, error);
     pc?.close();
     if (error instanceof HandoffCancelled) { onState("cancelled"); return; }
     onState("error", { error });
@@ -405,7 +434,7 @@ export function receiveRomHandoff({ code, onState = () => {}, signal } = {}) {
     setTimeout(() => { try { channel.close(); pc.close(); } catch { /* already closed */ } }, 500);
     return file;
   })().catch((error) => {
-    if (roomCode && guestKey) api(`/api/handoff/rooms/${roomCode}/close`, { method: "POST", body: { role: "guest", key: guestKey } }).catch(() => {});
+    farewell(roomCode, "guest", guestKey, error);
     pc?.close();
     if (error instanceof HandoffCancelled) { onState("cancelled"); }
     else onState("error", { error });
