@@ -1,1054 +1,1054 @@
-# S and A tiers of seed-roster.csv, rank order (batch_characters.py input)
-Cleopatra
-King Henry the Eighth
-Donald Trump
-Winston Churchill
-Pope Francis
-Albert Einstein
-Frida Kahlo
-William Shakespeare
-Wolfgang Amadeus Mozart
-Stan Lee
-Clint Eastwood
-Robin Williams
-Anthony Bourdain
-Dolly Parton
-Tupac Shakur
-Conor McGregor
-IShowSpeed
-Dario Amodei
-The Loch Ness Monster
-Don Quixote
-The Statue of Liberty
-Popeye
-Elon Musk
-Sylvester Stallone
-Victor Wembanyama
-Babe Ruth
-Blackbeard
-Kim Jong Un
-Santa Claus
-Medusa
-Zlatan Ibrahimović
-David Lynch
-Deion Sanders
-Anna Wintour
-Daft Punk
-Andre Agassi
-Tonya Harding
-Lady Gaga
-Keanu Reeves
-Jesus Christ
-Napoleon
-George Washington
-Mahatma Gandhi
-Mother Teresa
-Nikola Tesla
-Yayoi Kusama
-Friedrich Nietzsche
-Ludwig van Beethoven
-Gabe Newell
-Marilyn Monroe
-Sacha Baron Cohen
-Kim Kardashian
-Michael Jackson
-Eminem
-John Cena
-MrBeast
-Sam Altman
-Bigfoot
-Sherlock Holmes
-Mona Lisa
-Betty Boop
-Steve Jobs
-Arnold Schwarzenegger
-Michael Jordan
-Jaromir Jagr
-Uncle Sam
-The Minotaur
-Diego Maradona
-Alfred Hitchcock
-Marshawn Lynch
-Karl Lagerfeld
-Skrillex
-Usain Bolt
-Billie Eilish
-Nicolas Cage
-Julius Caesar
-Queen Elizabeth the First
-Theodore Roosevelt
-Boris Johnson
-Dalai Lama
-Sigmund Freud
-Vincent van Gogh
-Edgar Allan Poe
-Liberace
-Jim Henson
-William Shatner
-Jim Carrey
-Gordon Ramsay
-Madonna
-Diddy
-Muhammad Ali
-Khaby Lame
-Ilya Sutskever
-Cthulhu
-Terracotta Warrior
-Oswald the Lucky Rabbit
-Mark Zuckerberg
-Bruce Lee
-Shaquille O'Neal
-The Grim Reaper
-Sun Wukong the Monkey King
-Ronaldinho
-John Waters
-Rob Gronkowski
-Steve Aoki
-Joey Chestnut
-Post Malone
-Dwayne The Rock Johnson
-Buddha
-Genghis Khan
-Abraham Lincoln
-Karl Marx
-Charles Darwin
-Andy Warhol
-Mark Twain
-Luciano Pavarotti
-Hideo Kojima
-Charlie Chaplin
-Eddie Murphy
-Paris Hilton
-Elvis Presley
-Snoop Dogg
-Khabib Nurmagomedov
-MySpace Tom
-Geoffrey Hinton
-Count Dracula
-The Scream
-Felix the Cat
-Jensen Huang
-Chuck Norris
-Dennis Rodman
-Krampus
-Anubis
-Mario Balotelli
-Bo Jackson
-Deadmau5
-John Daly
-Lizzo
-Jason Momoa
-Tutankhamun
-Marie Antoinette
-Benjamin Franklin
-Pablo Picasso
-Johann Sebastian Bach
-Shigeru Miyamoto
-John Wayne
-Rowan Atkinson
-Steve Irwin
-Freddie Mercury
-Biggie Smalls
-Hulk Hogan
-Pikotaro
-Andrej Karpathy
-Humpty Dumpty
-Easter Island Moai
-Tintin
-Colonel Sanders
-Jackie Chan
-Yao Ming
-Ruud Gullit
-Refrigerator Perry
-Marshmello
-Eddie the Eagle
-Psy
-Dolph Lundgren
-Attila the Hun
-Joan of Arc
-Bob Ross
-Masahiro Sakurai
-Jeff Goldblum
-Jack Black
-Mister Rogers
-Prince
-Vanilla Ice
-Mike Tyson
-Yann LeCun
-Pinocchio
-Venus de Milo
-Steve Ballmer
-Steven Seagal
-Muggsy Bogues
-Troy Polamalu
-Takeru Kobayashi
-Willem Dafoe
-Moses
-Vlad the Impaler
-Salvador Dalí
-Reggie Fils-Aimé
-Betty White
-Weird Al Yankovic
-RuPaul
-David Bowie
-DJ Khaled
-Tyson Fury
-Lex Fridman
-Ebenezer Scrooge
-Jean-Claude Van Damme
-Manute Bol
-Dave Bautista
-Leonidas
-Rasputin
-Lucille Ball
-Pee-wee Herman
-Judge Judy
-Cher
-Ol' Dirty Bastard
-Brock Lesnar
-Frankenstein's Monster
-Mr. T
-Samuel L. Jackson
-Henry Winkler
-Chris Farley
-Richard Simmons
-Ozzy Osbourne
-MC Hammer
-Andre the Giant
-Count Orlok
-Bear Grylls
-Peter Dinklage
-Peter Sellers
-Tommy Chong
-Jerry Springer
-Elton John
-Flavor Flav
-George Foreman
-Quasimodo
-Danny DeVito
-David Hasselhoff
-Cheech Marin
-Guy Fieri
-Kurt Cobain
-Lil Jon
-Ric Flair
-The Wicked Witch of the West
-Christopher Walken
-Adam West
-Larry the Cable Guy
-Dr. Phil
-Bob Marley
-Sir Mix-a-Lot
-The Undertaker
-The Tin Man
-Rajinikanth
-Groucho Marx
-Benny Hill
-Elvira
-Boy George
-Rey Mysterio
-Toshiro Mifune
-Gallagher
-Snooki
-Alice Cooper
-Macho Man Randy Savage
-Carrot Top
-Salt Bae
-Gene Simmons
-Hafthor Björnsson
-Jack LaLanne
-Slash
-Ronnie Coleman
-Grace Jones
-Stone Cold Steve Austin
-Louis Armstrong
-Eddie Hall
-Sid Vicious
-Butterbean
-Lemmy
-Rowdy Roddy Piper
-Kenny G
-Kimbo Slice
-Mick Foley
-Ultimate Warrior
-Bill Goldberg
-Jake the Snake Roberts
-Bob Sapp
-Hakuho
-Charles Atlas
-Christopher Columbus
-Charles Manson
-Narendra Modi
-Edward Snowden
-Amelia Earhart
-Jeff Bezos
-Zendaya
-Bruce Willis
-Shakira
-Shania Twain
-LeBron James
-Travis Kelce
-Erling Haaland
-Shohei Ohtani
-Novak Djokovic
-Baba Yaga
-Odysseus
-Robin Hood
-King Lear
-Homer
-Barack Obama
-Che Guevara
-David Attenborough
-George R. R. Martin
-Steven Spielberg
-Travis Scott
-Martin Luther
-Robert De Niro
-Adam Sandler
-Kylie Jenner
-Kai Cenat
-Daniela Amodei
-Mothman
-Winnie the Pooh
-Michelangelo's David
-Leonardo da Vinci
-Olive Oyl
-Anne Boleyn
-Andrea Bocelli
-Paul McCartney
-Jon Jones
-Heidi Klum
-Matt Groening
-Billy the Kid
-O.J. Simpson
-Javier Milei
-King Charles the Third
-Malcolm X
-Neil Armstrong
-Bill Gates
-Timothée Chalamet
-Mel Gibson
-Taylor Swift
-Johnny Cash
-Caitlin Clark
-Tom Brady
-Lionel Messi
-Jackie Robinson
-Lewis Hamilton
-Rumpelstiltskin
-Achilles
-King Arthur
-Falstaff
-Alexander the Great
-John F. Kennedy
-Joseph Stalin
-Robert Oppenheimer
-J. R. R. Tolkien
-Mel Brooks
-Jelly Roll
-Pope John Paul the Second
-Dick Van Dyke
-Will Ferrell
-Caitlyn Jenner
-KSI
-Demis Hassabis
-The Chupacabra
-Mr. Hyde
-Girl with a Pearl Earring
-Jean-Michel Basquiat
-Mary, Queen of Scots
-Frédéric Chopin
-Bob Dylan
-Batista
-Coco Chanel
-Akira Toriyama
-Wyatt Earp
-Pablo Escobar
-Xi Jinping
-Queen Victoria
-Martin Luther King Jr.
-Buzz Aldrin
-Walt Disney
-Millie Bobby Brown
-Carl Weathers
-Ariana Grande
-Willie Nelson
-Giannis Antetokounmpo
-Patrick Mahomes
-Cristiano Ronaldo
-Wayne Gretzky
-Serena Williams
-The Pied Piper
-Polyphemus the Cyclops
-Merlin
-Hamlet
-Nero
-Joe Biden
-Margaret Thatcher
-Stephen Hawking
-Ernest Hemingway
-Martin Scorsese
-Drake
-Francis of Assisi
-Harrison Ford
-Larry David
-Joe Rogan
-Logan Paul
-Aravind Srinivas
-The Yeti
-Faust
-Vitruvian Man
-Marina Abramović
-King Louis the Fourteenth
-Richard Wagner
-Janet Jackson
-Roman Reigns
-Naomi Campbell
-Osamu Tezuka
-Davy Crockett
-El Chapo
-Princess Diana
-Pocahontas
-Yuri Gagarin
-Warren Buffett
-Tom Cruise
-Jesse Ventura
-Harry Styles
-Avicii
-Kobe Bryant
-Peyton Manning
-Kylian Mbappé
-Ken Griffey Jr.
-Rafael Nadal
-Little Red Riding Hood
-Zeus
-Paul Bunyan
-Caliban
-Caligula
-Franklin Roosevelt
-Benito Mussolini
-Alan Turing
-Stephen King
-Quentin Tarantino
-Jay-Z
-Saint Patrick
-Al Pacino
-Kelsey Grammer
-Conan O'Brien
-Grimes
-Palmer Luckey
-The Jersey Devil
-Hercule Poirot
-Rosie the Riveter
-Michelangelo
-Catherine the Great
-Leonard Bernstein
-Mick Jagger
-CM Punk
-Tyra Banks
-John Romero
-Ned Kelly
-Al Capone
-King George the Third
-Greta Thunberg
-Howard Hughes
-Javier Bardem
-Lou Ferrigno
-Katy Perry
-Morgan Wallen
-Stephen Curry
-Bill Belichick
-Neymar
-Ichiro
-Roger Federer
-The Flying Dutchman
-Hercules the Greek Hero
-William Tell
-Iago
-Socrates
-Ronald Reagan
-Muammar Gaddafi
-Marie Curie
-Oscar Wilde
-Stanley Kubrick
-Cardi B
-Elizabeth Taylor
-Seth Rogen
-Ellen DeGeneres
-PewDiePie
-Terence Tao
-Professor Moriarty
-The American Gothic Farmer
-Claude Monet
-Charlemagne
-Antonio Vivaldi
-John Lennon
-Floyd Mayweather
-Twiggy
-Satoru Iwata
-Marco Polo
-Bernie Madoff
-Julian Assange
-Martha Stewart
-Jennifer Lopez
-Jet Li
-Miley Cyrus
-Toby Keith
-Kareem Abdul-Jabbar
-Colin Kaepernick
-Zinedine Zidane
-Alex Ovechkin
-Virat Kohli
-The Boogeyman
-Beowulf
-John Henry the Steel-Driving Man
-Puck from A Midsummer Night's Dream
-Hannibal
-Alexander Hamilton
-Mao Zedong
-Isaac Newton
-Franz Kafka
-Spike Lee
-50 Cent
-Audrey Hepburn
-Tim Allen
-Steve Harvey
-Tyler Ninja Blevins
-Alexandr Wang
-Robinson Crusoe
-Botticelli's Venus
-Rembrandt
-King Richard the Third
-Franz Liszt
-Stevie Nicks
-Cody Rhodes
-Donatella Versace
-Todd Howard
-Calamity Jane
-Elizabeth Holmes
-Sitting Bull
-Henry Ford
-Brad Pitt
-Donnie Yen
-Bruno Mars
-Waylon Jennings
-Magic Johnson
-Chad Ochocinco
-David Beckham
-Yogi Berra
-Michael Schumacher
-Davy Jones
-Odin
-Lancelot
-Lady Macbeth
-Plato
-Bill Clinton
-Saddam Hussein
-Thomas Edison
-Charles Dickens
-George Lucas
-Nicki Minaj
-Kurt Russell
-Kevin Hart
-Johnny Carson
-Claude Shannon
-Zorro
-The Thinker
-Keith Haring
-Lawrence of Arabia
-Yo-Yo Ma
-Frank Sinatra
-Canelo Álvarez
-Vivienne Westwood
-Pancho Villa
-Sam Bankman-Fried
-Crazy Horse
-Jason Statham
-Ip Man
-Rihanna
-Fatboy Slim
-Brittney Griner
-Terry Bradshaw
-Pelé
-Niki Lauda
-Leprechaun
-Gilgamesh
-Friar Tuck
-Juliet Capulet
-Xerxes
-Richard Nixon
-Vladimir Lenin
-Neil deGrasse Tyson
-Dante Alighieri
-Tim Burton
-Lil Wayne
-Jack Nicholson
-Mike Myers
-Jon Stewart
-Marc Andreessen
-Oliver Twist
-The Winged Victory of Samothrace
-Donatello
-Saladin
-George Michael
-Jake Paul
-Buffalo Bill
-Martin Shkreli
-Geronimo
-Ryan Reynolds
-Chow Yun-fat
-Justin Bieber
-Calvin Harris
-Larry Bird
-Joe Namath
-José Mourinho
-John McEnroe
-Cupid
-Loki the Norse God
-Pecos Bill
-Prospero
-Qin Shi Huang
-Ulysses S. Grant
-Mikhail Gorbachev
-Carl Sagan
-Dr. Seuss
-Wes Anderson
-Ice-T
-Ian McKellen
-Steve Martin
-Dana White
-Mira Murati
-Mephistopheles
-Lady Justice
-Richard the Lionheart
-Ringo Starr
-Kurt Angle
-Jacques Cousteau
-Angelina Jolie
-Tony Jaa
-Britney Spears
-Hank Williams
-Wilt Chamberlain
-John Madden
-Luis Suárez
-Tiger Woods
-The Headless Horseman
-Thor the Norse God
-Romeo Montague
-Confucius
-Bernie Sanders
-Fidel Castro
-Galileo Galilei
-Leo Tolstoy
-Hayao Miyazaki
-Ice Cube
-Sean Connery
-Pete Davidson
-Evel Knievel
-Lisa Su
-Tarzan
-Liberty Leading the People
-William Wallace
-Robert Smith
-Georges St-Pierre
-Annie Oakley
-Henry Cavill
-Sonny Chiba
-Beyoncé
-Garth Brooks
-Charles Barkley
-Mike Ditka
-Wayne Rooney
-Ayrton Senna
-The Tooth Fairy
-The Golem of Prague
-Macbeth
-Spartacus
-Andrew Jackson
-Kaiser Wilhelm
-Jane Goodall
-Werner Herzog
-Kendrick Lamar
-Marlon Brando
-Jerry Seinfeld
-Stephen Colbert
-Jeff Dean
-Carmen
-Whistler's Mother
-Mansa Musa
-Billy Joel
-Manny Pacquiao
-Leonardo DiCaprio
-Sammo Hung
-The Weeknd
-Tiësto
-Allen Iverson
-Vince Lombardi
-Jürgen Klopp
-Sachin Tendulkar
-Jack Frost
-Valkyrie
-Othello
-Nefertiti
-George Patton
-Eva Perón
-Linus Torvalds
-Guillermo del Toro
-Dr. Dre
-Judy Garland
-Richard Pryor
-David Letterman
-Greg Brockman
-Rip Van Winkle
-The Discus Thrower
-Miyamoto Musashi
-Tina Turner
-Triple H
-Johnny Depp
-Bolo Yeung
-Bad Bunny
-Nikola Jokić
-Paul Gascoigne
-Lance Armstrong
-John Bull
-The Sphinx
-Shylock
-Sun Tzu
-Douglas MacArthur
-Ho Chi Minh
-Steve Wozniak
-Akira Kurosawa
-Tyler the Creator
-Carrie Fisher
-Jonah Hill
-Harry Houdini
-Eliezer Yudkowsky
-The Cheshire Cat
-Suleiman the Magnificent
-Bruce Springsteen
-Ronda Rousey
-Robert Downey Jr.
-Ed Sheeran
-Dikembe Mutombo
-Eric Cantona
-Michael Phelps
-The Big Bad Wolf
-Sinbad the Sailor
-Laozi
-Sarah Palin
-Otto von Bismarck
-Bill Nye
-Kevin Smith
-Eazy-E
-Patrick Stewart
-Kevin James
-Howard Stern
-Stephen Wolfram
-Long John Silver
-Robespierre
-Stevie Wonder
-Chyna
-Hugh Jackman
-Jungkook
-Simone Biles
-Mother Goose
-Oni Demon
-Lu Bu
-Rob Ford
-Erwin Schrödinger
-Michael Moore
-LL Cool J
-Anthony Hopkins
-Kristen Wiig
-Julia Child
-Fei-Fei Li
-Van Helsing
-Peter the Great
-Jon Bon Jovi
-Seth Rollins
-James Gandolfini
-Chappell Roan
-Tony Hawk
-Father Time
-Kappa the Yokai
-Guan Yu
-Imelda Marcos
-Isambard Kingdom Brunel
-Ed Wood
-Coolio
-Burt Reynolds
-Don Rickles
-Bob Barker
-Ray Kurzweil
-Captain Hook
-Ragnar Lothbrok
-Jimi Hendrix
-Francis Ngannou
-Denzel Washington
-Billy Ray Cyrus
-Björn Borg
-The Easter Bunny
-Scheherazade
-Tycho Brahe
-Kid Rock
-Tom Selleck
-John Belushi
-Jay Leno
-Andrew Ng
-Miss Marple
-Ivan the Terrible
-Yoko Ono
-Anderson Silva
-Chris Hemsworth
-Doja Cat
-Jesse Owens
-Jack the Giant Killer
-Tengu
-RZA
-Christopher Lee
-Dan Aykroyd
-Alex Trebek
-Guido van Rossum
-Don Juan
-Guy Fawkes
-Courtney Love
-Big Show
-Pedro Pascal
-Burna Boy
-Dale Earnhardt
-Ali Baba
-Lil Nas X
-Christopher Reeve
-Ricky Gervais
-Michael Buffer
-Donald Knuth
-Peter Pan
-Kublai Khan
-Gwen Stefani
-Eddie Guerrero
-Tom Hardy
-Carlos Santana
-Sha'Carri Richardson
-Anansi
-Ice Spice
-Michael Keaton
-John Cleese
-Larry King
-Dwarkesh Patel
-Captain Nemo
-Horatio Nelson
-Tom Jones
-Evander Holyfield
-Idris Elba
-Ricky Martin
-Valentino Rossi
-Nezha
-André 3000
-Liza Minnelli
-Bill Murray
-Bruce Buffer
-Yoshua Bengio
-Cyrano de Bergerac
-Wu Zetian
-Aretha Franklin
-Rocky Marciano
-Morgan Freeman
-Pitbull
-Florence Griffith Joyner
-Grendel
-Method Man
-Shirley Temple
-George Carlin
-Jamie Oliver
-Marvin Minsky
-Victor Frankenstein
-Oda Nobunaga
-Dave Grohl
-Shawn Michaels
-Jane Fonda
-G-Dragon
-Danica Patrick
-Momotaro
-Busta Rhymes
-Farrah Fawcett
-Tracy Morgan
-David Copperfield
-Lee Sedol
-d'Artagnan
-Mata Hari
-Jim Morrison
-Randy Orton
-Julie Andrews
-Shane Warne
-Brunhilde
-Missy Elliott
-Humphrey Bogart
-Eddie Izzard
-Penn Jillette
-Captain Ahab
-Nostradamus
-Neil Young
-Fedor Emelianenko
-Gary Oldman
-Jonah Lomu
-Master P
-John Candy
-Chris Rock
-David Blaine
-Ichabod Crane
-Leif Erikson
-Robert Plant
-Chris Jericho
-Bryan Cranston
-Shaun White
-Lil Kim
-James Dean
-Zach Galifianakis
-Criss Angel
-The Invisible Man
-Yasuke
-Dean Martin
-Nate Diaz
-Will Smith
-Chuck D
-James Earl Jones
-Rodney Dangerfield
-Billy Blanks
-Dorothy Gale
-Casanova
-Keith Richards
-Bret Hart
-Giancarlo Esposito
-Grandmaster Flash
-Mark Hamill
-Dave Chappelle
-Marie Kondo
-Baron Munchausen
-Shaka Zulu
-Barry Manilow
-Becky Lynch
-Vin Diesel
-Rick Moranis
-Jerry Lewis
-Huckleberry Finn
-Montezuma
-Janis Joplin
-Booker T
-Daniel Radcliffe
-Fred Astaire
-Howie Mandel
-The Phantom of the Opera
-Hattori Hanzo
-Eddie Van Halen
-Antonio Inoki
-Pamela Anderson
-Leslie Nielsen
-Joan Rivers
-The Count of Monte Cristo
-Date Masamune
-Axl Rose
-Royce Gracie
-Jenna Ortega
-Charlton Heston
-Kenan Thompson
-The Mad Hatter
-Steven Tyler
-Shinsuke Nakamura
-Uma Thurman
-Leonard Nimoy
-Billy Connolly
-Tom Sawyer
-Jimmy Page
-Shah Rukh Khan
-Eartha Kitt
-Andy Kaufman
-John Carter of Mars
-Ray Charles
-Elijah Wood
-Don Knotts
-Katt Williams
-Tigger
-Debbie Harry
-Adam Driver
-Jackie Gleason
-George Lopez
-Sancho Panza
-Anthony Kiedis
-Benedict Cumberbatch
-Buster Keaton
-Bob Hope
-The Scarecrow
-Bono
-Andy Serkis
-Lynda Carter
-Sam Kinison
-Alice in Wonderland
-Brian May
-Amitabh Bachchan
-George Takei
-Eric Idle
-The Queen of Hearts
-Buddy Holly
-Steve Buscemi
-Curly Howard
-Gabriel Iglesias
-Phileas Fogg
-James Brown
-Whoopi Goldberg
-Moe Howard
-Dana Carvey
-The Cowardly Lion
-Morrissey
-Lucy Liu
-Mae West
-Figaro
-James Hetfield
-Mads Mikkelsen
-Stan Laurel
-Lemuel Gulliver
-Miles Davis
-Oprah Winfrey
-Oliver Hardy
-Cyndi Lauper
-Joe Pesci
-Lou Reed
-Tilda Swinton
-Flea
-Michelle Yeoh
-Billy Idol
-Michael Cera
-Corey Taylor
-Warwick Davis
-Iggy Pop
-Gwendoline Christie
-Angus Young
-Stephen Chow
-Kate Bush
-Jean Reno
-Sammy Davis Jr.
-Ken Watanabe
-Annie Lennox
-Billie Joe Armstrong
-Little Richard
-Chuck Berry
-Fred Durst
-Liam Gallagher
-Joan Jett
-Rob Zombie
-Billy Corgan
-Trent Reznor
-Jerry Garcia
-Wayne Newton
-Noel Gallagher
-Chad Kroeger
-Nina Simone
-Johnny Rotten
-Edith Piaf
-Siouxsie Sioux
-Marc Bolan
-Barry White
-Joey Ramone
-Adam Ant
-Ella Fitzgerald
-Fela Kuti
-Dizzy Gillespie
+# S and A tiers of seed-roster.csv, rank order. Columns: name<TAB>expander notes (roster section)
+Cleopatra	Roster category: ANCIENT & CLASSICAL
+King Henry the Eighth	Roster category: MEDIEVAL, RENAISSANCE & EARLY MODERN RULERS AND WARRIORS
+Donald Trump	Roster category: US PRESIDENTS & POLITICIANS
+Winston Churchill	Roster category: WORLD LEADERS (HISTORICAL)
+Pope Francis	Roster category: RELIGIOUS & SPIRITUAL
+Albert Einstein	Roster category: SCIENTISTS, INVENTORS & THINKERS
+Frida Kahlo	Roster category: ARTISTS, ARCHITECTS & PHOTOGRAPHERS
+William Shakespeare	Roster category: WRITERS & PHILOSOPHERS
+Wolfgang Amadeus Mozart	Roster category: COMPOSERS, CLASSICAL & STAGE
+Stan Lee	Roster category: GAME, COMICS & ANIMATION CREATORS
+Clint Eastwood	Roster category: CLASSIC HOLLYWOOD
+Robin Williams	Roster category: COMEDIANS
+Anthony Bourdain	Roster category: TV HOSTS, CHEFS, MAGICIANS & PERSONALITIES
+Dolly Parton	Roster category: ROCK & POP LEGENDS
+Tupac Shakur	Roster category: HIP-HOP & R&B
+Conor McGregor	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+IShowSpeed	Roster category: INTERNET, STREAMERS & ESPORTS
+Dario Amodei	Roster category: AI & MACHINE LEARNING
+The Loch Ness Monster	Roster category: FICTIONAL & FOLKLORE (public domain only) / Cryptids
+Don Quixote	Roster category: FICTIONAL & FOLKLORE (public domain only) / Literature
+The Statue of Liberty	Roster category: FICTIONAL & FOLKLORE (public domain only) / Art come to life
+Popeye	Roster category: FICTIONAL & FOLKLORE (public domain only) / Newly public domain cartoons (period-accurate designs only)
+Elon Musk	Roster category: TECH & BUSINESS
+Sylvester Stallone	Roster category: ACTION & MARTIAL ARTS
+Victor Wembanyama	Roster category: BASKETBALL
+Babe Ruth	Roster category: BASEBALL & HOCKEY
+Blackbeard	Roster category: EXPLORERS, PIRATES, WILD WEST & OUTLAWS
+Kim Jong Un	Roster category: WORLD LEADERS (CURRENT)
+Santa Claus	Roster category: FICTIONAL & FOLKLORE (public domain only) / Folklore & holiday
+Medusa	Roster category: FICTIONAL & FOLKLORE (public domain only) / Myth
+Zlatan Ibrahimović	Roster category: SOCCER
+David Lynch	Roster category: FILM DIRECTORS
+Deion Sanders	Roster category: AMERICAN FOOTBALL
+Anna Wintour	Roster category: FASHION & MODELS
+Daft Punk	Roster category: COUNTRY, EDM & OTHER
+Andre Agassi	Roster category: OLYMPICS, TENNIS, GOLF, MOTORSPORT & MORE
+Tonya Harding	Roster category: GANGSTERS, TRUE CRIME & FRAUDSTERS (intentional villains)
+Lady Gaga	Roster category: MODERN POP
+Keanu Reeves	Roster category: MODERN ACTORS
+Jesus Christ	Roster category: ANCIENT & CLASSICAL
+Napoleon	Roster category: MEDIEVAL, RENAISSANCE & EARLY MODERN RULERS AND WARRIORS
+George Washington	Roster category: US PRESIDENTS & POLITICIANS
+Mahatma Gandhi	Roster category: WORLD LEADERS (HISTORICAL)
+Mother Teresa	Roster category: RELIGIOUS & SPIRITUAL
+Nikola Tesla	Roster category: SCIENTISTS, INVENTORS & THINKERS
+Yayoi Kusama	Roster category: ARTISTS, ARCHITECTS & PHOTOGRAPHERS
+Friedrich Nietzsche	Roster category: WRITERS & PHILOSOPHERS
+Ludwig van Beethoven	Roster category: COMPOSERS, CLASSICAL & STAGE
+Gabe Newell	Roster category: GAME, COMICS & ANIMATION CREATORS
+Marilyn Monroe	Roster category: CLASSIC HOLLYWOOD
+Sacha Baron Cohen	Roster category: COMEDIANS
+Kim Kardashian	Roster category: TV HOSTS, CHEFS, MAGICIANS & PERSONALITIES
+Michael Jackson	Roster category: ROCK & POP LEGENDS
+Eminem	Roster category: HIP-HOP & R&B
+John Cena	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+MrBeast	Roster category: INTERNET, STREAMERS & ESPORTS
+Sam Altman	Roster category: AI & MACHINE LEARNING
+Bigfoot	Roster category: FICTIONAL & FOLKLORE (public domain only) / Cryptids
+Sherlock Holmes	Roster category: FICTIONAL & FOLKLORE (public domain only) / Literature
+Mona Lisa	Roster category: FICTIONAL & FOLKLORE (public domain only) / Art come to life
+Betty Boop	Roster category: FICTIONAL & FOLKLORE (public domain only) / Newly public domain cartoons (period-accurate designs only)
+Steve Jobs	Roster category: TECH & BUSINESS
+Arnold Schwarzenegger	Roster category: ACTION & MARTIAL ARTS
+Michael Jordan	Roster category: BASKETBALL
+Jaromir Jagr	Roster category: BASEBALL & HOCKEY
+Uncle Sam	Roster category: FICTIONAL & FOLKLORE (public domain only) / Folklore & holiday
+The Minotaur	Roster category: FICTIONAL & FOLKLORE (public domain only) / Myth
+Diego Maradona	Roster category: SOCCER
+Alfred Hitchcock	Roster category: FILM DIRECTORS
+Marshawn Lynch	Roster category: AMERICAN FOOTBALL
+Karl Lagerfeld	Roster category: FASHION & MODELS
+Skrillex	Roster category: COUNTRY, EDM & OTHER
+Usain Bolt	Roster category: OLYMPICS, TENNIS, GOLF, MOTORSPORT & MORE
+Billie Eilish	Roster category: MODERN POP
+Nicolas Cage	Roster category: MODERN ACTORS
+Julius Caesar	Roster category: ANCIENT & CLASSICAL
+Queen Elizabeth the First	Roster category: MEDIEVAL, RENAISSANCE & EARLY MODERN RULERS AND WARRIORS
+Theodore Roosevelt	Roster category: US PRESIDENTS & POLITICIANS
+Boris Johnson	Roster category: WORLD LEADERS (HISTORICAL)
+Dalai Lama	Roster category: RELIGIOUS & SPIRITUAL
+Sigmund Freud	Roster category: SCIENTISTS, INVENTORS & THINKERS
+Vincent van Gogh	Roster category: ARTISTS, ARCHITECTS & PHOTOGRAPHERS
+Edgar Allan Poe	Roster category: WRITERS & PHILOSOPHERS
+Liberace	Roster category: COMPOSERS, CLASSICAL & STAGE
+Jim Henson	Roster category: GAME, COMICS & ANIMATION CREATORS
+William Shatner	Roster category: CLASSIC HOLLYWOOD
+Jim Carrey	Roster category: COMEDIANS
+Gordon Ramsay	Roster category: TV HOSTS, CHEFS, MAGICIANS & PERSONALITIES
+Madonna	Roster category: ROCK & POP LEGENDS
+Diddy	Roster category: HIP-HOP & R&B
+Muhammad Ali	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+Khaby Lame	Roster category: INTERNET, STREAMERS & ESPORTS
+Ilya Sutskever	Roster category: AI & MACHINE LEARNING
+Cthulhu	Roster category: FICTIONAL & FOLKLORE (public domain only) / Literature
+Terracotta Warrior	Roster category: FICTIONAL & FOLKLORE (public domain only) / Art come to life
+Oswald the Lucky Rabbit	Roster category: FICTIONAL & FOLKLORE (public domain only) / Newly public domain cartoons (period-accurate designs only)
+Mark Zuckerberg	Roster category: TECH & BUSINESS
+Bruce Lee	Roster category: ACTION & MARTIAL ARTS
+Shaquille O'Neal	Roster category: BASKETBALL
+The Grim Reaper	Roster category: FICTIONAL & FOLKLORE (public domain only) / Folklore & holiday
+Sun Wukong the Monkey King	Roster category: FICTIONAL & FOLKLORE (public domain only) / Myth
+Ronaldinho	Roster category: SOCCER
+John Waters	Roster category: FILM DIRECTORS
+Rob Gronkowski	Roster category: AMERICAN FOOTBALL
+Steve Aoki	Roster category: COUNTRY, EDM & OTHER
+Joey Chestnut	Roster category: OLYMPICS, TENNIS, GOLF, MOTORSPORT & MORE
+Post Malone	Roster category: MODERN POP
+Dwayne The Rock Johnson	Roster category: MODERN ACTORS
+Buddha	Roster category: ANCIENT & CLASSICAL
+Genghis Khan	Roster category: MEDIEVAL, RENAISSANCE & EARLY MODERN RULERS AND WARRIORS
+Abraham Lincoln	Roster category: US PRESIDENTS & POLITICIANS
+Karl Marx	Roster category: WORLD LEADERS (HISTORICAL)
+Charles Darwin	Roster category: SCIENTISTS, INVENTORS & THINKERS
+Andy Warhol	Roster category: ARTISTS, ARCHITECTS & PHOTOGRAPHERS
+Mark Twain	Roster category: WRITERS & PHILOSOPHERS
+Luciano Pavarotti	Roster category: COMPOSERS, CLASSICAL & STAGE
+Hideo Kojima	Roster category: GAME, COMICS & ANIMATION CREATORS
+Charlie Chaplin	Roster category: CLASSIC HOLLYWOOD
+Eddie Murphy	Roster category: COMEDIANS
+Paris Hilton	Roster category: TV HOSTS, CHEFS, MAGICIANS & PERSONALITIES
+Elvis Presley	Roster category: ROCK & POP LEGENDS
+Snoop Dogg	Roster category: HIP-HOP & R&B
+Khabib Nurmagomedov	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+MySpace Tom	Roster category: INTERNET, STREAMERS & ESPORTS
+Geoffrey Hinton	Roster category: AI & MACHINE LEARNING
+Count Dracula	Roster category: FICTIONAL & FOLKLORE (public domain only) / Literature
+The Scream	Roster category: FICTIONAL & FOLKLORE (public domain only) / Art come to life
+Felix the Cat	Roster category: FICTIONAL & FOLKLORE (public domain only) / Newly public domain cartoons (period-accurate designs only)
+Jensen Huang	Roster category: TECH & BUSINESS
+Chuck Norris	Roster category: ACTION & MARTIAL ARTS
+Dennis Rodman	Roster category: BASKETBALL
+Krampus	Roster category: FICTIONAL & FOLKLORE (public domain only) / Folklore & holiday
+Anubis	Roster category: FICTIONAL & FOLKLORE (public domain only) / Myth
+Mario Balotelli	Roster category: SOCCER
+Bo Jackson	Roster category: AMERICAN FOOTBALL
+Deadmau5	Roster category: COUNTRY, EDM & OTHER
+John Daly	Roster category: OLYMPICS, TENNIS, GOLF, MOTORSPORT & MORE
+Lizzo	Roster category: MODERN POP
+Jason Momoa	Roster category: MODERN ACTORS
+Tutankhamun	Roster category: ANCIENT & CLASSICAL
+Marie Antoinette	Roster category: MEDIEVAL, RENAISSANCE & EARLY MODERN RULERS AND WARRIORS
+Benjamin Franklin	Roster category: US PRESIDENTS & POLITICIANS
+Pablo Picasso	Roster category: ARTISTS, ARCHITECTS & PHOTOGRAPHERS
+Johann Sebastian Bach	Roster category: COMPOSERS, CLASSICAL & STAGE
+Shigeru Miyamoto	Roster category: GAME, COMICS & ANIMATION CREATORS
+John Wayne	Roster category: CLASSIC HOLLYWOOD
+Rowan Atkinson	Roster category: COMEDIANS
+Steve Irwin	Roster category: TV HOSTS, CHEFS, MAGICIANS & PERSONALITIES
+Freddie Mercury	Roster category: ROCK & POP LEGENDS
+Biggie Smalls	Roster category: HIP-HOP & R&B
+Hulk Hogan	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+Pikotaro	Roster category: INTERNET, STREAMERS & ESPORTS
+Andrej Karpathy	Roster category: AI & MACHINE LEARNING
+Humpty Dumpty	Roster category: FICTIONAL & FOLKLORE (public domain only) / Literature
+Easter Island Moai	Roster category: FICTIONAL & FOLKLORE (public domain only) / Art come to life
+Tintin	Roster category: FICTIONAL & FOLKLORE (public domain only) / Newly public domain cartoons (period-accurate designs only)
+Colonel Sanders	Roster category: TECH & BUSINESS
+Jackie Chan	Roster category: ACTION & MARTIAL ARTS
+Yao Ming	Roster category: BASKETBALL
+Ruud Gullit	Roster category: SOCCER
+Refrigerator Perry	Roster category: AMERICAN FOOTBALL
+Marshmello	Roster category: COUNTRY, EDM & OTHER
+Eddie the Eagle	Roster category: OLYMPICS, TENNIS, GOLF, MOTORSPORT & MORE
+Psy	Roster category: MODERN POP
+Dolph Lundgren	Roster category: MODERN ACTORS
+Attila the Hun	Roster category: ANCIENT & CLASSICAL
+Joan of Arc	Roster category: MEDIEVAL, RENAISSANCE & EARLY MODERN RULERS AND WARRIORS
+Bob Ross	Roster category: ARTISTS, ARCHITECTS & PHOTOGRAPHERS
+Masahiro Sakurai	Roster category: GAME, COMICS & ANIMATION CREATORS
+Jeff Goldblum	Roster category: CLASSIC HOLLYWOOD
+Jack Black	Roster category: COMEDIANS
+Mister Rogers	Roster category: TV HOSTS, CHEFS, MAGICIANS & PERSONALITIES
+Prince	Roster category: ROCK & POP LEGENDS
+Vanilla Ice	Roster category: HIP-HOP & R&B
+Mike Tyson	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+Yann LeCun	Roster category: AI & MACHINE LEARNING
+Pinocchio	Roster category: FICTIONAL & FOLKLORE (public domain only) / Literature
+Venus de Milo	Roster category: FICTIONAL & FOLKLORE (public domain only) / Art come to life
+Steve Ballmer	Roster category: TECH & BUSINESS
+Steven Seagal	Roster category: ACTION & MARTIAL ARTS
+Muggsy Bogues	Roster category: BASKETBALL
+Troy Polamalu	Roster category: AMERICAN FOOTBALL
+Takeru Kobayashi	Roster category: OLYMPICS, TENNIS, GOLF, MOTORSPORT & MORE
+Willem Dafoe	Roster category: MODERN ACTORS
+Moses	Roster category: ANCIENT & CLASSICAL
+Vlad the Impaler	Roster category: MEDIEVAL, RENAISSANCE & EARLY MODERN RULERS AND WARRIORS
+Salvador Dalí	Roster category: ARTISTS, ARCHITECTS & PHOTOGRAPHERS
+Reggie Fils-Aimé	Roster category: GAME, COMICS & ANIMATION CREATORS
+Betty White	Roster category: CLASSIC HOLLYWOOD
+Weird Al Yankovic	Roster category: COMEDIANS
+RuPaul	Roster category: TV HOSTS, CHEFS, MAGICIANS & PERSONALITIES
+David Bowie	Roster category: ROCK & POP LEGENDS
+DJ Khaled	Roster category: HIP-HOP & R&B
+Tyson Fury	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+Lex Fridman	Roster category: AI & MACHINE LEARNING
+Ebenezer Scrooge	Roster category: FICTIONAL & FOLKLORE (public domain only) / Literature
+Jean-Claude Van Damme	Roster category: ACTION & MARTIAL ARTS
+Manute Bol	Roster category: BASKETBALL
+Dave Bautista	Roster category: MODERN ACTORS
+Leonidas	Roster category: ANCIENT & CLASSICAL
+Rasputin	Roster category: MEDIEVAL, RENAISSANCE & EARLY MODERN RULERS AND WARRIORS
+Lucille Ball	Roster category: CLASSIC HOLLYWOOD
+Pee-wee Herman	Roster category: COMEDIANS
+Judge Judy	Roster category: TV HOSTS, CHEFS, MAGICIANS & PERSONALITIES
+Cher	Roster category: ROCK & POP LEGENDS
+Ol' Dirty Bastard	Roster category: HIP-HOP & R&B
+Brock Lesnar	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+Frankenstein's Monster	Roster category: FICTIONAL & FOLKLORE (public domain only) / Literature
+Mr. T	Roster category: ACTION & MARTIAL ARTS
+Samuel L. Jackson	Roster category: MODERN ACTORS
+Henry Winkler	Roster category: CLASSIC HOLLYWOOD
+Chris Farley	Roster category: COMEDIANS
+Richard Simmons	Roster category: TV HOSTS, CHEFS, MAGICIANS & PERSONALITIES
+Ozzy Osbourne	Roster category: ROCK & POP LEGENDS
+MC Hammer	Roster category: HIP-HOP & R&B
+Andre the Giant	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+Count Orlok	Roster category: FICTIONAL & FOLKLORE (public domain only) / Literature
+Bear Grylls	Roster category: ACTION & MARTIAL ARTS
+Peter Dinklage	Roster category: MODERN ACTORS
+Peter Sellers	Roster category: CLASSIC HOLLYWOOD
+Tommy Chong	Roster category: COMEDIANS
+Jerry Springer	Roster category: TV HOSTS, CHEFS, MAGICIANS & PERSONALITIES
+Elton John	Roster category: ROCK & POP LEGENDS
+Flavor Flav	Roster category: HIP-HOP & R&B
+George Foreman	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+Quasimodo	Roster category: FICTIONAL & FOLKLORE (public domain only) / Literature
+Danny DeVito	Roster category: MODERN ACTORS
+David Hasselhoff	Roster category: CLASSIC HOLLYWOOD
+Cheech Marin	Roster category: COMEDIANS
+Guy Fieri	Roster category: TV HOSTS, CHEFS, MAGICIANS & PERSONALITIES
+Kurt Cobain	Roster category: ROCK & POP LEGENDS
+Lil Jon	Roster category: HIP-HOP & R&B
+Ric Flair	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+The Wicked Witch of the West	Roster category: FICTIONAL & FOLKLORE (public domain only) / Literature
+Christopher Walken	Roster category: MODERN ACTORS
+Adam West	Roster category: CLASSIC HOLLYWOOD
+Larry the Cable Guy	Roster category: COMEDIANS
+Dr. Phil	Roster category: TV HOSTS, CHEFS, MAGICIANS & PERSONALITIES
+Bob Marley	Roster category: ROCK & POP LEGENDS
+Sir Mix-a-Lot	Roster category: HIP-HOP & R&B
+The Undertaker	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+The Tin Man	Roster category: FICTIONAL & FOLKLORE (public domain only) / Literature
+Rajinikanth	Roster category: MODERN ACTORS
+Groucho Marx	Roster category: CLASSIC HOLLYWOOD
+Benny Hill	Roster category: COMEDIANS
+Elvira	Roster category: TV HOSTS, CHEFS, MAGICIANS & PERSONALITIES
+Boy George	Roster category: ROCK & POP LEGENDS
+Rey Mysterio	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+Toshiro Mifune	Roster category: CLASSIC HOLLYWOOD
+Gallagher	Roster category: COMEDIANS
+Snooki	Roster category: TV HOSTS, CHEFS, MAGICIANS & PERSONALITIES
+Alice Cooper	Roster category: ROCK & POP LEGENDS
+Macho Man Randy Savage	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+Carrot Top	Roster category: COMEDIANS
+Salt Bae	Roster category: TV HOSTS, CHEFS, MAGICIANS & PERSONALITIES
+Gene Simmons	Roster category: ROCK & POP LEGENDS
+Hafthor Björnsson	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+Jack LaLanne	Roster category: TV HOSTS, CHEFS, MAGICIANS & PERSONALITIES
+Slash	Roster category: ROCK & POP LEGENDS
+Ronnie Coleman	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+Grace Jones	Roster category: ROCK & POP LEGENDS
+Stone Cold Steve Austin	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+Louis Armstrong	Roster category: ROCK & POP LEGENDS
+Eddie Hall	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+Sid Vicious	Roster category: ROCK & POP LEGENDS
+Butterbean	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+Lemmy	Roster category: ROCK & POP LEGENDS
+Rowdy Roddy Piper	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+Kenny G	Roster category: ROCK & POP LEGENDS
+Kimbo Slice	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+Mick Foley	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+Ultimate Warrior	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+Bill Goldberg	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+Jake the Snake Roberts	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+Bob Sapp	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+Hakuho	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+Charles Atlas	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+Christopher Columbus	Roster category: EXPLORERS, PIRATES, WILD WEST & OUTLAWS
+Charles Manson	Roster category: GANGSTERS, TRUE CRIME & FRAUDSTERS (intentional villains)
+Narendra Modi	Roster category: WORLD LEADERS (CURRENT)
+Edward Snowden	Roster category: ACTIVISTS, CIVIL RIGHTS & WHISTLEBLOWERS
+Amelia Earhart	Roster category: ASTRONAUTS & AVIATORS
+Jeff Bezos	Roster category: TECH & BUSINESS
+Zendaya	Roster category: MODERN ACTORS
+Bruce Willis	Roster category: ACTION & MARTIAL ARTS
+Shakira	Roster category: MODERN POP
+Shania Twain	Roster category: COUNTRY, EDM & OTHER
+LeBron James	Roster category: BASKETBALL
+Travis Kelce	Roster category: AMERICAN FOOTBALL
+Erling Haaland	Roster category: SOCCER
+Shohei Ohtani	Roster category: BASEBALL & HOCKEY
+Novak Djokovic	Roster category: OLYMPICS, TENNIS, GOLF, MOTORSPORT & MORE
+Baba Yaga	Roster category: FICTIONAL & FOLKLORE (public domain only) / Folklore & holiday
+Odysseus	Roster category: FICTIONAL & FOLKLORE (public domain only) / Myth
+Robin Hood	Roster category: FICTIONAL & FOLKLORE (public domain only) / Legend & tall tales
+King Lear	Roster category: FICTIONAL & FOLKLORE (public domain only) / Shakespeare
+Homer	Roster category: ANCIENT & CLASSICAL
+Barack Obama	Roster category: US PRESIDENTS & POLITICIANS
+Che Guevara	Roster category: WORLD LEADERS (HISTORICAL)
+David Attenborough	Roster category: SCIENTISTS, INVENTORS & THINKERS
+George R. R. Martin	Roster category: WRITERS & PHILOSOPHERS
+Steven Spielberg	Roster category: FILM DIRECTORS
+Travis Scott	Roster category: HIP-HOP & R&B
+Martin Luther	Roster category: RELIGIOUS & SPIRITUAL
+Robert De Niro	Roster category: CLASSIC HOLLYWOOD
+Adam Sandler	Roster category: COMEDIANS
+Kylie Jenner	Roster category: TV HOSTS, CHEFS, MAGICIANS & PERSONALITIES
+Kai Cenat	Roster category: INTERNET, STREAMERS & ESPORTS
+Daniela Amodei	Roster category: AI & MACHINE LEARNING
+Mothman	Roster category: FICTIONAL & FOLKLORE (public domain only) / Cryptids
+Winnie the Pooh	Roster category: FICTIONAL & FOLKLORE (public domain only) / Literature
+Michelangelo's David	Roster category: FICTIONAL & FOLKLORE (public domain only) / Art come to life
+Leonardo da Vinci	Roster category: ARTISTS, ARCHITECTS & PHOTOGRAPHERS
+Olive Oyl	Roster category: FICTIONAL & FOLKLORE (public domain only) / Newly public domain cartoons (period-accurate designs only)
+Anne Boleyn	Roster category: MEDIEVAL, RENAISSANCE & EARLY MODERN RULERS AND WARRIORS
+Andrea Bocelli	Roster category: COMPOSERS, CLASSICAL & STAGE
+Paul McCartney	Roster category: ROCK & POP LEGENDS
+Jon Jones	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+Heidi Klum	Roster category: FASHION & MODELS
+Matt Groening	Roster category: GAME, COMICS & ANIMATION CREATORS
+Billy the Kid	Roster category: EXPLORERS, PIRATES, WILD WEST & OUTLAWS
+O.J. Simpson	Roster category: GANGSTERS, TRUE CRIME & FRAUDSTERS (intentional villains)
+Javier Milei	Roster category: WORLD LEADERS (CURRENT)
+King Charles the Third	Roster category: BRITISH ROYALS
+Malcolm X	Roster category: ACTIVISTS, CIVIL RIGHTS & WHISTLEBLOWERS
+Neil Armstrong	Roster category: ASTRONAUTS & AVIATORS
+Bill Gates	Roster category: TECH & BUSINESS
+Timothée Chalamet	Roster category: MODERN ACTORS
+Mel Gibson	Roster category: ACTION & MARTIAL ARTS
+Taylor Swift	Roster category: MODERN POP
+Johnny Cash	Roster category: COUNTRY, EDM & OTHER
+Caitlin Clark	Roster category: BASKETBALL
+Tom Brady	Roster category: AMERICAN FOOTBALL
+Lionel Messi	Roster category: SOCCER
+Jackie Robinson	Roster category: BASEBALL & HOCKEY
+Lewis Hamilton	Roster category: OLYMPICS, TENNIS, GOLF, MOTORSPORT & MORE
+Rumpelstiltskin	Roster category: FICTIONAL & FOLKLORE (public domain only) / Folklore & holiday
+Achilles	Roster category: FICTIONAL & FOLKLORE (public domain only) / Myth
+King Arthur	Roster category: FICTIONAL & FOLKLORE (public domain only) / Legend & tall tales
+Falstaff	Roster category: FICTIONAL & FOLKLORE (public domain only) / Shakespeare
+Alexander the Great	Roster category: ANCIENT & CLASSICAL
+John F. Kennedy	Roster category: US PRESIDENTS & POLITICIANS
+Joseph Stalin	Roster category: WORLD LEADERS (HISTORICAL)
+Robert Oppenheimer	Roster category: SCIENTISTS, INVENTORS & THINKERS
+J. R. R. Tolkien	Roster category: WRITERS & PHILOSOPHERS
+Mel Brooks	Roster category: FILM DIRECTORS
+Jelly Roll	Roster category: HIP-HOP & R&B
+Pope John Paul the Second	Roster category: RELIGIOUS & SPIRITUAL
+Dick Van Dyke	Roster category: CLASSIC HOLLYWOOD
+Will Ferrell	Roster category: COMEDIANS
+Caitlyn Jenner	Roster category: TV HOSTS, CHEFS, MAGICIANS & PERSONALITIES
+KSI	Roster category: INTERNET, STREAMERS & ESPORTS
+Demis Hassabis	Roster category: AI & MACHINE LEARNING
+The Chupacabra	Roster category: FICTIONAL & FOLKLORE (public domain only) / Cryptids
+Mr. Hyde	Roster category: FICTIONAL & FOLKLORE (public domain only) / Literature
+Girl with a Pearl Earring	Roster category: FICTIONAL & FOLKLORE (public domain only) / Art come to life
+Jean-Michel Basquiat	Roster category: ARTISTS, ARCHITECTS & PHOTOGRAPHERS
+Mary, Queen of Scots	Roster category: MEDIEVAL, RENAISSANCE & EARLY MODERN RULERS AND WARRIORS
+Frédéric Chopin	Roster category: COMPOSERS, CLASSICAL & STAGE
+Bob Dylan	Roster category: ROCK & POP LEGENDS
+Batista	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+Coco Chanel	Roster category: FASHION & MODELS
+Akira Toriyama	Roster category: GAME, COMICS & ANIMATION CREATORS
+Wyatt Earp	Roster category: EXPLORERS, PIRATES, WILD WEST & OUTLAWS
+Pablo Escobar	Roster category: GANGSTERS, TRUE CRIME & FRAUDSTERS (intentional villains)
+Xi Jinping	Roster category: WORLD LEADERS (CURRENT)
+Queen Victoria	Roster category: BRITISH ROYALS
+Martin Luther King Jr.	Roster category: ACTIVISTS, CIVIL RIGHTS & WHISTLEBLOWERS
+Buzz Aldrin	Roster category: ASTRONAUTS & AVIATORS
+Walt Disney	Roster category: TECH & BUSINESS
+Millie Bobby Brown	Roster category: MODERN ACTORS
+Carl Weathers	Roster category: ACTION & MARTIAL ARTS
+Ariana Grande	Roster category: MODERN POP
+Willie Nelson	Roster category: COUNTRY, EDM & OTHER
+Giannis Antetokounmpo	Roster category: BASKETBALL
+Patrick Mahomes	Roster category: AMERICAN FOOTBALL
+Cristiano Ronaldo	Roster category: SOCCER
+Wayne Gretzky	Roster category: BASEBALL & HOCKEY
+Serena Williams	Roster category: OLYMPICS, TENNIS, GOLF, MOTORSPORT & MORE
+The Pied Piper	Roster category: FICTIONAL & FOLKLORE (public domain only) / Folklore & holiday
+Polyphemus the Cyclops	Roster category: FICTIONAL & FOLKLORE (public domain only) / Myth
+Merlin	Roster category: FICTIONAL & FOLKLORE (public domain only) / Legend & tall tales
+Hamlet	Roster category: FICTIONAL & FOLKLORE (public domain only) / Shakespeare
+Nero	Roster category: ANCIENT & CLASSICAL
+Joe Biden	Roster category: US PRESIDENTS & POLITICIANS
+Margaret Thatcher	Roster category: WORLD LEADERS (HISTORICAL)
+Stephen Hawking	Roster category: SCIENTISTS, INVENTORS & THINKERS
+Ernest Hemingway	Roster category: WRITERS & PHILOSOPHERS
+Martin Scorsese	Roster category: FILM DIRECTORS
+Drake	Roster category: HIP-HOP & R&B
+Francis of Assisi	Roster category: RELIGIOUS & SPIRITUAL
+Harrison Ford	Roster category: CLASSIC HOLLYWOOD
+Larry David	Roster category: COMEDIANS
+Joe Rogan	Roster category: TV HOSTS, CHEFS, MAGICIANS & PERSONALITIES
+Logan Paul	Roster category: INTERNET, STREAMERS & ESPORTS
+Aravind Srinivas	Roster category: AI & MACHINE LEARNING
+The Yeti	Roster category: FICTIONAL & FOLKLORE (public domain only) / Cryptids
+Faust	Roster category: FICTIONAL & FOLKLORE (public domain only) / Literature
+Vitruvian Man	Roster category: FICTIONAL & FOLKLORE (public domain only) / Art come to life
+Marina Abramović	Roster category: ARTISTS, ARCHITECTS & PHOTOGRAPHERS
+King Louis the Fourteenth	Roster category: MEDIEVAL, RENAISSANCE & EARLY MODERN RULERS AND WARRIORS
+Richard Wagner	Roster category: COMPOSERS, CLASSICAL & STAGE
+Janet Jackson	Roster category: ROCK & POP LEGENDS
+Roman Reigns	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+Naomi Campbell	Roster category: FASHION & MODELS
+Osamu Tezuka	Roster category: GAME, COMICS & ANIMATION CREATORS
+Davy Crockett	Roster category: EXPLORERS, PIRATES, WILD WEST & OUTLAWS
+El Chapo	Roster category: GANGSTERS, TRUE CRIME & FRAUDSTERS (intentional villains)
+Princess Diana	Roster category: BRITISH ROYALS
+Pocahontas	Roster category: ACTIVISTS, CIVIL RIGHTS & WHISTLEBLOWERS
+Yuri Gagarin	Roster category: ASTRONAUTS & AVIATORS
+Warren Buffett	Roster category: TECH & BUSINESS
+Tom Cruise	Roster category: MODERN ACTORS
+Jesse Ventura	Roster category: ACTION & MARTIAL ARTS
+Harry Styles	Roster category: MODERN POP
+Avicii	Roster category: COUNTRY, EDM & OTHER
+Kobe Bryant	Roster category: BASKETBALL
+Peyton Manning	Roster category: AMERICAN FOOTBALL
+Kylian Mbappé	Roster category: SOCCER
+Ken Griffey Jr.	Roster category: BASEBALL & HOCKEY
+Rafael Nadal	Roster category: OLYMPICS, TENNIS, GOLF, MOTORSPORT & MORE
+Little Red Riding Hood	Roster category: FICTIONAL & FOLKLORE (public domain only) / Folklore & holiday
+Zeus	Roster category: FICTIONAL & FOLKLORE (public domain only) / Myth
+Paul Bunyan	Roster category: FICTIONAL & FOLKLORE (public domain only) / Legend & tall tales
+Caliban	Roster category: FICTIONAL & FOLKLORE (public domain only) / Shakespeare
+Caligula	Roster category: ANCIENT & CLASSICAL
+Franklin Roosevelt	Roster category: US PRESIDENTS & POLITICIANS
+Benito Mussolini	Roster category: WORLD LEADERS (HISTORICAL)
+Alan Turing	Roster category: SCIENTISTS, INVENTORS & THINKERS
+Stephen King	Roster category: WRITERS & PHILOSOPHERS
+Quentin Tarantino	Roster category: FILM DIRECTORS
+Jay-Z	Roster category: HIP-HOP & R&B
+Saint Patrick	Roster category: RELIGIOUS & SPIRITUAL
+Al Pacino	Roster category: CLASSIC HOLLYWOOD
+Kelsey Grammer	Roster category: COMEDIANS
+Conan O'Brien	Roster category: TV HOSTS, CHEFS, MAGICIANS & PERSONALITIES
+Grimes	Roster category: INTERNET, STREAMERS & ESPORTS
+Palmer Luckey	Roster category: AI & MACHINE LEARNING
+The Jersey Devil	Roster category: FICTIONAL & FOLKLORE (public domain only) / Cryptids
+Hercule Poirot	Roster category: FICTIONAL & FOLKLORE (public domain only) / Literature
+Rosie the Riveter	Roster category: FICTIONAL & FOLKLORE (public domain only) / Art come to life
+Michelangelo	Roster category: ARTISTS, ARCHITECTS & PHOTOGRAPHERS
+Catherine the Great	Roster category: MEDIEVAL, RENAISSANCE & EARLY MODERN RULERS AND WARRIORS
+Leonard Bernstein	Roster category: COMPOSERS, CLASSICAL & STAGE
+Mick Jagger	Roster category: ROCK & POP LEGENDS
+CM Punk	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+Tyra Banks	Roster category: FASHION & MODELS
+John Romero	Roster category: GAME, COMICS & ANIMATION CREATORS
+Ned Kelly	Roster category: EXPLORERS, PIRATES, WILD WEST & OUTLAWS
+Al Capone	Roster category: GANGSTERS, TRUE CRIME & FRAUDSTERS (intentional villains)
+King George the Third	Roster category: BRITISH ROYALS
+Greta Thunberg	Roster category: ACTIVISTS, CIVIL RIGHTS & WHISTLEBLOWERS
+Howard Hughes	Roster category: TECH & BUSINESS
+Javier Bardem	Roster category: MODERN ACTORS
+Lou Ferrigno	Roster category: ACTION & MARTIAL ARTS
+Katy Perry	Roster category: MODERN POP
+Morgan Wallen	Roster category: COUNTRY, EDM & OTHER
+Stephen Curry	Roster category: BASKETBALL
+Bill Belichick	Roster category: AMERICAN FOOTBALL
+Neymar	Roster category: SOCCER
+Ichiro	Roster category: BASEBALL & HOCKEY
+Roger Federer	Roster category: OLYMPICS, TENNIS, GOLF, MOTORSPORT & MORE
+The Flying Dutchman	Roster category: FICTIONAL & FOLKLORE (public domain only) / Folklore & holiday
+Hercules the Greek Hero	Roster category: FICTIONAL & FOLKLORE (public domain only) / Myth
+William Tell	Roster category: FICTIONAL & FOLKLORE (public domain only) / Legend & tall tales
+Iago	Roster category: FICTIONAL & FOLKLORE (public domain only) / Shakespeare
+Socrates	Roster category: ANCIENT & CLASSICAL
+Ronald Reagan	Roster category: US PRESIDENTS & POLITICIANS
+Muammar Gaddafi	Roster category: WORLD LEADERS (HISTORICAL)
+Marie Curie	Roster category: SCIENTISTS, INVENTORS & THINKERS
+Oscar Wilde	Roster category: WRITERS & PHILOSOPHERS
+Stanley Kubrick	Roster category: FILM DIRECTORS
+Cardi B	Roster category: HIP-HOP & R&B
+Elizabeth Taylor	Roster category: CLASSIC HOLLYWOOD
+Seth Rogen	Roster category: COMEDIANS
+Ellen DeGeneres	Roster category: TV HOSTS, CHEFS, MAGICIANS & PERSONALITIES
+PewDiePie	Roster category: INTERNET, STREAMERS & ESPORTS
+Terence Tao	Roster category: AI & MACHINE LEARNING
+Professor Moriarty	Roster category: FICTIONAL & FOLKLORE (public domain only) / Literature
+The American Gothic Farmer	Roster category: FICTIONAL & FOLKLORE (public domain only) / Art come to life
+Claude Monet	Roster category: ARTISTS, ARCHITECTS & PHOTOGRAPHERS
+Charlemagne	Roster category: MEDIEVAL, RENAISSANCE & EARLY MODERN RULERS AND WARRIORS
+Antonio Vivaldi	Roster category: COMPOSERS, CLASSICAL & STAGE
+John Lennon	Roster category: ROCK & POP LEGENDS
+Floyd Mayweather	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+Twiggy	Roster category: FASHION & MODELS
+Satoru Iwata	Roster category: GAME, COMICS & ANIMATION CREATORS
+Marco Polo	Roster category: EXPLORERS, PIRATES, WILD WEST & OUTLAWS
+Bernie Madoff	Roster category: GANGSTERS, TRUE CRIME & FRAUDSTERS (intentional villains)
+Julian Assange	Roster category: ACTIVISTS, CIVIL RIGHTS & WHISTLEBLOWERS
+Martha Stewart	Roster category: TECH & BUSINESS
+Jennifer Lopez	Roster category: MODERN ACTORS
+Jet Li	Roster category: ACTION & MARTIAL ARTS
+Miley Cyrus	Roster category: MODERN POP
+Toby Keith	Roster category: COUNTRY, EDM & OTHER
+Kareem Abdul-Jabbar	Roster category: BASKETBALL
+Colin Kaepernick	Roster category: AMERICAN FOOTBALL
+Zinedine Zidane	Roster category: SOCCER
+Alex Ovechkin	Roster category: BASEBALL & HOCKEY
+Virat Kohli	Roster category: OLYMPICS, TENNIS, GOLF, MOTORSPORT & MORE
+The Boogeyman	Roster category: FICTIONAL & FOLKLORE (public domain only) / Folklore & holiday
+Beowulf	Roster category: FICTIONAL & FOLKLORE (public domain only) / Myth
+John Henry the Steel-Driving Man	Roster category: FICTIONAL & FOLKLORE (public domain only) / Legend & tall tales
+Puck from A Midsummer Night's Dream	Roster category: FICTIONAL & FOLKLORE (public domain only) / Shakespeare
+Hannibal	Roster category: ANCIENT & CLASSICAL
+Alexander Hamilton	Roster category: US PRESIDENTS & POLITICIANS
+Mao Zedong	Roster category: WORLD LEADERS (HISTORICAL)
+Isaac Newton	Roster category: SCIENTISTS, INVENTORS & THINKERS
+Franz Kafka	Roster category: WRITERS & PHILOSOPHERS
+Spike Lee	Roster category: FILM DIRECTORS
+50 Cent	Roster category: HIP-HOP & R&B
+Audrey Hepburn	Roster category: CLASSIC HOLLYWOOD
+Tim Allen	Roster category: COMEDIANS
+Steve Harvey	Roster category: TV HOSTS, CHEFS, MAGICIANS & PERSONALITIES
+Tyler Ninja Blevins	Roster category: INTERNET, STREAMERS & ESPORTS
+Alexandr Wang	Roster category: AI & MACHINE LEARNING
+Robinson Crusoe	Roster category: FICTIONAL & FOLKLORE (public domain only) / Literature
+Botticelli's Venus	Roster category: FICTIONAL & FOLKLORE (public domain only) / Art come to life
+Rembrandt	Roster category: ARTISTS, ARCHITECTS & PHOTOGRAPHERS
+King Richard the Third	Roster category: MEDIEVAL, RENAISSANCE & EARLY MODERN RULERS AND WARRIORS
+Franz Liszt	Roster category: COMPOSERS, CLASSICAL & STAGE
+Stevie Nicks	Roster category: ROCK & POP LEGENDS
+Cody Rhodes	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+Donatella Versace	Roster category: FASHION & MODELS
+Todd Howard	Roster category: GAME, COMICS & ANIMATION CREATORS
+Calamity Jane	Roster category: EXPLORERS, PIRATES, WILD WEST & OUTLAWS
+Elizabeth Holmes	Roster category: GANGSTERS, TRUE CRIME & FRAUDSTERS (intentional villains)
+Sitting Bull	Roster category: ACTIVISTS, CIVIL RIGHTS & WHISTLEBLOWERS
+Henry Ford	Roster category: TECH & BUSINESS
+Brad Pitt	Roster category: MODERN ACTORS
+Donnie Yen	Roster category: ACTION & MARTIAL ARTS
+Bruno Mars	Roster category: MODERN POP
+Waylon Jennings	Roster category: COUNTRY, EDM & OTHER
+Magic Johnson	Roster category: BASKETBALL
+Chad Ochocinco	Roster category: AMERICAN FOOTBALL
+David Beckham	Roster category: SOCCER
+Yogi Berra	Roster category: BASEBALL & HOCKEY
+Michael Schumacher	Roster category: OLYMPICS, TENNIS, GOLF, MOTORSPORT & MORE
+Davy Jones	Roster category: FICTIONAL & FOLKLORE (public domain only) / Folklore & holiday
+Odin	Roster category: FICTIONAL & FOLKLORE (public domain only) / Myth
+Lancelot	Roster category: FICTIONAL & FOLKLORE (public domain only) / Legend & tall tales
+Lady Macbeth	Roster category: FICTIONAL & FOLKLORE (public domain only) / Shakespeare
+Plato	Roster category: ANCIENT & CLASSICAL
+Bill Clinton	Roster category: US PRESIDENTS & POLITICIANS
+Saddam Hussein	Roster category: WORLD LEADERS (HISTORICAL)
+Thomas Edison	Roster category: SCIENTISTS, INVENTORS & THINKERS
+Charles Dickens	Roster category: WRITERS & PHILOSOPHERS
+George Lucas	Roster category: FILM DIRECTORS
+Nicki Minaj	Roster category: HIP-HOP & R&B
+Kurt Russell	Roster category: CLASSIC HOLLYWOOD
+Kevin Hart	Roster category: COMEDIANS
+Johnny Carson	Roster category: TV HOSTS, CHEFS, MAGICIANS & PERSONALITIES
+Claude Shannon	Roster category: AI & MACHINE LEARNING
+Zorro	Roster category: FICTIONAL & FOLKLORE (public domain only) / Literature
+The Thinker	Roster category: FICTIONAL & FOLKLORE (public domain only) / Art come to life
+Keith Haring	Roster category: ARTISTS, ARCHITECTS & PHOTOGRAPHERS
+Lawrence of Arabia	Roster category: MEDIEVAL, RENAISSANCE & EARLY MODERN RULERS AND WARRIORS
+Yo-Yo Ma	Roster category: COMPOSERS, CLASSICAL & STAGE
+Frank Sinatra	Roster category: ROCK & POP LEGENDS
+Canelo Álvarez	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+Vivienne Westwood	Roster category: FASHION & MODELS
+Pancho Villa	Roster category: EXPLORERS, PIRATES, WILD WEST & OUTLAWS
+Sam Bankman-Fried	Roster category: GANGSTERS, TRUE CRIME & FRAUDSTERS (intentional villains)
+Crazy Horse	Roster category: ACTIVISTS, CIVIL RIGHTS & WHISTLEBLOWERS
+Jason Statham	Roster category: MODERN ACTORS
+Ip Man	Roster category: ACTION & MARTIAL ARTS
+Rihanna	Roster category: MODERN POP
+Fatboy Slim	Roster category: COUNTRY, EDM & OTHER
+Brittney Griner	Roster category: BASKETBALL
+Terry Bradshaw	Roster category: AMERICAN FOOTBALL
+Pelé	Roster category: SOCCER
+Niki Lauda	Roster category: OLYMPICS, TENNIS, GOLF, MOTORSPORT & MORE
+Leprechaun	Roster category: FICTIONAL & FOLKLORE (public domain only) / Folklore & holiday
+Gilgamesh	Roster category: FICTIONAL & FOLKLORE (public domain only) / Myth
+Friar Tuck	Roster category: FICTIONAL & FOLKLORE (public domain only) / Legend & tall tales
+Juliet Capulet	Roster category: FICTIONAL & FOLKLORE (public domain only) / Shakespeare
+Xerxes	Roster category: ANCIENT & CLASSICAL
+Richard Nixon	Roster category: US PRESIDENTS & POLITICIANS
+Vladimir Lenin	Roster category: WORLD LEADERS (HISTORICAL)
+Neil deGrasse Tyson	Roster category: SCIENTISTS, INVENTORS & THINKERS
+Dante Alighieri	Roster category: WRITERS & PHILOSOPHERS
+Tim Burton	Roster category: FILM DIRECTORS
+Lil Wayne	Roster category: HIP-HOP & R&B
+Jack Nicholson	Roster category: CLASSIC HOLLYWOOD
+Mike Myers	Roster category: COMEDIANS
+Jon Stewart	Roster category: TV HOSTS, CHEFS, MAGICIANS & PERSONALITIES
+Marc Andreessen	Roster category: AI & MACHINE LEARNING
+Oliver Twist	Roster category: FICTIONAL & FOLKLORE (public domain only) / Literature
+The Winged Victory of Samothrace	Roster category: FICTIONAL & FOLKLORE (public domain only) / Art come to life
+Donatello	Roster category: ARTISTS, ARCHITECTS & PHOTOGRAPHERS
+Saladin	Roster category: MEDIEVAL, RENAISSANCE & EARLY MODERN RULERS AND WARRIORS
+George Michael	Roster category: ROCK & POP LEGENDS
+Jake Paul	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+Buffalo Bill	Roster category: EXPLORERS, PIRATES, WILD WEST & OUTLAWS
+Martin Shkreli	Roster category: GANGSTERS, TRUE CRIME & FRAUDSTERS (intentional villains)
+Geronimo	Roster category: ACTIVISTS, CIVIL RIGHTS & WHISTLEBLOWERS
+Ryan Reynolds	Roster category: MODERN ACTORS
+Chow Yun-fat	Roster category: ACTION & MARTIAL ARTS
+Justin Bieber	Roster category: MODERN POP
+Calvin Harris	Roster category: COUNTRY, EDM & OTHER
+Larry Bird	Roster category: BASKETBALL
+Joe Namath	Roster category: AMERICAN FOOTBALL
+José Mourinho	Roster category: SOCCER
+John McEnroe	Roster category: OLYMPICS, TENNIS, GOLF, MOTORSPORT & MORE
+Cupid	Roster category: FICTIONAL & FOLKLORE (public domain only) / Folklore & holiday
+Loki the Norse God	Roster category: FICTIONAL & FOLKLORE (public domain only) / Myth
+Pecos Bill	Roster category: FICTIONAL & FOLKLORE (public domain only) / Legend & tall tales
+Prospero	Roster category: FICTIONAL & FOLKLORE (public domain only) / Shakespeare
+Qin Shi Huang	Roster category: ANCIENT & CLASSICAL
+Ulysses S. Grant	Roster category: US PRESIDENTS & POLITICIANS
+Mikhail Gorbachev	Roster category: WORLD LEADERS (HISTORICAL)
+Carl Sagan	Roster category: SCIENTISTS, INVENTORS & THINKERS
+Dr. Seuss	Roster category: WRITERS & PHILOSOPHERS
+Wes Anderson	Roster category: FILM DIRECTORS
+Ice-T	Roster category: HIP-HOP & R&B
+Ian McKellen	Roster category: CLASSIC HOLLYWOOD
+Steve Martin	Roster category: COMEDIANS
+Dana White	Roster category: TV HOSTS, CHEFS, MAGICIANS & PERSONALITIES
+Mira Murati	Roster category: AI & MACHINE LEARNING
+Mephistopheles	Roster category: FICTIONAL & FOLKLORE (public domain only) / Literature
+Lady Justice	Roster category: FICTIONAL & FOLKLORE (public domain only) / Art come to life
+Richard the Lionheart	Roster category: MEDIEVAL, RENAISSANCE & EARLY MODERN RULERS AND WARRIORS
+Ringo Starr	Roster category: ROCK & POP LEGENDS
+Kurt Angle	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+Jacques Cousteau	Roster category: EXPLORERS, PIRATES, WILD WEST & OUTLAWS
+Angelina Jolie	Roster category: MODERN ACTORS
+Tony Jaa	Roster category: ACTION & MARTIAL ARTS
+Britney Spears	Roster category: MODERN POP
+Hank Williams	Roster category: COUNTRY, EDM & OTHER
+Wilt Chamberlain	Roster category: BASKETBALL
+John Madden	Roster category: AMERICAN FOOTBALL
+Luis Suárez	Roster category: SOCCER
+Tiger Woods	Roster category: OLYMPICS, TENNIS, GOLF, MOTORSPORT & MORE
+The Headless Horseman	Roster category: FICTIONAL & FOLKLORE (public domain only) / Folklore & holiday
+Thor the Norse God	Roster category: FICTIONAL & FOLKLORE (public domain only) / Myth
+Romeo Montague	Roster category: FICTIONAL & FOLKLORE (public domain only) / Shakespeare
+Confucius	Roster category: ANCIENT & CLASSICAL
+Bernie Sanders	Roster category: US PRESIDENTS & POLITICIANS
+Fidel Castro	Roster category: WORLD LEADERS (HISTORICAL)
+Galileo Galilei	Roster category: SCIENTISTS, INVENTORS & THINKERS
+Leo Tolstoy	Roster category: WRITERS & PHILOSOPHERS
+Hayao Miyazaki	Roster category: FILM DIRECTORS
+Ice Cube	Roster category: HIP-HOP & R&B
+Sean Connery	Roster category: CLASSIC HOLLYWOOD
+Pete Davidson	Roster category: COMEDIANS
+Evel Knievel	Roster category: TV HOSTS, CHEFS, MAGICIANS & PERSONALITIES
+Lisa Su	Roster category: AI & MACHINE LEARNING
+Tarzan	Roster category: FICTIONAL & FOLKLORE (public domain only) / Literature
+Liberty Leading the People	Roster category: FICTIONAL & FOLKLORE (public domain only) / Art come to life
+William Wallace	Roster category: MEDIEVAL, RENAISSANCE & EARLY MODERN RULERS AND WARRIORS
+Robert Smith	Roster category: ROCK & POP LEGENDS
+Georges St-Pierre	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+Annie Oakley	Roster category: EXPLORERS, PIRATES, WILD WEST & OUTLAWS
+Henry Cavill	Roster category: MODERN ACTORS
+Sonny Chiba	Roster category: ACTION & MARTIAL ARTS
+Beyoncé	Roster category: MODERN POP
+Garth Brooks	Roster category: COUNTRY, EDM & OTHER
+Charles Barkley	Roster category: BASKETBALL
+Mike Ditka	Roster category: AMERICAN FOOTBALL
+Wayne Rooney	Roster category: SOCCER
+Ayrton Senna	Roster category: OLYMPICS, TENNIS, GOLF, MOTORSPORT & MORE
+The Tooth Fairy	Roster category: FICTIONAL & FOLKLORE (public domain only) / Folklore & holiday
+The Golem of Prague	Roster category: FICTIONAL & FOLKLORE (public domain only) / Myth
+Macbeth	Roster category: FICTIONAL & FOLKLORE (public domain only) / Shakespeare
+Spartacus	Roster category: ANCIENT & CLASSICAL
+Andrew Jackson	Roster category: US PRESIDENTS & POLITICIANS
+Kaiser Wilhelm	Roster category: WORLD LEADERS (HISTORICAL)
+Jane Goodall	Roster category: SCIENTISTS, INVENTORS & THINKERS
+Werner Herzog	Roster category: FILM DIRECTORS
+Kendrick Lamar	Roster category: HIP-HOP & R&B
+Marlon Brando	Roster category: CLASSIC HOLLYWOOD
+Jerry Seinfeld	Roster category: COMEDIANS
+Stephen Colbert	Roster category: TV HOSTS, CHEFS, MAGICIANS & PERSONALITIES
+Jeff Dean	Roster category: AI & MACHINE LEARNING
+Carmen	Roster category: FICTIONAL & FOLKLORE (public domain only) / Literature
+Whistler's Mother	Roster category: FICTIONAL & FOLKLORE (public domain only) / Art come to life
+Mansa Musa	Roster category: MEDIEVAL, RENAISSANCE & EARLY MODERN RULERS AND WARRIORS
+Billy Joel	Roster category: ROCK & POP LEGENDS
+Manny Pacquiao	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+Leonardo DiCaprio	Roster category: MODERN ACTORS
+Sammo Hung	Roster category: ACTION & MARTIAL ARTS
+The Weeknd	Roster category: MODERN POP
+Tiësto	Roster category: COUNTRY, EDM & OTHER
+Allen Iverson	Roster category: BASKETBALL
+Vince Lombardi	Roster category: AMERICAN FOOTBALL
+Jürgen Klopp	Roster category: SOCCER
+Sachin Tendulkar	Roster category: OLYMPICS, TENNIS, GOLF, MOTORSPORT & MORE
+Jack Frost	Roster category: FICTIONAL & FOLKLORE (public domain only) / Folklore & holiday
+Valkyrie	Roster category: FICTIONAL & FOLKLORE (public domain only) / Myth
+Othello	Roster category: FICTIONAL & FOLKLORE (public domain only) / Shakespeare
+Nefertiti	Roster category: ANCIENT & CLASSICAL
+George Patton	Roster category: US PRESIDENTS & POLITICIANS
+Eva Perón	Roster category: WORLD LEADERS (HISTORICAL)
+Linus Torvalds	Roster category: SCIENTISTS, INVENTORS & THINKERS
+Guillermo del Toro	Roster category: FILM DIRECTORS
+Dr. Dre	Roster category: HIP-HOP & R&B
+Judy Garland	Roster category: CLASSIC HOLLYWOOD
+Richard Pryor	Roster category: COMEDIANS
+David Letterman	Roster category: TV HOSTS, CHEFS, MAGICIANS & PERSONALITIES
+Greg Brockman	Roster category: AI & MACHINE LEARNING
+Rip Van Winkle	Roster category: FICTIONAL & FOLKLORE (public domain only) / Literature
+The Discus Thrower	Roster category: FICTIONAL & FOLKLORE (public domain only) / Art come to life
+Miyamoto Musashi	Roster category: MEDIEVAL, RENAISSANCE & EARLY MODERN RULERS AND WARRIORS
+Tina Turner	Roster category: ROCK & POP LEGENDS
+Triple H	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+Johnny Depp	Roster category: MODERN ACTORS
+Bolo Yeung	Roster category: ACTION & MARTIAL ARTS
+Bad Bunny	Roster category: MODERN POP
+Nikola Jokić	Roster category: BASKETBALL
+Paul Gascoigne	Roster category: SOCCER
+Lance Armstrong	Roster category: OLYMPICS, TENNIS, GOLF, MOTORSPORT & MORE
+John Bull	Roster category: FICTIONAL & FOLKLORE (public domain only) / Folklore & holiday
+The Sphinx	Roster category: FICTIONAL & FOLKLORE (public domain only) / Myth
+Shylock	Roster category: FICTIONAL & FOLKLORE (public domain only) / Shakespeare
+Sun Tzu	Roster category: ANCIENT & CLASSICAL
+Douglas MacArthur	Roster category: US PRESIDENTS & POLITICIANS
+Ho Chi Minh	Roster category: WORLD LEADERS (HISTORICAL)
+Steve Wozniak	Roster category: SCIENTISTS, INVENTORS & THINKERS
+Akira Kurosawa	Roster category: FILM DIRECTORS
+Tyler the Creator	Roster category: HIP-HOP & R&B
+Carrie Fisher	Roster category: CLASSIC HOLLYWOOD
+Jonah Hill	Roster category: COMEDIANS
+Harry Houdini	Roster category: TV HOSTS, CHEFS, MAGICIANS & PERSONALITIES
+Eliezer Yudkowsky	Roster category: AI & MACHINE LEARNING
+The Cheshire Cat	Roster category: FICTIONAL & FOLKLORE (public domain only) / Literature
+Suleiman the Magnificent	Roster category: MEDIEVAL, RENAISSANCE & EARLY MODERN RULERS AND WARRIORS
+Bruce Springsteen	Roster category: ROCK & POP LEGENDS
+Ronda Rousey	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+Robert Downey Jr.	Roster category: MODERN ACTORS
+Ed Sheeran	Roster category: MODERN POP
+Dikembe Mutombo	Roster category: BASKETBALL
+Eric Cantona	Roster category: SOCCER
+Michael Phelps	Roster category: OLYMPICS, TENNIS, GOLF, MOTORSPORT & MORE
+The Big Bad Wolf	Roster category: FICTIONAL & FOLKLORE (public domain only) / Folklore & holiday
+Sinbad the Sailor	Roster category: FICTIONAL & FOLKLORE (public domain only) / Myth
+Laozi	Roster category: ANCIENT & CLASSICAL
+Sarah Palin	Roster category: US PRESIDENTS & POLITICIANS
+Otto von Bismarck	Roster category: WORLD LEADERS (HISTORICAL)
+Bill Nye	Roster category: SCIENTISTS, INVENTORS & THINKERS
+Kevin Smith	Roster category: FILM DIRECTORS
+Eazy-E	Roster category: HIP-HOP & R&B
+Patrick Stewart	Roster category: CLASSIC HOLLYWOOD
+Kevin James	Roster category: COMEDIANS
+Howard Stern	Roster category: TV HOSTS, CHEFS, MAGICIANS & PERSONALITIES
+Stephen Wolfram	Roster category: AI & MACHINE LEARNING
+Long John Silver	Roster category: FICTIONAL & FOLKLORE (public domain only) / Literature
+Robespierre	Roster category: MEDIEVAL, RENAISSANCE & EARLY MODERN RULERS AND WARRIORS
+Stevie Wonder	Roster category: ROCK & POP LEGENDS
+Chyna	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+Hugh Jackman	Roster category: MODERN ACTORS
+Jungkook	Roster category: MODERN POP
+Simone Biles	Roster category: OLYMPICS, TENNIS, GOLF, MOTORSPORT & MORE
+Mother Goose	Roster category: FICTIONAL & FOLKLORE (public domain only) / Folklore & holiday
+Oni Demon	Roster category: FICTIONAL & FOLKLORE (public domain only) / Myth
+Lu Bu	Roster category: ANCIENT & CLASSICAL
+Rob Ford	Roster category: WORLD LEADERS (HISTORICAL)
+Erwin Schrödinger	Roster category: SCIENTISTS, INVENTORS & THINKERS
+Michael Moore	Roster category: FILM DIRECTORS
+LL Cool J	Roster category: HIP-HOP & R&B
+Anthony Hopkins	Roster category: CLASSIC HOLLYWOOD
+Kristen Wiig	Roster category: COMEDIANS
+Julia Child	Roster category: TV HOSTS, CHEFS, MAGICIANS & PERSONALITIES
+Fei-Fei Li	Roster category: AI & MACHINE LEARNING
+Van Helsing	Roster category: FICTIONAL & FOLKLORE (public domain only) / Literature
+Peter the Great	Roster category: MEDIEVAL, RENAISSANCE & EARLY MODERN RULERS AND WARRIORS
+Jon Bon Jovi	Roster category: ROCK & POP LEGENDS
+Seth Rollins	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+James Gandolfini	Roster category: MODERN ACTORS
+Chappell Roan	Roster category: MODERN POP
+Tony Hawk	Roster category: OLYMPICS, TENNIS, GOLF, MOTORSPORT & MORE
+Father Time	Roster category: FICTIONAL & FOLKLORE (public domain only) / Folklore & holiday
+Kappa the Yokai	Roster category: FICTIONAL & FOLKLORE (public domain only) / Myth
+Guan Yu	Roster category: ANCIENT & CLASSICAL
+Imelda Marcos	Roster category: WORLD LEADERS (HISTORICAL)
+Isambard Kingdom Brunel	Roster category: SCIENTISTS, INVENTORS & THINKERS
+Ed Wood	Roster category: FILM DIRECTORS
+Coolio	Roster category: HIP-HOP & R&B
+Burt Reynolds	Roster category: CLASSIC HOLLYWOOD
+Don Rickles	Roster category: COMEDIANS
+Bob Barker	Roster category: TV HOSTS, CHEFS, MAGICIANS & PERSONALITIES
+Ray Kurzweil	Roster category: AI & MACHINE LEARNING
+Captain Hook	Roster category: FICTIONAL & FOLKLORE (public domain only) / Literature
+Ragnar Lothbrok	Roster category: MEDIEVAL, RENAISSANCE & EARLY MODERN RULERS AND WARRIORS
+Jimi Hendrix	Roster category: ROCK & POP LEGENDS
+Francis Ngannou	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+Denzel Washington	Roster category: MODERN ACTORS
+Billy Ray Cyrus	Roster category: MODERN POP
+Björn Borg	Roster category: OLYMPICS, TENNIS, GOLF, MOTORSPORT & MORE
+The Easter Bunny	Roster category: FICTIONAL & FOLKLORE (public domain only) / Folklore & holiday
+Scheherazade	Roster category: FICTIONAL & FOLKLORE (public domain only) / Myth
+Tycho Brahe	Roster category: SCIENTISTS, INVENTORS & THINKERS
+Kid Rock	Roster category: HIP-HOP & R&B
+Tom Selleck	Roster category: CLASSIC HOLLYWOOD
+John Belushi	Roster category: COMEDIANS
+Jay Leno	Roster category: TV HOSTS, CHEFS, MAGICIANS & PERSONALITIES
+Andrew Ng	Roster category: AI & MACHINE LEARNING
+Miss Marple	Roster category: FICTIONAL & FOLKLORE (public domain only) / Literature
+Ivan the Terrible	Roster category: MEDIEVAL, RENAISSANCE & EARLY MODERN RULERS AND WARRIORS
+Yoko Ono	Roster category: ROCK & POP LEGENDS
+Anderson Silva	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+Chris Hemsworth	Roster category: MODERN ACTORS
+Doja Cat	Roster category: MODERN POP
+Jesse Owens	Roster category: OLYMPICS, TENNIS, GOLF, MOTORSPORT & MORE
+Jack the Giant Killer	Roster category: FICTIONAL & FOLKLORE (public domain only) / Folklore & holiday
+Tengu	Roster category: FICTIONAL & FOLKLORE (public domain only) / Myth
+RZA	Roster category: HIP-HOP & R&B
+Christopher Lee	Roster category: CLASSIC HOLLYWOOD
+Dan Aykroyd	Roster category: COMEDIANS
+Alex Trebek	Roster category: TV HOSTS, CHEFS, MAGICIANS & PERSONALITIES
+Guido van Rossum	Roster category: AI & MACHINE LEARNING
+Don Juan	Roster category: FICTIONAL & FOLKLORE (public domain only) / Literature
+Guy Fawkes	Roster category: MEDIEVAL, RENAISSANCE & EARLY MODERN RULERS AND WARRIORS
+Courtney Love	Roster category: ROCK & POP LEGENDS
+Big Show	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+Pedro Pascal	Roster category: MODERN ACTORS
+Burna Boy	Roster category: MODERN POP
+Dale Earnhardt	Roster category: OLYMPICS, TENNIS, GOLF, MOTORSPORT & MORE
+Ali Baba	Roster category: FICTIONAL & FOLKLORE (public domain only) / Myth
+Lil Nas X	Roster category: HIP-HOP & R&B
+Christopher Reeve	Roster category: CLASSIC HOLLYWOOD
+Ricky Gervais	Roster category: COMEDIANS
+Michael Buffer	Roster category: TV HOSTS, CHEFS, MAGICIANS & PERSONALITIES
+Donald Knuth	Roster category: AI & MACHINE LEARNING
+Peter Pan	Roster category: FICTIONAL & FOLKLORE (public domain only) / Literature
+Kublai Khan	Roster category: MEDIEVAL, RENAISSANCE & EARLY MODERN RULERS AND WARRIORS
+Gwen Stefani	Roster category: ROCK & POP LEGENDS
+Eddie Guerrero	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+Tom Hardy	Roster category: MODERN ACTORS
+Carlos Santana	Roster category: MODERN POP
+Sha'Carri Richardson	Roster category: OLYMPICS, TENNIS, GOLF, MOTORSPORT & MORE
+Anansi	Roster category: FICTIONAL & FOLKLORE (public domain only) / Myth
+Ice Spice	Roster category: HIP-HOP & R&B
+Michael Keaton	Roster category: CLASSIC HOLLYWOOD
+John Cleese	Roster category: COMEDIANS
+Larry King	Roster category: TV HOSTS, CHEFS, MAGICIANS & PERSONALITIES
+Dwarkesh Patel	Roster category: AI & MACHINE LEARNING
+Captain Nemo	Roster category: FICTIONAL & FOLKLORE (public domain only) / Literature
+Horatio Nelson	Roster category: MEDIEVAL, RENAISSANCE & EARLY MODERN RULERS AND WARRIORS
+Tom Jones	Roster category: ROCK & POP LEGENDS
+Evander Holyfield	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+Idris Elba	Roster category: MODERN ACTORS
+Ricky Martin	Roster category: MODERN POP
+Valentino Rossi	Roster category: OLYMPICS, TENNIS, GOLF, MOTORSPORT & MORE
+Nezha	Roster category: FICTIONAL & FOLKLORE (public domain only) / Myth
+André 3000	Roster category: HIP-HOP & R&B
+Liza Minnelli	Roster category: CLASSIC HOLLYWOOD
+Bill Murray	Roster category: COMEDIANS
+Bruce Buffer	Roster category: TV HOSTS, CHEFS, MAGICIANS & PERSONALITIES
+Yoshua Bengio	Roster category: AI & MACHINE LEARNING
+Cyrano de Bergerac	Roster category: FICTIONAL & FOLKLORE (public domain only) / Literature
+Wu Zetian	Roster category: MEDIEVAL, RENAISSANCE & EARLY MODERN RULERS AND WARRIORS
+Aretha Franklin	Roster category: ROCK & POP LEGENDS
+Rocky Marciano	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+Morgan Freeman	Roster category: MODERN ACTORS
+Pitbull	Roster category: MODERN POP
+Florence Griffith Joyner	Roster category: OLYMPICS, TENNIS, GOLF, MOTORSPORT & MORE
+Grendel	Roster category: FICTIONAL & FOLKLORE (public domain only) / Myth
+Method Man	Roster category: HIP-HOP & R&B
+Shirley Temple	Roster category: CLASSIC HOLLYWOOD
+George Carlin	Roster category: COMEDIANS
+Jamie Oliver	Roster category: TV HOSTS, CHEFS, MAGICIANS & PERSONALITIES
+Marvin Minsky	Roster category: AI & MACHINE LEARNING
+Victor Frankenstein	Roster category: FICTIONAL & FOLKLORE (public domain only) / Literature
+Oda Nobunaga	Roster category: MEDIEVAL, RENAISSANCE & EARLY MODERN RULERS AND WARRIORS
+Dave Grohl	Roster category: ROCK & POP LEGENDS
+Shawn Michaels	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+Jane Fonda	Roster category: MODERN ACTORS
+G-Dragon	Roster category: MODERN POP
+Danica Patrick	Roster category: OLYMPICS, TENNIS, GOLF, MOTORSPORT & MORE
+Momotaro	Roster category: FICTIONAL & FOLKLORE (public domain only) / Myth
+Busta Rhymes	Roster category: HIP-HOP & R&B
+Farrah Fawcett	Roster category: CLASSIC HOLLYWOOD
+Tracy Morgan	Roster category: COMEDIANS
+David Copperfield	Roster category: TV HOSTS, CHEFS, MAGICIANS & PERSONALITIES
+Lee Sedol	Roster category: AI & MACHINE LEARNING
+d'Artagnan	Roster category: FICTIONAL & FOLKLORE (public domain only) / Literature
+Mata Hari	Roster category: MEDIEVAL, RENAISSANCE & EARLY MODERN RULERS AND WARRIORS
+Jim Morrison	Roster category: ROCK & POP LEGENDS
+Randy Orton	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+Julie Andrews	Roster category: MODERN ACTORS
+Shane Warne	Roster category: OLYMPICS, TENNIS, GOLF, MOTORSPORT & MORE
+Brunhilde	Roster category: FICTIONAL & FOLKLORE (public domain only) / Myth
+Missy Elliott	Roster category: HIP-HOP & R&B
+Humphrey Bogart	Roster category: CLASSIC HOLLYWOOD
+Eddie Izzard	Roster category: COMEDIANS
+Penn Jillette	Roster category: TV HOSTS, CHEFS, MAGICIANS & PERSONALITIES
+Captain Ahab	Roster category: FICTIONAL & FOLKLORE (public domain only) / Literature
+Nostradamus	Roster category: MEDIEVAL, RENAISSANCE & EARLY MODERN RULERS AND WARRIORS
+Neil Young	Roster category: ROCK & POP LEGENDS
+Fedor Emelianenko	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+Gary Oldman	Roster category: MODERN ACTORS
+Jonah Lomu	Roster category: OLYMPICS, TENNIS, GOLF, MOTORSPORT & MORE
+Master P	Roster category: HIP-HOP & R&B
+John Candy	Roster category: CLASSIC HOLLYWOOD
+Chris Rock	Roster category: COMEDIANS
+David Blaine	Roster category: TV HOSTS, CHEFS, MAGICIANS & PERSONALITIES
+Ichabod Crane	Roster category: FICTIONAL & FOLKLORE (public domain only) / Literature
+Leif Erikson	Roster category: MEDIEVAL, RENAISSANCE & EARLY MODERN RULERS AND WARRIORS
+Robert Plant	Roster category: ROCK & POP LEGENDS
+Chris Jericho	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+Bryan Cranston	Roster category: MODERN ACTORS
+Shaun White	Roster category: OLYMPICS, TENNIS, GOLF, MOTORSPORT & MORE
+Lil Kim	Roster category: HIP-HOP & R&B
+James Dean	Roster category: CLASSIC HOLLYWOOD
+Zach Galifianakis	Roster category: COMEDIANS
+Criss Angel	Roster category: TV HOSTS, CHEFS, MAGICIANS & PERSONALITIES
+The Invisible Man	Roster category: FICTIONAL & FOLKLORE (public domain only) / Literature
+Yasuke	Roster category: MEDIEVAL, RENAISSANCE & EARLY MODERN RULERS AND WARRIORS
+Dean Martin	Roster category: ROCK & POP LEGENDS
+Nate Diaz	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+Will Smith	Roster category: MODERN ACTORS
+Chuck D	Roster category: HIP-HOP & R&B
+James Earl Jones	Roster category: CLASSIC HOLLYWOOD
+Rodney Dangerfield	Roster category: COMEDIANS
+Billy Blanks	Roster category: TV HOSTS, CHEFS, MAGICIANS & PERSONALITIES
+Dorothy Gale	Roster category: FICTIONAL & FOLKLORE (public domain only) / Literature
+Casanova	Roster category: MEDIEVAL, RENAISSANCE & EARLY MODERN RULERS AND WARRIORS
+Keith Richards	Roster category: ROCK & POP LEGENDS
+Bret Hart	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+Giancarlo Esposito	Roster category: MODERN ACTORS
+Grandmaster Flash	Roster category: HIP-HOP & R&B
+Mark Hamill	Roster category: CLASSIC HOLLYWOOD
+Dave Chappelle	Roster category: COMEDIANS
+Marie Kondo	Roster category: TV HOSTS, CHEFS, MAGICIANS & PERSONALITIES
+Baron Munchausen	Roster category: FICTIONAL & FOLKLORE (public domain only) / Literature
+Shaka Zulu	Roster category: MEDIEVAL, RENAISSANCE & EARLY MODERN RULERS AND WARRIORS
+Barry Manilow	Roster category: ROCK & POP LEGENDS
+Becky Lynch	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+Vin Diesel	Roster category: MODERN ACTORS
+Rick Moranis	Roster category: CLASSIC HOLLYWOOD
+Jerry Lewis	Roster category: COMEDIANS
+Huckleberry Finn	Roster category: FICTIONAL & FOLKLORE (public domain only) / Literature
+Montezuma	Roster category: MEDIEVAL, RENAISSANCE & EARLY MODERN RULERS AND WARRIORS
+Janis Joplin	Roster category: ROCK & POP LEGENDS
+Booker T	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+Daniel Radcliffe	Roster category: MODERN ACTORS
+Fred Astaire	Roster category: CLASSIC HOLLYWOOD
+Howie Mandel	Roster category: COMEDIANS
+The Phantom of the Opera	Roster category: FICTIONAL & FOLKLORE (public domain only) / Literature
+Hattori Hanzo	Roster category: MEDIEVAL, RENAISSANCE & EARLY MODERN RULERS AND WARRIORS
+Eddie Van Halen	Roster category: ROCK & POP LEGENDS
+Antonio Inoki	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+Pamela Anderson	Roster category: MODERN ACTORS
+Leslie Nielsen	Roster category: CLASSIC HOLLYWOOD
+Joan Rivers	Roster category: COMEDIANS
+The Count of Monte Cristo	Roster category: FICTIONAL & FOLKLORE (public domain only) / Literature
+Date Masamune	Roster category: MEDIEVAL, RENAISSANCE & EARLY MODERN RULERS AND WARRIORS
+Axl Rose	Roster category: ROCK & POP LEGENDS
+Royce Gracie	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+Jenna Ortega	Roster category: MODERN ACTORS
+Charlton Heston	Roster category: CLASSIC HOLLYWOOD
+Kenan Thompson	Roster category: COMEDIANS
+The Mad Hatter	Roster category: FICTIONAL & FOLKLORE (public domain only) / Literature
+Steven Tyler	Roster category: ROCK & POP LEGENDS
+Shinsuke Nakamura	Roster category: BOXING, MMA, WRESTLING & STRENGTH
+Uma Thurman	Roster category: MODERN ACTORS
+Leonard Nimoy	Roster category: CLASSIC HOLLYWOOD
+Billy Connolly	Roster category: COMEDIANS
+Tom Sawyer	Roster category: FICTIONAL & FOLKLORE (public domain only) / Literature
+Jimmy Page	Roster category: ROCK & POP LEGENDS
+Shah Rukh Khan	Roster category: MODERN ACTORS
+Eartha Kitt	Roster category: CLASSIC HOLLYWOOD
+Andy Kaufman	Roster category: COMEDIANS
+John Carter of Mars	Roster category: FICTIONAL & FOLKLORE (public domain only) / Literature
+Ray Charles	Roster category: ROCK & POP LEGENDS
+Elijah Wood	Roster category: MODERN ACTORS
+Don Knotts	Roster category: CLASSIC HOLLYWOOD
+Katt Williams	Roster category: COMEDIANS
+Tigger	Roster category: FICTIONAL & FOLKLORE (public domain only) / Literature
+Debbie Harry	Roster category: ROCK & POP LEGENDS
+Adam Driver	Roster category: MODERN ACTORS
+Jackie Gleason	Roster category: CLASSIC HOLLYWOOD
+George Lopez	Roster category: COMEDIANS
+Sancho Panza	Roster category: FICTIONAL & FOLKLORE (public domain only) / Literature
+Anthony Kiedis	Roster category: ROCK & POP LEGENDS
+Benedict Cumberbatch	Roster category: MODERN ACTORS
+Buster Keaton	Roster category: CLASSIC HOLLYWOOD
+Bob Hope	Roster category: COMEDIANS
+The Scarecrow	Roster category: FICTIONAL & FOLKLORE (public domain only) / Literature
+Bono	Roster category: ROCK & POP LEGENDS
+Andy Serkis	Roster category: MODERN ACTORS
+Lynda Carter	Roster category: CLASSIC HOLLYWOOD
+Sam Kinison	Roster category: COMEDIANS
+Alice in Wonderland	Roster category: FICTIONAL & FOLKLORE (public domain only) / Literature
+Brian May	Roster category: ROCK & POP LEGENDS
+Amitabh Bachchan	Roster category: MODERN ACTORS
+George Takei	Roster category: CLASSIC HOLLYWOOD
+Eric Idle	Roster category: COMEDIANS
+The Queen of Hearts	Roster category: FICTIONAL & FOLKLORE (public domain only) / Literature
+Buddy Holly	Roster category: ROCK & POP LEGENDS
+Steve Buscemi	Roster category: MODERN ACTORS
+Curly Howard	Roster category: CLASSIC HOLLYWOOD
+Gabriel Iglesias	Roster category: COMEDIANS
+Phileas Fogg	Roster category: FICTIONAL & FOLKLORE (public domain only) / Literature
+James Brown	Roster category: ROCK & POP LEGENDS
+Whoopi Goldberg	Roster category: MODERN ACTORS
+Moe Howard	Roster category: CLASSIC HOLLYWOOD
+Dana Carvey	Roster category: COMEDIANS
+The Cowardly Lion	Roster category: FICTIONAL & FOLKLORE (public domain only) / Literature
+Morrissey	Roster category: ROCK & POP LEGENDS
+Lucy Liu	Roster category: MODERN ACTORS
+Mae West	Roster category: CLASSIC HOLLYWOOD
+Figaro	Roster category: FICTIONAL & FOLKLORE (public domain only) / Literature
+James Hetfield	Roster category: ROCK & POP LEGENDS
+Mads Mikkelsen	Roster category: MODERN ACTORS
+Stan Laurel	Roster category: CLASSIC HOLLYWOOD
+Lemuel Gulliver	Roster category: FICTIONAL & FOLKLORE (public domain only) / Literature
+Miles Davis	Roster category: ROCK & POP LEGENDS
+Oprah Winfrey	Roster category: MODERN ACTORS
+Oliver Hardy	Roster category: CLASSIC HOLLYWOOD
+Cyndi Lauper	Roster category: ROCK & POP LEGENDS
+Joe Pesci	Roster category: MODERN ACTORS
+Lou Reed	Roster category: ROCK & POP LEGENDS
+Tilda Swinton	Roster category: MODERN ACTORS
+Flea	Roster category: ROCK & POP LEGENDS
+Michelle Yeoh	Roster category: MODERN ACTORS
+Billy Idol	Roster category: ROCK & POP LEGENDS
+Michael Cera	Roster category: MODERN ACTORS
+Corey Taylor	Roster category: ROCK & POP LEGENDS
+Warwick Davis	Roster category: MODERN ACTORS
+Iggy Pop	Roster category: ROCK & POP LEGENDS
+Gwendoline Christie	Roster category: MODERN ACTORS
+Angus Young	Roster category: ROCK & POP LEGENDS
+Stephen Chow	Roster category: MODERN ACTORS
+Kate Bush	Roster category: ROCK & POP LEGENDS
+Jean Reno	Roster category: MODERN ACTORS
+Sammy Davis Jr.	Roster category: ROCK & POP LEGENDS
+Ken Watanabe	Roster category: MODERN ACTORS
+Annie Lennox	Roster category: ROCK & POP LEGENDS
+Billie Joe Armstrong	Roster category: ROCK & POP LEGENDS
+Little Richard	Roster category: ROCK & POP LEGENDS
+Chuck Berry	Roster category: ROCK & POP LEGENDS
+Fred Durst	Roster category: ROCK & POP LEGENDS
+Liam Gallagher	Roster category: ROCK & POP LEGENDS
+Joan Jett	Roster category: ROCK & POP LEGENDS
+Rob Zombie	Roster category: ROCK & POP LEGENDS
+Billy Corgan	Roster category: ROCK & POP LEGENDS
+Trent Reznor	Roster category: ROCK & POP LEGENDS
+Jerry Garcia	Roster category: ROCK & POP LEGENDS
+Wayne Newton	Roster category: ROCK & POP LEGENDS
+Noel Gallagher	Roster category: ROCK & POP LEGENDS
+Chad Kroeger	Roster category: ROCK & POP LEGENDS
+Nina Simone	Roster category: ROCK & POP LEGENDS
+Johnny Rotten	Roster category: ROCK & POP LEGENDS
+Edith Piaf	Roster category: ROCK & POP LEGENDS
+Siouxsie Sioux	Roster category: ROCK & POP LEGENDS
+Marc Bolan	Roster category: ROCK & POP LEGENDS
+Barry White	Roster category: ROCK & POP LEGENDS
+Joey Ramone	Roster category: ROCK & POP LEGENDS
+Adam Ant	Roster category: ROCK & POP LEGENDS
+Ella Fitzgerald	Roster category: ROCK & POP LEGENDS
+Fela Kuti	Roster category: ROCK & POP LEGENDS
+Dizzy Gillespie	Roster category: ROCK & POP LEGENDS
