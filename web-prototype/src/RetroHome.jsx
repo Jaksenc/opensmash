@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import introVideoUrl from "../visual/assets/intro-crt.mp4?url";
 import logoFallbackUrl from "../visual/assets/smash-the-weights-logo.png?url";
 import FlameAction from "./FlameAction.jsx";
@@ -219,16 +219,24 @@ export default function RetroHome({
   onAdvanced,
   onCreate,
   onFullscreen,
+  onTrailerControl,
   onResetRom,
   onSignOut,
   pageError,
   ready,
   soundOn,
+  trailerCinematic = false,
+  trailerEngineReady = false,
+  trailerEngineStarted = false,
+  trailerMode = false,
   user,
 }) {
   const aboutCancelRef = useRef(null);
   const introVideoRef = useRef(null);
   const moreMenuRef = useRef(null);
+  const gameSurfaceRef = useRef(null);
+  const cinematicFirstRectRef = useRef(null);
+  const cinematicAnimationRef = useRef(null);
   const [mobileLayout, setMobileLayout] = useState(() => (
     mobileControlsRequested() || window.matchMedia(MOBILE_CONTROLS_MEDIA).matches
   ));
@@ -263,6 +271,49 @@ export default function RetroHome({
       }
     };
   }, []);
+
+  useLayoutEffect(() => {
+    document.body.classList.toggle("is-trailer-mode", trailerMode);
+    document.body.classList.toggle("is-trailer-cinematic", trailerMode && trailerCinematic);
+    return () => {
+      document.body.classList.remove("is-trailer-mode", "is-trailer-cinematic");
+    };
+  }, [trailerCinematic, trailerMode]);
+
+  useLayoutEffect(() => {
+    const first = cinematicFirstRectRef.current;
+    const surface = gameSurfaceRef.current;
+    cinematicFirstRectRef.current = null;
+    if (!first || !surface) return undefined;
+
+    const last = surface.getBoundingClientRect();
+    const scaleX = last.width ? first.width / last.width : 1;
+    const scaleY = last.height ? first.height / last.height : 1;
+    cinematicAnimationRef.current?.cancel();
+    const animation = surface.animate([
+      {
+        transformOrigin: "top left",
+        transform: `translate(${first.left - last.left}px, ${first.top - last.top}px) scale(${scaleX}, ${scaleY})`,
+      },
+      { transformOrigin: "top left", transform: "none" },
+    ], {
+      duration: 1050,
+      easing: "cubic-bezier(.2,.82,.2,1)",
+      fill: "both",
+    });
+    cinematicAnimationRef.current = animation;
+    animation.finished.catch(() => {}).finally(() => {
+      if (cinematicAnimationRef.current === animation) cinematicAnimationRef.current = null;
+    });
+    return () => animation.cancel();
+  }, [trailerCinematic]);
+
+  function runTrailerControl() {
+    const surface = gameSurfaceRef.current;
+    if (surface) cinematicFirstRectRef.current = surface.getBoundingClientRect();
+    if (trailerCinematic) window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    onTrailerControl?.();
+  }
 
   useEffect(() => {
     if (!ready) return;
@@ -450,7 +501,10 @@ export default function RetroHome({
           </nav>
         </header>
         <section className="intro-video-stage" aria-label="Intro video">
-          <div className={`game-surface-shell ${mobileControlsVisible ? "has-mobile-control-deck" : ""} ${immersive ? "is-immersive" : ""}`}>
+          <div
+            ref={gameSurfaceRef}
+            className={`game-surface-shell ${mobileControlsVisible ? "has-mobile-control-deck" : ""} ${immersive ? "is-immersive" : ""} ${trailerCinematic ? "is-cinematic" : ""}`}
+          >
             <div className={`intro-video-frame ${engine ? "is-game-running" : ""}`} ref={gameFrameRef}>
               <video
                 ref={introVideoRef}
@@ -488,6 +542,20 @@ export default function RetroHome({
                 </svg>
               </button>
             </div>
+            {trailerMode && trailerCinematic && (
+              <button
+                className={`trailer-cinematic-control ${trailerEngineStarted ? "is-reveal" : ""}`}
+                type="button"
+                disabled={!trailerEngineReady}
+                onClick={runTrailerControl}
+              >
+                {!trailerEngineReady
+                  ? "Loading intro…"
+                  : trailerEngineStarted
+                    ? "Reveal website"
+                    : "Start capture"}
+              </button>
+            )}
             <MobileControls
               active={mobileControlsVisible}
               frameRef={engineRef}

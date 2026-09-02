@@ -1,0 +1,8 @@
+# Python dependencies for the generation pipeline (pipeline/*.py, scripts/,
+# tools/derive_*). Same set the production worker installs
+# (web-prototype/infra/requirements-worker.txt).
+fal-client>=0.11,<1
+numpy>=2,<3
+opencv-python-headless>=4.12,<5
+Pillow>=11,<13
+scipy>=1.14,<2

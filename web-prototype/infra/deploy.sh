@@ -49,8 +49,7 @@ assert_clean_source() {
 # Cloud Build uploads the local filesystem, so fail before any remote mutation
 # if a file included by either Docker context could differ from a commit.
 assert_clean_source "$WORKSPACE_ROOT/pipeline" pipeline \
-  web-prototype pipeline skels \
-  artifacts/experiments/vg7-tpose.png
+  web-prototype pipeline skels assets/portrait_style_refs assets/tpose_style_ref
 assert_clean_source "$BATTLESHIP_ROOT" BattleShip web scripts port/css_icons torch
 
 # The engine package no longer ships the ROM-derived archive; the browser
@@ -190,15 +189,19 @@ gcloud run jobs add-iam-policy-binding "$WORKER_JOB" \
   --member "serviceAccount:${API_IDENTITY}" \
   --role roles/run.invoker >/dev/null
 
+# Fighter-creation killswitch. --set-env-vars replaces the whole environment,
+# so a deploy would otherwise silently reopen a lab that was paused with
+# `gcloud run services update`. Export CREATION_ENABLED=0 for this deploy to
+# keep it closed.
 gcloud run deploy "$SERVICE_NAME" \
   --image "$API_IMAGE" \
   --region "$REGION" \
   --service-account "$API_IDENTITY" \
   --allow-unauthenticated \
   --ingress internal-and-cloud-load-balancing \
-  --port 8080 --cpu 1 --memory 1Gi --concurrency 200 \
-  --min-instances 0 --max-instances 1 --timeout 3600 \
-  --set-env-vars "JOB_DATABASE=firestore,OBJECT_STORE=gcs,FIGHTER_JOBS_ROOT=/tmp/fighter-jobs,FIGHTER_EXECUTION_MODE=cloud-run,GOOGLE_CLOUD_PROJECT=${PROJECT_ID},CLOUD_RUN_REGION=${REGION},CLOUD_RUN_WORKER_JOB=${WORKER_JOB},GCS_PRIVATE_BUCKET=${PRIVATE_BUCKET},GCS_PUBLIC_BUCKET=${PUBLIC_BUCKET},ASSET_BASE_URL=${ASSET_BASE_URL},ALLOWED_ORIGINS=${PUBLIC_ORIGIN},FIREBASE_AUTH_ENABLED=1,FIREBASE_PROJECT_ID=${PROJECT_ID},FIREBASE_API_KEY=${FIREBASE_API_KEY},FIREBASE_AUTH_DOMAIN=${FIREBASE_AUTH_DOMAIN},FIREBASE_APP_ID=${FIREBASE_APP_ID},FIREBASE_AUTH_PROVIDERS=google|apple|email,FIGHTER_MODERATION_ENABLED=1" \
+  --port 8080 --cpu 2 --memory 2Gi --concurrency 500 --cpu-boost \
+  --min-instances 3 --max-instances 6 --timeout 3600 \
+  --set-env-vars "JOB_DATABASE=firestore,OBJECT_STORE=gcs,FIGHTER_JOBS_ROOT=/tmp/fighter-jobs,FIGHTER_EXECUTION_MODE=cloud-run,GOOGLE_CLOUD_PROJECT=${PROJECT_ID},CLOUD_RUN_REGION=${REGION},CLOUD_RUN_WORKER_JOB=${WORKER_JOB},GCS_PRIVATE_BUCKET=${PRIVATE_BUCKET},GCS_PUBLIC_BUCKET=${PUBLIC_BUCKET},ASSET_BASE_URL=${ASSET_BASE_URL},ALLOWED_ORIGINS=${PUBLIC_ORIGIN},FIREBASE_AUTH_ENABLED=1,FIREBASE_PROJECT_ID=${PROJECT_ID},FIREBASE_API_KEY=${FIREBASE_API_KEY},FIREBASE_AUTH_DOMAIN=${FIREBASE_AUTH_DOMAIN},FIREBASE_APP_ID=${FIREBASE_APP_ID},FIREBASE_AUTH_PROVIDERS=google|apple|email,FIGHTER_MODERATION_ENABLED=1,CREATION_ENABLED=${CREATION_ENABLED:-1}" \
   --set-secrets "COOKIE_SECRET=${COOKIE_SECRET_NAME}:latest,COOKIE_SECRET_PREVIOUS=${COOKIE_SECRET_PREVIOUS_NAME}:latest,OPENAI_API_KEY=opensmash-openai-api-key:latest"
 
 cookie_secret="$(gcloud secrets versions access latest --secret "$COOKIE_SECRET_NAME")"

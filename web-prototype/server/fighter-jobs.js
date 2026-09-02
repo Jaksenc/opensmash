@@ -991,6 +991,12 @@ export function createFighterJobs({
         photo.path,
         { contentType: photo.mimeType, public: false },
       );
+      // The upload now lives in the object store. Drop the local copy: on
+      // Cloud Run the filesystem is in-memory, so keeping every accepted
+      // photo (up to MAX_PHOTO_BYTES each) would eat the instance's RAM
+      // one submission at a time. The worker re-fetches from job.input.key
+      // when the file is absent (see runJob).
+      await rm(photo.path, { force: true });
       const job = {
         protocolVersion: 1,
         id,

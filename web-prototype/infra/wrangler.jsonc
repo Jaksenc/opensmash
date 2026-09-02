@@ -7,6 +7,8 @@
     { "pattern": "smashtheweights.com/engine/*", "zone_name": "smashtheweights.com" },
     { "pattern": "www.smashtheweights.com/engine/*", "zone_name": "smashtheweights.com" },
     { "pattern": "intheweights64.com/engine/*", "zone_name": "intheweights64.com" },
-    { "pattern": "www.intheweights64.com/engine/*", "zone_name": "intheweights64.com" }
+    { "pattern": "www.intheweights64.com/engine/*", "zone_name": "intheweights64.com" },
+    { "pattern": "smash.fun/engine/*", "zone_name": "smash.fun" },
+    { "pattern": "www.smash.fun/engine/*", "zone_name": "smash.fun" }
   ]
 }

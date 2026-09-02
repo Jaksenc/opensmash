@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import flowMusicUrl from "../visual/assets/skyward-save.mp3?url";
 import viewportLogoUrl from "../visual/assets/branding/super-weights-bros-stacked-white.png?url";
 import AuthGate from "./AuthGate.jsx";
 import CreateVisualShell from "./CreateVisualShell.jsx";
+import CreationPaused from "./CreationPaused.jsx";
 import FighterCreator from "./FighterCreator.jsx";
 import ModalPage from "./ModalPage.jsx";
 import RetroHome from "./RetroHome.jsx";
@@ -37,10 +38,18 @@ import {
   selectDirectBattleOpponents,
   createFullBootIntroConfig,
 } from "./launch-options.js";
+import {
+  TRAILER_CPU_LEVEL,
+  TRAILER_STAGE,
+  createTrailerIntroAction,
+  createTrailerMatchAction,
+} from "./trailer-preset.js";
 
 const ADVANCED_OPTIONS_KEY = "opensmash-advanced-options";
 // Posted by BattleShip/web/index.html when the engine cannot obtain its assets.
 const ENGINE_ASSET_ERROR_MESSAGE = "opensmash:engine-asset-error";
+const ENGINE_TRAILER_READY_MESSAGE = "opensmash:trailer-ready";
+const ENGINE_TRAILER_REVEAL_MESSAGE = "opensmash:trailer-reveal";
 
 function inlineCharacters() {
   const characters = window.__OPENSMASH_INITIAL_STATE__?.characters;
@@ -307,6 +316,9 @@ function CreateExperienceOverlay({ onAuthenticated, onClose, onCreated, onPlay, 
 
 export default function App() {
   const isCreatePage = window.location.pathname.replace(/\/+$/, "") === "/create";
+  const [trailerMode] = useState(() => (
+    !isCreatePage && new URLSearchParams(window.location.search).get("trailer") === "1"
+  ));
   const [characters, setCharacters] = useState(() => INLINE_CHARACTERS || []);
   const [fighterJobs, setFighterJobs] = useState([]);
   const [loadingCharacters, setLoadingCharacters] = useState(() => INLINE_CHARACTERS === null);
@@ -320,12 +332,19 @@ export default function App() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   // CSS-only fullscreen for browsers without an element Fullscreen API (iPhone Safari).
   const [immersive, setImmersive] = useState(false);
+  const [trailerCinematic, setTrailerCinematic] = useState(trailerMode);
+  const [trailerEngineReady, setTrailerEngineReady] = useState(false);
+  const [trailerEngineStarted, setTrailerEngineStarted] = useState(false);
   const [soundOn, setSoundOn] = useState(() => localStorage.getItem("opensmash-sound") !== "off");
   const [advancedOptions, setAdvancedOptions] = useState(loadAdvancedOptions);
   const gamepads = useGamepads();
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [createStage, setCreateStage] = useState(null);
+  // Server killswitch (CREATION_ENABLED). Assumed on until /api/session
+  // answers; the value is re-read on every create click, so a flip takes
+  // effect without the player reloading.
+  const [creationOpen, setCreationOpen] = useState(true);
   const [flowMusicActive, setFlowMusicActive] = useState(false);
   const gameRef = useRef(null);
   const gameFrameRef = useRef(null);
@@ -334,6 +353,7 @@ export default function App() {
   const announcerRef = useRef(null);
   const visualBridgeRef = useRef({});
   const previousFighterJobStatusesRef = useRef(new Map());
+  const trailerBootStartedRef = useRef(false);
   const setPageError = useCallback((value) => {
     setPageErrorToast((current) => {
       const currentMessage = current?.message || "";
@@ -344,6 +364,11 @@ export default function App() {
     });
   }, []);
   const pageError = pageErrorToast?.message || "";
+
+  useLayoutEffect(() => {
+    if (!trailerMode || !window.location.search) return;
+    window.history.replaceState(null, "", window.location.pathname + window.location.hash);
+  }, [trailerMode]);
 
   // A handoff QR opens the receiver directly, then removes the one-time code
   // from the URL so a reload cannot consume it twice. Keep the code in state
@@ -448,6 +473,7 @@ export default function App() {
         if (cancelled) return;
         setAuthorized(Boolean(session.authorized));
         setUser(session.user || null);
+        setCreationOpen(session.creationEnabled !== false);
         if (isCreatePage && session.user && !session.authorized) {
           setPendingAction({ type: "create" });
         }
@@ -648,19 +674,47 @@ export default function App() {
     };
   }, []);
 
+  function launchOptionsFor(action) {
+    if (action.trailerIntro) {
+      return { ...advancedOptions, bootMode: "full-boot" };
+    }
+    if (trailerMode && action.type === "character") {
+      return {
+        ...advancedOptions,
+        bootMode: "free-for-all",
+        stage: TRAILER_STAGE,
+        opponentLevel: TRAILER_CPU_LEVEL,
+      };
+    }
+    return advancedOptions;
+  }
+
   function launch(action) {
     try {
-      const launchAction = prepareLaunchAction(action);
-      setEngine({ src: engineUrl(launchAction, advancedOptions, gamepads), action: launchAction });
+      const launchOptions = launchOptionsFor(action);
+      const launchAction = prepareLaunchAction(action, launchOptions);
+      if (action.trailerIntro) {
+        setTrailerEngineReady(false);
+        setTrailerEngineStarted(false);
+      }
+      setEngine({ src: engineUrl(launchAction, launchOptions, gamepads), action: launchAction });
       setPendingAction(null);
-      requestAnimationFrame(() => gameRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+      if (!action.trailerIntro) {
+        requestAnimationFrame(() => gameRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+      }
     } catch (error) {
       setPageError(error.message || "Could not apply those advanced options.");
     }
   }
 
-  function prepareLaunchAction(action) {
-    if (advancedOptions.bootMode === "full-boot") {
+  function prepareLaunchAction(action, launchOptions = advancedOptions) {
+    if (action.trailerIntro) {
+      return createTrailerIntroAction(action, characters);
+    }
+    if (trailerMode && action.type === "character") {
+      return createTrailerMatchAction(action, characters);
+    }
+    if (launchOptions.bootMode === "full-boot") {
       return {
         ...action,
         introConfig: createFullBootIntroConfig(
@@ -684,6 +738,32 @@ export default function App() {
       ),
     };
   }
+
+  useEffect(() => {
+    if (!trailerMode || loadingCharacters || loadingSession || trailerBootStartedRef.current) return;
+    trailerBootStartedRef.current = true;
+    const action = { type: "start", trailerIntro: true };
+    if (authorized) {
+      launch(action);
+      return undefined;
+    }
+
+    // The direct-site visual runtime owns the ROM/controller gates. Wait for
+    // its bridge and send the same trailer action through that normal flow.
+    let attempts = 0;
+    let timer = 0;
+    function requestTrailerLaunch() {
+      if (window.gameLauncher?.requestTrailer) {
+        window.gameLauncher.requestTrailer();
+        return;
+      }
+      attempts += 1;
+      if (attempts < 100) timer = window.setTimeout(requestTrailerLaunch, 50);
+      else setPageError("Could not start trailer capture mode.");
+    }
+    requestTrailerLaunch();
+    return () => window.clearTimeout(timer);
+  }, [authorized, loadingCharacters, loadingSession, trailerMode]);
 
   function updateAdvancedOptions(nextOptions) {
     const normalized = normalizeAdvancedOptions(nextOptions);
@@ -736,7 +816,10 @@ export default function App() {
       const session = await getSession();
       setAuthorized(Boolean(session.authorized));
       setUser(session.user || null);
-      if (!session.user) setCreateStage("auth");
+      const open = session.creationEnabled !== false;
+      setCreationOpen(open);
+      if (!open) setCreateStage("paused");
+      else if (!session.user) setCreateStage("auth");
       else setCreateStage(session.authorized ? "creator" : "rom");
     } catch (error) {
       setPageError(error.message || "Could not start character creation.");
@@ -844,7 +927,9 @@ export default function App() {
   }
 
   function launchVisualAction({ type, slug, picks = [] }) {
-    const action = type === "character"
+    const action = type === "trailer-intro"
+      ? { type: "start", trailerIntro: true }
+      : type === "character"
       ? {
           type,
           character: characters.find((character) => character.slug === slug),
@@ -856,8 +941,9 @@ export default function App() {
       return "about:blank";
     }
     try {
-      const launchAction = prepareLaunchAction(action);
-      const src = engineUrl(launchAction, advancedOptions, gamepads);
+      const launchOptions = launchOptionsFor(action);
+      const launchAction = prepareLaunchAction(action, launchOptions);
+      const src = engineUrl(launchAction, launchOptions, gamepads);
       setEngine({ src, action: launchAction });
       setPendingAction(null);
       setPageError("");
@@ -882,12 +968,21 @@ export default function App() {
   useEffect(() => {
     function onEngineMessage(event) {
       if (event.origin !== window.location.origin) return;
-      if (event.data?.type !== ENGINE_ASSET_ERROR_MESSAGE) return;
-      reportEngineAssetError(new Error(String(event.data.message || "unknown error")));
+      if (event.data?.type === ENGINE_TRAILER_READY_MESSAGE) {
+        setTrailerEngineReady(true);
+        return;
+      }
+      if (event.data?.type === ENGINE_TRAILER_REVEAL_MESSAGE) {
+        runTrailerControl();
+        return;
+      }
+      if (event.data?.type === ENGINE_ASSET_ERROR_MESSAGE) {
+        reportEngineAssetError(new Error(String(event.data.message || "unknown error")));
+      }
     }
     window.addEventListener("message", onEngineMessage);
     return () => window.removeEventListener("message", onEngineMessage);
-  }, []);
+  }, [trailerEngineReady, trailerEngineStarted]);
 
   async function clearVerification() {
     setPageError("");
@@ -972,9 +1067,48 @@ export default function App() {
     }
   }
 
+  async function runTrailerControl() {
+    const target = fullscreenTarget();
+    if (!target) return;
+
+    const fullscreenElement = document.fullscreenElement || document.webkitFullscreenElement;
+    if (!trailerEngineStarted) {
+      if (!trailerEngineReady) return;
+      const startTrailer = engineRef.current?.contentWindow?.openSmashStartTrailer;
+      if (typeof startTrailer !== "function") {
+        setPageError("The trailer engine is not ready yet.");
+        return;
+      }
+
+      // Call into the same-origin iframe synchronously while this trusted click
+      // still owns browser activation. SDL creates its AudioContext inside
+      // callMain(), so the opening starts audible instead of autoplay-blocked.
+      startTrailer();
+      setTrailerEngineStarted(true);
+      return;
+    }
+
+    if (fullscreenElement) {
+      try {
+        const exitFullscreen = document.exitFullscreen || document.webkitExitFullscreen;
+        await exitFullscreen.call(document);
+      } catch {
+        // Continue with the in-page reveal if browser fullscreen exit fails.
+      }
+    }
+    setTrailerCinematic(false);
+  }
+
   const visibleCharacters = characters
     .map((character, index) => ({ character, index }))
     .filter(({ character }) => matchesCharacterSearch(character, fighterSearch));
+
+  // /create is a real URL, so the killswitch has to close it too — not just
+  // the create tile on the home page. A closed lab replaces the whole page:
+  // no ROM shell, no sign-in gate, nothing to fill in.
+  if (isCreatePage && !loadingSession && !creationOpen) {
+    return <CreationPaused open onClose={() => window.location.assign("/")} />;
+  }
 
   if (isCreatePage) {
     Object.assign(visualBridgeRef.current, {
@@ -1036,11 +1170,16 @@ export default function App() {
           onAdvanced={() => setAdvancedOpen(true)}
           onCreate={openCreateExperience}
           onFullscreen={toggleFullscreen}
+          onTrailerControl={runTrailerControl}
           onResetRom={clearVerification}
           onSignOut={signOutUser}
           pageError={pageError}
           ready={!loadingCharacters}
           soundOn={soundOn}
+          trailerCinematic={trailerCinematic}
+          trailerEngineReady={trailerEngineReady}
+          trailerEngineStarted={trailerEngineStarted}
+          trailerMode={trailerMode}
           user={user}
         />
         <CreateExperienceOverlay
@@ -1051,6 +1190,7 @@ export default function App() {
           stage={createStage}
           user={user}
         />
+        <CreationPaused open={createStage === "paused"} onClose={() => setCreateStage(null)} />
         <SettingsModal
           accountConnected={Boolean(user)}
           authorized={authorized}

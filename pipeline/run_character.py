@@ -26,6 +26,10 @@ PIPELINE_DIR = os.path.dirname(os.path.abspath(__file__))
 HERE = os.path.dirname(PIPELINE_DIR)
 UI_REFS = os.path.join(HERE, "web-prototype", "visual", "assets", "ui_refs")
 PORTRAIT_STYLE_REFS = os.path.join(HERE, "assets", "portrait_style_refs")
+# Style reference for the T-pose model sheet (the "vg7" Mario sheet the
+# production recipe was tuned on; eval/ configs reference the same image from
+# its original home in artifacts/experiments).
+TPOSE_STYLE_REF = os.path.join(HERE, "assets", "tpose_style_ref", "vg7-tpose.png")
 PORTRAIT_STYLE_REFERENCE_FILES = (
     "blakerobbins.png",
     "kaishahom.png",
@@ -343,7 +347,7 @@ def main():
         log("tpose: generating source image")
         prompt = N64_TEMPLATE.format(desc=cdef["desc"], display=cdef["display"])
         cmd = ["python3", pipeline_script("gen.py"), "image", "--api", "openai", "--model", "gpt-image-2",
-               "--ref", os.path.join(HERE, "artifacts", "experiments", "vg7-tpose.png")]
+               "--ref", TPOSE_STYLE_REF]
         if a.photo:
             cmd += ["--ref", a.photo]
             prompt += PHOTO_NOTE

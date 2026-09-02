@@ -21,7 +21,8 @@ RUN pip install --no-cache-dir -r /tmp/requirements-worker.txt
 COPY pipeline/pipeline /workspace/pipeline/pipeline
 COPY pipeline/skels /workspace/pipeline/skels
 COPY pipeline/web-prototype/visual/assets/ui_refs /workspace/pipeline/web-prototype/visual/assets/ui_refs
-COPY pipeline/artifacts/experiments/vg7-tpose.png /workspace/pipeline/artifacts/experiments/vg7-tpose.png
+COPY pipeline/assets/portrait_style_refs /workspace/pipeline/assets/portrait_style_refs
+COPY pipeline/assets/tpose_style_ref /workspace/pipeline/assets/tpose_style_ref
 RUN mkdir -p /workspace/pipeline/play/ui /workspace/BattleShip/web-dist/bundles /workspace/pipeline/web-prototype/data/fighter-jobs \
     && chown -R node:node /workspace
 

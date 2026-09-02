@@ -57,12 +57,16 @@ Run from clean commits in both the `pipeline` and sibling `BattleShip`
 repositories. The first deploy creates `opensmash-cookie-secret-previous` by
 copying the current signing key; subsequent rotations maintain it.
 
-The API is initially capped at one instance so uploader quotas and
-local upload parsing cannot race across replicas. (ROM-handoff signalling is
-already replica-safe: rooms live in Firestore under `handoffRooms` with a TTL
-policy on `expireAt` that `deploy.sh` enables.) Firestore leases still make
-worker execution idempotent. Raise the API instance cap only after moving quota
-reservation into a Firestore transaction.
+The API runs with 3 to 6 instances (2 vCPU, 2 GiB, 500 concurrent
+requests each, startup CPU boost). Everything that has to agree across
+replicas lives in Firestore: job records and leases, the quota re-check inside
+the insert transaction, and ROM-handoff rooms (`handoffRooms`, with a TTL
+policy on `expireAt` that `deploy.sh` enables). The per-instance in-memory
+quota reservation and the ROM-validation rate limiter are only a first line;
+across replicas they are looser by the instance count, which is acceptable.
+Keep `--min-instances` at 1 or more: a cold start pulls a multi-GB image and
+scans the roster, and with `--min-instances 0` the first visitor after a quiet
+spell pays for it.
 
 The public bucket works immediately at its `storage.googleapis.com` URL. To put
 it behind Cloud CDN, create the backend bucket with one command, then attach it
@@ -108,6 +112,27 @@ CERT_PREFIX=opensmash-alias \
 CLOUDFLARE_API_TOKEN=... \
 ./infra/configure-domain.sh
 ```
+
+## Pausing fighter creation
+
+Creation is the only part of the site that spends money per request (GPU time,
+image and voice models). `CREATION_ENABLED=0` closes it without touching the
+roster: `/api/session` reports `creationEnabled: false`, the create tile and
+`/create` show the "Fighter creation is paused" notice instead of the creator,
+and
+`POST /api/fighters` and `/api/fighters/:id/retry` answer `503`. Any other
+value, including an unset one, leaves creation open.
+
+```bash
+gcloud run services update opensmash-web --region "$REGION" \
+  --update-env-vars CREATION_ENABLED=0
+```
+
+The switch takes effect on the next `/api/session` call — no redeploy, no edge
+purge, because the shared app shell never carries the flag. Set it back with
+`CREATION_ENABLED=1`. `deploy.sh` rewrites the whole environment, so export
+`CREATION_ENABLED=0` for a deploy that must keep the lab closed. The switch
+only refuses new work: jobs the worker already picked up run to completion.
 
 ## Cloudflare edge cache
 

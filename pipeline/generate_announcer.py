@@ -77,7 +77,7 @@ def _fal_client():
     except ImportError as exc:
         raise RuntimeError(
             "fal-client is not installed; run: "
-            "python -m pip install -r requirements-announcer.txt"
+            "python -m pip install -r requirements.txt"
         ) from exc
     return fal_client
 

@@ -1094,7 +1094,8 @@ body.retro-home::before {
   letter-spacing: .1em;
   text-transform: uppercase;
 }
-.about-overlay {
+.about-overlay,
+.creation-paused-overlay {
   position: fixed;
   inset: 0;
   z-index: 1500;
@@ -1104,7 +1105,8 @@ body.retro-home::before {
   background: #000;
   color: #fff2d6;
 }
-.about-screen {
+.about-screen,
+.creation-paused-screen {
   width: 100%;
   min-height: 100svh;
   display: grid;
@@ -1113,19 +1115,25 @@ body.retro-home::before {
   font-family: "Kanit", sans-serif;
   text-align: center;
 }
-.about-content {
+.about-content,
+.creation-paused-content {
   --launch-control-width: clamp(210px, 23vw, 300px);
   display: flex;
   width: min(760px, 100%);
   flex-direction: column;
   align-items: center;
 }
-.about-title { margin: 0; }
-.about-copy { margin-top: 12px; }
-.about-copy p { margin: 0; }
-.about-copy p + p { margin-top: 12px; }
+.about-title,
+.creation-paused-title { margin: 0; }
+.about-copy,
+.creation-paused-copy { margin-top: 12px; }
+.about-copy p,
+.creation-paused-copy p { margin: 0; }
+.about-copy p + p,
+.creation-paused-copy p + p { margin-top: 12px; }
 .about-legal { opacity: .82; }
-.about-cancel {
+.about-cancel,
+.creation-paused-cancel {
   box-sizing: border-box;
   width: clamp(210px, 23vw, 300px);
   min-width: clamp(210px, 23vw, 300px);
@@ -1133,15 +1141,30 @@ body.retro-home::before {
   margin-top: 22px;
   background: #050303;
 }
+/* The support link takes the launch flow's highlighted primary slot, so it
+   needs the centring a <button> gets for free. */
+.creation-paused-support {
+  display: grid;
+  place-items: center;
+  text-decoration: none;
+}
+.creation-paused-support-cell + .creation-paused-cancel { margin-top: 11px; }
 .about-title,
 .about-copy,
-.about-cancel {
+.about-cancel,
+.creation-paused-title,
+.creation-paused-copy,
+.creation-paused-support,
+.creation-paused-cancel {
   filter: none;
   -webkit-font-smoothing: none;
 }
-body.is-about-open #glove-canvas { z-index: 1800; }
+body.is-about-open #glove-canvas,
+body.is-creation-paused-open #glove-canvas { z-index: 1800; }
 .retro-home .about-overlay,
-.retro-home .about-overlay button { cursor: none; }
+.retro-home .about-overlay button,
+.retro-home .creation-paused-overlay,
+.retro-home .creation-paused-overlay button { cursor: none; }
 .retro-home .modal-backdrop { z-index: 2100; cursor: none; }
 .retro-home .modal,
 .retro-home .modal button,
@@ -1159,6 +1182,69 @@ body.is-advanced-open #glove-canvas { z-index: 1800; }
    or coarse-pointer devices. Every interactive target meets the 44px minimum. */
 .game-surface-shell { width: 100%; }
 .mobile-controls { display: none; }
+
+/* Temporary `?trailer=1` capture surface. Start Capture releases the staged
+   engine from a user gesture; Reveal Website FLIP-animates that same live
+   iframe into its normal page position. */
+.game-surface-shell.is-cinematic {
+  position: fixed;
+  inset: 0;
+  z-index: 2500;
+  display: grid;
+  width: 100vw;
+  height: 100dvh;
+  background: #000;
+}
+.game-surface-shell.is-cinematic .intro-video-frame {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  max-height: none;
+  aspect-ratio: auto;
+}
+body.is-trailer-cinematic { overflow: hidden; }
+body.is-trailer-mode .retro-site-header,
+body.is-trailer-mode .arena-surface {
+  transition: opacity 620ms ease 180ms, filter 620ms ease 180ms;
+}
+body.is-trailer-cinematic .retro-site-header,
+body.is-trailer-cinematic .arena-surface {
+  opacity: 0;
+  filter: brightness(.35) blur(8px);
+}
+body.is-trailer-mode .game-fullscreen-control { display: none; }
+body.is-trailer-mode.is-launch-flow-open .launch-flow-overlay { z-index: 3000; }
+body.is-trailer-mode.is-launch-flow-open #glove-canvas { z-index: 3200; }
+.trailer-cinematic-control {
+  position: fixed;
+  z-index: 2600;
+  right: 16px;
+  bottom: 16px;
+  padding: 9px 12px;
+  border: 1px solid rgba(255, 242, 214, .5);
+  border-radius: 3px;
+  background: rgba(8, 5, 4, .82);
+  color: #fff2d6;
+  font: 600 11px/1 "Kanit", sans-serif;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  opacity: .82;
+  cursor: none;
+  transition: opacity 120ms linear, filter 120ms linear;
+}
+.trailer-cinematic-control:hover,
+.trailer-cinematic-control:focus-visible {
+  opacity: 1;
+  outline: 0;
+  filter: drop-shadow(0 0 8px rgba(255, 179, 81, .65));
+}
+.trailer-cinematic-control:disabled {
+  color: rgba(255, 242, 214, .6);
+  filter: none;
+}
+.trailer-cinematic-control.is-reveal { opacity: 0; }
+.trailer-cinematic-control.is-reveal:hover,
+.trailer-cinematic-control.is-reveal:focus-visible { opacity: 1; }
 
 /* Fullscreen (native) or immersive (CSS fallback for browsers without an
    element Fullscreen API, i.e. iPhone Safari): the shell pins over the page

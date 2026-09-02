@@ -331,6 +331,7 @@ export function engineUrl(action, advancedOptions, gamepads = []) {
   // Vanilla entries are intentionally omitted from the URL; missing injected
   // assets are also omitted by the shell, making vanilla the per-card fallback.
   if (options.bootMode === "full-boot") {
+    if (action.trailerIntro) params.set("SSB64_TRAILER_HOLD", "1");
     action.introConfig?.forEach((card) => {
       if (card.type !== "character") return;
       params.append("intro_character", JSON.stringify({
@@ -338,11 +339,20 @@ export function engineUrl(action, advancedOptions, gamepads = []) {
         fkind: card.fkind,
       }));
     });
+    const roomCards = (action.introRoomPicks || []).map((slug) =>
+      action.introConfig?.find(
+        (card) => card.type === "character" && card.character.slug === slug,
+      ),
+    );
     const featuredCard = action.introConfig?.find(
       (card) => card.type === "character" && card.featured,
     );
-    if (featuredCard) {
-      params.set("SSB64_OPENING_FIRST_FKIND", String(featuredCard.fkind));
+    const firstRoomCard = roomCards[0] || featuredCard;
+    if (firstRoomCard) {
+      params.set("SSB64_OPENING_FIRST_FKIND", String(firstRoomCard.fkind));
+    }
+    if (roomCards[1]) {
+      params.set("SSB64_OPENING_SECOND_FKIND", String(roomCards[1].fkind));
     }
   }
 

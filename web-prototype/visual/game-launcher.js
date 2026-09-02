@@ -2763,6 +2763,15 @@ window.gameLauncher = Object.freeze({
       selectionName: character.slug,
     });
   },
+  requestTrailer() {
+    requestLaunch({
+      displayName: 'the trailer intro',
+      slug: null,
+      actionType: 'trailer-intro',
+      fkind: 0,
+      bundle: null,
+    });
+  },
   request(actionType = 'select') {
     requestLaunch({
       displayName: actionType === 'start' ? 'the full game' : 'character select',
