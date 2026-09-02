@@ -29,6 +29,7 @@ import {
   hasAdvancedOverrides,
   normalizeAdvancedOptions,
   selectDirectBattleOpponents,
+  createFullBootIntroConfig,
 } from "./launch-options.js";
 
 const ADVANCED_OPTIONS_KEY = "opensmash-advanced-options";
@@ -644,6 +645,17 @@ export default function App() {
   }
 
   function prepareLaunchAction(action) {
+    if (advancedOptions.bootMode === "full-boot") {
+      return {
+        ...action,
+        introConfig: createFullBootIntroConfig(
+          characters,
+          Math.random,
+          action.type === "character" ? action.character : null,
+          advancedOptions.characterMesh,
+        ),
+      };
+    }
     if (action.type !== "character" || action.opponents) return action;
     const ownedCharacters = fighterJobs
       .filter((job) => job.status === "complete" && job.character)
