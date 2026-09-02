@@ -20,6 +20,8 @@
 !pipeline/pipeline/**
 !pipeline/skels/
 !pipeline/skels/**
-!pipeline/artifacts/
-!pipeline/artifacts/experiments/
-!pipeline/artifacts/experiments/vg7-tpose.png
+!pipeline/assets/
+!pipeline/assets/portrait_style_refs/
+!pipeline/assets/portrait_style_refs/**
+!pipeline/assets/tpose_style_ref/
+!pipeline/assets/tpose_style_ref/**
