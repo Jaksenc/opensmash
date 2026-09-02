@@ -111,6 +111,10 @@ const FEATURED_ROSTER = Object.freeze([
     bundle: 'rohansahai-link.osb'
   }
 ]);
+const ACTION_PORTRAITS = Object.freeze({
+  search: 'action-search',
+  create: 'action-create'
+});
 const APP_BRIDGE = window.openSmashReactBridge;
 const LIVE_ROSTER = Object.freeze((APP_BRIDGE?.characters || []).map(character => ({
   asset: character.slug,
@@ -316,6 +320,13 @@ await Promise.all(FEATURED_ROSTER.map(async character => {
   CHARACTER_PORTRAITS.set(
     character.portrait,
     await loadFeaturedPortrait(character.portrait)
+  );
+}));
+
+await Promise.all(Object.values(ACTION_PORTRAITS).map(async portraitName => {
+  CHARACTER_PORTRAITS.set(
+    portraitName,
+    await loadFeaturedPortrait(portraitName)
   );
 }));
 
@@ -805,9 +816,9 @@ CELL_IDS.forEach((id, index) => {
   const isSearch = index === 0;
   const isCreate = index === 1;
   const character = isSearch
-    ? { asset: 'search', portrait: '', label: 'SEARCH', name: 'Search fighters' }
+    ? { asset: 'search', portrait: ACTION_PORTRAITS.search, label: 'SEARCH', name: 'Search fighters' }
     : isCreate
-      ? { asset: 'create', portrait: '', label: 'CREATE', name: 'Create fighter' }
+      ? { asset: 'create', portrait: ACTION_PORTRAITS.create, label: 'CREATE', name: 'Create fighter' }
       : rosterCharacterForIndex(index - 2);
   const fkind = character.fkind ?? VANILLA_ROSTER.indexOf(character);
   const label = character.label;
@@ -1056,7 +1067,7 @@ function updateSearchTile(query = '') {
   paintCellCanvas(
     searchCell.querySelector('.replica-texture-layer'),
     displayLabel,
-    null,
+    ACTION_PORTRAITS.search,
     active && !value ? 0.5 : 1,
     ACTION_CELL_BACKGROUND_PIXELS.search
   );
@@ -1338,6 +1349,19 @@ function select(name) {
   return selected;
 }
 
+// Double select: stamp "1P"/"2P" on picked tiles while more players choose.
+function markPick(name, tag) {
+  const cell = name == null ? null : getCell(name);
+  if (!cell) return null;
+  if (tag) cell.dataset.pick = tag;
+  else delete cell.dataset.pick;
+  return cell;
+}
+
+function clearPicks() {
+  cells.forEach(cell => { delete cell.dataset.pick; });
+}
+
 function requestSelection(name) {
   const selected = name == null ? null : getCell(name);
   if (selected) {
@@ -1525,6 +1549,8 @@ window.characterGrid = Object.freeze({
   highlight,
   clearHighlights,
   select,
+  markPick,
+  clearPicks,
   syncJobs,
   filter: filterRoster,
   randomize

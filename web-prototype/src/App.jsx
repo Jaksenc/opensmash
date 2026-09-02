@@ -16,6 +16,8 @@ import {
 import { identifyRomFile } from "./rom-validation.js";
 import { clearRomStore, hasStoredRom, prewarmEngineArchive, storeRom } from "../shared/rom-store.js";
 import { clearControllerTutorialCompletion } from "../visual/control-tutorial.js";
+import { choiceForEntry, describePort, portOptions } from "../shared/controller-ports.js";
+import { useGamepads } from "./gamepads.js";
 import {
   FLOW_MUSIC_MAX_VOLUME,
   transitionMediaVolume,
@@ -27,6 +29,7 @@ import {
   DEFAULT_ADVANCED_OPTIONS,
   OPPONENT_LEVELS,
   STAGES,
+  controllerPlan,
   engineUrl,
   hasAdvancedOverrides,
   normalizeAdvancedOptions,
@@ -255,9 +258,21 @@ function RomModal({ action, onCancel, onValidated, onPrewarmError }) {
   );
 }
 
-function AdvancedModal({ authorized, debugMode, open, options, onCancel, onResetControllerTutorial, onResetRom, onSave }) {
+function AdvancedModal({
+  authorized,
+  debugMode,
+  gamepads,
+  open,
+  options,
+  onCancel,
+  onResetControllerTutorial,
+  onResetRom,
+  onSave,
+}) {
   const [draft, setDraft] = useState(options);
   const firstFieldRef = useRef(null);
+  const portPlan = controllerPlan(draft, gamepads);
+  const humanPorts = portPlan.filter((entry) => entry && entry.kind !== "none").length;
 
   useEffect(() => {
     if (open) setDraft(options);
@@ -265,6 +280,14 @@ function AdvancedModal({ authorized, debugMode, open, options, onCancel, onReset
 
   function update(key, value) {
     setDraft((current) => ({ ...current, [key]: value }));
+  }
+
+  function updatePort(port, value) {
+    setDraft((current) => {
+      const ports = [...(current.ports ?? DEFAULT_ADVANCED_OPTIONS.ports)];
+      ports[port] = value;
+      return { ...current, ports };
+    });
   }
 
   return (
@@ -297,12 +320,57 @@ function AdvancedModal({ authorized, debugMode, open, options, onCancel, onReset
               close(() => onSave(draft));
             }}
           >
+          <section className="advanced-input" aria-labelledby="advanced-input-title">
+            <div className="advanced-controllers-heading">
+              <strong id="advanced-input-title" className="advanced-field-label">Input</strong>
+              <small>
+                {gamepads.length
+                  ? "Controllers take ports in the order they connected. Pick who plays where."
+                  : "No controllers detected. Press any button on a controller to wake it up."}
+              </small>
+            </div>
+            <div className="advanced-selects advanced-inputs">
+              {portPlan.map((entry, port) => {
+                const options = portOptions(portPlan, gamepads, port);
+                const current = choiceForEntry(entry);
+                const disabled = options.length === 0 && current === "none";
+                return (
+                  <label className="advanced-field" key={port}>
+                    <span className="advanced-field-label">{`P${port + 1}`}</span>
+                    <span className={`advanced-select-shell advanced-cell-frame flame-bridge-cell ${disabled ? "is-disabled" : ""}`}>
+                      <select
+                        ref={port === 0 ? firstFieldRef : undefined}
+                        value={current}
+                        disabled={disabled}
+                        onChange={(event) => updatePort(port, event.target.value)}
+                      >
+                        <option value="none">{disabled ? "Empty" : "None"}</option>
+                        {options.map((option) => (
+                          <option value={option.value} key={option.value}>{option.label}</option>
+                        ))}
+                      </select>
+                    </span>
+                    <small>
+                      {disabled
+                        ? "Connect a controller to enable."
+                        : entry && entry.kind !== "none" ? describePort(entry, gamepads) : "Nobody"}
+                    </small>
+                  </label>
+                );
+              })}
+            </div>
+            <small className="advanced-controllers-note">
+              {humanPorts >= 2
+                ? "Two or more players: launches open the VS character select so everyone picks a fighter."
+                : "Controller buttons follow the standard layout: A / B, bumpers L / R, triggers Z / R, right stick or X / Y to jump."}
+            </small>
+          </section>
+
           <div className="advanced-selects">
             <label className="advanced-field">
               <span className="advanced-field-label">Character Mesh</span>
               <span className="advanced-select-shell advanced-cell-frame flame-bridge-cell">
                 <select
-                  ref={firstFieldRef}
                   value={draft.characterMesh}
                   onChange={(event) => update("characterMesh", event.target.value)}
                 >
@@ -458,6 +526,7 @@ export default function App() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [soundOn, setSoundOn] = useState(() => localStorage.getItem("opensmash-sound") !== "off");
   const [advancedOptions, setAdvancedOptions] = useState(loadAdvancedOptions);
+  const gamepads = useGamepads();
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [createStage, setCreateStage] = useState(null);
@@ -651,6 +720,13 @@ export default function App() {
     };
   }, [engine, soundOn]);
 
+  // Re-plan the running game's ports when the controller settings change;
+  // the shell (window.controllerPorts) handles hot-plug on its own.
+  useEffect(() => {
+    if (!engine) return;
+    engineRef.current?.contentWindow?.controllerPorts?.apply?.(controllerPlan(advancedOptions, gamepads));
+  }, [engine, advancedOptions, gamepads]);
+
   useEffect(() => {
     function syncFullscreenState() {
       const fullscreenElement = document.fullscreenElement || document.webkitFullscreenElement;
@@ -668,7 +744,7 @@ export default function App() {
   function launch(action) {
     try {
       const launchAction = prepareLaunchAction(action);
-      setEngine({ src: engineUrl(launchAction, advancedOptions), action: launchAction });
+      setEngine({ src: engineUrl(launchAction, advancedOptions, gamepads), action: launchAction });
       setPendingAction(null);
       requestAnimationFrame(() => gameRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
     } catch (error) {
@@ -838,17 +914,21 @@ export default function App() {
     return result;
   }
 
-  function launchVisualAction({ type, slug }) {
+  function launchVisualAction({ type, slug, picks = [] }) {
     const action = type === "character"
-      ? { type, character: characters.find((character) => character.slug === slug) }
+      ? {
+          type,
+          character: characters.find((character) => character.slug === slug),
+          picks: picks.map((pickSlug) => characters.find((character) => character.slug === pickSlug)),
+        }
       : { type };
-    if (type === "character" && !action.character) {
+    if (type === "character" && (!action.character || action.picks.some((pick) => !pick))) {
       setPageError("That fighter is no longer available.");
       return "about:blank";
     }
     try {
       const launchAction = prepareLaunchAction(action);
-      const src = engineUrl(launchAction, advancedOptions);
+      const src = engineUrl(launchAction, advancedOptions, gamepads);
       setEngine({ src, action: launchAction });
       setPendingAction(null);
       setPageError("");
@@ -971,6 +1051,11 @@ export default function App() {
       clearVerification,
       closeGame() { setEngine(null); },
       completeCreateRom() { setCreateStage("creator"); },
+      hasGamepad() { return gamepads.length > 0; },
+      humanPortCount() {
+        return controllerPlan(advancedOptions, gamepads)
+          .filter((entry) => entry && entry.kind !== "none").length;
+      },
       isAuthorized() { return authorized; },
       launch: launchVisualAction,
       cancelCreateRom() { setCreateStage(null); },
@@ -994,6 +1079,7 @@ export default function App() {
           engine={engine}
           engineRef={engineRef}
           gameFrameRef={gameFrameRef}
+          gamepadCount={gamepads.length}
           isFullscreen={isFullscreen}
           launchFlowOpen={overlayMusicActive}
           onAboutChange={setAboutOpen}
@@ -1020,6 +1106,7 @@ export default function App() {
         <AdvancedModal
           authorized={authorized}
           debugMode={new URLSearchParams(window.location.search).get("debug") === "1"}
+          gamepads={gamepads}
           open={advancedOpen}
           options={advancedOptions}
           onCancel={() => setAdvancedOpen(false)}
