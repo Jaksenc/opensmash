@@ -12,6 +12,7 @@ Key from TRIPO_API_KEY in .env next to this script.
 """
 import argparse
 import json
+import time
 import os
 import subprocess
 import sys
@@ -37,12 +38,29 @@ def http(url, body=None):
     if body is not None:
         req.add_header("Content-Type", "application/json")
         data = json.dumps(body).encode()
-    try:
-        with urllib.request.urlopen(req, data, timeout=180) as r:
-            return json.loads(r.read().decode())
-    except urllib.error.HTTPError as e:
-        detail = e.read().decode(errors="replace")
-        raise RuntimeError(f"HTTP {e.code} from {url}: {detail}") from e
+    # 429 "exceeded the limit of generation" is Tripo's concurrent-task cap,
+    # not a failure: wait for the Retry-After window (or 20s) and re-submit,
+    # for up to ~12 minutes, so a batch running more workers than the cap
+    # self-throttles instead of failing characters.
+    waited = 0.0
+    while True:
+        try:
+            with urllib.request.urlopen(req, data, timeout=180) as r:
+                return json.loads(r.read().decode())
+        except urllib.error.HTTPError as e:
+            detail = e.read().decode(errors="replace")
+            if (e.code == 429 or e.code >= 500) and waited < 720:
+                # 5xx: Tripo's gateway hiccups for a few seconds at a time
+                try:
+                    delay = float(e.headers.get("Retry-After") or 20)
+                except ValueError:
+                    delay = 20.0
+                delay = max(5.0, min(delay, 120.0)) if e.code == 429 else 10.0
+                print(f"tripo: 429 rate/concurrency limit, waiting {delay:.0f}s", file=sys.stderr, flush=True)
+                time.sleep(delay)
+                waited += delay
+                continue
+            raise RuntimeError(f"HTTP {e.code} from {url}: {detail}") from e
 
 
 def cmd_upload(a):

@@ -184,3 +184,41 @@ default. This folder is git-ignored because generated GLBs can be large. Use `--
 
 Generation consumes provider credits. `--textured` may consume additional
 credits, and Meshy's textured flow runs a preview task followed by a refine task.
+
+## Wikipedia people seed
+
+Build a popularity-ranked, upload-ready people list from Wikipedia pageviews
+and Wikidata's human metadata. The default ordering is pure all-Wikipedia
+Wikidata PageRank, favoring durable encyclopedic centrality over short-lived
+attention spikes. QRank's rolling twelve-month pageview total remains available
+for an optional geometric rank blend. Monthly English top-page lists supply the
+candidate pool; they do not supply the final score:
+
+```bash
+python3 tools/build_wikipedia_people_seed.py --limit 500
+```
+
+The size is deliberately tunable; for a larger pool, use `--limit 2000` with
+the same ranking and eligibility rules. The default output is
+`wikipedia-people-<limit>.txt`, one name per line. Add `--details-output` for a
+scored review CSV, `--exclude`/`--exclude-file` for editorial exclusions, or
+increase `--months` and `--oversample` if a very large target exhausts the
+eligible candidate pool. The weights pipeline is assumed to supply imagery;
+`--require-image` is available as an optional stricter filter. API responses
+and the ranking snapshots are cached under `.cache/`. Use `--pagerank-weight 0`
+for pure QRank or `--pagerank-weight 0.35` for the previous 65/35 blend.
+`--qrank-file` and
+`--pagerank-file` accept local snapshots; the corresponding URL options update
+the default sources.
+
+The generator also applies `config/wikipedia-roster-inclusions.txt`. Those
+names are guaranteed a slot within the exact `--limit`, displacing the lowest
+ranked non-inclusions when necessary. Use `--include`/`--include-file` for
+additional names or `--no-default-inclusions` to audit pure ranking output.
+If a named person has no standalone human Wikipedia/Wikidata page, the literal
+name is retained with deterministic local metadata and a zero popularity score.
+
+The generator applies `config/wikipedia-roster-exclusions.txt` by default and
+replaces excluded entries so `--limit` remains exact. The human-review rules
+behind that list are documented in `docs/character-roster-editorial-policy.md`.
+Use `--no-default-exclusions` only for auditing the unfiltered source pool.
