@@ -422,6 +422,15 @@ def main():
         except Exception as e:
             log(f"variants: {tgt} FAILED ({e}) — continuing")
 
+    # 4c. pack ----------------------------------------------------------
+    # The shipped bundle is one OSB6 per character: the atlas once (at the
+    # 512x512 production size) plus every built target's payload, so the
+    # engine picks the block for whatever fighter it spawns. The per-target
+    # .osb files above stay as pipeline intermediates for the offline tools.
+    osb6 = os.path.join(HERE, "play", f"{slug}.osb6")
+    log("pack: merging targets into one OSB6 bundle")
+    sh(["python3", pipeline_script("osb_merge.py"), osb, "-o", osb6, "--atlas", "512"], timeout=300)
+
     # 5+6. UI art --------------------------------------------------------
     if stage_needed(F("portrait_raw.png"), force, "portrait"):
         log("portrait: generating tile art")
@@ -482,11 +491,7 @@ def main():
 
     # 9. stage -----------------------------------------------------------
     if os.path.isdir(WEBDIST):
-        stage_files = [(osb, f"{slug}.osb"), (osbui, f"{slug}.osbui"), (wav, f"{slug}.wav")]
-        for tgt in variants:
-            vosb = os.path.join(HERE, "play", f"{slug}-{tgt}.osb")
-            if os.path.exists(vosb):
-                stage_files.append((vosb, f"{slug}-{tgt}.osb"))
+        stage_files = [(osb6, f"{slug}.osb6"), (osbui, f"{slug}.osbui"), (wav, f"{slug}.wav")]
         for src, base in stage_files:
             dst = os.path.join(WEBDIST, base)
             open(dst, "wb").write(open(src, "rb").read())
@@ -498,7 +503,7 @@ def main():
         from baked_roster import publish_character
         changed = publish_character(slug)
         log(f"{'published' if changed else 'already present in'} baked roster manifest")
-    url = (f"http://localhost:8600/index.html?inject=bundles/{slug}.osb"
+    url = (f"http://localhost:8600/index.html?inject=bundles/{slug}.osb6"
            f"&inject_ui=bundles/{slug}.osbui&inject_voice=bundles/{slug}.wav"
            f"&SSB64_START_SCENE=16")
     log(f"done: {url}")

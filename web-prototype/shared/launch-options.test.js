@@ -15,10 +15,9 @@ const CHARACTER = {
   name: "Test Fighter",
   fkind: 0,
   base: "mario",
-  bundle: "testfighter.osb",
-  variants: {
-    link: "bundles/testfighter-link.osb",
-  },
+  // One OSB6 per character; `variants` lists the skeleton targets built into it.
+  bundle: "testfighter.osb6",
+  variants: ["fox", "samus", "link", "kirby", "pikachu"],
 };
 
 function queryFor(action, options = DEFAULT_ADVANCED_OPTIONS) {
@@ -31,7 +30,7 @@ test("launch URLs do not contain per-launch cache busters", () => {
 
 test("default launches start a free-for-all", () => {
   const characterQuery = queryFor({ type: "character", character: CHARACTER });
-  assert.equal(characterQuery.get("inject"), "bundles/testfighter.osb");
+  assert.equal(characterQuery.get("inject"), "bundles/testfighter.osb6");
   assert.equal(characterQuery.get("inject_ui"), null);
   assert.equal(characterQuery.get("inject_voice"), null);
   assert.match(characterQuery.get("SSB64_BOOT_BATTLE"), /^0,\d+,\d+,1,\d+,\d+$/);
@@ -224,15 +223,17 @@ test("explicit clicked mesh targets the matching opening card", () => {
   const featured = introConfig.find((card) => card.featured);
 
   assert.equal(featured.fkind, 5);
-  assert.equal(featured.character.bundleUrl, "bundles/testfighter-link.osb");
+  // The mesh override changes the spawned fighter, never the file.
+  assert.equal(featured.character.bundle, "testfighter.osb6");
+  assert.equal(featured.character.base, "link");
 });
 
 test("missing intro variants fall back to vanilla per card", () => {
   const limited = {
     ...CHARACTER,
     slug: "limited",
-    bundleUrl: "https://objects.test/limited.osb",
-    variants: { fox: "https://objects.test/limited-fox.osb" },
+    bundleUrl: "https://objects.test/limited.osb6",
+    variants: ["fox"],
   };
   const introConfig = createFullBootIntroConfig([limited], () => 0);
   assert.deepEqual(
@@ -265,7 +266,7 @@ test("mesh and stage overrides select the matching injection variant", () => {
     { type: "character", character: CHARACTER },
     { characterMesh: "link", stage: "4", opponentLevel: "9", bootMode: "free-for-all" },
   );
-  assert.equal(query.get("inject"), "bundles/testfighter-link.osb");
+  assert.equal(query.get("inject"), "bundles/testfighter.osb6");
   assert.equal(query.get("fkind"), "5");
   assert.equal(query.get("base"), "testfighter:link");
   assert.match(query.get("SSB64_BOOT_BATTLE"), /^5,\d+,4,1,\d+,\d+$/);
@@ -310,7 +311,10 @@ test("stored settings are allow-listed and report active overrides", () => {
 test("a missing forced mesh variant produces a useful error", () => {
   assert.throws(
     () => queryFor(
-      { type: "character", character: { ...CHARACTER, bundleUrl: "https://objects.test/testfighter.osb" } },
+      {
+        type: "character",
+        character: { ...CHARACTER, bundleUrl: "https://objects.test/testfighter.osb6", variants: ["link"] },
+      },
       { characterMesh: "fox", stage: "random", bootMode: "free-for-all" },
     ),
     /does not have a Fox mesh variant/,
@@ -363,7 +367,7 @@ test("two human ports without picks open the character select", () => {
   assert.equal(query.get("SSB64_BOOT_HUMANS"), "2");
   assert.match(query.get("SSB64_BOOT_BATTLE"), /^0,-1,\d+,0,-1,-1$/);
   assert.equal(query.has("inject_player"), false);
-  assert.equal(query.get("inject"), "bundles/testfighter.osb");
+  assert.equal(query.get("inject"), "bundles/testfighter.osb6");
 });
 
 test("explicit port choices shape the plan and count as overrides", () => {

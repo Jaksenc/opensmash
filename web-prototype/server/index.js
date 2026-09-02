@@ -11,7 +11,7 @@ import { createJobDispatcher } from "./job-dispatcher.js";
 import { createObjectStore } from "./object-store.js";
 import { withInitialState } from "./html-state.js";
 import { resolveProjectPaths } from "./project-paths.js";
-import { assignRosterBases, bundleForBase, FIGHTERS } from "./roster.js";
+import { assignRosterBases, bundleForBase, FIGHTERS, readOsb6Targets } from "./roster.js";
 import { matchesCharacterSearch } from "../shared/character-search.js";
 import { bakedRosterEntries } from "../shared/baked-roster.js";
 import { ROMS_BY_SHA1, UNSUPPORTED_ROMS_BY_SHA1 } from "../shared/rom-catalog.js";
@@ -305,7 +305,7 @@ async function configuredCharacters(query = "", user = null) {
     const characterRoot = path.join(PIPELINE_UI_ROOT, slug);
     try {
       await access(path.join(characterRoot, "portrait_raw.png"));
-      const bundle = bundleForBase(slug, fighterName);
+      const bundle = bundleForBase(slug);
       await access(path.join(PIPELINE_PLAY_ROOT, bundle));
       result.push({
         slug,
@@ -316,6 +316,7 @@ async function configuredCharacters(query = "", user = null) {
         base: fighterName,
         fkind,
         bundle,
+        variants: character.variants,
         ui: character.ui,
         voice: character.voice,
       });
@@ -344,14 +345,19 @@ async function engineRoster(config = null) {
 
   for (const entry of entries) {
     const { slug } = entry;
-    if (!files.has(`${slug}.osb`)) {
-      console.warn(`Skipping baked character '${slug}': play/${slug}.osb is missing`);
+    if (!files.has(`${slug}.osb6`)) {
+      console.warn(`Skipping baked character '${slug}': play/${slug}.osb6 is missing`);
       continue;
     }
-    const variants = [...files]
-      .filter((candidate) => candidate.startsWith(`${slug}-`) && candidate.endsWith(".osb"))
-      .map((candidate) => candidate.slice(slug.length + 1, -4))
-      .sort();
+    let variants;
+    try {
+      variants = (await readOsb6Targets(path.join(PIPELINE_PLAY_ROOT, `${slug}.osb6`)))
+        .filter((target) => target !== "mario")
+        .sort();
+    } catch (error) {
+      console.warn(`Skipping baked character '${slug}': ${error.message}`);
+      continue;
+    }
     let metadata = {};
     try {
       metadata = JSON.parse(await readFile(path.join(PIPELINE_UI_ROOT, slug, "character.json"), "utf8"));
@@ -381,14 +387,14 @@ async function engineRoster(config = null) {
 }
 
 async function bakedEngineFile(relative) {
-  const match = relative.match(/^bundles\/([a-z0-9]+)(?:-([a-z0-9]+))?\.(osb|osbui|wav)$/);
+  const match = relative.match(/^bundles\/([a-z0-9]+)\.(osb6|osbui|wav)$/);
   if (!match) return null;
-  const [, slug, variant, extension] = match;
+  const [, slug, extension] = match;
   const configured = new Set((await bakedCharacterConfig()).map((entry) => entry.slug));
-  if (!configured.has(slug) || (variant && extension !== "osb")) return null;
+  if (!configured.has(slug)) return null;
 
-  if (extension === "osb") {
-    return path.join(PIPELINE_PLAY_ROOT, `${slug}${variant ? `-${variant}` : ""}.osb`);
+  if (extension === "osb6") {
+    return path.join(PIPELINE_PLAY_ROOT, `${slug}.osb6`);
   }
   return path.join(
     PIPELINE_UI_ROOT,
@@ -674,8 +680,7 @@ async function handleRequest(req, res, vite) {
     if (!validSession(req)) return json(res, 401, { error: "ROM validation required" });
     if (pathname === "/bundles.json") {
       const names = (await engineRoster()).flatMap((character) => [
-        `${character.slug}.osb`,
-        ...character.variants.map((variant) => `${character.slug}-${variant}.osb`),
+        `${character.slug}.osb6`,
         ...(character.ui ? [`${character.slug}.osbui`] : []),
         ...(character.voice ? [`${character.slug}.wav`] : []),
       ]).sort();
