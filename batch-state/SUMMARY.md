@@ -23,3 +23,9 @@ pipeline/expand_character.py (pixel-budget short-name wording), scripts/batch_ch
 - Steered re-runs with --notes (new run_character flag): Cheshire Cat, Loki, Thor, Hemsworth, Reeve, Lynda Carter, Radcliffe, Carrie Fisher, Homer (Greek poet), Paul Bunyan, David (tunic) — all built.
 - Still blocked (output filter judges the image itself; PD-design notes did not help): Oswald, Pinocchio, Winnie the Pooh, Captain Hook, Peter Pan.
 - Charles Manson: skipped by user.
+
+## Quality passes (2026-09-02 late morning)
+- Facing: render+VLM gate (pipeline/facing_check.py) in the convert stage; roster sweep found 110 backwards (11%), all reconverted with --flip-facing (batch-state/facing_sweep.py, facing_fix.py).
+- Mesh sanity: batch-state/mesh_check.py sweep (tpose vs render): 42 broken (4%), two Tripo failure classes — pure-black/mirror surfaces lose geometry (legs missing), thin free-hanging cloth (gowns, capes, flared skirts) comes back as open, inside-out shells. Tripo options (geometry_quality detailed, orientation align_image) do not help. Fixed at the request: t-pose prompt forbids pure black/mirror, expander asks for charcoal with seams, fitted garments, tights under skirts. All 42 re-rolled (batch-state/reroll_broken.py): 38 ok, 4 minor, 0 broken. Marilyn/Dolly re-rolled as test cases. Backups: batch-state/reroll-backup/.
+- Depiction: batch-state/depiction_check.py sweep (name + CSV section vs t-pose). Real wrong-person picks re-rolled: Michelangelo, Donatello (turtles), Butterbean (fairy), Nero, Hannibal, Terry Bradshaw, Whistler's Mother, Iago, Anansi, Mata Hari, Faust, Boy George. Left as taste: Jim Carrey (The Mask), Patrick Stewart (Picard), Nimoy (Spock), Harrison Ford (Indy). The batch list now carries "Roster category: <section>" per name so the expander picks the right person.
+- Daft Punk: duo t-pose → single member; two Tripo meshes broken by black+gold; intact on the third with matte/charcoal notes.

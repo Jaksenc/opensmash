@@ -1,0 +1,1114 @@
+{"verdict": "ok", "issue": "Intact figure with both arms and legs present", "confidence": "high", "cost_usd": 0.0005413999999999999, "slug": "50cent"}
+{"verdict": "ok", "issue": "Body, head, and four limbs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.000491, "slug": "abrahamlincoln"}
+{"verdict": "ok", "issue": "Complete recognizable figure with two arms and two legs", "confidence": "high", "cost_usd": 0.0004718, "slug": "achilles"}
+{"verdict": "ok", "issue": "Head, torso, two arms, and two legs are present and structurally intact.", "confidence": "high", "cost_usd": 0.000581, "slug": "adamant"}
+{"verdict": "ok", "issue": "All major body parts and four limbs are present.", "confidence": "high", "cost_usd": 0.00045139999999999997, "slug": "adamdriver"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and structurally intact.", "confidence": "high", "cost_usd": 0.000485, "slug": "adamwest"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0004622, "slug": "akirakurosawa"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are all present and structurally continuous.", "confidence": "high", "cost_usd": 0.0004706, "slug": "akiratoriyama"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0005522000000000001, "slug": "alanturing"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0004502, "slug": "alberteinstein"}
+{"verdict": "error", "issue": "Unterminated string starting at: line 1 column 29 (char 28)", "slug": "alcapone"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are intact and recognizable.", "confidence": "high", "cost_usd": 0.0004418, "slug": "alexanderhamilto"}
+{"verdict": "ok", "issue": "Recognizable intact figure with both legs and arms present.", "confidence": "high", "cost_usd": 0.0005677999999999999, "slug": "alexanderthegrea"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0005413999999999999, "slug": "alexandrwang"}
+{"verdict": "minor_defects", "issue": "Two arms and two legs are present; small protruding hand/foot mesh artifacts.", "confidence": "high", "cost_usd": 0.0005882000000000001, "slug": "alexovechkin"}
+{"verdict": "ok", "issue": "Intact figure with two arms, two legs, continuous torso, and proportionate head.", "confidence": "high", "cost_usd": 0.000461, "slug": "alextrebek"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "alfredhitchcock"}
+{"verdict": "ok", "issue": "Intact figure with both arms and legs present", "confidence": "high", "cost_usd": 0.0005174, "slug": "alibaba"}
+{"verdict": "ok", "issue": "Intact low-poly figure with both arms and legs present", "confidence": "high", "cost_usd": 0.0005366, "slug": "alicecooper"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are intact; skirt hem is slightly jagged.", "confidence": "high", "cost_usd": 0.00048019999999999996, "slug": "aliceinwonderlan"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "alleniverson"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "alpacino"}
+{"verdict": "ok", "issue": "Two arms and two legs are present; torso and head are continuous.", "confidence": "high", "cost_usd": 0.0004646, "slug": "ameliaearhart"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0004886000000000001, "slug": "amitabhbachchan"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs present.", "confidence": "high", "cost_usd": 0.0005162000000000001, "slug": "anansi"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are intact and recognizable.", "confidence": "high", "cost_usd": 0.00047539999999999995, "slug": "andersonsilva"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and continuous.", "confidence": "high", "cost_usd": 0.0004886000000000001, "slug": "andr3000"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0004862, "slug": "andreabocelli"}
+{"verdict": "error", "issue": "Unterminated string starting at: line 1 column 36 (char 35)", "slug": "andreagassi"}
+{"verdict": "minor_defects", "issue": "Recognizable figure with all limbs present, but jagged lower clothing and foot geometry.", "confidence": "high", "cost_usd": 0.0005497999999999999, "slug": "andrejkarpathy"}
+{"verdict": "broken", "issue": "Torso and clothing are heavily shredded with jagged fragments; limbs appear incomplete.", "confidence": "high", "cost_usd": 0.000611, "slug": "andrethegiant"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0005317999999999999, "slug": "andrewjackson"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0004718, "slug": "andrewng"}
+{"verdict": "ok", "issue": "Complete recognizable figure with two arms and two legs", "confidence": "high", "cost_usd": 0.0004826, "slug": "andykaufman"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs", "confidence": "high", "cost_usd": 0.0005006, "slug": "andyserkis"}
+{"verdict": "minor_defects", "issue": "All limbs and head are present; minor jagged spikes and tears on clothing and feet.", "confidence": "high", "cost_usd": 0.000527, "slug": "andywarhol"}
+{"verdict": "ok", "issue": "Low-poly profile view with intact head, torso, two arms, and two legs.", "confidence": "high", "cost_usd": 0.0006865999999999999, "slug": "angelinajolie"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs", "confidence": "high", "cost_usd": 0.000467, "slug": "angusyoung"}
+{"verdict": "ok", "issue": "Two arms and two legs are present; head, torso, and clothing remain continuous.", "confidence": "high", "cost_usd": 0.0006182000000000001, "slug": "annawintour"}
+{"verdict": "ok", "issue": "Intact low-poly figure with two arms and two legs present.", "confidence": "high", "cost_usd": 0.0005593999999999999, "slug": "anneboleyn"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs", "confidence": "high", "cost_usd": 0.0005246000000000001, "slug": "annielennox"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and intact.", "confidence": "high", "cost_usd": 0.0004718, "slug": "annieoakley"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are all present and continuous.", "confidence": "high", "cost_usd": 0.0004598, "slug": "anthonybourdain"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are intact and recognizable.", "confidence": "high", "cost_usd": 0.0006674, "slug": "anthonyhopkins"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are intact.", "confidence": "high", "cost_usd": 0.0004634, "slug": "anthonykiedis"}
+{"verdict": "ok", "issue": "Intact low-poly figure with two arms, two legs, and continuous torso.", "confidence": "high", "cost_usd": 0.0004898, "slug": "antonioinoki"}
+{"verdict": "minor_defects", "issue": "Jagged tears and spikes along the coat, but all limbs and the head remain intact.", "confidence": "high", "cost_usd": 0.0005773999999999999, "slug": "antoniovivaldi"}
+{"verdict": "ok", "issue": "Body, head, and four limbs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.00045860000000000003, "slug": "anubis"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0004358, "slug": "aravindsrinivas"}
+{"verdict": "broken", "issue": "Lower body and dress are heavily fragmented and jagged", "confidence": "high", "cost_usd": 0.000659, "slug": "arethafranklin"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally intact.", "confidence": "high", "cost_usd": 0.0004718, "slug": "arianagrande"}
+{"verdict": "ok", "issue": "Intact low-poly figure with two arms and two legs present.", "confidence": "high", "cost_usd": 0.0005773999999999999, "slug": "arnoldschwarzene"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally intact.", "confidence": "high", "cost_usd": 0.000533, "slug": "attilathehun"}
+{"verdict": "minor_defects", "issue": "Recognizable intact figure with some jagged, stretched clothing and limb geometry.", "confidence": "high", "cost_usd": 0.0006002000000000001, "slug": "audreyhepburn"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0004934, "slug": "avicii"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and structurally intact.", "confidence": "high", "cost_usd": 0.0004934, "slug": "axlrose"}
+{"verdict": "minor_defects", "issue": "All limbs and head are present; lower boots have jagged, spiky edges.", "confidence": "high", "cost_usd": 0.0005186, "slug": "ayrtonsenna"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and structurally intact.", "confidence": "high", "cost_usd": 0.0006745999999999999, "slug": "babayaga"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs", "confidence": "high", "cost_usd": 0.00046939999999999997, "slug": "baberuth"}
+{"verdict": "minor_defects", "issue": "Jagged, spiky clothing and limb surfaces, but all limbs and head remain recognizable", "confidence": "high", "cost_usd": 0.0006242, "slug": "badbunny"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.00047779999999999996, "slug": "barackobama"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs", "confidence": "high", "cost_usd": 0.0004418, "slug": "baronmunchausen"}
+{"verdict": "error", "issue": "Unterminated string starting at: line 1 column 138 (char 137)", "slug": "barrymanilow"}
+{"verdict": "ok", "issue": "Intact figure with two arms and two legs visible", "confidence": "high", "cost_usd": 0.0005894, "slug": "barrywhite"}
+{"verdict": "ok", "issue": "All limbs and body surfaces are intact", "confidence": "high", "cost_usd": 0.0005402, "slug": "beargrylls"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and structurally continuous.", "confidence": "high", "cost_usd": 0.000467, "slug": "beckylynch"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0004874, "slug": "benedictcumberba"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are structurally intact.", "confidence": "high", "cost_usd": 0.0004706, "slug": "benitomussolini"}
+{"verdict": "ok", "issue": "Intact low-poly figure with two arms, two legs, continuous torso, and proportionate head.", "confidence": "high", "cost_usd": 0.0005942, "slug": "benjaminfranklin"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "bennyhill"}
+{"verdict": "ok", "issue": "Recognizable figure with head, continuous torso, two arms, and two legs present.", "confidence": "high", "cost_usd": 0.00047539999999999995, "slug": "beowulf"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "berniemadoff"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "berniesanders"}
+{"verdict": "broken", "issue": "Body and clothing are severely shredded into jagged fragments", "confidence": "high", "cost_usd": 0.0005233999999999999, "slug": "bettyboop"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and structurally intact.", "confidence": "high", "cost_usd": 0.0005462, "slug": "bettywhite"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present; minor jagged clothing edges.", "confidence": "high", "cost_usd": 0.000473, "slug": "beyonc"}
+{"verdict": "ok", "issue": "All limbs, head, and torso appear structurally intact.", "confidence": "high", "cost_usd": 0.0006217999999999999, "slug": "bigfoot"}
+{"verdict": "ok", "issue": "All major body parts and limbs are present.", "confidence": "high", "cost_usd": 0.000515, "slug": "biggiesmalls"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "bigshow"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are intact.", "confidence": "high", "cost_usd": 0.0005126, "slug": "billclinton"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally present.", "confidence": "high", "cost_usd": 0.000503, "slug": "billgates"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and connected.", "confidence": "high", "cost_usd": 0.0004634, "slug": "billieeilish"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are intact.", "confidence": "high", "cost_usd": 0.0004562, "slug": "billiejoearmstro"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are intact.", "confidence": "high", "cost_usd": 0.0005137999999999999, "slug": "billmurray"}
+{"verdict": "error", "issue": "Unterminated string starting at: line 1 column 36 (char 35)", "slug": "billnye"}
+{"verdict": "minor_defects", "issue": "Jagged tears and spikes around the pants and feet", "confidence": "high", "cost_usd": 0.0005738, "slug": "billyblanks"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs present.", "confidence": "high", "cost_usd": 0.0004946, "slug": "billyconnolly"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are structurally intact.", "confidence": "high", "cost_usd": 0.0005402, "slug": "billyidol"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and structurally continuous.", "confidence": "high", "cost_usd": 0.000509, "slug": "billyjoel"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0004394, "slug": "billyraycyrus"}
+{"verdict": "ok", "issue": "Low-poly jagged coat edges, but the figure and all four limbs are intact.", "confidence": "high", "cost_usd": 0.000665, "slug": "billythekid"}
+{"verdict": "ok", "issue": "Body, head, and all four limbs are present and intact.", "confidence": "high", "cost_usd": 0.000479, "slug": "bjrnborg"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs present.", "confidence": "high", "cost_usd": 0.0005282, "slug": "blackbeard"}
+{"verdict": "minor_defects", "issue": "All limbs and body are present; feet are somewhat jagged.", "confidence": "high", "cost_usd": 0.0006182000000000001, "slug": "blakerobbins"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.00047779999999999996, "slug": "bobbarker"}
+{"verdict": "ok", "issue": "Recognisable intact figure with two arms, two legs, continuous torso, and proportionate head", "confidence": "high", "cost_usd": 0.0004982, "slug": "bobdylan"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.00047779999999999996, "slug": "bobhope"}
+{"verdict": "ok", "issue": "All limbs, head, torso, and clothing are structurally intact.", "confidence": "high", "cost_usd": 0.000623, "slug": "bobmarley"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs", "confidence": "high", "cost_usd": 0.0004646, "slug": "bobross"}
+{"verdict": "error", "issue": "Unterminated string starting at: line 1 column 36 (char 35)", "slug": "bobsapp"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are visibly intact.", "confidence": "high", "cost_usd": 0.000437, "slug": "bojackson"}
+{"verdict": "ok", "issue": "Intact low-poly figure with both arms and legs present", "confidence": "high", "cost_usd": 0.000455, "slug": "boloyeung"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0005078, "slug": "bono"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0006074, "slug": "bookert"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact", "confidence": "high", "cost_usd": 0.0005233999999999999, "slug": "borisjohnson"}
+{"verdict": "broken", "issue": "Torso and lower clothing are heavily collapsed into jagged fragments.", "confidence": "high", "cost_usd": 0.0006638, "slug": "botticellisvenus"}
+{"verdict": "ok", "issue": "Low-poly but structurally intact with head, torso, two arms, and two legs present.", "confidence": "high", "cost_usd": 0.0005546, "slug": "boyangniu"}
+{"verdict": "minor_defects", "issue": "Small jagged clothing fragments around the torso and waist.", "confidence": "high", "cost_usd": 0.0005918, "slug": "boygeorge"}
+{"verdict": "ok", "issue": "Intact figure with two arms and two legs present", "confidence": "high", "cost_usd": 0.0005114, "slug": "bradpitt"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and continuous.", "confidence": "high", "cost_usd": 0.0006337999999999999, "slug": "brethart"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are intact and recognizable.", "confidence": "high", "cost_usd": 0.00041539999999999996, "slug": "brianmay"}
+{"verdict": "ok", "issue": "Intact low-poly figure with both arms and legs present.", "confidence": "high", "cost_usd": 0.000437, "slug": "britneyspears"}
+{"verdict": "ok", "issue": "All limbs, head, torso, and clothing are structurally intact", "confidence": "high", "cost_usd": 0.0005654, "slug": "brittneygriner"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "brocklesnar"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "brucebuffer"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0004562, "slug": "brucelee"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "brucespringsteen"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally present", "confidence": "high", "cost_usd": 0.0006205999999999999, "slug": "brucewillis"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.00045739999999999995, "slug": "brunhilde"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally intact.", "confidence": "high", "cost_usd": 0.0004634, "slug": "brunomars"}
+{"verdict": "error", "issue": "Unterminated string starting at: line 1 column 36 (char 35)", "slug": "buddha"}
+{"verdict": "ok", "issue": "Intact low-poly figure with two arms and two legs visible.", "confidence": "high", "cost_usd": 0.000455, "slug": "buddyholly"}
+{"verdict": "ok", "issue": "All limbs and body surfaces are intact.", "confidence": "high", "cost_usd": 0.0003674, "slug": "buffalobill"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0005378, "slug": "burnaboy"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0004646, "slug": "burtreynolds"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are intact.", "confidence": "high", "cost_usd": 0.0004478, "slug": "bustarhymes"}
+{"verdict": "ok", "issue": "All limbs and head are present; low-poly clothing is angular but continuous.", "confidence": "high", "cost_usd": 0.0005714, "slug": "busterkeaton"}
+{"verdict": "broken", "issue": "Torso, clothing, and limbs are heavily shredded into jagged fragments.", "confidence": "high", "cost_usd": 0.0005017999999999999, "slug": "butterbean"}
+{"verdict": "ok", "issue": "All major body parts and four limbs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0004742, "slug": "buzzaldrin"}
+{"verdict": "ok", "issue": "All limbs, head, torso, and clothing are structurally intact.", "confidence": "high", "cost_usd": 0.00047660000000000004, "slug": "caitlinclark"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs present", "confidence": "high", "cost_usd": 0.0006314, "slug": "caitlynjenner"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are structurally intact.", "confidence": "high", "cost_usd": 0.0004622, "slug": "calamityjane"}
+{"verdict": "error", "issue": "Unterminated string starting at: line 1 column 25 (char 24)", "slug": "caliban"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.000497, "slug": "caligula"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are intact", "confidence": "high", "cost_usd": 0.0005102, "slug": "calvinharris"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are intact and recognizable.", "confidence": "high", "cost_usd": 0.0004994, "slug": "canelolvarez"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally intact.", "confidence": "high", "cost_usd": 0.00045739999999999995, "slug": "captainahab"}
+{"verdict": "ok", "issue": "Intact figure with both arms, legs, head, and torso present.", "confidence": "high", "cost_usd": 0.000455, "slug": "captainnemo"}
+{"verdict": "minor_defects", "issue": "Recognizable full figure with both arms and legs, but limbs have some jagged, rough mesh edges.", "confidence": "high", "cost_usd": 0.0005053999999999999, "slug": "cardib"}
+{"verdict": "minor_defects", "issue": "Jagged clothing edges, but the head, torso, two arms, and two legs remain intact.", "confidence": "high", "cost_usd": 0.000527, "slug": "carlossantana"}
+{"verdict": "minor_defects", "issue": "Both arms and legs are present, with minor jagged/spiky mesh artifacts around the clothing and rear arm.", "confidence": "high", "cost_usd": 0.0006458, "slug": "carlsagan"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs present.", "confidence": "high", "cost_usd": 0.0005233999999999999, "slug": "carlweathers"}
+{"verdict": "broken", "issue": "Dress and lower body are severely shredded into jagged fragments.", "confidence": "high", "cost_usd": 0.0004622, "slug": "carmen"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are recognisably intact", "confidence": "high", "cost_usd": 0.00048379999999999994, "slug": "carriefisher"}
+{"verdict": "ok", "issue": "All limbs and main body surfaces are present and connected", "confidence": "high", "cost_usd": 0.0004898, "slug": "carrottop"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally intact.", "confidence": "high", "cost_usd": 0.0004862, "slug": "casanova"}
+{"verdict": "ok", "issue": "Recognizable intact figure with both arms and legs present", "confidence": "high", "cost_usd": 0.0004946, "slug": "catherinethegrea"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are intact.", "confidence": "high", "cost_usd": 0.0005786, "slug": "chadkroeger"}
+{"verdict": "ok", "issue": "Recognizable intact figure with all limbs present.", "confidence": "high", "cost_usd": 0.000599, "slug": "chappellroan"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs", "confidence": "high", "cost_usd": 0.00047660000000000004, "slug": "charlemagne"}
+{"verdict": "ok", "issue": "Body, head, and all four limbs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0005078, "slug": "charlesatlas"}
+{"verdict": "ok", "issue": "Head, torso, two arms, and two legs are present and structurally connected.", "confidence": "high", "cost_usd": 0.0006254, "slug": "charlesbarkley"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs", "confidence": "high", "cost_usd": 0.0004994, "slug": "charlesdarwin"}
+{"verdict": "error", "issue": "Unterminated string starting at: line 1 column 25 (char 24)", "slug": "charlesdickens"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs", "confidence": "high", "cost_usd": 0.0006145999999999999, "slug": "charliechaplin"}
+{"verdict": "minor_defects", "issue": "Recognizable intact figure with some thin jagged clothing and limb edges", "confidence": "high", "cost_usd": 0.0005137999999999999, "slug": "charltonheston"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are intact.", "confidence": "high", "cost_usd": 0.0004706, "slug": "cheechmarin"}
+{"verdict": "minor_defects", "issue": "All limbs and body are present; boot edges are slightly jagged.", "confidence": "high", "cost_usd": 0.0004622, "slug": "cheguevara"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally intact.", "confidence": "high", "cost_usd": 0.0005233999999999999, "slug": "cher"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0004634, "slug": "chowyunfat"}
+{"verdict": "ok", "issue": "Low-poly jaggedness; body, head, and four limbs remain intact.", "confidence": "high", "cost_usd": 0.000581, "slug": "chrisfarley"}
+{"verdict": "minor_defects", "issue": "All limbs and head are present; clothing and shoes have jagged, stretched edges.", "confidence": "high", "cost_usd": 0.0006385999999999999, "slug": "chrishemsworth"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0004886000000000001, "slug": "chrisjericho"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "chrisrock"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are intact and recognizable.", "confidence": "high", "cost_usd": 0.000449, "slug": "christophercolum"}
+{"verdict": "ok", "issue": "Intact crouched figure with both arms and legs present", "confidence": "high", "cost_usd": 0.0005053999999999999, "slug": "christopherlee"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "christopherreeve"}
+{"verdict": "minor_defects", "issue": "Body and all four limbs are present, with slightly jagged coat and trouser ends.", "confidence": "high", "cost_usd": 0.0004946, "slug": "christopherwalke"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally intact.", "confidence": "high", "cost_usd": 0.0005354, "slug": "chuckberry"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and structurally continuous.", "confidence": "high", "cost_usd": 0.000479, "slug": "chuckd"}
+{"verdict": "ok", "issue": "All limbs and torso are intact", "confidence": "high", "cost_usd": 0.0006577999999999999, "slug": "chucknorris"}
+{"verdict": "minor_defects", "issue": "Minor jagged edges around the clothing and limbs", "confidence": "high", "cost_usd": 0.0005294, "slug": "chyna"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are visibly intact.", "confidence": "high", "cost_usd": 0.0005582, "slug": "claudemonet"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.000473, "slug": "claudeshannon"}
+{"verdict": "ok", "issue": "All limbs, head, torso, and clothing are structurally intact.", "confidence": "high", "cost_usd": 0.0006434, "slug": "cleopatra"}
+{"verdict": "minor_defects", "issue": "Low-poly jagged edges around clothing and limbs, but the full figure remains intact.", "confidence": "high", "cost_usd": 0.0005102, "slug": "clinteastwood"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are intact and recognizable.", "confidence": "high", "cost_usd": 0.0004874, "slug": "cmpunk"}
+{"verdict": "ok", "issue": "Body, head, and all four limbs are intact and recognizable.", "confidence": "high", "cost_usd": 0.0005126, "slug": "cocochanel"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally intact.", "confidence": "high", "cost_usd": 0.000455, "slug": "codyrhodes"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "colinkaepernick"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are recognisably intact.", "confidence": "high", "cost_usd": 0.0005965999999999999, "slug": "colonelsanders"}
+{"verdict": "ok", "issue": "Intact figure with both arms and legs present", "confidence": "high", "cost_usd": 0.00045739999999999995, "slug": "conanobrien"}
+{"verdict": "broken", "issue": "Torso and lower clothing are severely shredded into jagged fragments.", "confidence": "high", "cost_usd": 0.0005666, "slug": "confucius"}
+{"verdict": "minor_defects", "issue": "Jagged, ragged lower clothing and limb ends", "confidence": "high", "cost_usd": 0.0006614, "slug": "conormcgregor"}
+{"verdict": "ok", "issue": "Recognizable intact figure with both legs and arms present; side pose obscures one arm.", "confidence": "high", "cost_usd": 0.00047779999999999996, "slug": "coolio"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are structurally intact.", "confidence": "high", "cost_usd": 0.0004826, "slug": "coreytaylor"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "countdracula"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are intact.", "confidence": "high", "cost_usd": 0.0005137999999999999, "slug": "countorlok"}
+{"verdict": "ok", "issue": "Intact low-poly figure with both arms and legs present", "confidence": "high", "cost_usd": 0.0005474, "slug": "courtneylove"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are all present and structurally continuous.", "confidence": "high", "cost_usd": 0.000503, "slug": "crazyhorse"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact", "confidence": "high", "cost_usd": 0.000431, "slug": "crissangel"}
+{"verdict": "error", "issue": "Unterminated string starting at: line 1 column 36 (char 35)", "slug": "cristianoronaldo"}
+{"verdict": "ok", "issue": "All limbs, head, torso, and clothing are structurally intact.", "confidence": "high", "cost_usd": 0.000455, "slug": "cupid"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are intact.", "confidence": "high", "cost_usd": 0.0005042, "slug": "curlyhoward"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0003746, "slug": "cyndilauper"}
+{"verdict": "ok", "issue": "Body, head, and all four limbs appear intact.", "confidence": "high", "cost_usd": 0.0004682, "slug": "cyranodebergerac"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally intact.", "confidence": "high", "cost_usd": 0.00048379999999999994, "slug": "dalailama"}
+{"verdict": "minor_defects", "issue": "Small jagged spikes and clothing tears around the back and shoulders.", "confidence": "high", "cost_usd": 0.0005546, "slug": "daleearnhardt"}
+{"verdict": "minor_defects", "issue": "Recognizable figure with all limbs present, though the crouched lower body and clothing are somewhat jagged.", "confidence": "medium", "cost_usd": 0.0005906, "slug": "danacarvey"}
+{"verdict": "ok", "issue": "All limbs and body surfaces are present and structurally intact.", "confidence": "high", "cost_usd": 0.0005017999999999999, "slug": "danawhite"}
+{"verdict": "ok", "issue": "Intact low-poly figure with two arms and two legs present", "confidence": "high", "cost_usd": 0.0006446, "slug": "danaykroyd"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact", "confidence": "high", "cost_usd": 0.0005066000000000001, "slug": "danicapatrick"}
+{"verdict": "ok", "issue": "All limbs and main body surfaces are intact", "confidence": "high", "cost_usd": 0.000491, "slug": "danielaamodei"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0004622, "slug": "danielradcliffe"}
+{"verdict": "ok", "issue": "All limbs and major body surfaces are intact", "confidence": "high", "cost_usd": 0.0005965999999999999, "slug": "dannydevito"}
+{"verdict": "ok", "issue": "All limbs and major body surfaces are present and recognizable", "confidence": "high", "cost_usd": 0.0006182000000000001, "slug": "dantealighieri"}
+{"verdict": "ok", "issue": "Two arms and two legs are present; head and torso remain structurally intact.", "confidence": "high", "cost_usd": 0.0004538, "slug": "darioamodei"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are intact.", "confidence": "high", "cost_usd": 0.0004634, "slug": "dartagnan"}
+{"verdict": "ok", "issue": "Recognizable figure with intact head, torso, two arms, and two legs", "confidence": "high", "cost_usd": 0.0005317999999999999, "slug": "datemasamune"}
+{"verdict": "ok", "issue": "Intact low-poly figure with two arms and two legs present", "confidence": "high", "cost_usd": 0.0005738, "slug": "davebautista"}
+{"verdict": "broken", "issue": "Lower body and limbs are shredded with missing legs/feet.", "confidence": "high", "cost_usd": 0.000449, "slug": "davechappelle"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and structurally continuous.", "confidence": "high", "cost_usd": 0.00046579999999999994, "slug": "davegrohl"}
+{"verdict": "minor_defects", "issue": "Slightly jagged shoulder and clothing geometry; all limbs remain present.", "confidence": "high", "cost_usd": 0.0005773999999999999, "slug": "davidattenboroug"}
+{"verdict": "ok", "issue": "Recognizable intact figure with both arms and legs present", "confidence": "high", "cost_usd": 0.0004718, "slug": "davidbeckham"}
+{"verdict": "error", "issue": "Unterminated string starting at: line 1 column 36 (char 35)", "slug": "davidblaine"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.00044060000000000003, "slug": "davidbowie"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are intact.", "confidence": "high", "cost_usd": 0.0004682, "slug": "davidcopperfield"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact", "confidence": "high", "cost_usd": 0.0005222, "slug": "davidhasselhoff"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0004562, "slug": "davidletterman"}
+{"verdict": "ok", "issue": "Intact low-poly figure with two arms and two legs present.", "confidence": "high", "cost_usd": 0.0006217999999999999, "slug": "davidlynch"}
+{"verdict": "ok", "issue": "Complete figure with both arms and legs intact", "confidence": "high", "cost_usd": 0.000503, "slug": "davycrockett"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0004394, "slug": "davyjones"}
+{"verdict": "minor_defects", "issue": "Small jagged spikes and rough edges on the clothing and feet; limbs and body remain intact.", "confidence": "high", "cost_usd": 0.0005354, "slug": "deadmau5"}
+{"verdict": "ok", "issue": "All limbs, head, and torso appear structurally intact.", "confidence": "high", "cost_usd": 0.000449, "slug": "deanmartin"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and structurally continuous.", "confidence": "high", "cost_usd": 0.00045860000000000003, "slug": "debbieharry"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0005978, "slug": "deionsanders"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.00046939999999999997, "slug": "demishassabis"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "dennisrodman"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "denzelwashington"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "dickvandyke"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "diddy"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are visibly intact.", "confidence": "high", "cost_usd": 0.00045860000000000003, "slug": "diegomaradona"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0005042, "slug": "dikembemutombo"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs; minor jagged clothing edges.", "confidence": "high", "cost_usd": 0.0005186, "slug": "dizzygillespie"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact in the seated pose.", "confidence": "high", "cost_usd": 0.0005306, "slug": "djkhaled"}
+{"verdict": "ok", "issue": "Recognizable figure with intact head, torso, two arms, and two legs.", "confidence": "high", "cost_usd": 0.0005306, "slug": "dollyparton"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are intact.", "confidence": "high", "cost_usd": 0.0004946, "slug": "dolphlundgren"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "donaldknuth"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.000455, "slug": "donaldtrump"}
+{"verdict": "minor_defects", "issue": "Recognizable figure with all limbs present; clothing edges are somewhat jagged.", "confidence": "high", "cost_usd": 0.0005306, "slug": "donaldtrumpjr"}
+{"verdict": "ok", "issue": "Recognizable intact figure with both arms and legs present", "confidence": "high", "cost_usd": 0.000605, "slug": "donatellaversace"}
+{"verdict": "minor_defects", "issue": "Jagged, torn-looking boot and clothing edges; all limbs remain present.", "confidence": "high", "cost_usd": 0.0006638, "slug": "donatello"}
+{"verdict": "ok", "issue": "Intact figure with both arms and legs present; some limbs are partly occluded.", "confidence": "high", "cost_usd": 0.0006626, "slug": "donjuan"}
+{"verdict": "ok", "issue": "Body, head, and all four limbs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.00047539999999999995, "slug": "donknotts"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs", "confidence": "high", "cost_usd": 0.0005413999999999999, "slug": "donnieyen"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally intact.", "confidence": "high", "cost_usd": 0.00044060000000000003, "slug": "donquixote"}
+{"verdict": "minor_defects", "issue": "Slightly jagged clothing and arm geometry", "confidence": "medium", "cost_usd": 0.000683, "slug": "donrickles"}
+{"verdict": "ok", "issue": "All limbs, head, torso, and clothing are structurally intact.", "confidence": "high", "cost_usd": 0.0005042, "slug": "dorothygale"}
+{"verdict": "ok", "issue": "Complete recognizable figure with two arms and two legs", "confidence": "high", "cost_usd": 0.000419, "slug": "douglasmacarthur"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are structurally intact.", "confidence": "high", "cost_usd": 0.0004454, "slug": "drake"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0005546, "slug": "drdre"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "drphil"}
+{"verdict": "minor_defects", "issue": "Recognizable figure with two arms and legs, but clothing has some jagged, spiky deformation.", "confidence": "high", "cost_usd": 0.000695, "slug": "drseuss"}
+{"verdict": "ok", "issue": "Recognizable figure with both arms and legs present.", "confidence": "medium", "cost_usd": 0.0006877999999999999, "slug": "dwarkeshpatel"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs", "confidence": "high", "cost_usd": 0.0006482, "slug": "dwaynetherockjoh"}
+{"verdict": "minor_defects", "issue": "Recognizable intact figure with both arms and legs; minor jagged spikes around shoes and clothing.", "confidence": "high", "cost_usd": 0.0005006, "slug": "eazye"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs", "confidence": "high", "cost_usd": 0.000509, "slug": "ebenezerscrooge"}
+{"verdict": "ok", "issue": "Body, head, and all four limbs are present and structurally intact.", "confidence": "high", "cost_usd": 0.00048379999999999994, "slug": "eddieguerrero"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally present and recognizable.", "confidence": "high", "cost_usd": 0.0004442, "slug": "eddieizzard"}
+{"verdict": "ok", "issue": "Intact figure with both arms and legs present", "confidence": "high", "cost_usd": 0.0005294, "slug": "eddiemurphy"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs", "confidence": "high", "cost_usd": 0.000497, "slug": "eddietheeagle"}
+{"verdict": "ok", "issue": "Recognisable intact figure with two arms and two legs present", "confidence": "high", "cost_usd": 0.0004634, "slug": "eddievanhalen"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs present", "confidence": "high", "cost_usd": 0.0004562, "slug": "edgarallanpoe"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "edithpiaf"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "edsheeran"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.000461, "slug": "edwardsnowden"}
+{"verdict": "ok", "issue": "Intact figure with two arms and two legs visible", "confidence": "high", "cost_usd": 0.0005114, "slug": "edwood"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are structurally intact.", "confidence": "high", "cost_usd": 0.0006818, "slug": "elchapo"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and continuous.", "confidence": "high", "cost_usd": 0.000461, "slug": "eliezeryudkowsky"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are intact.", "confidence": "high", "cost_usd": 0.0004562, "slug": "elijahwood"}
+{"verdict": "ok", "issue": "All limbs and major body surfaces are intact and recognizable.", "confidence": "high", "cost_usd": 0.000527, "slug": "elizabethholmes"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "elizabethtaylor"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are intact.", "confidence": "high", "cost_usd": 0.00046579999999999994, "slug": "elonmusk"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are recognizable and structurally intact.", "confidence": "high", "cost_usd": 0.0005258, "slug": "eltonjohn"}
+{"verdict": "ok", "issue": "Body, head, and all four limbs are recognizably intact.", "confidence": "high", "cost_usd": 0.0006265999999999999, "slug": "elvira"}
+{"verdict": "minor_defects", "issue": "Recognizable figure with both arms and legs present, but clothing has noticeable jagged mesh artifacts.", "confidence": "high", "cost_usd": 0.0005666, "slug": "elvispresley"}
+{"verdict": "ok", "issue": "Body, head, four limbs, and clothing are structurally intact.", "confidence": "high", "cost_usd": 0.0006265999999999999, "slug": "eminem"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0005233999999999999, "slug": "ericcantona"}
+{"verdict": "minor_defects", "issue": "Recognizable figure with all limbs present, but clothing and lower legs are jagged.", "confidence": "high", "cost_usd": 0.0005066000000000001, "slug": "ericidle"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are intact and recognizable.", "confidence": "high", "cost_usd": 0.000509, "slug": "erlinghaaland"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.00045860000000000003, "slug": "ernesthemingway"}
+{"verdict": "minor_defects", "issue": "Jagged clothing edges, but the head, torso, two arms, and two legs are intact.", "confidence": "high", "cost_usd": 0.0005666, "slug": "erwinschrdinger"}
+{"verdict": "ok", "issue": "Recognizable figure with two arms, two legs, intact head, and continuous torso.", "confidence": "high", "cost_usd": 0.00045860000000000003, "slug": "evapern"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs present.", "confidence": "high", "cost_usd": 0.000563, "slug": "evelknievel"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "falstaff"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0004886000000000001, "slug": "farrahfawcett"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are structurally intact", "confidence": "high", "cost_usd": 0.0005846, "slug": "fatboyslim"}
+{"verdict": "minor_defects", "issue": "Intact figure with slightly jagged, torn-looking clothing edges.", "confidence": "high", "cost_usd": 0.0006806, "slug": "fathertime"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "faust"}
+{"verdict": "ok", "issue": "Body, head, and all four limbs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.000545, "slug": "fedoremelianenko"}
+{"verdict": "minor_defects", "issue": "Small jagged clothing and limb-edge artifacts", "confidence": "high", "cost_usd": 0.000521, "slug": "feifeili"}
+{"verdict": "ok", "issue": "All major body parts and limbs are present; low-detail pose only.", "confidence": "high", "cost_usd": 0.0005497999999999999, "slug": "felakuti"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0006074, "slug": "felixthecat"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs present.", "confidence": "high", "cost_usd": 0.0005282, "slug": "fidelcastro"}
+{"verdict": "ok", "issue": "All limbs, head, and torso appear structurally intact.", "confidence": "high", "cost_usd": 0.0004898, "slug": "figaro"}
+{"verdict": "minor_defects", "issue": "Recognizable figure with both arms and legs, but noticeable jagged mesh tearing around the torso and limbs.", "confidence": "medium", "cost_usd": 0.0006482, "slug": "flavorflav"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and structurally continuous.", "confidence": "high", "cost_usd": 0.000473, "slug": "flea"}
+{"verdict": "ok", "issue": "Recognisable intact figure with two arms, two legs, and continuous torso", "confidence": "high", "cost_usd": 0.00048379999999999994, "slug": "florencegriffith"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and continuous.", "confidence": "high", "cost_usd": 0.0004622, "slug": "floydmayweather"}
+{"verdict": "ok", "issue": "Body, head, and all four limbs are present and intact", "confidence": "high", "cost_usd": 0.000533, "slug": "francisngannou"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0004994, "slug": "francisofassisi"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "frankensteinsmon"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally intact.", "confidence": "high", "cost_usd": 0.0005762, "slug": "franklinroosevel"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0005522000000000001, "slug": "franzkafka"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.000581, "slug": "franzliszt"}
+{"verdict": "error", "issue": "Unterminated string starting at: line 1 column 25 (char 24)", "slug": "frdricchopin"}
+{"verdict": "ok", "issue": "Recognizable intact figure with both arms and legs present", "confidence": "high", "cost_usd": 0.0005126, "slug": "fredastaire"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs", "confidence": "high", "cost_usd": 0.0004526, "slug": "freddiemercury"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs present.", "confidence": "high", "cost_usd": 0.0006014, "slug": "freddurst"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "fredtrump"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs present", "confidence": "high", "cost_usd": 0.0005497999999999999, "slug": "friartuck"}
+{"verdict": "minor_defects", "issue": "Skirt mesh is visibly jagged and torn, but the head, torso, and all four limbs remain intact.", "confidence": "high", "cost_usd": 0.0006217999999999999, "slug": "fridakahlo"}
+{"verdict": "ok", "issue": "Recognisable intact figure with both arms and legs present.", "confidence": "high", "cost_usd": 0.0005126, "slug": "friedrichnietzsc"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally intact.", "confidence": "high", "cost_usd": 0.0004982, "slug": "gabenewell"}
+{"verdict": "minor_defects", "issue": "All limbs and body are present, with some jagged spikes around the clothing and shoes.", "confidence": "high", "cost_usd": 0.0005282, "slug": "gabrieliglesias"}
+{"verdict": "ok", "issue": "Intact figure with two arms, two legs, continuous torso, and proportionate head.", "confidence": "high", "cost_usd": 0.000533, "slug": "galileogalilei"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0004706, "slug": "gallagher"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are intact and recognizable.", "confidence": "high", "cost_usd": 0.0004322, "slug": "garthbrooks"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.000479, "slug": "garyoldman"}
+{"verdict": "ok", "issue": "Intact figure with two arms, two legs, and continuous torso", "confidence": "high", "cost_usd": 0.000485, "slug": "gdragon"}
+{"verdict": "ok", "issue": "Intact figure with head, continuous torso, and four limbs present", "confidence": "high", "cost_usd": 0.0005942, "slug": "genesimmons"}
+{"verdict": "minor_defects", "issue": "Some jagged clothing edges, but the figure and all four limbs remain intact.", "confidence": "medium", "cost_usd": 0.0006734, "slug": "genghiskhan"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.000455, "slug": "geoffreyhinton"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.00048379999999999994, "slug": "georgecarlin"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact", "confidence": "high", "cost_usd": 0.0005642, "slug": "georgeforeman"}
+{"verdict": "minor_defects", "issue": "Minor jagged mesh artifacts around arms and feet", "confidence": "high", "cost_usd": 0.000605, "slug": "georgelopez"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and structurally continuous.", "confidence": "high", "cost_usd": 0.000455, "slug": "georgelucas"}
+{"verdict": "ok", "issue": "Intact figure with two arms and two legs visible", "confidence": "high", "cost_usd": 0.0004922, "slug": "georgemichael"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs", "confidence": "high", "cost_usd": 0.000623, "slug": "georgepatton"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0005162000000000001, "slug": "georgerrmartin"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0005486, "slug": "georgetakei"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are intact; minor jagged clothing edges.", "confidence": "high", "cost_usd": 0.0004898, "slug": "georgewashington"}
+{"verdict": "ok", "issue": "Body, head, and all four limbs are present and continuous.", "confidence": "high", "cost_usd": 0.000455, "slug": "geronimo"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "giancarloesposit"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0004358, "slug": "giannisantetokou"}
+{"verdict": "minor_defects", "issue": "Body and all four limbs are present, with minor jagged clothing edges.", "confidence": "high", "cost_usd": 0.000641, "slug": "gilgamesh"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0004874, "slug": "girlwithapearlea"}
+{"verdict": "ok", "issue": "Intact figure with two arms and two legs visible", "confidence": "high", "cost_usd": 0.0005953999999999999, "slug": "gracejones"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.00045139999999999997, "slug": "grandmasterflash"}
+{"verdict": "minor_defects", "issue": "Jagged spikes along the pant and boot hems", "confidence": "high", "cost_usd": 0.0006458, "slug": "gregbrockman"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0004706, "slug": "gretathunberg"}
+{"verdict": "ok", "issue": "All limbs, head, torso, and clothing are structurally intact.", "confidence": "high", "cost_usd": 0.0005066000000000001, "slug": "grimes"}
+{"verdict": "minor_defects", "issue": "Recognizable full figure with both arms and legs; coat edges are somewhat jagged.", "confidence": "high", "cost_usd": 0.000695, "slug": "grouchomarx"}
+{"verdict": "minor_defects", "issue": "Small jagged clothing protrusions, but the head, torso, two arms, and two legs are intact.", "confidence": "high", "cost_usd": 0.0005354, "slug": "guanyu"}
+{"verdict": "ok", "issue": "Recognizable figure with two arms, two legs, intact head and continuous torso.", "confidence": "high", "cost_usd": 0.0005066000000000001, "slug": "guidovanrossum"}
+{"verdict": "ok", "issue": "Recognisable intact figure with both arms and legs present", "confidence": "high", "cost_usd": 0.0005438, "slug": "guillermodeltoro"}
+{"verdict": "ok", "issue": "All limbs and body surfaces are intact", "confidence": "high", "cost_usd": 0.0006085999999999999, "slug": "guyfawkes"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.000503, "slug": "guyfieri"}
+{"verdict": "ok", "issue": "Head, torso, two arms, and two legs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0005593999999999999, "slug": "gwendolinechrist"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are intact and recognizable.", "confidence": "high", "cost_usd": 0.0004646, "slug": "gwenstefani"}
+{"verdict": "error", "issue": "Unterminated string starting at: line 1 column 159 (char 158)", "slug": "hafthorbjrnsson"}
+{"verdict": "minor_defects", "issue": "Recognizable figure with both arms and legs; clothing mesh is somewhat jagged.", "confidence": "high", "cost_usd": 0.0006362000000000001, "slug": "hamlet"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs", "confidence": "high", "cost_usd": 0.0006025999999999999, "slug": "hankwilliams"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally intact.", "confidence": "high", "cost_usd": 0.00048019999999999996, "slug": "hannibal"}
+{"verdict": "error", "issue": "Unterminated string starting at: line 1 column 25 (char 24)", "slug": "harrisonford"}
+{"verdict": "ok", "issue": "Intact low-poly figure with both arms and legs present.", "confidence": "high", "cost_usd": 0.0005606000000000001, "slug": "harryhoudini"}
+{"verdict": "minor_defects", "issue": "Jagged, torn-looking clothing and faceted surfaces, but the head, torso, two arms, and two legs remain intact.", "confidence": "high", "cost_usd": 0.0006205999999999999, "slug": "harrystyles"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.00043819999999999997, "slug": "hattorihanzo"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are intact.", "confidence": "high", "cost_usd": 0.00045139999999999997, "slug": "hayaomiyazaki"}
+{"verdict": "ok", "issue": "Intact low-poly figure with both arms and legs present", "confidence": "high", "cost_usd": 0.0005606000000000001, "slug": "heidiklum"}
+{"verdict": "error", "issue": "Unterminated string starting at: line 1 column 12 (char 11)", "slug": "henrycavill"}
+{"verdict": "error", "issue": "Unterminated string starting at: line 1 column 25 (char 24)", "slug": "henryford"}
+{"verdict": "ok", "issue": "Body, head, and all four limbs are present and structurally intact.", "confidence": "high", "cost_usd": 0.0005354, "slug": "henrywinkler"}
+{"verdict": "ok", "issue": "All limbs and body surfaces are intact", "confidence": "high", "cost_usd": 0.0006842, "slug": "herculepoirot"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0004622, "slug": "herculesthegreek"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.000449, "slug": "hideokojima"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs present.", "confidence": "high", "cost_usd": 0.0004957999999999999, "slug": "hochiminh"}
+{"verdict": "ok", "issue": "All limbs and major body surfaces are intact.", "confidence": "high", "cost_usd": 0.0004874, "slug": "homer"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally intact.", "confidence": "high", "cost_usd": 0.00047539999999999995, "slug": "horationelson"}
+{"verdict": "ok", "issue": "Intact figure with two arms and two legs visible or naturally occluded.", "confidence": "high", "cost_usd": 0.0005042, "slug": "howardhughes"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "howardstern"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.00046579999999999994, "slug": "howiemandel"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0004526, "slug": "huckleberryfinn"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "hughjackman"}
+{"verdict": "ok", "issue": "Intact figure with two arms, two legs, and continuous torso and head.", "confidence": "high", "cost_usd": 0.000449, "slug": "hulkhogan"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "humphreybogart"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "humptydumpty"}
+{"verdict": "ok", "issue": "Body, head, and all four limbs are present and structurally intact.", "confidence": "high", "cost_usd": 0.0005894, "slug": "iago"}
+{"verdict": "ok", "issue": "All limbs and body structures are present and continuous.", "confidence": "high", "cost_usd": 0.000599, "slug": "ianmckellen"}
+{"verdict": "ok", "issue": "Body, head, and all four limbs are present and structurally intact.", "confidence": "high", "cost_usd": 0.0005906, "slug": "icecube"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0005522000000000001, "slug": "icespice"}
+{"verdict": "ok", "issue": "Recognizable figure with intact head, torso, two arms, and two legs.", "confidence": "high", "cost_usd": 0.0005126, "slug": "ichabodcrane"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0004466, "slug": "ichiro"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0005137999999999999, "slug": "idriselba"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and intact", "confidence": "high", "cost_usd": 0.000479, "slug": "iggypop"}
+{"verdict": "minor_defects", "issue": "All limbs are present; clothing and lower legs are somewhat jagged.", "confidence": "high", "cost_usd": 0.000587, "slug": "ilyasutskever"}
+{"verdict": "minor_defects", "issue": "Small jagged spikes and rough clothing edges", "confidence": "high", "cost_usd": 0.000515, "slug": "imeldamarcos"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0004994, "slug": "ipman"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "isaacnewton"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "isambardkingdomb"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally intact.", "confidence": "high", "cost_usd": 0.0004634, "slug": "ishowspeed"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0005006, "slug": "ivankatrump"}
+{"verdict": "ok", "issue": "All limbs, head, torso, and clothing appear structurally intact.", "confidence": "high", "cost_usd": 0.0004622, "slug": "ivantheterrible"}
+{"verdict": "minor_defects", "issue": "Both arms and legs are present, with jagged torn-looking lower edges.", "confidence": "high", "cost_usd": 0.000641, "slug": "jackblack"}
+{"verdict": "ok", "issue": "All major body parts and limbs are present and structurally intact.", "confidence": "high", "cost_usd": 0.00048019999999999996, "slug": "jackfrost"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally present.", "confidence": "high", "cost_usd": 0.0006685999999999999, "slug": "jackiechan"}
+{"verdict": "ok", "issue": "All limbs and continuous body are present.", "confidence": "high", "cost_usd": 0.0005474, "slug": "jackiegleason"}
+{"verdict": "ok", "issue": "Intact low-poly figure with both arms and legs present", "confidence": "high", "cost_usd": 0.000467, "slug": "jackierobinson"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are intact and recognizable.", "confidence": "high", "cost_usd": 0.000473, "slug": "jacklalanne"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "jacknicholson"}
+{"verdict": "ok", "issue": "Intact figure with two arms, two legs, continuous torso, and proportional head", "confidence": "high", "cost_usd": 0.000437, "slug": "jackthegiantkill"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0004562, "slug": "jacquescousteau"}
+{"verdict": "minor_defects", "issue": "Small jagged spikes and mesh tears around the limbs", "confidence": "high", "cost_usd": 0.0004994, "slug": "jakepaul"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs", "confidence": "high", "cost_usd": 0.00047660000000000004, "slug": "jakethesnakerobe"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "jamesbrown"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0004862, "slug": "jamesdean"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "jamesearljones"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs", "confidence": "high", "cost_usd": 0.0005233999999999999, "slug": "jamesgandolfini"}
+{"verdict": "minor_defects", "issue": "All limbs and body are intact, with some jagged clothing and boot edges.", "confidence": "high", "cost_usd": 0.0004634, "slug": "jamieoliver"}
+{"verdict": "minor_defects", "issue": "Recognizable figure with all limbs present, but the jacket and limbs have some jagged, rough edges.", "confidence": "high", "cost_usd": 0.0005677999999999999, "slug": "janefonda"}
+{"verdict": "ok", "issue": "Complete figure with two arms, two legs, intact head and continuous torso.", "confidence": "high", "cost_usd": 0.000503, "slug": "janegoodall"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0005102, "slug": "janetjackson"}
+{"verdict": "minor_defects", "issue": "Recognizable figure with all limbs present, but clothing has some jagged mesh artifacts.", "confidence": "high", "cost_usd": 0.0005582, "slug": "janisjoplin"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs", "confidence": "high", "cost_usd": 0.000599, "slug": "jaromirjagr"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0004538, "slug": "jasonmomoa"}
+{"verdict": "ok", "issue": "Two arms and two legs are present; head and clothing remain structurally intact.", "confidence": "high", "cost_usd": 0.0006602, "slug": "jasonstatham"}
+{"verdict": "ok", "issue": "All limbs and torso are intact; clothing edges are slightly jagged.", "confidence": "high", "cost_usd": 0.0006494, "slug": "javierbardem"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are intact", "confidence": "high", "cost_usd": 0.000581, "slug": "javiermilei"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0004982, "slug": "jayleno"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are structurally intact.", "confidence": "high", "cost_usd": 0.0005426000000000001, "slug": "jayz"}
+{"verdict": "minor_defects", "issue": "Both arms and legs are present; lower pant cuffs and shoes are jagged.", "confidence": "high", "cost_usd": 0.0005306, "slug": "jeanmichelbasqui"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0006758, "slug": "jeanreno"}
+{"verdict": "ok", "issue": "All limbs and main body structures are present and recognizable.", "confidence": "high", "cost_usd": 0.0006182000000000001, "slug": "jeffbezos"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are intact", "confidence": "high", "cost_usd": 0.0004922, "slug": "jeffdean"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.00048379999999999994, "slug": "jeffgoldblum"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs present.", "confidence": "high", "cost_usd": 0.000581, "slug": "jellyroll"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and structurally intact.", "confidence": "high", "cost_usd": 0.0005042, "slug": "jennaortega"}
+{"verdict": "ok", "issue": "Recognizable intact figure with both arms and legs present", "confidence": "high", "cost_usd": 0.0006134, "slug": "jenniferlopez"}
+{"verdict": "ok", "issue": "Body, head, and all four limbs are structurally intact.", "confidence": "high", "cost_usd": 0.0005773999999999999, "slug": "jensenhuang"}
+{"verdict": "ok", "issue": "All limbs, head, and torso appear structurally intact.", "confidence": "high", "cost_usd": 0.0006242, "slug": "jerrygarcia"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "jerrylewis"}
+{"verdict": "minor_defects", "issue": "Recognizable intact figure with slight jaggedness around the jacket and limbs.", "confidence": "high", "cost_usd": 0.0005402, "slug": "jerryseinfeld"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.00045739999999999995, "slug": "jerryspringer"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms, two legs, continuous torso, and proportionate head.", "confidence": "high", "cost_usd": 0.000479, "slug": "jesseowens"}
+{"verdict": "ok", "issue": "Recognizable figure with two arms, two legs, and intact torso/head", "confidence": "high", "cost_usd": 0.00047779999999999996, "slug": "jesseventura"}
+{"verdict": "minor_defects", "issue": "Jagged, spiky clothing edges and small mesh distortions", "confidence": "high", "cost_usd": 0.0006745999999999999, "slug": "jesuschrist"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are structurally intact.", "confidence": "high", "cost_usd": 0.0004502, "slug": "jetli"}
+{"verdict": "minor_defects", "issue": "Jagged spiky clothing edges, but the head, torso, two arms, and two legs remain intact.", "confidence": "high", "cost_usd": 0.0005474, "slug": "jimcarrey"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0004646, "slug": "jimhenson"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0005413999999999999, "slug": "jimihendrix"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "jimmorrison"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are intact", "confidence": "high", "cost_usd": 0.00045139999999999997, "slug": "jimmypage"}
+{"verdict": "ok", "issue": "Intact low-poly figure with two arms, two legs, continuous torso, and proportionate head.", "confidence": "high", "cost_usd": 0.0004982, "slug": "joanjett"}
+{"verdict": "ok", "issue": "Two arms and two legs are present; head, torso, and clothing remain continuous.", "confidence": "high", "cost_usd": 0.0005593999999999999, "slug": "joanofarc"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs present.", "confidence": "high", "cost_usd": 0.0005126, "slug": "joanrivers"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally intact.", "confidence": "high", "cost_usd": 0.00047660000000000004, "slug": "joebiden"}
+{"verdict": "ok", "issue": "Intact figure with two arms, two legs, and continuous body surfaces.", "confidence": "high", "cost_usd": 0.0004622, "slug": "joenamath"}
+{"verdict": "minor_defects", "issue": "Slightly jagged clothing edges and small protrusions", "confidence": "high", "cost_usd": 0.0006602, "slug": "joepesci"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.000449, "slug": "joerogan"}
+{"verdict": "ok", "issue": "All limbs and body surfaces appear intact", "confidence": "high", "cost_usd": 0.0006098, "slug": "joeychestnut"}
+{"verdict": "ok", "issue": "All limbs, head, torso, and clothing are structurally intact", "confidence": "high", "cost_usd": 0.0004502, "slug": "joeyflynn"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0004682, "slug": "joeyramone"}
+{"verdict": "ok", "issue": "Recognisable intact figure with two arms, two legs, continuous torso, and proportional head.", "confidence": "high", "cost_usd": 0.0005857999999999999, "slug": "johannsebastianb"}
+{"verdict": "ok", "issue": "Recognizable figure with both arms and legs intact.", "confidence": "high", "cost_usd": 0.0006434, "slug": "johnbull"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0005042, "slug": "johncandy"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact", "confidence": "high", "cost_usd": 0.000437, "slug": "johncarterofmars"}
+{"verdict": "ok", "issue": "Intact figure with two arms and two legs visible", "confidence": "high", "cost_usd": 0.0005342000000000001, "slug": "johncena"}
+{"verdict": "minor_defects", "issue": "Jagged clothing edges; all limbs and body remain intact.", "confidence": "high", "cost_usd": 0.0006745999999999999, "slug": "johncleese"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "johndaly"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are intact.", "confidence": "high", "cost_usd": 0.0005102, "slug": "johnfkennedy"}
+{"verdict": "minor_defects", "issue": "Jagged edges on clothing and boots", "confidence": "high", "cost_usd": 0.0006362000000000001, "slug": "johnhenrythestee"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and structurally continuous.", "confidence": "high", "cost_usd": 0.00046939999999999997, "slug": "johnlennon"}
+{"verdict": "ok", "issue": "Intact low-poly figure with both arms and legs present", "confidence": "high", "cost_usd": 0.0004957999999999999, "slug": "johnmadden"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms, two legs, and continuous torso.", "confidence": "high", "cost_usd": 0.0005593999999999999, "slug": "johnmcenroe"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and structurally continuous.", "confidence": "high", "cost_usd": 0.000497, "slug": "johnnycarson"}
+{"verdict": "ok", "issue": "All major body parts and four limbs are present.", "confidence": "high", "cost_usd": 0.0005822000000000001, "slug": "johnnycash"}
+{"verdict": "ok", "issue": "Body, head, and all four limbs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0005233999999999999, "slug": "johnnydepp"}
+{"verdict": "ok", "issue": "All major body parts and limbs are present and connected.", "confidence": "high", "cost_usd": 0.000443, "slug": "johnnyrotten"}
+{"verdict": "minor_defects", "issue": "Recognizable intact figure; feet and clothing have some jagged low-poly deformation.", "confidence": "high", "cost_usd": 0.0006577999999999999, "slug": "johnromero"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "johnwaters"}
+{"verdict": "ok", "issue": "Body, head, and all four limbs are present and structurally intact.", "confidence": "high", "cost_usd": 0.00048379999999999994, "slug": "johnwayne"}
+{"verdict": "ok", "issue": "Intact crouched figure with head, torso, two arms, and two legs present", "confidence": "high", "cost_usd": 0.0004982, "slug": "jonahhill"}
+{"verdict": "ok", "issue": "All limbs and main body structures are present and recognizable", "confidence": "high", "cost_usd": 0.0005857999999999999, "slug": "jonahlomu"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are recognisably intact.", "confidence": "high", "cost_usd": 0.000485, "slug": "jonbonjovi"}
+{"verdict": "minor_defects", "issue": "Recognizable figure with all limbs present, but clothing and limb areas have some jagged protrusions.", "confidence": "high", "cost_usd": 0.0005222, "slug": "jonjones"}
+{"verdict": "ok", "issue": "Intact low-poly figure with two arms and two legs present.", "confidence": "high", "cost_usd": 0.0006925999999999999, "slug": "jonstewart"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.00048019999999999996, "slug": "josephstalin"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally present.", "confidence": "high", "cost_usd": 0.000641, "slug": "josmourinho"}
+{"verdict": "minor_defects", "issue": "Jagged clothing edges and cuffs, but the figure remains structurally intact.", "confidence": "high", "cost_usd": 0.0006182000000000001, "slug": "jrgenklopp"}
+{"verdict": "minor_defects", "issue": "Some jagged lower clothing and partially obscured limbs", "confidence": "medium", "cost_usd": 0.0005822000000000001, "slug": "jrrtolkien"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally present.", "confidence": "high", "cost_usd": 0.000539, "slug": "judgejudy"}
+{"verdict": "minor_defects", "issue": "Recognizable figure with both arms and legs; skirt has some jagged protrusions.", "confidence": "high", "cost_usd": 0.000515, "slug": "judygarland"}
+{"verdict": "ok", "issue": "All limbs, head, torso, and clothing are structurally intact.", "confidence": "high", "cost_usd": 0.0004418, "slug": "juliachild"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms, two legs, and continuous torso.", "confidence": "high", "cost_usd": 0.0005413999999999999, "slug": "julianassange"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are intact.", "confidence": "high", "cost_usd": 0.000479, "slug": "julieandrews"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "julietcapulet"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are intact and recognizable.", "confidence": "high", "cost_usd": 0.0004226, "slug": "juliuscaesar"}
+{"verdict": "ok", "issue": "Complete recognizable figure with two arms and two legs.", "confidence": "high", "cost_usd": 0.00047660000000000004, "slug": "jungkook"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and continuous.", "confidence": "high", "cost_usd": 0.0004706, "slug": "justinbieber"}
+{"verdict": "ok", "issue": "All limbs, head, torso, and clothing are structurally intact.", "confidence": "high", "cost_usd": 0.0003746, "slug": "kaicenat"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact", "confidence": "high", "cost_usd": 0.0004826, "slug": "kaiserwilhelm"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact", "confidence": "high", "cost_usd": 0.0005198, "slug": "kaishahom"}
+{"verdict": "ok", "issue": "Intact low-poly figure with two arms and two legs present", "confidence": "high", "cost_usd": 0.0005198, "slug": "kappatheyokai"}
+{"verdict": "ok", "issue": "Intact figure with two arms, two legs, and continuous body surfaces.", "confidence": "high", "cost_usd": 0.000479, "slug": "kareemabduljabba"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0004478, "slug": "karllagerfeld"}
+{"verdict": "minor_defects", "issue": "Small jagged clothing spikes at the back; limbs and body remain intact.", "confidence": "high", "cost_usd": 0.0006145999999999999, "slug": "karlmarx"}
+{"verdict": "ok", "issue": "All major body parts and four limbs are present and connected.", "confidence": "high", "cost_usd": 0.0005978, "slug": "katebush"}
+{"verdict": "ok", "issue": "Intact low-poly figure with two arms and two legs present.", "confidence": "high", "cost_usd": 0.000563, "slug": "kattwilliams"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0005258, "slug": "katyperry"}
+{"verdict": "ok", "issue": "Recognisable intact figure with two arms and two legs", "confidence": "high", "cost_usd": 0.0006758, "slug": "keanureeves"}
+{"verdict": "minor_defects", "issue": "Recognizable intact figure with two arms and legs; minor jagged spikes around the shoes.", "confidence": "high", "cost_usd": 0.00046579999999999994, "slug": "keithharing"}
+{"verdict": "ok", "issue": "Intact figure with two arms, two legs, and continuous torso and head.", "confidence": "high", "cost_usd": 0.0005246000000000001, "slug": "keithrichards"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0005342000000000001, "slug": "kelseygrammer"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0006037999999999999, "slug": "kenanthompson"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact", "confidence": "high", "cost_usd": 0.0004898, "slug": "kendricklamar"}
+{"verdict": "ok", "issue": "Intact figure with two arms, two legs, head, and continuous clothing surfaces.", "confidence": "high", "cost_usd": 0.0004874, "slug": "kengriffeyjr"}
+{"verdict": "ok", "issue": "Two arms and legs present; body and head are intact.", "confidence": "high", "cost_usd": 0.0005246000000000001, "slug": "kennyg"}
+{"verdict": "ok", "issue": "Two arms and two legs are present; body and head are structurally intact.", "confidence": "high", "cost_usd": 0.000473, "slug": "kenwatanabe"}
+{"verdict": "ok", "issue": "Body, head, both arms, and both legs are present and structurally intact.", "confidence": "high", "cost_usd": 0.00048019999999999996, "slug": "kevinhart"}
+{"verdict": "ok", "issue": "Intact figure with two arms and two legs visible.", "confidence": "high", "cost_usd": 0.0004622, "slug": "kevinjames"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs present", "confidence": "high", "cost_usd": 0.0004934, "slug": "kevinsmith"}
+{"verdict": "ok", "issue": "Recognizable intact figure with both arms and legs present", "confidence": "high", "cost_usd": 0.00048019999999999996, "slug": "khabylame"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0005174, "slug": "kidrock"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0005066000000000001, "slug": "kimboslice"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "kimjongun"}
+{"verdict": "ok", "issue": "All major body parts and limbs are present and structurally connected.", "confidence": "high", "cost_usd": 0.000509, "slug": "kingarthur"}
+{"verdict": "ok", "issue": "Complete recognizable figure with two arms and two legs", "confidence": "high", "cost_usd": 0.0005114, "slug": "kingcharlestheth"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and structurally continuous.", "confidence": "high", "cost_usd": 0.00047779999999999996, "slug": "kinggeorgethethi"}
+{"verdict": "ok", "issue": "All major body parts and four limbs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0004454, "slug": "kinghenrytheeigh"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0004598, "slug": "kinglear"}
+{"verdict": "ok", "issue": "Complete figure with both arms and legs intact", "confidence": "high", "cost_usd": 0.00045139999999999997, "slug": "kinglouisthefour"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0004814, "slug": "kingrichardtheth"}
+{"verdict": "ok", "issue": "All limbs, head, torso, and clothing are structurally intact.", "confidence": "high", "cost_usd": 0.00047660000000000004, "slug": "kobebryant"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are all present and structurally continuous.", "confidence": "high", "cost_usd": 0.0005918, "slug": "krampus"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs", "confidence": "high", "cost_usd": 0.0005174, "slug": "kristenwiig"}
+{"verdict": "minor_defects", "issue": "All limbs and body are present; boots and some edges are mildly jagged.", "confidence": "high", "cost_usd": 0.0005438, "slug": "ksi"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally intact.", "confidence": "high", "cost_usd": 0.0005317999999999999, "slug": "kublaikhan"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and continuous.", "confidence": "high", "cost_usd": 0.000449, "slug": "kurtcobain"}
+{"verdict": "ok", "issue": "Intact low-poly figure with two arms and two legs present", "confidence": "high", "cost_usd": 0.0004957999999999999, "slug": "kurtrussell"}
+{"verdict": "ok", "issue": "Body, head, and all four limbs are intact", "confidence": "high", "cost_usd": 0.0006362000000000001, "slug": "kylianmbapp"}
+{"verdict": "ok", "issue": "Recognisable intact figure with two arms and two legs.", "confidence": "high", "cost_usd": 0.00047660000000000004, "slug": "kyliejenner"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "ladygaga"}
+{"verdict": "minor_defects", "issue": "Slightly jagged, uneven skirt geometry", "confidence": "high", "cost_usd": 0.0005666, "slug": "ladyjustice"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "ladymacbeth"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0004562, "slug": "lancearmstrong"}
+{"verdict": "ok", "issue": "Complete figure with head, torso, two arms, and two legs intact", "confidence": "high", "cost_usd": 0.000431, "slug": "lancelot"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs.", "confidence": "high", "cost_usd": 0.0005486, "slug": "laozi"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are structurally intact.", "confidence": "high", "cost_usd": 0.0004886000000000001, "slug": "larrybird"}
+{"verdict": "ok", "issue": "All major body parts and four limbs are present and continuous.", "confidence": "high", "cost_usd": 0.00047539999999999995, "slug": "larrydavid"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs; minor jagged clothing edges.", "confidence": "high", "cost_usd": 0.0005714, "slug": "larryking"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are intact", "confidence": "high", "cost_usd": 0.000479, "slug": "lawrenceofarabia"}
+{"verdict": "ok", "issue": "All limbs and body are present; low-poly edges are somewhat jagged.", "confidence": "high", "cost_usd": 0.0006722000000000001, "slug": "leesedol"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0004982, "slug": "leiferikson"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0005078, "slug": "lemmy"}
+{"verdict": "ok", "issue": "Body, head, and all four limbs appear intact; one arm is partly occluded by the pose.", "confidence": "high", "cost_usd": 0.0004646, "slug": "lemuelgulliver"}
+{"verdict": "minor_defects", "issue": "Recognizable figure with all limbs present; lower legs and clothing have some jagged protrusions.", "confidence": "high", "cost_usd": 0.000503, "slug": "leonardbernstein"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs; clothing is somewhat jagged but continuous.", "confidence": "high", "cost_usd": 0.0005773999999999999, "slug": "leonardnimoy"}
+{"verdict": "ok", "issue": "Intact low-poly figure with both arms and legs present.", "confidence": "high", "cost_usd": 0.0004994, "slug": "leonardodavinci"}
+{"verdict": "ok", "issue": "Intact figure with two arms and two legs present", "confidence": "high", "cost_usd": 0.0005233999999999999, "slug": "leonardodicaprio"}
+{"verdict": "ok", "issue": "Intact low-poly figure with both arms, legs, head, and continuous torso.", "confidence": "high", "cost_usd": 0.00047539999999999995, "slug": "leonidas"}
+{"verdict": "minor_defects", "issue": "All limbs and body parts are present, with some jagged clothing edges and small mesh protrusions.", "confidence": "high", "cost_usd": 0.0006278, "slug": "leotolstoy"}
+{"verdict": "ok", "issue": "Intact low-poly figure with head, torso, two legs, and arms present.", "confidence": "high", "cost_usd": 0.000563, "slug": "leprechaun"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "leslienielsen"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact", "confidence": "high", "cost_usd": 0.0004814, "slug": "lewishamilton"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are intact.", "confidence": "high", "cost_usd": 0.000653, "slug": "lexfridman"}
+{"verdict": "ok", "issue": "Intact figure with two arms and two legs present.", "confidence": "high", "cost_usd": 0.0006062000000000001, "slug": "liamgallagher"}
+{"verdict": "ok", "issue": "All limbs, head, and torso appear structurally intact.", "confidence": "high", "cost_usd": 0.000587, "slug": "liberace"}
+{"verdict": "ok", "issue": "All limbs and major body surfaces are present and structurally intact.", "confidence": "high", "cost_usd": 0.00046579999999999994, "slug": "libertyleadingth"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs present.", "confidence": "high", "cost_usd": 0.000605, "slug": "liljon"}
+{"verdict": "minor_defects", "issue": "All limbs and body are present, with some spiky, distorted extremities.", "confidence": "high", "cost_usd": 0.0005042, "slug": "lilkim"}
+{"verdict": "ok", "issue": "All limbs and major body surfaces are intact.", "confidence": "high", "cost_usd": 0.0006782, "slug": "lilnasx"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "lilwayne"}
+{"verdict": "ok", "issue": "Recognizable figure with intact head, torso, two arms, and two legs.", "confidence": "high", "cost_usd": 0.00047660000000000004, "slug": "linustorvalds"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "lionelmessi"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0004874, "slug": "lisasu"}
+{"verdict": "minor_defects", "issue": "All limbs are present, but the hood and clothing have heavy jagged surface artifacts.", "confidence": "high", "cost_usd": 0.0005438, "slug": "littleredridingh"}
+{"verdict": "ok", "issue": "Recognizable figure with two arms and two legs intact", "confidence": "high", "cost_usd": 0.0004934, "slug": "littlerichard"}
+{"verdict": "ok", "issue": "All limbs, head, and continuous torso are present.", "confidence": "high", "cost_usd": 0.000371, "slug": "lizaminnelli"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally intact.", "confidence": "high", "cost_usd": 0.0005618, "slug": "lizzo"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0005582, "slug": "llcoolj"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms, two legs, and continuous torso", "confidence": "high", "cost_usd": 0.00048379999999999994, "slug": "loganpaul"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0004826, "slug": "lokithenorsegod"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs appear structurally intact.", "confidence": "high", "cost_usd": 0.0005306, "slug": "longjohnsilver"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0005642, "slug": "louferrigno"}
+{"verdict": "minor_defects", "issue": "Recognizable intact figure with both arms and legs, but small jagged clothing protrusions are visible.", "confidence": "high", "cost_usd": 0.0005402, "slug": "louisarmstrong"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0004394, "slug": "lubu"}
+{"verdict": "ok", "issue": "Body, head, and all four limbs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0006542000000000001, "slug": "lucianopavarotti"}
+{"verdict": "broken", "issue": "Skirt and lower body are severely shredded into jagged fragments.", "confidence": "high", "cost_usd": 0.0006577999999999999, "slug": "lucilleball"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0005233999999999999, "slug": "lucyliu"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are recognizably intact.", "confidence": "high", "cost_usd": 0.0005894, "slug": "ludwigvanbeethov"}
+{"verdict": "ok", "issue": "Two arms and two legs are present; head, torso, and clothing remain structurally intact.", "confidence": "high", "cost_usd": 0.0006734, "slug": "luissurez"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and structurally intact.", "confidence": "high", "cost_usd": 0.000467, "slug": "lyndacarter"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0004957999999999999, "slug": "macbeth"}
+{"verdict": "ok", "issue": "Recognizable figure with both arms and legs intact", "confidence": "high", "cost_usd": 0.0004682, "slug": "machomanrandysav"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are intact.", "confidence": "high", "cost_usd": 0.0004742, "slug": "madonna"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and structurally continuous.", "confidence": "high", "cost_usd": 0.00048379999999999994, "slug": "madsmikkelsen"}
+{"verdict": "broken", "issue": "Torso and clothing are heavily shredded into jagged fragments.", "confidence": "high", "cost_usd": 0.0005953999999999999, "slug": "maewest"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.00046939999999999997, "slug": "magicjohnson"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are intact.", "confidence": "high", "cost_usd": 0.0004478, "slug": "mahatmagandhi"}
+{"verdict": "minor_defects", "issue": "Small jagged spikes on the coat and lower legs", "confidence": "high", "cost_usd": 0.0006877999999999999, "slug": "malcolmx"}
+{"verdict": "ok", "issue": "Body, head, both arms, and both legs are structurally intact", "confidence": "high", "cost_usd": 0.0005462, "slug": "mannypacquiao"}
+{"verdict": "broken", "issue": "Torso and clothing are severely shredded into jagged fragments, with an arm appearing missing or malformed.", "confidence": "high", "cost_usd": 0.0006254, "slug": "mansamusa"}
+{"verdict": "ok", "issue": "Two arms and two legs are present; torso and head remain continuous.", "confidence": "high", "cost_usd": 0.0004814, "slug": "manutebol"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0004922, "slug": "maozedong"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and structurally intact.", "confidence": "high", "cost_usd": 0.0004862, "slug": "marcandreessen"}
+{"verdict": "ok", "issue": "Recognizable figure with two arms and two legs intact", "confidence": "high", "cost_usd": 0.000473, "slug": "marcbolan"}
+{"verdict": "ok", "issue": "All limbs and body surfaces are present and structurally intact.", "confidence": "high", "cost_usd": 0.0005317999999999999, "slug": "marcopolo"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms, two legs, head, and continuous clothing surfaces.", "confidence": "high", "cost_usd": 0.0004466, "slug": "marieantoinette"}
+{"verdict": "minor_defects", "issue": "Minor jagged clothing edges", "confidence": "high", "cost_usd": 0.0006505999999999999, "slug": "mariecurie"}
+{"verdict": "ok", "issue": "All limbs and body surfaces are recognizable and intact", "confidence": "high", "cost_usd": 0.0005474, "slug": "mariekondo"}
+{"verdict": "minor_defects", "issue": "Body and limbs are intact, with some jagged geometry on the skirt.", "confidence": "high", "cost_usd": 0.0005762, "slug": "marilynmonroe"}
+{"verdict": "minor_defects", "issue": "Ragged, slightly spiky clothing edges", "confidence": "medium", "cost_usd": 0.000641, "slug": "marinaabramovi"}
+{"verdict": "error", "issue": "Unterminated string starting at: line 1 column 25 (char 24)", "slug": "mariobalotelli"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "markhamill"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs", "confidence": "high", "cost_usd": 0.0004526, "slug": "markkupa"}
+{"verdict": "ok", "issue": "Recognisable figure with two arms and two legs; surfaces remain intact.", "confidence": "high", "cost_usd": 0.00047539999999999995, "slug": "marktwain"}
+{"verdict": "ok", "issue": "Recognizable intact figure with all limbs present", "confidence": "high", "cost_usd": 0.00043819999999999997, "slug": "markzuckerberg"}
+{"verdict": "ok", "issue": "Intact low-poly figure with two arms and two legs visible or plausibly occluded", "confidence": "high", "cost_usd": 0.000467, "slug": "marlonbrando"}
+{"verdict": "ok", "issue": "Body, head, and all four limbs are intact.", "confidence": "high", "cost_usd": 0.0004718, "slug": "marshawnlynch"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs", "confidence": "high", "cost_usd": 0.0004898, "slug": "marshmello"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs present", "confidence": "high", "cost_usd": 0.0005042, "slug": "marthastewart"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.00046579999999999994, "slug": "martinluther"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "martinlutherking"}
+{"verdict": "broken", "issue": "Both legs are missing and the lower torso ends in jagged fragments.", "confidence": "high", "cost_usd": 0.0004634, "slug": "martinscorsese"}
+{"verdict": "ok", "issue": "Intact figure with two arms and two legs present", "confidence": "high", "cost_usd": 0.000533, "slug": "martinshkreli"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally intact.", "confidence": "high", "cost_usd": 0.00048379999999999994, "slug": "marvinminsky"}
+{"verdict": "ok", "issue": "Body, head, and four limbs are present and structurally intact.", "confidence": "high", "cost_usd": 0.000563, "slug": "maryqueenofscots"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are structurally intact", "confidence": "high", "cost_usd": 0.0006385999999999999, "slug": "masahirosakurai"}
+{"verdict": "broken", "issue": "Lower body and limbs are severely fragmented, with no clearly intact pair of legs.", "confidence": "high", "cost_usd": 0.0006626, "slug": "masterp"}
+{"verdict": "minor_defects", "issue": "All limbs and head are present; clothing has some jagged, spiky edges.", "confidence": "high", "cost_usd": 0.0005174, "slug": "matahari"}
+{"verdict": "minor_defects", "issue": "Jagged coat and trouser edges, but all limbs and body are intact", "confidence": "high", "cost_usd": 0.0005486, "slug": "mattgroening"}
+{"verdict": "minor_defects", "issue": "Body and all four limbs are present, with some jagged clothing edges and mesh tearing.", "confidence": "high", "cost_usd": 0.0006842, "slug": "mchammer"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are intact and recognizable.", "confidence": "high", "cost_usd": 0.00045860000000000003, "slug": "medusa"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and structurally continuous.", "confidence": "high", "cost_usd": 0.00046579999999999994, "slug": "melaniatrump"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "melbrooks"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "melgibson"}
+{"verdict": "ok", "issue": "Recognizable intact figure with head, torso, two arms, and two legs present.", "confidence": "high", "cost_usd": 0.0006446, "slug": "mephistopheles"}
+{"verdict": "error", "issue": "Unterminated string starting at: line 1 column 21 (char 20)", "slug": "merlin"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs present", "confidence": "high", "cost_usd": 0.0005534, "slug": "methodman"}
+{"verdict": "ok", "issue": "Intact body with two arms and two legs present.", "confidence": "high", "cost_usd": 0.000455, "slug": "michaelbuffer"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0004646, "slug": "michaelcera"}
+{"verdict": "ok", "issue": "Low-poly jagged coat edges", "confidence": "medium", "cost_usd": 0.0006626, "slug": "michaelkeaton"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms, two legs, continuous torso, and proportionate head.", "confidence": "high", "cost_usd": 0.0005114, "slug": "michaelmoore"}
+{"verdict": "ok", "issue": "Body, head, and all four limbs are structurally intact.", "confidence": "high", "cost_usd": 0.0004874, "slug": "michelangelo"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0005438, "slug": "michelangelosdav"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "michelleobama"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0005558, "slug": "michelleyeoh"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0005474, "slug": "mickfoley"}
+{"verdict": "ok", "issue": "Full body is intact with two arms and two legs present.", "confidence": "high", "cost_usd": 0.0004622, "slug": "mickjagger"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0005258, "slug": "mikeditka"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs", "confidence": "high", "cost_usd": 0.00048379999999999994, "slug": "mikemyers"}
+{"verdict": "minor_defects", "issue": "Small jagged protrusions around the boots; limbs and body remain intact.", "confidence": "high", "cost_usd": 0.0005834, "slug": "miketyson"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and structurally intact", "confidence": "high", "cost_usd": 0.0005965999999999999, "slug": "mikhailgorbachev"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0006565999999999999, "slug": "milesdavis"}
+{"verdict": "ok", "issue": "All limbs, head, torso, and clothing surfaces are present and continuous.", "confidence": "high", "cost_usd": 0.000503, "slug": "mileycyrus"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0005174, "slug": "milliebobbybrown"}
+{"verdict": "ok", "issue": "Intact low-poly figure with all limbs present", "confidence": "high", "cost_usd": 0.0006122, "slug": "miramurati"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and structurally intact.", "confidence": "high", "cost_usd": 0.0004886000000000001, "slug": "missmarple"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0004634, "slug": "missyelliott"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0004262, "slug": "miyamotomusashi"}
+{"verdict": "ok", "issue": "Body, head, and all four limbs are present and intact.", "confidence": "high", "cost_usd": 0.000515, "slug": "moehoward"}
+{"verdict": "ok", "issue": "Body, head, and all four limbs are present and structurally intact.", "confidence": "high", "cost_usd": 0.0004478, "slug": "momotaro"}
+{"verdict": "minor_defects", "issue": "All limbs and head are present; clothing has minor jagged edges.", "confidence": "high", "cost_usd": 0.0006602, "slug": "monalisa"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0005677999999999999, "slug": "montezuma"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are intact.", "confidence": "high", "cost_usd": 0.000647, "slug": "morganfreeman"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs", "confidence": "high", "cost_usd": 0.0005413999999999999, "slug": "morrissey"}
+{"verdict": "ok", "issue": "Low-poly side view; body, head, and four limbs remain intact", "confidence": "high", "cost_usd": 0.000641, "slug": "moses"}
+{"verdict": "error", "issue": "Unterminated string starting at: line 1 column 12 (char 11)", "slug": "mothergoose"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally present.", "confidence": "high", "cost_usd": 0.000497, "slug": "motherteresa"}
+{"verdict": "ok", "issue": "Intact figure with two arms and two legs visible", "confidence": "high", "cost_usd": 0.00045139999999999997, "slug": "mothman"}
+{"verdict": "ok", "issue": "Intact low-poly figure with two arms and two legs present", "confidence": "high", "cost_usd": 0.000551, "slug": "mrbeast"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs", "confidence": "high", "cost_usd": 0.0006074, "slug": "mrhyde"}
+{"verdict": "ok", "issue": "Intact low-poly figure with four limbs present", "confidence": "high", "cost_usd": 0.0005126, "slug": "muammargaddafi"}
+{"verdict": "ok", "issue": "All limbs and continuous body surfaces are present.", "confidence": "high", "cost_usd": 0.0005282, "slug": "muggsybogues"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.000467, "slug": "muhammadali"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs", "confidence": "high", "cost_usd": 0.0005582, "slug": "myspacetom"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "naomicampbell"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0004598, "slug": "napoleon"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "narendramodi"}
+{"verdict": "broken", "issue": "Torso and skirt are heavily shredded into jagged fragments.", "confidence": "high", "cost_usd": 0.00043460000000000005, "slug": "nefertiti"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are visibly intact.", "confidence": "high", "cost_usd": 0.0004634, "slug": "neilarmstrong"}
+{"verdict": "ok", "issue": "Recognizable intact figure with four limbs present", "confidence": "high", "cost_usd": 0.0004982, "slug": "neildegrassetyso"}
+{"verdict": "ok", "issue": "Intact body with all four limbs present.", "confidence": "high", "cost_usd": 0.00045139999999999997, "slug": "neilyoung"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.00048379999999999994, "slug": "nero"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0004742, "slug": "neymar"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0004718, "slug": "nezha"}
+{"verdict": "ok", "issue": "Intact figure with both arms and legs present", "confidence": "high", "cost_usd": 0.0005618, "slug": "nickiminaj"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.000527, "slug": "nicolascage"}
+{"verdict": "error", "issue": "Unterminated string starting at: line 1 column 36 (char 35)", "slug": "nikilauda"}
+{"verdict": "ok", "issue": "All limbs, head, torso, and clothing are structurally intact", "confidence": "high", "cost_usd": 0.0004886000000000001, "slug": "nikolajoki"}
+{"verdict": "ok", "issue": "Two arms, two legs, head, and continuous torso are present.", "confidence": "high", "cost_usd": 0.000467, "slug": "nikolatesla"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "ninasimone"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0005294, "slug": "noelgallagher"}
+{"verdict": "minor_defects", "issue": "Jagged clothing edges, but the head, torso, and all four limbs are intact.", "confidence": "high", "cost_usd": 0.000575, "slug": "nostradamus"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact and recognizable.", "confidence": "high", "cost_usd": 0.000443, "slug": "novakdjokovic"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are intact and recognizable.", "confidence": "high", "cost_usd": 0.000467, "slug": "odanobunaga"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are intact and recognizable", "confidence": "high", "cost_usd": 0.0005126, "slug": "odin"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.00048019999999999996, "slug": "odysseus"}
+{"verdict": "minor_defects", "issue": "All limbs and body parts are present, with some jagged deformation around the clothing and feet.", "confidence": "high", "cost_usd": 0.00046939999999999997, "slug": "ojsimpson"}
+{"verdict": "ok", "issue": "All major body parts and limbs are present and continuous.", "confidence": "high", "cost_usd": 0.00045139999999999997, "slug": "oldirtybastard"}
+{"verdict": "broken", "issue": "Torso and skirt are severely shredded into fragments, with distorted legs.", "confidence": "high", "cost_usd": 0.000455, "slug": "oliveoyl"}
+{"verdict": "ok", "issue": "Recognizable full figure with two arms and two legs present.", "confidence": "high", "cost_usd": 0.0006577999999999999, "slug": "oliverhardy"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "olivertwist"}
+{"verdict": "ok", "issue": "Recognisable intact figure with two arms and two legs", "confidence": "high", "cost_usd": 0.0005233999999999999, "slug": "onidemon"}
+{"verdict": "ok", "issue": "Recognisable intact figure with two arms and two legs", "confidence": "high", "cost_usd": 0.000503, "slug": "oprahwinfrey"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0005773999999999999, "slug": "osamutezuka"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are structurally intact.", "confidence": "high", "cost_usd": 0.0005426000000000001, "slug": "oscarwilde"}
+{"verdict": "minor_defects", "issue": "Recognizable figure with all limbs present, but clothing and arm areas are visibly jagged and fragmented.", "confidence": "high", "cost_usd": 0.0006577999999999999, "slug": "othello"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "ottovonbismarck"}
+{"verdict": "minor_defects", "issue": "Slightly jagged coat edges; all limbs remain intact.", "confidence": "high", "cost_usd": 0.000659, "slug": "ozzyosbourne"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "pabloescobar"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs", "confidence": "high", "cost_usd": 0.0005306, "slug": "pablopicasso"}
+{"verdict": "ok", "issue": "All major body parts and four limbs are present and structurally intact.", "confidence": "high", "cost_usd": 0.0005786, "slug": "palmerluckey"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs.", "confidence": "high", "cost_usd": 0.0004934, "slug": "pamelaanderson"}
+{"verdict": "ok", "issue": "All limbs, head, torso, and clothing are structurally intact.", "confidence": "high", "cost_usd": 0.0004718, "slug": "panchovilla"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0004886000000000001, "slug": "parishilton"}
+{"verdict": "broken", "issue": "Severely shredded limbs and clothing with jagged fragmented surfaces.", "confidence": "high", "cost_usd": 0.0006446, "slug": "patrickmahomes"}
+{"verdict": "ok", "issue": "Two arms and two legs are present; body and head remain structurally intact.", "confidence": "high", "cost_usd": 0.000683, "slug": "patrickstewart"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "paulbunyan"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.000563, "slug": "paulgascoigne"}
+{"verdict": "ok", "issue": "Intact figure with two arms, two legs, and continuous torso", "confidence": "high", "cost_usd": 0.0004742, "slug": "paulmccartney"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are visibly intact.", "confidence": "high", "cost_usd": 0.0004478, "slug": "pecosbill"}
+{"verdict": "error", "issue": "Unterminated string starting at: line 1 column 12 (char 11)", "slug": "pedropascal"}
+{"verdict": "ok", "issue": "Intact low-poly figure with two arms and two legs visible.", "confidence": "high", "cost_usd": 0.000485, "slug": "peeweeherman"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are intact and recognizable.", "confidence": "high", "cost_usd": 0.0006745999999999999, "slug": "pel"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and structurally continuous.", "confidence": "high", "cost_usd": 0.00048019999999999996, "slug": "pennjillette"}
+{"verdict": "ok", "issue": "Body, head, both arms, and both legs are present and structurally intact.", "confidence": "high", "cost_usd": 0.0005953999999999999, "slug": "petedavidson"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs present", "confidence": "high", "cost_usd": 0.0005186, "slug": "peterdinklage"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally intact.", "confidence": "high", "cost_usd": 0.000569, "slug": "petersellers"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are intact.", "confidence": "high", "cost_usd": 0.000419, "slug": "peterthegreat"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0006145999999999999, "slug": "pewdiepie"}
+{"verdict": "error", "issue": "Unterminated string starting at: line 1 column 36 (char 35)", "slug": "peytonmanning"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0004682, "slug": "phileasfogg"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.000467, "slug": "pikotaro"}
+{"verdict": "ok", "issue": "Intact low-poly figure with head, torso, two arms, and two legs present", "confidence": "high", "cost_usd": 0.0005294, "slug": "pitbull"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and continuous.", "confidence": "high", "cost_usd": 0.0005186, "slug": "plato"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs", "confidence": "high", "cost_usd": 0.0006074, "slug": "pocahontas"}
+{"verdict": "ok", "issue": "Body, head, and four limbs are structurally intact.", "confidence": "high", "cost_usd": 0.0005642, "slug": "polyphemusthecyc"}
+{"verdict": "minor_defects", "issue": "Recognizable figure with all limbs present, but coat and torso show several jagged or stretched polygon panels.", "confidence": "high", "cost_usd": 0.0006182000000000001, "slug": "popefrancis"}
+{"verdict": "broken", "issue": "Torso and clothing are heavily shredded into jagged fragments.", "confidence": "high", "cost_usd": 0.0006722000000000001, "slug": "popejohnpaulthes"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.00045860000000000003, "slug": "popeye"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs", "confidence": "high", "cost_usd": 0.0004634, "slug": "postmalone"}
+{"verdict": "ok", "issue": "Two arms and two legs are present; head, torso, and clothing remain continuous.", "confidence": "high", "cost_usd": 0.000629, "slug": "prince"}
+{"verdict": "ok", "issue": "All limbs, head, torso, and clothing are structurally intact.", "confidence": "high", "cost_usd": 0.0004946, "slug": "princessdiana"}
+{"verdict": "ok", "issue": "All four limbs, head, and continuous torso are present.", "confidence": "high", "cost_usd": 0.0005042, "slug": "professormoriart"}
+{"verdict": "error", "issue": "Unterminated string starting at: line 1 column 36 (char 35)", "slug": "prospero"}
+{"verdict": "ok", "issue": "Low-poly jagged edges; limbs and body remain intact.", "confidence": "high", "cost_usd": 0.0006517999999999999, "slug": "psy"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0005714, "slug": "puckfromamidsumm"}
+{"verdict": "ok", "issue": "Recognizable figure with intact head, torso, two arms, and two legs.", "confidence": "high", "cost_usd": 0.0005102, "slug": "qinshihuang"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are intact.", "confidence": "high", "cost_usd": 0.0004238, "slug": "quasimodo"}
+{"verdict": "ok", "issue": "All limbs and continuous body structure are present.", "confidence": "high", "cost_usd": 0.0005822000000000001, "slug": "queen"}
+{"verdict": "ok", "issue": "All limbs, head, and torso appear structurally intact.", "confidence": "high", "cost_usd": 0.0004994, "slug": "queenelizabethth"}
+{"verdict": "broken", "issue": "Torso and clothing are heavily shredded into jagged fragments, with limbs not clearly intact.", "confidence": "high", "cost_usd": 0.000599, "slug": "queenvictoria"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and continuous.", "confidence": "high", "cost_usd": 0.00047779999999999996, "slug": "quentintarantino"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are intact and recognizable.", "confidence": "high", "cost_usd": 0.000485, "slug": "rafaelnadal"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are intact.", "confidence": "high", "cost_usd": 0.0005066000000000001, "slug": "ragnarlothbrok"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "rajinikanth"}
+{"verdict": "minor_defects", "issue": "Some jagged clothing and boot edges", "confidence": "high", "cost_usd": 0.000521, "slug": "randyorton"}
+{"verdict": "minor_defects", "issue": "Jagged, slightly fragmented clothing edges", "confidence": "high", "cost_usd": 0.0006374, "slug": "rasputin"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "raycharles"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "raykurzweil"}
+{"verdict": "minor_defects", "issue": "All limbs and the head are present; only the boot edges show some jagged/spiky mesh artifacts.", "confidence": "high", "cost_usd": 0.0005497999999999999, "slug": "refrigeratorperr"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0004922, "slug": "reggiefilsaim"}
+{"verdict": "ok", "issue": "Recognizable figure with intact head, torso, two arms, and two legs.", "confidence": "high", "cost_usd": 0.0004898, "slug": "rembrandt"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "reymysterio"}
+{"verdict": "ok", "issue": "All limbs, head, torso, and clothing are structurally intact.", "confidence": "high", "cost_usd": 0.000485, "slug": "ricflair"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and structurally continuous.", "confidence": "high", "cost_usd": 0.000533, "slug": "richardnixon"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0006517999999999999, "slug": "richardpryor"}
+{"verdict": "minor_defects", "issue": "Recognizable intact figure with jagged, spiky shoe soles.", "confidence": "high", "cost_usd": 0.0004982, "slug": "richardsimmons"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact", "confidence": "high", "cost_usd": 0.0006602, "slug": "richardthelionhe"}
+{"verdict": "ok", "issue": "Recognizable figure with intact head, torso, two arms, and two legs.", "confidence": "high", "cost_usd": 0.000503, "slug": "richardwagner"}
+{"verdict": "ok", "issue": "Intact low-poly figure with two arms and two legs present", "confidence": "high", "cost_usd": 0.000491, "slug": "rickmoranis"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally intact.", "confidence": "high", "cost_usd": 0.0006458, "slug": "rickygervais"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact", "confidence": "high", "cost_usd": 0.000551, "slug": "rickymartin"}
+{"verdict": "error", "issue": "Unterminated string starting at: line 1 column 29 (char 28)", "slug": "rihanna"}
+{"verdict": "ok", "issue": "All limbs and body surfaces appear intact.", "confidence": "high", "cost_usd": 0.000515, "slug": "ringostarr"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.00043460000000000005, "slug": "ripvanwinkle"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact; coat edges are slightly jagged.", "confidence": "high", "cost_usd": 0.0004898, "slug": "robertdeniro"}
+{"verdict": "error", "issue": "Unterminated string starting at: line 1 column 98 (char 97)", "slug": "robertdowneyjr"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.00045860000000000003, "slug": "robertoppenheime"}
+{"verdict": "minor_defects", "issue": "Recognizable full figure with both arms and legs; some jagged mesh spikes around clothing and limbs.", "confidence": "high", "cost_usd": 0.0004934, "slug": "robertplant"}
+{"verdict": "ok", "issue": "All limbs and major body surfaces are present and intact.", "confidence": "high", "cost_usd": 0.0004562, "slug": "robertsmith"}
+{"verdict": "ok", "issue": "All limbs and major body surfaces are present and recognizable.", "confidence": "high", "cost_usd": 0.0006134, "slug": "robespierre"}
+{"verdict": "broken", "issue": "Lower body is fragmented with missing or indistinct legs; only one arm is clearly present.", "confidence": "high", "cost_usd": 0.0006074, "slug": "robford"}
+{"verdict": "minor_defects", "issue": "Recognizable figure with small jagged protrusions around the feet.", "confidence": "high", "cost_usd": 0.0005102, "slug": "robgronkowski"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0004718, "slug": "robinhood"}
+{"verdict": "ok", "issue": "Body, head, and all four limbs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0004862, "slug": "robinsoncrusoe"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0004502, "slug": "robinwilliams"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs visible or occluded.", "confidence": "high", "cost_usd": 0.000533, "slug": "robzombie"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are recognisably intact.", "confidence": "high", "cost_usd": 0.0004886000000000001, "slug": "rodneydangerfiel"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are recognisably intact.", "confidence": "high", "cost_usd": 0.0004814, "slug": "rogerfederer"}
+{"verdict": "ok", "issue": "Two arms and two legs are present; body and head remain structurally intact.", "confidence": "high", "cost_usd": 0.00047660000000000004, "slug": "rohansahai"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0004454, "slug": "romeomontague"}
+{"verdict": "ok", "issue": "Coherent full figure with both legs and arms present, one partly occluded", "confidence": "high", "cost_usd": 0.0005762, "slug": "ronaldinho"}
+{"verdict": "broken", "issue": "One leg is missing or shredded into jagged fragments.", "confidence": "high", "cost_usd": 0.0006434, "slug": "ronaldreagan"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are visibly intact.", "confidence": "high", "cost_usd": 0.0004538, "slug": "rondarousey"}
+{"verdict": "minor_defects", "issue": "Minor jagged spikes around the limbs and clothing", "confidence": "high", "cost_usd": 0.0006265999999999999, "slug": "ronniecoleman"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are all present and structurally continuous.", "confidence": "high", "cost_usd": 0.000467, "slug": "rosietheriveter"}
+{"verdict": "minor_defects", "issue": "Small jagged spikes on the lower footwear", "confidence": "high", "cost_usd": 0.00047660000000000004, "slug": "rowanatkinson"}
+{"verdict": "ok", "issue": "Complete recognizable figure with two arms and two legs", "confidence": "high", "cost_usd": 0.0004562, "slug": "rowdyroddypiper"}
+{"verdict": "ok", "issue": "All limbs and body are present despite coarse, crumpled clothing geometry.", "confidence": "high", "cost_usd": 0.0006025999999999999, "slug": "roycegracie"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.000461, "slug": "rumpelstiltskin"}
+{"verdict": "minor_defects", "issue": "Recognizable figure with all limbs present, but the dress has some jagged, torn-looking geometry.", "confidence": "high", "cost_usd": 0.000599, "slug": "rupaul"}
+{"verdict": "minor_defects", "issue": "Jagged, slightly torn-looking clothing and limb geometry", "confidence": "high", "cost_usd": 0.000665, "slug": "ruudgullit"}
+{"verdict": "ok", "issue": "Low-poly angularity; body and all four limbs are intact", "confidence": "high", "cost_usd": 0.0006278, "slug": "ryanreynolds"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0004478, "slug": "rza"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0004526, "slug": "sachabaroncohen"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.000509, "slug": "sachintendulkar"}
+{"verdict": "ok", "issue": "Recognizable figure with both arms and legs intact", "confidence": "high", "cost_usd": 0.0005918, "slug": "saintpatrick"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally intact.", "confidence": "high", "cost_usd": 0.0004442, "slug": "saladin"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "saltbae"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0004418, "slug": "salvadordal"}
+{"verdict": "minor_defects", "issue": "Jagged, slightly spiky boot edges", "confidence": "high", "cost_usd": 0.0006697999999999999, "slug": "samaltman"}
+{"verdict": "ok", "issue": "All limbs and major body surfaces are intact.", "confidence": "high", "cost_usd": 0.00047539999999999995, "slug": "sambankmanfried"}
+{"verdict": "error", "issue": "Unterminated string starting at: line 1 column 25 (char 24)", "slug": "samkinison"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and structurally intact.", "confidence": "high", "cost_usd": 0.0005462, "slug": "sammohung"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0005102, "slug": "sammydavisjr"}
+{"verdict": "ok", "issue": "Recognisable intact figure with two arms, two legs, head, and continuous torso.", "confidence": "high", "cost_usd": 0.0005137999999999999, "slug": "samuelljackson"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are intact", "confidence": "high", "cost_usd": 0.000497, "slug": "sanchopanza"}
+{"verdict": "ok", "issue": "Recognizable intact Santa figure with two arms and two legs", "confidence": "high", "cost_usd": 0.000473, "slug": "santaclaus"}
+{"verdict": "error", "issue": "Unterminated string starting at: line 1 column 2 (char 1)", "slug": "sarahpalin"}
+{"verdict": "ok", "issue": "Recognizable figure with two arms, two legs, intact head and continuous clothing.", "confidence": "high", "cost_usd": 0.000473, "slug": "satoruiwata"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0005593999999999999, "slug": "scheherazade"}
+{"verdict": "minor_defects", "issue": "Jagged, spiky low-poly limb edges", "confidence": "high", "cost_usd": 0.0006638, "slug": "scrapper"}
+{"verdict": "ok", "issue": "Intact low-poly figure with all limbs present.", "confidence": "high", "cost_usd": 0.0006397999999999999, "slug": "seanconnery"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0004682, "slug": "serenawilliams"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.00044060000000000003, "slug": "sethrogen"}
+{"verdict": "ok", "issue": "Intact low-poly figure with two arms, two legs, continuous torso, and proportionate head.", "confidence": "high", "cost_usd": 0.000509, "slug": "sethrollins"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact", "confidence": "high", "cost_usd": 0.0006482, "slug": "shahrukhkhan"}
+{"verdict": "ok", "issue": "Body, head, and all four limbs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0005282, "slug": "shakazulu"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "shakira"}
+{"verdict": "minor_defects", "issue": "Jagged clothing and small mesh artifacts, but all limbs and body are intact", "confidence": "high", "cost_usd": 0.000581, "slug": "shanewarne"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs", "confidence": "high", "cost_usd": 0.0004454, "slug": "shaniatwain"}
+{"verdict": "minor_defects", "issue": "Minor jagged spikes around the lower clothing and limbs", "confidence": "high", "cost_usd": 0.0006085999999999999, "slug": "shaunwhite"}
+{"verdict": "ok", "issue": "Intact figure with two arms and two legs visible", "confidence": "high", "cost_usd": 0.000647, "slug": "shawnmichaels"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs", "confidence": "high", "cost_usd": 0.00046579999999999994, "slug": "sherlockholmes"}
+{"verdict": "ok", "issue": "Recognizable figure with intact head, torso, two arms, and two legs.", "confidence": "high", "cost_usd": 0.0005186, "slug": "shigerumiyamoto"}
+{"verdict": "ok", "issue": "All limbs, head, torso, and clothing are structurally intact.", "confidence": "high", "cost_usd": 0.0005198, "slug": "shinsukenakamura"}
+{"verdict": "ok", "issue": "All limbs, head, torso, and clothing are structurally intact.", "confidence": "high", "cost_usd": 0.0004682, "slug": "shirleytemple"}
+{"verdict": "ok", "issue": "Complete recognizable figure with two arms and two legs", "confidence": "high", "cost_usd": 0.0004682, "slug": "shoheiohtani"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are structurally intact.", "confidence": "high", "cost_usd": 0.00045860000000000003, "slug": "shylock"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0004562, "slug": "sidvicious"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "sigmundfreud"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are intact and recognizable.", "confidence": "high", "cost_usd": 0.0004526, "slug": "siouxsiesioux"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0005078, "slug": "sirmixalot"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "sittingbull"}
+{"verdict": "ok", "issue": "All limbs and continuous body surfaces are present; low-poly jaggedness is minor.", "confidence": "high", "cost_usd": 0.0006254, "slug": "skrillex"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0004814, "slug": "slash"}
+{"verdict": "ok", "issue": "Intact low-poly figure with two arms and two legs present.", "confidence": "high", "cost_usd": 0.0005258, "slug": "snooki"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0005426000000000001, "slug": "snoopdogg"}
+{"verdict": "ok", "issue": "Intact low-poly figure with both arms and legs present", "confidence": "high", "cost_usd": 0.0005053999999999999, "slug": "socrates"}
+{"verdict": "ok", "issue": "Intact figure with both arms and legs present", "confidence": "high", "cost_usd": 0.0005102, "slug": "sonnychiba"}
+{"verdict": "ok", "issue": "Intact figure with two arms, two legs, continuous torso, and proportionate head.", "confidence": "high", "cost_usd": 0.0004646, "slug": "spartacus"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact", "confidence": "high", "cost_usd": 0.000491, "slug": "spikelee"}
+{"verdict": "minor_defects", "issue": "Recognizable full figure with two arms and legs, but clothing and feet have some jagged protrusions.", "confidence": "high", "cost_usd": 0.000503, "slug": "stanlaurel"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs", "confidence": "high", "cost_usd": 0.000509, "slug": "stanlee"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "stanleykubrick"}
+{"verdict": "ok", "issue": "Recognisable intact figure with two arms and two legs", "confidence": "high", "cost_usd": 0.0004718, "slug": "stephenchow"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0005426000000000001, "slug": "stephencolbert"}
+{"verdict": "ok", "issue": "Intact body with two arms, two legs, and continuous torso surfaces.", "confidence": "high", "cost_usd": 0.0004994, "slug": "stephencurry"}
+{"verdict": "broken", "issue": "Mesh is shredded into fragments with missing recognizable limbs and body.", "confidence": "high", "cost_usd": 0.0004094, "slug": "stephenhawking"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and connected.", "confidence": "high", "cost_usd": 0.0004598, "slug": "stephenking"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "stephenwolfram"}
+{"verdict": "minor_defects", "issue": "Recognizable intact figure with small jagged clothing and shoe edges", "confidence": "high", "cost_usd": 0.000515, "slug": "steveaoki"}
+{"verdict": "ok", "issue": "Body, head, and all four limbs are intact and recognizable.", "confidence": "high", "cost_usd": 0.0005366, "slug": "steveballmer"}
+{"verdict": "ok", "issue": "All limbs and body surfaces are structurally intact.", "confidence": "high", "cost_usd": 0.0006025999999999999, "slug": "stevebuscemi"}
+{"verdict": "ok", "issue": "Intact low-poly figure with both arms and legs present", "confidence": "high", "cost_usd": 0.0004946, "slug": "steveharvey"}
+{"verdict": "ok", "issue": "Intact figure with two arms and two legs visible.", "confidence": "high", "cost_usd": 0.0005413999999999999, "slug": "steveirwin"}
+{"verdict": "ok", "issue": "Recognizable intact figure; rear arm is partly occluded by the pose.", "confidence": "high", "cost_usd": 0.0006337999999999999, "slug": "stevejobs"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "stevenspielberg"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0004502, "slug": "steventyler"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.00048379999999999994, "slug": "stevewozniak"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are recognisably intact.", "confidence": "high", "cost_usd": 0.00048019999999999996, "slug": "stevienicks"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.000551, "slug": "steviewonder"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0004706, "slug": "stonecoldsteveau"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are intact and recognizable.", "confidence": "high", "cost_usd": 0.0005137999999999999, "slug": "suleimanthemagni"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and continuous.", "confidence": "high", "cost_usd": 0.00046939999999999997, "slug": "suntzu"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and structurally continuous.", "confidence": "high", "cost_usd": 0.00045739999999999995, "slug": "sunwukongthemonk"}
+{"verdict": "ok", "issue": "All limbs, head, torso, and clothing are structurally intact.", "confidence": "high", "cost_usd": 0.0005642, "slug": "sylvesterstallon"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are structurally intact.", "confidence": "high", "cost_usd": 0.0004322, "slug": "takerukobayashi"}
+{"verdict": "minor_defects", "issue": "Recognizable figure with both arms and legs, but some jagged mesh spikes and rough seams.", "confidence": "high", "cost_usd": 0.0005846, "slug": "tarzan"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0004442, "slug": "taylorswift"}
+{"verdict": "broken", "issue": "Torso and one arm are severely shredded into jagged fragments.", "confidence": "high", "cost_usd": 0.0005306, "slug": "tengu"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and continuous.", "confidence": "high", "cost_usd": 0.000449, "slug": "terencetao"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs", "confidence": "high", "cost_usd": 0.0004442, "slug": "terracottawarrio"}
+{"verdict": "minor_defects", "issue": "Recognizable figure with all limbs present; minor jagged clothing edges.", "confidence": "high", "cost_usd": 0.0005378, "slug": "terrybradshaw"}
+{"verdict": "minor_defects", "issue": "Recognizable figure with all limbs present; clothing edges are slightly jagged.", "confidence": "high", "cost_usd": 0.000623, "slug": "theamericangothi"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0004478, "slug": "thebigbadwolf"}
+{"verdict": "ok", "issue": "All limbs and main body structures are present; low-poly jagged clothing is intact.", "confidence": "medium", "cost_usd": 0.0005558, "slug": "theboogeyman"}
+{"verdict": "minor_defects", "issue": "Small jagged spikes and rough limb geometry", "confidence": "high", "cost_usd": 0.000527, "slug": "thecheshirecat"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.00047660000000000004, "slug": "thecountofmontec"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs present.", "confidence": "high", "cost_usd": 0.0004598, "slug": "thecowardlylion"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs", "confidence": "high", "cost_usd": 0.0005137999999999999, "slug": "thediscusthrower"}
+{"verdict": "ok", "issue": "Low-poly angularity only; body, head, two arms, and two legs are intact.", "confidence": "high", "cost_usd": 0.0005366, "slug": "theeasterbunny"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are all present and connected.", "confidence": "high", "cost_usd": 0.0004886000000000001, "slug": "theflyingdutchma"}
+{"verdict": "broken", "issue": "Torso and arms are severely shredded into jagged fragments", "confidence": "high", "cost_usd": 0.0005738, "slug": "thegrimreaper"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "theheadlesshorse"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "theinvisibleman"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.00048019999999999996, "slug": "thelochnessmonst"}
+{"verdict": "ok", "issue": "All major body parts and four limbs are present and connected.", "confidence": "high", "cost_usd": 0.0004526, "slug": "themadhatter"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.00045139999999999997, "slug": "theminotaur"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs present.", "confidence": "high", "cost_usd": 0.0006662, "slug": "theodoreroosevel"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs", "confidence": "high", "cost_usd": 0.00047539999999999995, "slug": "thephantomoftheo"}
+{"verdict": "ok", "issue": "All limbs, head, torso, and clothing are structurally intact.", "confidence": "high", "cost_usd": 0.0004718, "slug": "thepiedpiper"}
+{"verdict": "ok", "issue": "Recognizable figure with intact head, torso, two arms, and two legs", "confidence": "high", "cost_usd": 0.0006014, "slug": "thequeenofhearts"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0004946, "slug": "thescarecrow"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.000461, "slug": "thescream"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0005642, "slug": "thestatueofliber"}
+{"verdict": "ok", "issue": "All major body parts are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0005834, "slug": "thethinker"}
+{"verdict": "minor_defects", "issue": "Recognizable figure with all limbs present, but surfaces have noticeable jagged protrusions and tears.", "confidence": "high", "cost_usd": 0.000551, "slug": "thetinman"}
+{"verdict": "minor_defects", "issue": "Recognizable figure with all limbs present, but clothing and wings show some jagged, noisy mesh artifacts.", "confidence": "high", "cost_usd": 0.0004982, "slug": "thetoothfairy"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "theundertaker"}
+{"verdict": "minor_defects", "issue": "Recognizable figure with all limbs present, but the suit has some jagged torn-looking geometry.", "confidence": "high", "cost_usd": 0.0005534, "slug": "theweeknd"}
+{"verdict": "broken", "issue": "Torso and clothing are heavily shredded, with limbs partially missing or fragmented.", "confidence": "high", "cost_usd": 0.0006062000000000001, "slug": "thewickedwitchof"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "thewingedvictory"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "theyeti"}
+{"verdict": "broken", "issue": "Both legs are missing or merged into a jagged lower-body blob.", "confidence": "high", "cost_usd": 0.000677, "slug": "thomasedison"}
+{"verdict": "ok", "issue": "Intact figure with both legs and arms present or occluded by the side pose.", "confidence": "high", "cost_usd": 0.00048379999999999994, "slug": "thorthenorsegod"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and continuous.", "confidence": "high", "cost_usd": 0.000467, "slug": "tigerwoods"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "tigger"}
+{"verdict": "ok", "issue": "Intact low-poly figure with two arms and two legs present.", "confidence": "high", "cost_usd": 0.0004826, "slug": "tildaswinton"}
+{"verdict": "minor_defects", "issue": "Body and all four limbs are present, with jagged torn-looking lower pant and shoe edges.", "confidence": "high", "cost_usd": 0.0005006, "slug": "timallen"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0004526, "slug": "timburton"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.000479, "slug": "timothechalamet"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.00045860000000000003, "slug": "tinaturner"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and structurally intact.", "confidence": "high", "cost_usd": 0.0004814, "slug": "tinetine"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0005258, "slug": "tintin"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "tisto"}
+{"verdict": "ok", "issue": "Recognizable figure with both arms and legs present", "confidence": "high", "cost_usd": 0.000557, "slug": "tobykeith"}
+{"verdict": "ok", "issue": "Body, head, and all four limbs are present and structurally intact.", "confidence": "high", "cost_usd": 0.0005462, "slug": "toddhoward"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs", "confidence": "high", "cost_usd": 0.0004898, "slug": "tombrady"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs", "confidence": "high", "cost_usd": 0.0004718, "slug": "tomcruise"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally present", "confidence": "high", "cost_usd": 0.0005558, "slug": "tomhardy"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "tomjones"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are intact.", "confidence": "high", "cost_usd": 0.000461, "slug": "tommychong"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are intact.", "confidence": "high", "cost_usd": 0.00045139999999999997, "slug": "tomsawyer"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and structurally continuous.", "confidence": "high", "cost_usd": 0.000539, "slug": "tomselleck"}
+{"verdict": "ok", "issue": "Intact low-poly figure with two arms and two legs present", "confidence": "high", "cost_usd": 0.0005677999999999999, "slug": "tonyaharding"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms, two legs, continuous torso, and proportionate head.", "confidence": "high", "cost_usd": 0.0004718, "slug": "tonyhawk"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are intact and recognizable.", "confidence": "high", "cost_usd": 0.0004274, "slug": "tonyjaa"}
+{"verdict": "ok", "issue": "Two arms, two legs, head, and torso are intact and recognizable.", "confidence": "high", "cost_usd": 0.00048379999999999994, "slug": "toshiromifune"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "tracymorgan"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0004598, "slug": "traviskelce"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and intact", "confidence": "high", "cost_usd": 0.000527, "slug": "travisscott"}
+{"verdict": "minor_defects", "issue": "All limbs and body are present, but the lower legs and clothing have jagged, spiky edges.", "confidence": "high", "cost_usd": 0.0004898, "slug": "trentreznor"}
+{"verdict": "ok", "issue": "Intact figure with both arms and legs present", "confidence": "high", "cost_usd": 0.000629, "slug": "tripleh"}
+{"verdict": "minor_defects", "issue": "All limbs and torso are present, with minor jagged spikes around the lower legs and feet.", "confidence": "high", "cost_usd": 0.0005462, "slug": "troypolamalu"}
+{"verdict": "broken", "issue": "Torso and clothing are severely shredded into jagged fragments.", "confidence": "high", "cost_usd": 0.0006662, "slug": "tutankhamun"}
+{"verdict": "ok", "issue": "All limbs, head, torso, and clothing are structurally intact.", "confidence": "high", "cost_usd": 0.0004598, "slug": "twiggy"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.00043339999999999996, "slug": "tychobrahe"}
+{"verdict": "minor_defects", "issue": "Small jagged spikes around the back and clothing edges; limbs remain present.", "confidence": "high", "cost_usd": 0.0006374, "slug": "tylercowen"}
+{"verdict": "ok", "issue": "Intact figure with both arms and legs present", "confidence": "high", "cost_usd": 0.0005174, "slug": "tylerninjablevin"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and continuous.", "confidence": "high", "cost_usd": 0.00045860000000000003, "slug": "tylerthecreator"}
+{"verdict": "ok", "issue": "Body, head, and all four limbs are present and structurally intact.", "confidence": "high", "cost_usd": 0.000497, "slug": "tyrabanks"}
+{"verdict": "ok", "issue": "Body, head, and all four limbs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0004478, "slug": "tysonfury"}
+{"verdict": "ok", "issue": "Intact figure with two arms, two legs, and continuous torso", "confidence": "high", "cost_usd": 0.0005162000000000001, "slug": "ulyssessgrant"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0004814, "slug": "umathurman"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally present; only coarse low-poly faceting is visible.", "confidence": "high", "cost_usd": 0.0006385999999999999, "slug": "unclesam"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and structurally continuous.", "confidence": "high", "cost_usd": 0.000539, "slug": "valentinorossi"}
+{"verdict": "ok", "issue": "Intact low-poly figure with four limbs and continuous body surfaces", "confidence": "high", "cost_usd": 0.000473, "slug": "valkyrie"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0005198, "slug": "vanhelsing"}
+{"verdict": "ok", "issue": "All major body parts and limbs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0005174, "slug": "vanillaice"}
+{"verdict": "minor_defects", "issue": "Recognizable figure with both arms and legs, but clothing and hands are somewhat jagged and distorted.", "confidence": "high", "cost_usd": 0.000683, "slug": "venusdemilo"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are intact.", "confidence": "high", "cost_usd": 0.0005053999999999999, "slug": "victorfrankenste"}
+{"verdict": "minor_defects", "issue": "Small jagged artifacts around the rear arm; body and all four limbs remain intact.", "confidence": "high", "cost_usd": 0.0006494, "slug": "victorwembanyama"}
+{"verdict": "minor_defects", "issue": "Recognizable figure with two arms and legs; some jagged clothing and facial geometry.", "confidence": "high", "cost_usd": 0.000563, "slug": "vincelombardi"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0005186, "slug": "vincentvangogh"}
+{"verdict": "ok", "issue": "All limbs, head, torso, and clothing are structurally intact.", "confidence": "high", "cost_usd": 0.0004946, "slug": "viratkohli"}
+{"verdict": "broken", "issue": "Torso and limbs are heavily shredded into jagged fragments", "confidence": "high", "cost_usd": 0.0004502, "slug": "vitruvianman"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are intact and recognizable.", "confidence": "high", "cost_usd": 0.0004718, "slug": "viviennewestwood"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0005413999999999999, "slug": "vladimirlenin"}
+{"verdict": "minor_defects", "issue": "Jagged cape and clothing edges", "confidence": "high", "cost_usd": 0.0005534, "slug": "vladtheimpaler"}
+{"verdict": "ok", "issue": "Intact low-poly figure with two arms, two legs, continuous torso, and proportionate head.", "confidence": "high", "cost_usd": 0.000455, "slug": "warrenbuffett"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs", "confidence": "high", "cost_usd": 0.0004898, "slug": "warwickdavis"}
+{"verdict": "ok", "issue": "Recognizable figure with two arms, two legs, and intact head and torso", "confidence": "high", "cost_usd": 0.0006626, "slug": "waylonjennings"}
+{"verdict": "ok", "issue": "Body, head, and all four limbs are intact.", "confidence": "high", "cost_usd": 0.000443, "slug": "waynegretzky"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and structurally continuous.", "confidence": "high", "cost_usd": 0.000599, "slug": "waynenewton"}
+{"verdict": "ok", "issue": "Intact figure with two arms and two legs present", "confidence": "high", "cost_usd": 0.0005413999999999999, "slug": "waynerooney"}
+{"verdict": "minor_defects", "issue": "Recognizable figure with all limbs present; minor jagged tears around hands and shoes.", "confidence": "high", "cost_usd": 0.0004874, "slug": "weirdalyankovic"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0005426000000000001, "slug": "wernerherzog"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs", "confidence": "high", "cost_usd": 0.0005162000000000001, "slug": "wesanderson"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "whistlersmother"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0005654, "slug": "whoopigoldberg"}
+{"verdict": "minor_defects", "issue": "Slight jagged tearing around the shoulder and clothing edges", "confidence": "high", "cost_usd": 0.000581, "slug": "willemdafoe"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0005546, "slug": "willferrell"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0004814, "slug": "williamshakespea"}
+{"verdict": "minor_defects", "issue": "All limbs and head are present; clothing and feet have some jagged edges.", "confidence": "high", "cost_usd": 0.0006085999999999999, "slug": "williamshatner"}
+{"verdict": "minor_defects", "issue": "Small jagged spikes and mesh protrusions around the limbs and clothing", "confidence": "high", "cost_usd": 0.0004742, "slug": "williamtell"}
+{"verdict": "ok", "issue": "Intact figure with two arms and two legs; minor pose occlusion only.", "confidence": "high", "cost_usd": 0.000485, "slug": "williamwallace"}
+{"verdict": "ok", "issue": "Intact low-poly figure with both arms and legs present", "confidence": "high", "cost_usd": 0.0005186, "slug": "willienelson"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs present.", "confidence": "high", "cost_usd": 0.000599, "slug": "willsmith"}
+{"verdict": "minor_defects", "issue": "Body and limbs are intact; boots have jagged, stretched-looking edges.", "confidence": "high", "cost_usd": 0.0005186, "slug": "wiltchamberlain"}
+{"verdict": "ok", "issue": "Recognisable intact figure with two arms and two legs visible in side pose.", "confidence": "high", "cost_usd": 0.0005438, "slug": "winstonchurchill"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "wolfgangamadeusm"}
+{"verdict": "ok", "issue": "Body, head, and all four limbs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0006037999999999999, "slug": "wuzetian"}
+{"verdict": "ok", "issue": "Intact low-poly figure with two arms and two legs visible", "confidence": "high", "cost_usd": 0.0005546, "slug": "wyattearp"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "xerxes"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.00047660000000000004, "slug": "yannlecun"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.00046579999999999994, "slug": "yaoming"}
+{"verdict": "ok", "issue": "Recognizable figure with intact head, torso, arms, and legs", "confidence": "high", "cost_usd": 0.000563, "slug": "yasuke"}
+{"verdict": "minor_defects", "issue": "Recognizable figure with both arms and legs; clothing has some jagged, spiky edges.", "confidence": "high", "cost_usd": 0.0006434, "slug": "yayoikusama"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact", "confidence": "high", "cost_usd": 0.0004934, "slug": "yogiberra"}
+{"verdict": "ok", "issue": "Intact figure with two arms and two legs visible", "confidence": "high", "cost_usd": 0.0004622, "slug": "yokoono"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0005174, "slug": "yoshuabengio"}
+{"verdict": "error", "issue": "Expecting value: line 1 column 1 (char 0)", "slug": "yoyoma"}
+{"verdict": "ok", "issue": "Intact low-poly figure with two arms, two legs, continuous torso, and proportional head.", "confidence": "high", "cost_usd": 0.000479, "slug": "yurigagarin"}
+{"verdict": "error", "issue": "Unterminated string starting at: line 1 column 36 (char 35)", "slug": "zachgalifianakis"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs present.", "confidence": "high", "cost_usd": 0.0005582, "slug": "zendaya"}
+{"verdict": "error", "issue": "Unterminated string starting at: line 1 column 12 (char 11)", "slug": "zeus"}
+{"verdict": "ok", "issue": "Recognizable figure with intact head, torso, two arms, and two legs.", "confidence": "high", "cost_usd": 0.0005294, "slug": "zinedinezidane"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are intact.", "confidence": "high", "cost_usd": 0.0004898, "slug": "zlatanibrahimovi"}
+{"verdict": "ok", "issue": "Recognisable intact figure with two arms and two legs", "confidence": "high", "cost_usd": 0.0004706, "slug": "zorro"}
+{"verdict": "broken", "issue": "Lower body is shredded and neither leg is discernible.", "confidence": "high", "cost_usd": 0.000743, "slug": "alcapone"}
+{"verdict": "minor_defects", "issue": "All limbs are present; clothing has some jagged torn edges.", "confidence": "medium", "cost_usd": 0.0009974, "slug": "alfredhitchcock"}
+{"verdict": "minor_defects", "issue": "Jagged mesh fragments around the back and shorts; limbs remain present.", "confidence": "medium", "cost_usd": 0.0009986, "slug": "alleniverson"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are intact", "confidence": "high", "cost_usd": 0.0008966, "slug": "alpacino"}
+{"verdict": "ok", "issue": "Two arms and two legs are present; head, torso, and clothing remain structurally continuous.", "confidence": "high", "cost_usd": 0.00048379999999999994, "slug": "andreagassi"}
+{"verdict": "ok", "issue": "No significant structural defects; all major body parts are present.", "confidence": "high", "cost_usd": 0.0007585999999999999, "slug": "barrymanilow"}
+{"verdict": "broken", "issue": "Both legs and feet are missing, with the lower body ending in jagged fragments.", "confidence": "high", "cost_usd": 0.0004826, "slug": "bennyhill"}
+{"verdict": "minor_defects", "issue": "Recognizable figure with all limbs present, but coat and lower legs have jagged, spiky edges.", "confidence": "high", "cost_usd": 0.0005006, "slug": "berniemadoff"}
+{"verdict": "minor_defects", "issue": "Recognizable figure with both arms and legs; clothing has some jagged, spiky deformation.", "confidence": "high", "cost_usd": 0.0005426000000000001, "slug": "berniesanders"}
+{"verdict": "ok", "issue": "Body, head, and all four limbs are present and structurally intact.", "confidence": "high", "cost_usd": 0.0006265999999999999, "slug": "bigshow"}
+{"verdict": "ok", "issue": "Recognizable intact figure with both arms and legs present", "confidence": "high", "cost_usd": 0.0005006, "slug": "billnye"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs", "confidence": "high", "cost_usd": 0.000497, "slug": "bobsapp"}
+{"verdict": "ok", "issue": "Recognizable figure with two arms, two legs, intact head, and continuous torso.", "confidence": "high", "cost_usd": 0.0007442000000000001, "slug": "brocklesnar"}
+{"verdict": "minor_defects", "issue": "Recognizable figure with all four limbs; clothing edges are somewhat jagged.", "confidence": "high", "cost_usd": 0.0007298, "slug": "brucebuffer"}
+{"verdict": "minor_defects", "issue": "Recognizable intact figure with both arms and legs; feet have some jagged, spiky geometry.", "confidence": "high", "cost_usd": 0.000515, "slug": "brucespringsteen"}
+{"verdict": "minor_defects", "issue": "Recognizable figure with both arms and legs present, but some jagged/spiky mesh artifacts around the back and torso.", "confidence": "high", "cost_usd": 0.000797, "slug": "buddha"}
+{"verdict": "ok", "issue": "Intact low-poly figure with both arms and legs present", "confidence": "high", "cost_usd": 0.0006662, "slug": "caliban"}
+{"verdict": "ok", "issue": "Recognizable intact figure with both arms and legs present", "confidence": "high", "cost_usd": 0.0005822000000000001, "slug": "charlesdickens"}
+{"verdict": "minor_defects", "issue": "All limbs and body are present, with some jagged coat and leg edges.", "confidence": "high", "cost_usd": 0.000665, "slug": "chrisrock"}
+{"verdict": "ok", "issue": "Recognizable intact figure with both arms and legs present.", "confidence": "high", "cost_usd": 0.0006134, "slug": "christopherreeve"}
+{"verdict": "minor_defects", "issue": "Some jagged, slightly fragmented clothing and limb edges", "confidence": "medium", "cost_usd": 0.0008642, "slug": "colinkaepernick"}
+{"verdict": "ok", "issue": "Recognizable intact figure with both arms and legs present", "confidence": "high", "cost_usd": 0.000617, "slug": "countdracula"}
+{"verdict": "minor_defects", "issue": "All limbs and head are intact, with some jagged tears in the clothing mesh.", "confidence": "high", "cost_usd": 0.0006745999999999999, "slug": "cristianoronaldo"}
+{"verdict": "minor_defects", "issue": "Body and all four limbs are present, with some jagged clothing edges.", "confidence": "high", "cost_usd": 0.0006145999999999999, "slug": "davidblaine"}
+{"verdict": "minor_defects", "issue": "Small visible gaps between clothing and legs", "confidence": "medium", "cost_usd": 0.0009914, "slug": "dennisrodman"}
+{"verdict": "minor_defects", "issue": "Jagged clothing edges and rough limb geometry", "confidence": "medium", "cost_usd": 0.0008125999999999999, "slug": "denzelwashington"}
+{"verdict": "minor_defects", "issue": "Recognizable intact figure with both arms and legs, but clothing and shoulder areas have some jagged mesh artifacts.", "confidence": "high", "cost_usd": 0.000539, "slug": "dickvandyke"}
+{"verdict": "ok", "issue": "All limbs and body surfaces are intact.", "confidence": "high", "cost_usd": 0.0006122, "slug": "diddy"}
+{"verdict": "minor_defects", "issue": "Rear arm is partly obscured and jagged at the sleeve", "confidence": "medium", "cost_usd": 0.0009974, "slug": "donaldknuth"}
+{"verdict": "minor_defects", "issue": "Jagged, frayed clothing edges and lower mesh", "confidence": "medium", "cost_usd": 0.0008774, "slug": "drphil"}
+{"verdict": "broken", "issue": "Dress and lower body are heavily shredded into jagged fragments", "confidence": "high", "cost_usd": 0.0008317999999999999, "slug": "edithpiaf"}
+{"verdict": "minor_defects", "issue": "Body and all four limbs are present, with jagged feet and clothing edges.", "confidence": "medium", "cost_usd": 0.0007478, "slug": "edsheeran"}
+{"verdict": "broken", "issue": "Torso and clothing are heavily shredded into jagged fragments.", "confidence": "high", "cost_usd": 0.0007405999999999999, "slug": "elizabethtaylor"}
+{"verdict": "broken", "issue": "One arm appears missing and the torso clothing is heavily shredded into jagged fragments.", "confidence": "high", "cost_usd": 0.000779, "slug": "falstaff"}
+{"verdict": "broken", "issue": "Oversized crumpled head with jagged fragmented torso and limbs", "confidence": "high", "cost_usd": 0.000971, "slug": "faust"}
+{"verdict": "minor_defects", "issue": "Recognizable figure with all limbs present, but clothing and feet have some jagged mesh edges.", "confidence": "high", "cost_usd": 0.000611, "slug": "frankensteinsmon"}
+{"verdict": "minor_defects", "issue": "Jagged, spiky coat edges and lower clothing", "confidence": "high", "cost_usd": 0.0007825999999999999, "slug": "frdricchopin"}
+{"verdict": "minor_defects", "issue": "Recognizable figure with four limbs, though the clothing has jagged, ragged edges.", "confidence": "high", "cost_usd": 0.0006362000000000001, "slug": "fredtrump"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are recognisably intact.", "confidence": "high", "cost_usd": 0.0008797999999999999, "slug": "giancarloesposit"}
+{"verdict": "minor_defects", "issue": "Jagged tearing around the shoulder and arm", "confidence": "high", "cost_usd": 0.0008642, "slug": "hafthorbjrnsson"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are all present and structurally continuous.", "confidence": "high", "cost_usd": 0.0005258, "slug": "harrisonford"}
+{"verdict": "minor_defects", "issue": "Minor jagged clothing edges; all limbs and head are intact.", "confidence": "high", "cost_usd": 0.0006278, "slug": "henrycavill"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs visible in pose", "confidence": "high", "cost_usd": 0.0006458, "slug": "henryford"}
+{"verdict": "ok", "issue": "Intact body with two arms and two legs visible or plausibly occluded", "confidence": "high", "cost_usd": 0.0004826, "slug": "howardstern"}
+{"verdict": "minor_defects", "issue": "Body and all four limbs are present, with some ragged tearing around the left sleeve and coat.", "confidence": "high", "cost_usd": 0.0006902000000000001, "slug": "hughjackman"}
+{"verdict": "minor_defects", "issue": "Recognizable figure with both arms and legs; coat has some jagged spiky edges.", "confidence": "medium", "cost_usd": 0.000653, "slug": "humphreybogart"}
+{"verdict": "broken", "issue": "Shredded torso and legs with unclear limb continuity", "confidence": "high", "cost_usd": 0.0006062000000000001, "slug": "humptydumpty"}
+{"verdict": "ok", "issue": "Recognizable intact figure with both legs and arms present", "confidence": "high", "cost_usd": 0.0006614, "slug": "isaacnewton"}
+{"verdict": "ok", "issue": "All limbs and body surfaces are present and structurally intact", "confidence": "high", "cost_usd": 0.000647, "slug": "isambardkingdomb"}
+{"verdict": "broken", "issue": "Lower body and legs are fragmented or missing", "confidence": "high", "cost_usd": 0.0005378, "slug": "jacknicholson"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and connected.", "confidence": "high", "cost_usd": 0.00047779999999999996, "slug": "jamesbrown"}
+{"verdict": "minor_defects", "issue": "Jagged, uneven clothing edges and a slightly distorted hand.", "confidence": "medium", "cost_usd": 0.0009218, "slug": "jamesearljones"}
+{"verdict": "minor_defects", "issue": "Jagged torn-looking jacket and rear arm area", "confidence": "medium", "cost_usd": 0.000959, "slug": "jerrylewis"}
+{"verdict": "ok", "issue": "Intact figure with both arms and legs present", "confidence": "high", "cost_usd": 0.0006818, "slug": "jimmorrison"}
+{"verdict": "minor_defects", "issue": "Jagged clothing edges and small mesh spikes", "confidence": "high", "cost_usd": 0.0006205999999999999, "slug": "johndaly"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.000485, "slug": "johnwaters"}
+{"verdict": "minor_defects", "issue": "Skirt lower section is visibly jagged and partially torn.", "confidence": "medium", "cost_usd": 0.000731, "slug": "julietcapulet"}
+{"verdict": "minor_defects", "issue": "Jagged, torn-looking clothing edges", "confidence": "high", "cost_usd": 0.000821, "slug": "kimjongun"}
+{"verdict": "minor_defects", "issue": "Jagged clothing edges and small protrusions, but the full figure and limbs are present", "confidence": "medium", "cost_usd": 0.000779, "slug": "ladygaga"}
+{"verdict": "minor_defects", "issue": "Jagged, somewhat crumpled skirt geometry", "confidence": "medium", "cost_usd": 0.000695, "slug": "ladymacbeth"}
+{"verdict": "minor_defects", "issue": "Both arms and legs are present; coat edges and hands have some jagged low-poly deformation.", "confidence": "medium", "cost_usd": 0.0007045999999999999, "slug": "leslienielsen"}
+{"verdict": "minor_defects", "issue": "Recognizable figure with all limbs present; feet have some jagged, spiky deformation.", "confidence": "high", "cost_usd": 0.0005282, "slug": "lilwayne"}
+{"verdict": "minor_defects", "issue": "Low-poly jagged clothing and limb edges", "confidence": "high", "cost_usd": 0.0005965999999999999, "slug": "lionelmessi"}
+{"verdict": "minor_defects", "issue": "Some jagged, fragmented edges on the limbs and clothing", "confidence": "medium", "cost_usd": 0.0007285999999999999, "slug": "mariobalotelli"}
+{"verdict": "minor_defects", "issue": "Slightly jagged rear clothing and arm silhouette", "confidence": "high", "cost_usd": 0.0006182000000000001, "slug": "markhamill"}
+{"verdict": "ok", "issue": "Recognizable figure with all four limbs and continuous body surfaces", "confidence": "high", "cost_usd": 0.0007885999999999999, "slug": "martinlutherking"}
+{"verdict": "ok", "issue": "Low-poly edges are slightly jagged, but the body, head, two arms, and two legs are intact.", "confidence": "high", "cost_usd": 0.0005882000000000001, "slug": "melbrooks"}
+{"verdict": "ok", "issue": "Both arms and legs are present; the low-poly clothing is somewhat jagged but continuous.", "confidence": "medium", "cost_usd": 0.001001, "slug": "melgibson"}
+{"verdict": "broken", "issue": "Torso and clothing are severely fragmented with large gaps.", "confidence": "high", "cost_usd": 0.0005006, "slug": "merlin"}
+{"verdict": "minor_defects", "issue": "Recognizable figure with both arms and legs; clothing and limbs have minor jagged deformation.", "confidence": "high", "cost_usd": 0.000575, "slug": "michelleobama"}
+{"verdict": "ok", "issue": "Recognizable intact figure with all limbs present", "confidence": "high", "cost_usd": 0.0005762, "slug": "mothergoose"}
+{"verdict": "ok", "issue": "Recognizable intact figure with four limbs present", "confidence": "high", "cost_usd": 0.0007214, "slug": "naomicampbell"}
+{"verdict": "minor_defects", "issue": "Recognizable figure with all limbs present, but clothing and lower body show some jagged mesh distortion.", "confidence": "high", "cost_usd": 0.0006205999999999999, "slug": "narendramodi"}
+{"verdict": "broken", "issue": "Torso and limbs are heavily shredded into jagged fragments", "confidence": "high", "cost_usd": 0.0006697999999999999, "slug": "nikilauda"}
+{"verdict": "minor_defects", "issue": "Recognizable figure with all limbs present; skirt and rear arm have jagged stretched geometry.", "confidence": "medium", "cost_usd": 0.0010034, "slug": "ninasimone"}
+{"verdict": "minor_defects", "issue": "All limbs and head are present, with some jagged-looking coat geometry.", "confidence": "high", "cost_usd": 0.0005486, "slug": "olivertwist"}
+{"verdict": "ok", "issue": "Head, torso, two arms, and two legs are present and structurally intact.", "confidence": "high", "cost_usd": 0.0008366, "slug": "ottovonbismarck"}
+{"verdict": "ok", "issue": "Recognizable intact figure with both arms and legs present", "confidence": "high", "cost_usd": 0.0004898, "slug": "pabloescobar"}
+{"verdict": "minor_defects", "issue": "Recognizable figure with all limbs present, but some jagged clothing edges and small mesh protrusions.", "confidence": "medium", "cost_usd": 0.0008245999999999999, "slug": "paulbunyan"}
+{"verdict": "minor_defects", "issue": "Ragged, spiky clothing edges", "confidence": "high", "cost_usd": 0.0005846, "slug": "pedropascal"}
+{"verdict": "minor_defects", "issue": "All limbs and major body surfaces are present, with some jagged spikes and mesh tearing around the back and boots.", "confidence": "high", "cost_usd": 0.0005258, "slug": "peytonmanning"}
+{"verdict": "minor_defects", "issue": "Recognizable figure with all limbs present, but clothing edges are somewhat jagged and fragmented.", "confidence": "high", "cost_usd": 0.0006962, "slug": "prospero"}
+{"verdict": "broken", "issue": "One arm is missing and the shoulder area is shredded into fragments.", "confidence": "high", "cost_usd": 0.0006325999999999999, "slug": "rajinikanth"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and continuous.", "confidence": "high", "cost_usd": 0.0009218, "slug": "raycharles"}
+{"verdict": "minor_defects", "issue": "Jagged clothing edges and small mesh spikes; body and all limbs remain recognizable.", "confidence": "medium", "cost_usd": 0.0008881999999999999, "slug": "raykurzweil"}
+{"verdict": "minor_defects", "issue": "Minor jagged geometry around the torso and arms", "confidence": "high", "cost_usd": 0.0007525999999999999, "slug": "reymysterio"}
+{"verdict": "minor_defects", "issue": "Jagged, torn-looking jacket surfaces; head and all four limbs remain present.", "confidence": "high", "cost_usd": 0.0007898, "slug": "rihanna"}
+{"verdict": "minor_defects", "issue": "Body and all four limbs are present, with minor jagged edges on clothing and feet.", "confidence": "high", "cost_usd": 0.0004862, "slug": "robertdowneyjr"}
+{"verdict": "minor_defects", "issue": "Both arms and legs are present, but the rear sleeve/arm is jagged and distorted.", "confidence": "high", "cost_usd": 0.0006098, "slug": "saltbae"}
+{"verdict": "ok", "issue": "Two arms and two legs are present; body and head remain continuous.", "confidence": "high", "cost_usd": 0.000575, "slug": "samkinison"}
+{"verdict": "minor_defects", "issue": "All limbs and head are present, with some jagged clothing edges and small spikes.", "confidence": "high", "cost_usd": 0.000881, "slug": "sarahpalin"}
+{"verdict": "minor_defects", "issue": "Jagged pant edges and slightly distorted arms", "confidence": "high", "cost_usd": 0.000725, "slug": "shakira"}
+{"verdict": "ok", "issue": "All major body parts and four limbs are present", "confidence": "high", "cost_usd": 0.0006025999999999999, "slug": "sigmundfreud"}
+{"verdict": "ok", "issue": "Recognizable intact figure with two arms and two legs", "confidence": "high", "cost_usd": 0.0004598, "slug": "sittingbull"}
+{"verdict": "broken", "issue": "Torso and clothing are heavily shredded into jagged fragments.", "confidence": "high", "cost_usd": 0.000629, "slug": "stanleykubrick"}
+{"verdict": "minor_defects", "issue": "Recognizable figure with all limbs present, but clothing edges are somewhat jagged.", "confidence": "medium", "cost_usd": 0.0007982, "slug": "stephenwolfram"}
+{"verdict": "minor_defects", "issue": "Body and all limbs are present, with minor jagged edges on the clothing and shoes.", "confidence": "high", "cost_usd": 0.0005042, "slug": "stevenspielberg"}
+{"verdict": "broken", "issue": "Head and torso are severely distorted into jagged oversized fragments.", "confidence": "high", "cost_usd": 0.000635, "slug": "theheadlesshorse"}
+{"verdict": "minor_defects", "issue": "Recognizable figure with jagged, distorted clothing edges", "confidence": "high", "cost_usd": 0.0007705999999999999, "slug": "theinvisibleman"}
+{"verdict": "minor_defects", "issue": "Recognizable figure with both legs and arms largely present, though the coat surfaces are somewhat jagged.", "confidence": "medium", "cost_usd": 0.0007022, "slug": "theundertaker"}
+{"verdict": "broken", "issue": "Severely fragmented body and distorted limbs", "confidence": "high", "cost_usd": 0.0006434, "slug": "thewingedvictory"}
+{"verdict": "ok", "issue": "Recognizable intact figure with all limbs present", "confidence": "medium", "cost_usd": 0.0008941999999999999, "slug": "theyeti"}
+{"verdict": "minor_defects", "issue": "Recognizable figure with all limbs present, but several jagged mesh protrusions and fragmented-looking joints.", "confidence": "high", "cost_usd": 0.0007285999999999999, "slug": "tigger"}
+{"verdict": "ok", "issue": "Body, head, two arms, and two legs are present and continuous.", "confidence": "high", "cost_usd": 0.00047779999999999996, "slug": "tisto"}
+{"verdict": "minor_defects", "issue": "Jagged lower clothing and limb edges, but head, torso, two arms, and two legs remain recognizable.", "confidence": "medium", "cost_usd": 0.0010082, "slug": "tomjones"}
+{"verdict": "minor_defects", "issue": "Jagged, spiky clothing and limb edges", "confidence": "high", "cost_usd": 0.0008342, "slug": "tracymorgan"}
+{"verdict": "broken", "issue": "Torso and clothing are heavily shredded into jagged fragments.", "confidence": "high", "cost_usd": 0.0009157999999999999, "slug": "whistlersmother"}
+{"verdict": "ok", "issue": "All limbs, head, and torso are structurally intact.", "confidence": "high", "cost_usd": 0.0005233999999999999, "slug": "wolfgangamadeusm"}
+{"verdict": "minor_defects", "issue": "Recognizable figure with two legs and arms, but clothing and cape have jagged dangling tears.", "confidence": "high", "cost_usd": 0.0006806, "slug": "xerxes"}
+{"verdict": "minor_defects", "issue": "Recognizable figure with all limbs present, but clothing has some jagged mesh artifacts.", "confidence": "high", "cost_usd": 0.0008102000000000001, "slug": "yoyoma"}
+{"verdict": "minor_defects", "issue": "Jagged, ragged clothing edges; limbs and head remain intact", "confidence": "high", "cost_usd": 0.0005402, "slug": "zachgalifianakis"}
+{"verdict": "ok", "issue": "Body, head, and all four limbs are present and structurally continuous.", "confidence": "high", "cost_usd": 0.0005413999999999999, "slug": "zeus"}
