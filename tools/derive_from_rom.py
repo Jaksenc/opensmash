@@ -91,11 +91,13 @@ NAME_SPRITES = {  # reloc_menus/MNPlayersCommon ll MNPlayersCommon<X>TextSprite
 STOCK_SPRITE = ("reloc_fighters_main/MarioModel", 0x72d0)  # llMarioModelStockSprite
 BACKUP_GLYPHS = ("glyph_66.png", "glyph_67.png", "glyph_68.png", "glyph_75.png")
 
+# Sliced from the engine's own css_name sprite dumps, not from the o2r:
+# tools/derive_skeletons.py --glyphs produces them (run with --skeletons here).
 MANUAL = {
-    f"{UI_REFS}/glyph_66.png": "hand re-sliced B from in-engine dump (0d6a8d90); atlas output is glyph_backup/",
-    f"{UI_REFS}/glyph_67.png": "hand re-sliced C from in-engine dump (0d6a8d90); atlas output is glyph_backup/",
-    f"{UI_REFS}/glyph_68.png": "hand re-sliced D from in-engine dump (0d6a8d90); atlas output is glyph_backup/",
-    f"{UI_REFS}/glyph_75.png": "hand re-sliced K from in-engine dump (0d6a8d90); atlas output is glyph_backup/",
+    f"{UI_REFS}/glyph_66.png": "B sliced from the engine's css_name dump; produced by --skeletons",
+    f"{UI_REFS}/glyph_67.png": "C sliced from the engine's css_name dump; produced by --skeletons",
+    f"{UI_REFS}/glyph_68.png": "D sliced from the engine's css_name dump; produced by --skeletons",
+    f"{UI_REFS}/glyph_75.png": "K sliced from the engine's css_name dump; produced by --skeletons",
 }
 
 
@@ -234,7 +236,7 @@ def verify(rom, o2r):
         for rel in tracked_targets():
             if rel in skipped:
                 note = skipped[rel]
-                status = "MISSING-SOURCE" if note.startswith("MISSING-SOURCE") else "MANUAL"
+                status = "MISSING-SOURCE" if note.startswith("MISSING-SOURCE") else "ENGINE"
                 rows.append((rel, status, note.replace("MISSING-SOURCE ", "")))
                 continue
             rows.append((rel,) + compare(rel, os.path.join(tmp, rel), os.path.join(ROOT, rel)))
