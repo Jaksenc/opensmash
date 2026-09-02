@@ -1,0 +1,1054 @@
+# S and A tiers of seed-roster.csv, rank order (batch_characters.py input)
+Cleopatra
+King Henry the Eighth
+Donald Trump
+Winston Churchill
+Pope Francis
+Albert Einstein
+Frida Kahlo
+William Shakespeare
+Wolfgang Amadeus Mozart
+Stan Lee
+Clint Eastwood
+Robin Williams
+Anthony Bourdain
+Dolly Parton
+Tupac Shakur
+Conor McGregor
+IShowSpeed
+Dario Amodei
+The Loch Ness Monster
+Don Quixote
+The Statue of Liberty
+Popeye
+Elon Musk
+Sylvester Stallone
+Victor Wembanyama
+Babe Ruth
+Blackbeard
+Kim Jong Un
+Santa Claus
+Medusa
+Zlatan Ibrahimović
+David Lynch
+Deion Sanders
+Anna Wintour
+Daft Punk
+Andre Agassi
+Tonya Harding
+Lady Gaga
+Keanu Reeves
+Jesus Christ
+Napoleon
+George Washington
+Mahatma Gandhi
+Mother Teresa
+Nikola Tesla
+Yayoi Kusama
+Friedrich Nietzsche
+Ludwig van Beethoven
+Gabe Newell
+Marilyn Monroe
+Sacha Baron Cohen
+Kim Kardashian
+Michael Jackson
+Eminem
+John Cena
+MrBeast
+Sam Altman
+Bigfoot
+Sherlock Holmes
+Mona Lisa
+Betty Boop
+Steve Jobs
+Arnold Schwarzenegger
+Michael Jordan
+Jaromir Jagr
+Uncle Sam
+The Minotaur
+Diego Maradona
+Alfred Hitchcock
+Marshawn Lynch
+Karl Lagerfeld
+Skrillex
+Usain Bolt
+Billie Eilish
+Nicolas Cage
+Julius Caesar
+Queen Elizabeth the First
+Theodore Roosevelt
+Boris Johnson
+Dalai Lama
+Sigmund Freud
+Vincent van Gogh
+Edgar Allan Poe
+Liberace
+Jim Henson
+William Shatner
+Jim Carrey
+Gordon Ramsay
+Madonna
+Diddy
+Muhammad Ali
+Khaby Lame
+Ilya Sutskever
+Cthulhu
+Terracotta Warrior
+Oswald the Lucky Rabbit
+Mark Zuckerberg
+Bruce Lee
+Shaquille O'Neal
+The Grim Reaper
+Sun Wukong the Monkey King
+Ronaldinho
+John Waters
+Rob Gronkowski
+Steve Aoki
+Joey Chestnut
+Post Malone
+Dwayne The Rock Johnson
+Buddha
+Genghis Khan
+Abraham Lincoln
+Karl Marx
+Charles Darwin
+Andy Warhol
+Mark Twain
+Luciano Pavarotti
+Hideo Kojima
+Charlie Chaplin
+Eddie Murphy
+Paris Hilton
+Elvis Presley
+Snoop Dogg
+Khabib Nurmagomedov
+MySpace Tom
+Geoffrey Hinton
+Count Dracula
+The Scream
+Felix the Cat
+Jensen Huang
+Chuck Norris
+Dennis Rodman
+Krampus
+Anubis
+Mario Balotelli
+Bo Jackson
+Deadmau5
+John Daly
+Lizzo
+Jason Momoa
+Tutankhamun
+Marie Antoinette
+Benjamin Franklin
+Pablo Picasso
+Johann Sebastian Bach
+Shigeru Miyamoto
+John Wayne
+Rowan Atkinson
+Steve Irwin
+Freddie Mercury
+Biggie Smalls
+Hulk Hogan
+Pikotaro
+Andrej Karpathy
+Humpty Dumpty
+Easter Island Moai
+Tintin
+Colonel Sanders
+Jackie Chan
+Yao Ming
+Ruud Gullit
+Refrigerator Perry
+Marshmello
+Eddie the Eagle
+Psy
+Dolph Lundgren
+Attila the Hun
+Joan of Arc
+Bob Ross
+Masahiro Sakurai
+Jeff Goldblum
+Jack Black
+Mister Rogers
+Prince
+Vanilla Ice
+Mike Tyson
+Yann LeCun
+Pinocchio
+Venus de Milo
+Steve Ballmer
+Steven Seagal
+Muggsy Bogues
+Troy Polamalu
+Takeru Kobayashi
+Willem Dafoe
+Moses
+Vlad the Impaler
+Salvador Dalí
+Reggie Fils-Aimé
+Betty White
+Weird Al Yankovic
+RuPaul
+David Bowie
+DJ Khaled
+Tyson Fury
+Lex Fridman
+Ebenezer Scrooge
+Jean-Claude Van Damme
+Manute Bol
+Dave Bautista
+Leonidas
+Rasputin
+Lucille Ball
+Pee-wee Herman
+Judge Judy
+Cher
+Ol' Dirty Bastard
+Brock Lesnar
+Frankenstein's Monster
+Mr. T
+Samuel L. Jackson
+Henry Winkler
+Chris Farley
+Richard Simmons
+Ozzy Osbourne
+MC Hammer
+Andre the Giant
+Count Orlok
+Bear Grylls
+Peter Dinklage
+Peter Sellers
+Tommy Chong
+Jerry Springer
+Elton John
+Flavor Flav
+George Foreman
+Quasimodo
+Danny DeVito
+David Hasselhoff
+Cheech Marin
+Guy Fieri
+Kurt Cobain
+Lil Jon
+Ric Flair
+The Wicked Witch of the West
+Christopher Walken
+Adam West
+Larry the Cable Guy
+Dr. Phil
+Bob Marley
+Sir Mix-a-Lot
+The Undertaker
+The Tin Man
+Rajinikanth
+Groucho Marx
+Benny Hill
+Elvira
+Boy George
+Rey Mysterio
+Toshiro Mifune
+Gallagher
+Snooki
+Alice Cooper
+Macho Man Randy Savage
+Carrot Top
+Salt Bae
+Gene Simmons
+Hafthor Björnsson
+Jack LaLanne
+Slash
+Ronnie Coleman
+Grace Jones
+Stone Cold Steve Austin
+Louis Armstrong
+Eddie Hall
+Sid Vicious
+Butterbean
+Lemmy
+Rowdy Roddy Piper
+Kenny G
+Kimbo Slice
+Mick Foley
+Ultimate Warrior
+Bill Goldberg
+Jake the Snake Roberts
+Bob Sapp
+Hakuho
+Charles Atlas
+Christopher Columbus
+Charles Manson
+Narendra Modi
+Edward Snowden
+Amelia Earhart
+Jeff Bezos
+Zendaya
+Bruce Willis
+Shakira
+Shania Twain
+LeBron James
+Travis Kelce
+Erling Haaland
+Shohei Ohtani
+Novak Djokovic
+Baba Yaga
+Odysseus
+Robin Hood
+King Lear
+Homer
+Barack Obama
+Che Guevara
+David Attenborough
+George R. R. Martin
+Steven Spielberg
+Travis Scott
+Martin Luther
+Robert De Niro
+Adam Sandler
+Kylie Jenner
+Kai Cenat
+Daniela Amodei
+Mothman
+Winnie the Pooh
+Michelangelo's David
+Leonardo da Vinci
+Olive Oyl
+Anne Boleyn
+Andrea Bocelli
+Paul McCartney
+Jon Jones
+Heidi Klum
+Matt Groening
+Billy the Kid
+O.J. Simpson
+Javier Milei
+King Charles the Third
+Malcolm X
+Neil Armstrong
+Bill Gates
+Timothée Chalamet
+Mel Gibson
+Taylor Swift
+Johnny Cash
+Caitlin Clark
+Tom Brady
+Lionel Messi
+Jackie Robinson
+Lewis Hamilton
+Rumpelstiltskin
+Achilles
+King Arthur
+Falstaff
+Alexander the Great
+John F. Kennedy
+Joseph Stalin
+Robert Oppenheimer
+J. R. R. Tolkien
+Mel Brooks
+Jelly Roll
+Pope John Paul the Second
+Dick Van Dyke
+Will Ferrell
+Caitlyn Jenner
+KSI
+Demis Hassabis
+The Chupacabra
+Mr. Hyde
+Girl with a Pearl Earring
+Jean-Michel Basquiat
+Mary, Queen of Scots
+Frédéric Chopin
+Bob Dylan
+Batista
+Coco Chanel
+Akira Toriyama
+Wyatt Earp
+Pablo Escobar
+Xi Jinping
+Queen Victoria
+Martin Luther King Jr.
+Buzz Aldrin
+Walt Disney
+Millie Bobby Brown
+Carl Weathers
+Ariana Grande
+Willie Nelson
+Giannis Antetokounmpo
+Patrick Mahomes
+Cristiano Ronaldo
+Wayne Gretzky
+Serena Williams
+The Pied Piper
+Polyphemus the Cyclops
+Merlin
+Hamlet
+Nero
+Joe Biden
+Margaret Thatcher
+Stephen Hawking
+Ernest Hemingway
+Martin Scorsese
+Drake
+Francis of Assisi
+Harrison Ford
+Larry David
+Joe Rogan
+Logan Paul
+Aravind Srinivas
+The Yeti
+Faust
+Vitruvian Man
+Marina Abramović
+King Louis the Fourteenth
+Richard Wagner
+Janet Jackson
+Roman Reigns
+Naomi Campbell
+Osamu Tezuka
+Davy Crockett
+El Chapo
+Princess Diana
+Pocahontas
+Yuri Gagarin
+Warren Buffett
+Tom Cruise
+Jesse Ventura
+Harry Styles
+Avicii
+Kobe Bryant
+Peyton Manning
+Kylian Mbappé
+Ken Griffey Jr.
+Rafael Nadal
+Little Red Riding Hood
+Zeus
+Paul Bunyan
+Caliban
+Caligula
+Franklin Roosevelt
+Benito Mussolini
+Alan Turing
+Stephen King
+Quentin Tarantino
+Jay-Z
+Saint Patrick
+Al Pacino
+Kelsey Grammer
+Conan O'Brien
+Grimes
+Palmer Luckey
+The Jersey Devil
+Hercule Poirot
+Rosie the Riveter
+Michelangelo
+Catherine the Great
+Leonard Bernstein
+Mick Jagger
+CM Punk
+Tyra Banks
+John Romero
+Ned Kelly
+Al Capone
+King George the Third
+Greta Thunberg
+Howard Hughes
+Javier Bardem
+Lou Ferrigno
+Katy Perry
+Morgan Wallen
+Stephen Curry
+Bill Belichick
+Neymar
+Ichiro
+Roger Federer
+The Flying Dutchman
+Hercules the Greek Hero
+William Tell
+Iago
+Socrates
+Ronald Reagan
+Muammar Gaddafi
+Marie Curie
+Oscar Wilde
+Stanley Kubrick
+Cardi B
+Elizabeth Taylor
+Seth Rogen
+Ellen DeGeneres
+PewDiePie
+Terence Tao
+Professor Moriarty
+The American Gothic Farmer
+Claude Monet
+Charlemagne
+Antonio Vivaldi
+John Lennon
+Floyd Mayweather
+Twiggy
+Satoru Iwata
+Marco Polo
+Bernie Madoff
+Julian Assange
+Martha Stewart
+Jennifer Lopez
+Jet Li
+Miley Cyrus
+Toby Keith
+Kareem Abdul-Jabbar
+Colin Kaepernick
+Zinedine Zidane
+Alex Ovechkin
+Virat Kohli
+The Boogeyman
+Beowulf
+John Henry the Steel-Driving Man
+Puck from A Midsummer Night's Dream
+Hannibal
+Alexander Hamilton
+Mao Zedong
+Isaac Newton
+Franz Kafka
+Spike Lee
+50 Cent
+Audrey Hepburn
+Tim Allen
+Steve Harvey
+Tyler Ninja Blevins
+Alexandr Wang
+Robinson Crusoe
+Botticelli's Venus
+Rembrandt
+King Richard the Third
+Franz Liszt
+Stevie Nicks
+Cody Rhodes
+Donatella Versace
+Todd Howard
+Calamity Jane
+Elizabeth Holmes
+Sitting Bull
+Henry Ford
+Brad Pitt
+Donnie Yen
+Bruno Mars
+Waylon Jennings
+Magic Johnson
+Chad Ochocinco
+David Beckham
+Yogi Berra
+Michael Schumacher
+Davy Jones
+Odin
+Lancelot
+Lady Macbeth
+Plato
+Bill Clinton
+Saddam Hussein
+Thomas Edison
+Charles Dickens
+George Lucas
+Nicki Minaj
+Kurt Russell
+Kevin Hart
+Johnny Carson
+Claude Shannon
+Zorro
+The Thinker
+Keith Haring
+Lawrence of Arabia
+Yo-Yo Ma
+Frank Sinatra
+Canelo Álvarez
+Vivienne Westwood
+Pancho Villa
+Sam Bankman-Fried
+Crazy Horse
+Jason Statham
+Ip Man
+Rihanna
+Fatboy Slim
+Brittney Griner
+Terry Bradshaw
+Pelé
+Niki Lauda
+Leprechaun
+Gilgamesh
+Friar Tuck
+Juliet Capulet
+Xerxes
+Richard Nixon
+Vladimir Lenin
+Neil deGrasse Tyson
+Dante Alighieri
+Tim Burton
+Lil Wayne
+Jack Nicholson
+Mike Myers
+Jon Stewart
+Marc Andreessen
+Oliver Twist
+The Winged Victory of Samothrace
+Donatello
+Saladin
+George Michael
+Jake Paul
+Buffalo Bill
+Martin Shkreli
+Geronimo
+Ryan Reynolds
+Chow Yun-fat
+Justin Bieber
+Calvin Harris
+Larry Bird
+Joe Namath
+José Mourinho
+John McEnroe
+Cupid
+Loki the Norse God
+Pecos Bill
+Prospero
+Qin Shi Huang
+Ulysses S. Grant
+Mikhail Gorbachev
+Carl Sagan
+Dr. Seuss
+Wes Anderson
+Ice-T
+Ian McKellen
+Steve Martin
+Dana White
+Mira Murati
+Mephistopheles
+Lady Justice
+Richard the Lionheart
+Ringo Starr
+Kurt Angle
+Jacques Cousteau
+Angelina Jolie
+Tony Jaa
+Britney Spears
+Hank Williams
+Wilt Chamberlain
+John Madden
+Luis Suárez
+Tiger Woods
+The Headless Horseman
+Thor the Norse God
+Romeo Montague
+Confucius
+Bernie Sanders
+Fidel Castro
+Galileo Galilei
+Leo Tolstoy
+Hayao Miyazaki
+Ice Cube
+Sean Connery
+Pete Davidson
+Evel Knievel
+Lisa Su
+Tarzan
+Liberty Leading the People
+William Wallace
+Robert Smith
+Georges St-Pierre
+Annie Oakley
+Henry Cavill
+Sonny Chiba
+Beyoncé
+Garth Brooks
+Charles Barkley
+Mike Ditka
+Wayne Rooney
+Ayrton Senna
+The Tooth Fairy
+The Golem of Prague
+Macbeth
+Spartacus
+Andrew Jackson
+Kaiser Wilhelm
+Jane Goodall
+Werner Herzog
+Kendrick Lamar
+Marlon Brando
+Jerry Seinfeld
+Stephen Colbert
+Jeff Dean
+Carmen
+Whistler's Mother
+Mansa Musa
+Billy Joel
+Manny Pacquiao
+Leonardo DiCaprio
+Sammo Hung
+The Weeknd
+Tiësto
+Allen Iverson
+Vince Lombardi
+Jürgen Klopp
+Sachin Tendulkar
+Jack Frost
+Valkyrie
+Othello
+Nefertiti
+George Patton
+Eva Perón
+Linus Torvalds
+Guillermo del Toro
+Dr. Dre
+Judy Garland
+Richard Pryor
+David Letterman
+Greg Brockman
+Rip Van Winkle
+The Discus Thrower
+Miyamoto Musashi
+Tina Turner
+Triple H
+Johnny Depp
+Bolo Yeung
+Bad Bunny
+Nikola Jokić
+Paul Gascoigne
+Lance Armstrong
+John Bull
+The Sphinx
+Shylock
+Sun Tzu
+Douglas MacArthur
+Ho Chi Minh
+Steve Wozniak
+Akira Kurosawa
+Tyler the Creator
+Carrie Fisher
+Jonah Hill
+Harry Houdini
+Eliezer Yudkowsky
+The Cheshire Cat
+Suleiman the Magnificent
+Bruce Springsteen
+Ronda Rousey
+Robert Downey Jr.
+Ed Sheeran
+Dikembe Mutombo
+Eric Cantona
+Michael Phelps
+The Big Bad Wolf
+Sinbad the Sailor
+Laozi
+Sarah Palin
+Otto von Bismarck
+Bill Nye
+Kevin Smith
+Eazy-E
+Patrick Stewart
+Kevin James
+Howard Stern
+Stephen Wolfram
+Long John Silver
+Robespierre
+Stevie Wonder
+Chyna
+Hugh Jackman
+Jungkook
+Simone Biles
+Mother Goose
+Oni Demon
+Lu Bu
+Rob Ford
+Erwin Schrödinger
+Michael Moore
+LL Cool J
+Anthony Hopkins
+Kristen Wiig
+Julia Child
+Fei-Fei Li
+Van Helsing
+Peter the Great
+Jon Bon Jovi
+Seth Rollins
+James Gandolfini
+Chappell Roan
+Tony Hawk
+Father Time
+Kappa the Yokai
+Guan Yu
+Imelda Marcos
+Isambard Kingdom Brunel
+Ed Wood
+Coolio
+Burt Reynolds
+Don Rickles
+Bob Barker
+Ray Kurzweil
+Captain Hook
+Ragnar Lothbrok
+Jimi Hendrix
+Francis Ngannou
+Denzel Washington
+Billy Ray Cyrus
+Björn Borg
+The Easter Bunny
+Scheherazade
+Tycho Brahe
+Kid Rock
+Tom Selleck
+John Belushi
+Jay Leno
+Andrew Ng
+Miss Marple
+Ivan the Terrible
+Yoko Ono
+Anderson Silva
+Chris Hemsworth
+Doja Cat
+Jesse Owens
+Jack the Giant Killer
+Tengu
+RZA
+Christopher Lee
+Dan Aykroyd
+Alex Trebek
+Guido van Rossum
+Don Juan
+Guy Fawkes
+Courtney Love
+Big Show
+Pedro Pascal
+Burna Boy
+Dale Earnhardt
+Ali Baba
+Lil Nas X
+Christopher Reeve
+Ricky Gervais
+Michael Buffer
+Donald Knuth
+Peter Pan
+Kublai Khan
+Gwen Stefani
+Eddie Guerrero
+Tom Hardy
+Carlos Santana
+Sha'Carri Richardson
+Anansi
+Ice Spice
+Michael Keaton
+John Cleese
+Larry King
+Dwarkesh Patel
+Captain Nemo
+Horatio Nelson
+Tom Jones
+Evander Holyfield
+Idris Elba
+Ricky Martin
+Valentino Rossi
+Nezha
+André 3000
+Liza Minnelli
+Bill Murray
+Bruce Buffer
+Yoshua Bengio
+Cyrano de Bergerac
+Wu Zetian
+Aretha Franklin
+Rocky Marciano
+Morgan Freeman
+Pitbull
+Florence Griffith Joyner
+Grendel
+Method Man
+Shirley Temple
+George Carlin
+Jamie Oliver
+Marvin Minsky
+Victor Frankenstein
+Oda Nobunaga
+Dave Grohl
+Shawn Michaels
+Jane Fonda
+G-Dragon
+Danica Patrick
+Momotaro
+Busta Rhymes
+Farrah Fawcett
+Tracy Morgan
+David Copperfield
+Lee Sedol
+d'Artagnan
+Mata Hari
+Jim Morrison
+Randy Orton
+Julie Andrews
+Shane Warne
+Brunhilde
+Missy Elliott
+Humphrey Bogart
+Eddie Izzard
+Penn Jillette
+Captain Ahab
+Nostradamus
+Neil Young
+Fedor Emelianenko
+Gary Oldman
+Jonah Lomu
+Master P
+John Candy
+Chris Rock
+David Blaine
+Ichabod Crane
+Leif Erikson
+Robert Plant
+Chris Jericho
+Bryan Cranston
+Shaun White
+Lil Kim
+James Dean
+Zach Galifianakis
+Criss Angel
+The Invisible Man
+Yasuke
+Dean Martin
+Nate Diaz
+Will Smith
+Chuck D
+James Earl Jones
+Rodney Dangerfield
+Billy Blanks
+Dorothy Gale
+Casanova
+Keith Richards
+Bret Hart
+Giancarlo Esposito
+Grandmaster Flash
+Mark Hamill
+Dave Chappelle
+Marie Kondo
+Baron Munchausen
+Shaka Zulu
+Barry Manilow
+Becky Lynch
+Vin Diesel
+Rick Moranis
+Jerry Lewis
+Huckleberry Finn
+Montezuma
+Janis Joplin
+Booker T
+Daniel Radcliffe
+Fred Astaire
+Howie Mandel
+The Phantom of the Opera
+Hattori Hanzo
+Eddie Van Halen
+Antonio Inoki
+Pamela Anderson
+Leslie Nielsen
+Joan Rivers
+The Count of Monte Cristo
+Date Masamune
+Axl Rose
+Royce Gracie
+Jenna Ortega
+Charlton Heston
+Kenan Thompson
+The Mad Hatter
+Steven Tyler
+Shinsuke Nakamura
+Uma Thurman
+Leonard Nimoy
+Billy Connolly
+Tom Sawyer
+Jimmy Page
+Shah Rukh Khan
+Eartha Kitt
+Andy Kaufman
+John Carter of Mars
+Ray Charles
+Elijah Wood
+Don Knotts
+Katt Williams
+Tigger
+Debbie Harry
+Adam Driver
+Jackie Gleason
+George Lopez
+Sancho Panza
+Anthony Kiedis
+Benedict Cumberbatch
+Buster Keaton
+Bob Hope
+The Scarecrow
+Bono
+Andy Serkis
+Lynda Carter
+Sam Kinison
+Alice in Wonderland
+Brian May
+Amitabh Bachchan
+George Takei
+Eric Idle
+The Queen of Hearts
+Buddy Holly
+Steve Buscemi
+Curly Howard
+Gabriel Iglesias
+Phileas Fogg
+James Brown
+Whoopi Goldberg
+Moe Howard
+Dana Carvey
+The Cowardly Lion
+Morrissey
+Lucy Liu
+Mae West
+Figaro
+James Hetfield
+Mads Mikkelsen
+Stan Laurel
+Lemuel Gulliver
+Miles Davis
+Oprah Winfrey
+Oliver Hardy
+Cyndi Lauper
+Joe Pesci
+Lou Reed
+Tilda Swinton
+Flea
+Michelle Yeoh
+Billy Idol
+Michael Cera
+Corey Taylor
+Warwick Davis
+Iggy Pop
+Gwendoline Christie
+Angus Young
+Stephen Chow
+Kate Bush
+Jean Reno
+Sammy Davis Jr.
+Ken Watanabe
+Annie Lennox
+Billie Joe Armstrong
+Little Richard
+Chuck Berry
+Fred Durst
+Liam Gallagher
+Joan Jett
+Rob Zombie
+Billy Corgan
+Trent Reznor
+Jerry Garcia
+Wayne Newton
+Noel Gallagher
+Chad Kroeger
+Nina Simone
+Johnny Rotten
+Edith Piaf
+Siouxsie Sioux
+Marc Bolan
+Barry White
+Joey Ramone
+Adam Ant
+Ella Fitzgerald
+Fela Kuti
+Dizzy Gillespie
