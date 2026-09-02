@@ -26,7 +26,7 @@ import {
 export const ROOM_TTL_MS = 10 * 60 * 1000;
 export const MAX_ROOMS = 2000;
 export const MAX_ROOMS_PER_ADDRESS = 5;
-export const MAX_QUEUED_MESSAGES = 64;
+export const MAX_QUEUED_MESSAGES = 256;
 
 const ROLES = new Set(["host", "guest"]);
 
@@ -62,6 +62,14 @@ function encodeMessage(message) {
   if (encoded === "null") throw new HandoffError(400, "A message is required.");
   if (Buffer.byteLength(encoded) > HANDOFF_MAX_MESSAGE_BYTES) throw new HandoffError(413, "Handoff message is too large.");
   return message;
+}
+
+/** `post` accepts one `message` or a `messages` array (batched ICE candidates). */
+function normalizeMessages({ message, messages }) {
+  const list = Array.isArray(messages) ? messages : [message];
+  if (!list.length) throw new HandoffError(400, "A message is required.");
+  if (list.length > 64) throw new HandoffError(413, "Too many messages in one post.");
+  return list.map(encodeMessage);
 }
 
 function queueFor(room, role, { reading }) {
@@ -144,12 +152,13 @@ export class MemoryHandoffRooms {
   }
 
   /** Leave a message for the other side. */
-  async post(code, { role, key, message }) {
+  async post(code, { role, key, message, messages }) {
     const room = this.lookup(code);
     authorize(room, role, key);
+    const incoming = normalizeMessages({ message, messages });
     const queue = queueFor(room, role, { reading: false });
-    if (queue.length >= MAX_QUEUED_MESSAGES) throw new HandoffError(429, "Too many queued handoff messages.");
-    queue.push(encodeMessage(message));
+    if (queue.length + incoming.length > MAX_QUEUED_MESSAGES) throw new HandoffError(429, "Too many queued handoff messages.");
+    queue.push(...incoming);
     return { queued: queue.length };
   }
 
@@ -227,18 +236,18 @@ export class FirestoreHandoffRooms {
     });
   }
 
-  async post(code, { role, key, message }) {
+  async post(code, { role, key, message, messages }) {
     const reference = this.collection.doc(requireCode(code));
-    const payload = encodeMessage(message);
+    const incoming = normalizeMessages({ message, messages });
     return this.firestore.runTransaction(async (transaction) => {
       const room = this.liveRoom(await transaction.get(reference));
       if (!room) throw notFound();
       authorize(room, role, key);
       const field = role === "host" ? "toGuest" : "toHost";
       const queue = room[field];
-      if (queue.length >= MAX_QUEUED_MESSAGES) throw new HandoffError(429, "Too many queued handoff messages.");
-      transaction.update(reference, { [field]: [...queue, payload] });
-      return { queued: queue.length + 1 };
+      if (queue.length + incoming.length > MAX_QUEUED_MESSAGES) throw new HandoffError(429, "Too many queued handoff messages.");
+      transaction.update(reference, { [field]: [...queue, ...incoming] });
+      return { queued: queue.length + incoming.length };
     });
   }
 

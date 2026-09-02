@@ -730,6 +730,7 @@ async function handleRequest(req, res, vite) {
           role: String(body.role || ""),
           key: String(body.key || ""),
           message: body.message,
+          messages: body.messages,
         }));
       }
       if (code && verb === "messages" && req.method === "GET") {

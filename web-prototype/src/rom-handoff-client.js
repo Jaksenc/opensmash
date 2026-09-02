@@ -47,7 +47,7 @@ function connectionFailedMessage(relay) {
     : "The connection between the devices failed. Put both on the same Wi-Fi and try again.";
 }
 
-/** Log which candidate types each side gathered — the first thing to check when a pair cannot connect. */
+/** Log what each side gathered and how the connection progresses — the first thing to check when a pair cannot connect. */
 function logCandidateTypes(pc, label) {
   const types = new Set();
   pc.addEventListener("icecandidate", (event) => {
@@ -55,10 +55,15 @@ function logCandidateTypes(pc, label) {
     else if (!event.candidate) console.info(`[handoff] ${label} gathered candidate types:`, [...types].join(", ") || "none");
   });
   pc.addEventListener("connectionstatechange", () => console.info(`[handoff] ${label} connection state:`, pc.connectionState));
+  pc.addEventListener("iceconnectionstatechange", () => console.info(`[handoff] ${label} ICE state:`, pc.iceConnectionState));
 }
 const POLL_INTERVAL_MS = 500;
 const WAIT_FOR_PEER_MS = 10 * 60 * 1000;
-const CONNECT_TIMEOUT_MS = 45 * 1000;
+// From the moment both descriptions are in place until the channel opens.
+const CONNECT_TIMEOUT_MS = 60 * 1000;
+// Local ICE candidates are batched so a host with many interfaces and six TURN
+// URLs posts a handful of messages instead of dozens of contended writes.
+const CANDIDATE_BATCH_MS = 150;
 const BUFFER_HIGH_WATER = 1024 * 1024;
 const BUFFER_LOW_WATER = 256 * 1024;
 
@@ -101,44 +106,81 @@ function sleep(ms, signal) {
  * data channel opens. Returns when `until()` becomes true or throws on abort,
  * timeout, or a failed ICE state.
  */
-async function runSignalling({ pc, room, role, key, onRemote, until, signal, deadlineMs, relay = false }) {
+async function runSignalling({ pc, room, role, key, onRemote, until, signal, deadlineMs, relay = false, diagnostics }) {
   let cursor = 0;
   const pendingCandidates = [];
   let remoteDescriptionSet = false;
+  let connectStartedAt = 0;
+  const diag = diagnostics || { localTypes: new Set(), remoteTypes: new Set(), remoteCount: 0, postFailures: 0 };
 
-  pc.addEventListener("icecandidate", (event) => {
-    if (!event.candidate) return;
+  // Batch outgoing candidates.
+  let outbox = [];
+  let flushTimer = 0;
+  const flush = () => {
+    flushTimer = 0;
+    if (!outbox.length) return;
+    const batch = outbox;
+    outbox = [];
     api(`/api/handoff/rooms/${room}/messages`, {
       method: "POST",
-      body: { role, key, message: { type: "candidate", candidate: event.candidate.toJSON() } },
-    }).catch((error) => console.warn("[handoff] candidate relay failed:", error));
+      body: { role, key, messages: batch.map((candidate) => ({ type: "candidate", candidate })) },
+    }).catch((error) => {
+      diag.postFailures += batch.length;
+      console.warn("[handoff] candidate relay failed:", error);
+    });
+  };
+  pc.addEventListener("icecandidate", (event) => {
+    if (!event.candidate) { flush(); return; }
+    if (event.candidate.type) diag.localTypes.add(event.candidate.type);
+    outbox.push(event.candidate.toJSON());
+    if (!flushTimer) flushTimer = setTimeout(flush, CANDIDATE_BATCH_MS);
   });
+
+  const addRemote = async (candidate) => {
+    diag.remoteCount += 1;
+    const type = /typ (\w+)/.exec(candidate?.candidate || "")?.[1];
+    if (type) diag.remoteTypes.add(type);
+    await pc.addIceCandidate(candidate).catch((error) => console.warn("[handoff] addIceCandidate failed:", error));
+  };
 
   const started = Date.now();
   while (!until()) {
     if (signal?.aborted) throw new HandoffCancelled();
     if (Date.now() - started > deadlineMs) {
-      throw new Error("The devices could not connect. Make sure both are on the same Wi-Fi and try again.");
+      throw new Error(`The other device never connected. ${describeDiagnostics(pc, diag)}`);
+    }
+    if (connectStartedAt && Date.now() - connectStartedAt > CONNECT_TIMEOUT_MS) {
+      throw new Error(`${connectionFailedMessage(relay)} ${describeDiagnostics(pc, diag)}`);
     }
     if (pc.connectionState === "failed" || pc.iceConnectionState === "failed") {
-      throw new Error(connectionFailedMessage(relay));
+      throw new Error(`${connectionFailedMessage(relay)} ${describeDiagnostics(pc, diag)}`);
     }
     const view = await api(`/api/handoff/rooms/${room}/messages?role=${role}&key=${encodeURIComponent(key)}&after=${cursor}`);
     cursor = view.cursor;
     for (const message of view.messages) {
       if (message.type === "candidate") {
-        if (remoteDescriptionSet) await pc.addIceCandidate(message.candidate).catch(() => {});
+        if (remoteDescriptionSet) await addRemote(message.candidate);
         else pendingCandidates.push(message.candidate);
       } else {
         await onRemote(message);
         if (pc.remoteDescription) {
           remoteDescriptionSet = true;
-          for (const candidate of pendingCandidates.splice(0)) await pc.addIceCandidate(candidate).catch(() => {});
+          connectStartedAt = Date.now();
+          for (const candidate of pendingCandidates.splice(0)) await addRemote(candidate);
         }
       }
     }
     if (!until()) await sleep(POLL_INTERVAL_MS, signal);
   }
+  flush();
+}
+
+/** One line a player can read back to us: what each side saw. */
+function describeDiagnostics(pc, diag) {
+  const local = [...diag.localTypes].join("/") || "none";
+  const remote = [...diag.remoteTypes].join("/") || "none";
+  const dropped = diag.postFailures ? `, ${diag.postFailures} not delivered` : "";
+  return `(ice ${pc.iceConnectionState}; local ${local}; remote ${diag.remoteCount} ${remote}${dropped})`;
 }
 
 function waitForChannelOpen(channel, signal, timeoutMs) {

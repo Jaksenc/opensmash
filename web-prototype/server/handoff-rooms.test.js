@@ -96,6 +96,22 @@ for (const [name, make] of drivers) {
     assert.equal(own.messages.some((m) => m.type === "offer"), false);
   });
 
+  test(`[${name}] a batched post appends every message in order and respects the cap`, async () => {
+    const rooms = make({ now: clock() });
+    const { code, hostKey } = await rooms.create();
+    const { guestKey } = await rooms.join(code);
+    const batch = Array.from({ length: 5 }, (_, index) => ({ type: "candidate", candidate: { index } }));
+    assert.deepEqual(await rooms.post(code, { role: "host", key: hostKey, messages: batch }), { queued: 5 });
+    const view = await rooms.poll(code, { role: "guest", key: guestKey });
+    assert.deepEqual(view.messages.map((m) => m.candidate.index), [0, 1, 2, 3, 4]);
+    await assert.rejects(rooms.post(code, { role: "host", key: hostKey, messages: [] }), (error) => error.status === 400);
+    const tooMany = Array.from({ length: MAX_QUEUED_MESSAGES }, () => ({ type: "candidate" }));
+    await assert.rejects(rooms.post(code, { role: "host", key: hostKey, messages: tooMany.slice(0, 64) }).then(() =>
+      rooms.post(code, { role: "host", key: hostKey, messages: tooMany.slice(0, 64) })).then(() =>
+      rooms.post(code, { role: "host", key: hostKey, messages: tooMany.slice(0, 64) })).then(() =>
+      rooms.post(code, { role: "host", key: hostKey, messages: tooMany.slice(0, 64) })), (error) => error.status === 429);
+  });
+
   test(`[${name}] the host sees peerJoined flip when the guest arrives`, async () => {
     const rooms = make({ now: clock() });
     const { code, hostKey } = await rooms.create();
