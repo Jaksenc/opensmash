@@ -1,33 +1,48 @@
-# OpenSmash / Smash the Weights
+# OpenSmash
 
-Super Smash Bros. 64 running in the browser, with a roster of AI-generated
-fighters. Type a name (and optionally supply a photo) and the pipeline turns it
-into a rigged, textured, low-poly fighter with a character-select portrait,
-stock icon, series emblem, and an announcer call, then injects it into the game
-on top of one of the original twelve skeletons.
+Super Smash Bros. 64 in the browser, with AI-generated fighters. Give it a
+name and (optionally) a photo, and the pipeline produces a low-poly rigged
+mesh, a character-select portrait, a stock icon, a series emblem, and an
+announcer call, then injects the result into the game on one of the twelve
+original skeletons.
 
-Nothing Nintendo owns is in this repository or served by the site. The engine
-is compiled from the [BattleShip](https://github.com/turtlesoupy/BattleShip)
-decompilation port, and the game's assets are extracted inside the player's
-browser from a ROM they already own.
+No Nintendo assets are in this repo or served by the site. The engine is
+[BattleShip](https://github.com/turtlesoupy/BattleShip), a decomp-based PC
+port, and the game's assets are extracted in the player's browser from their
+own ROM.
 
-## How the pieces fit
+## Upstream projects
 
-| Piece | Where | What it does |
+Everything below the site is a chain of forks. We keep our own copies of each
+so the wasm build and the pipeline hooks stay pinned; the BattleShip
+submodules point at these copies.
+
+| Our copy | Forked from | What it is |
 |---|---|---|
-| Engine | sibling repo `BattleShip/` | The game, compiled to WebAssembly with Emscripten. Includes Torch compiled to wasm so the browser can build the asset archive from the player's ROM. |
-| Generator | `pipeline/` in this repo | Python scripts that turn a name + photo into a playable fighter (`run_character.py` is the one command). |
-| Website | `web-prototype/` in this repo | React site + Node server: the character grid, ROM validation, launching the engine, and the hosted "create a fighter" flow (Cloud Run + Firestore + GCS in production). |
-| Skeletons | `skels/` | The twelve target skeletons, per-fighter conform profiles, and the reference part data the converter fits generated meshes onto. |
-| Roster | `play/` (git-ignored) and GCS | Your local generation workspace. The production roster is content-addressed in a public GCS bucket and pinned by `web-prototype/config/baked-assets.json`. |
+| [turtlesoupy/BattleShip](https://github.com/turtlesoupy/BattleShip) | [JRickey/BattleShip](https://github.com/JRickey/BattleShip) | The PC port: native macOS/Linux/Windows/Android plus our Emscripten build, the fighter-injection code (`port/`), and the pipeline dump hooks. |
+| [turtlesoupy/ssb-decomp-re](https://github.com/turtlesoupy/ssb-decomp-re) | [VetriTheRetri/ssb-decomp-re](https://github.com/VetriTheRetri/ssb-decomp-re) | The game decompilation. BattleShip vendors it as `decomp/`. |
+| [turtlesoupy/libultraship](https://github.com/turtlesoupy/libultraship) | [JRickey/libultraship](https://github.com/JRickey/libultraship/tree/ssb64) ← [Kenix3/libultraship](https://github.com/Kenix3/libultraship) | Rendering, audio, and input layer for N64 ports. Vendored as `libultraship/`. |
+| [turtlesoupy/Torch](https://github.com/turtlesoupy/Torch) | [JRickey/Torch](https://github.com/JRickey/Torch/tree/ssb64) ← [HarbourMasters/Torch](https://github.com/HarbourMasters/Torch) | Extracts assets from the ROM into the `.o2r` archive. We also compile it to wasm so the browser can do this. Vendored as `torch/`. |
 
-Other directories: `scripts/` (batch generation driver), `tools/` (one-off
-utilities), `eval/` (mesh-quality evaluation harness, see `EVAL.md`),
-`config/` (roster lists and editorial policy inputs), `docs/`.
+BattleShip's own README covers licenses and credits for those projects.
 
-## Setting up a clone
+## Layout
 
-The two repositories sit side by side, with the Emscripten SDK next to them:
+| | Where | What |
+|---|---|---|
+| Engine | sibling repo `BattleShip/` | The game, built to WebAssembly. Ships Torch compiled to wasm so the browser can build the asset archive from the ROM. |
+| Generator | `pipeline/` | Python. `run_character.py` turns a name + photo into a playable fighter. |
+| Website | `web-prototype/` | React site + Node server. Character grid, ROM check, launching the engine, and the hosted "create a fighter" flow (Cloud Run, Firestore, GCS). |
+| Skeletons | `skels/` | The twelve target skeletons, per-fighter conform profiles, and the reference part data the converter fits meshes onto. |
+| Roster | `play/` (gitignored) + GCS | Local generation output. The production roster lives in a public GCS bucket, pinned by `web-prototype/config/baked-assets.json`. |
+
+Also: `scripts/` (batch driver), `tools/` (utilities), `eval/` (mesh eval
+harness, see `EVAL.md`), `config/` (roster lists), `docs/`.
+`requirements.txt` is the Python dependency list.
+
+## Clone layout
+
+The two repos sit next to each other, with emsdk alongside:
 
 ```
 opensmash/
@@ -36,27 +51,24 @@ opensmash/
   emsdk/         https://github.com/emscripten-core/emsdk
 ```
 
-The site server looks for the engine at `pipeline/BattleShip/web-dist` first
-and `../BattleShip/web-dist` second, so either a symlink
-(`ln -s ../BattleShip pipeline/BattleShip`) or the sibling layout works.
+The server looks for the engine at `pipeline/BattleShip/web-dist`, then
+`../BattleShip/web-dist`. A symlink (`ln -s ../BattleShip pipeline/BattleShip`)
+or the sibling layout both work.
 
-You will need:
+You need:
 
-- **Node 20+ and pnpm** (`corepack enable`; the lockfile pins pnpm 11).
-- **Python 3.11+** with `numpy scipy Pillow opencv-python-headless fal-client`
-  (the same list the production worker installs, see
-  `web-prototype/infra/requirements-worker.txt`), plus `ffmpeg` on your PATH
-  for announcer audio.
-- **A legal Super Smash Bros. (USA, NTSC-U v1.0) ROM.** SHA-1
-  `e2929e10fccc0aa84e5776227e798abc07cedabf`. Never commit it. Other regions
-  are recognised and rejected; the engine is region-compiled.
-- **Emscripten** (only to build the engine; skip if someone hands you a built
-  `web-dist`).
-- **API keys** if you want to generate fighters, see below.
+- Node 20+ and pnpm (`corepack enable`; the lockfile pins pnpm 11).
+- Python 3.11+ and `pip install -r requirements.txt`, plus `ffmpeg` for
+  announcer audio.
+- A Super Smash Bros. USA (NTSC-U v1.0) ROM, SHA-1
+  `e2929e10fccc0aa84e5776227e798abc07cedabf`. Don't commit it. Other regions
+  are rejected; the engine is built per region.
+- Emscripten, if you're building the engine yourself.
+- API keys, if you're generating fighters (below).
 
-## Run the website locally
+## Running the site locally
 
-### 1. Build the engine once
+### 1. Build the engine
 
 From `BattleShip/`, with the ROM at its root as `baserom.us.z64` and emsdk
 activated (`source ../emsdk/emsdk_env.sh`):
@@ -77,55 +89,54 @@ scripts/build_torch_wasm.sh
 scripts/package_web.sh build-wasm web-dist
 ```
 
-`package_web.sh` produces `web-dist/`, the self-contained engine package the
-site serves under `/engine/`. Every runtime URL in it carries a content-derived
-build version, and the package deliberately does not contain the ROM-derived
-archive; the browser rebuilds that from the player's ROM on first launch (see
-`BattleShip/docs/web_rom_extraction.md`). After C changes, rebuild with
-`ninja -C build-wasm BattleShip.js` and re-run `package_web.sh`.
+`web-dist/` is what the site serves under `/engine/`. Every file URL in it
+carries a build version, and it does not include the ROM-derived archive;
+the browser builds that on first launch (`BattleShip/docs/web_rom_extraction.md`).
+After C changes: `ninja -C build-wasm BattleShip.js`, then `package_web.sh`
+again.
 
 ### 2. Get a roster
 
-Either download the pinned production roster (1000+ fighters, about 3.3 GB)
-into `web-prototype/.baked-characters`:
+Download the production roster (1000+ fighters, ~3.3 GB) into
+`web-prototype/.baked-characters`:
 
 ```bash
 cd web-prototype && PUBLIC_BUCKET=smash-the-weights-fighter-assets pnpm assets:fetch
 ```
 
-or generate your own into `play/` (next section). In development the server
-reads `play/` directly.
+Or generate your own into `play/` (next section). In dev the server reads
+`play/` directly.
 
-### 3. Start the site
+### 3. Start it
 
 ```bash
 cd web-prototype && pnpm install && pnpm dev:safe
 ```
 
-Open <http://127.0.0.1:4174>, drop in your ROM, and play. `dev:safe` disables
-the local fighter worker so clicking around `/create` cannot spend provider
-credits; use `pnpm dev` to run real generations from the web UI. Details of
-the ROM gate, authentication, ROM hand-off between devices, and the hosted
-generation flow are in [`web-prototype/README.md`](web-prototype/README.md).
+Open <http://127.0.0.1:4174>, drop in the ROM, play. `dev:safe` disables the
+local fighter worker so `/create` can't spend credits; `pnpm dev` runs real
+generations from the web UI. The ROM gate, auth, phone hand-off, and the
+hosted generation flow are documented in
+[`web-prototype/README.md`](web-prototype/README.md).
 
-## Generate a fighter
+## Generating a fighter
 
 ### Keys
 
-Copy `.env.example` to `.env` at the repository root (git-ignored; every
-pipeline script reads it) and fill in:
+Copy `.env.example` to `.env` in the repo root (gitignored, every pipeline
+script reads it):
 
 | Key | Used for |
 |---|---|
-| `OPENAI_API_KEY` | Character description (`gpt-5.6-luna`), the T-pose model sheet, portrait, stock, and emblem art (`gpt-image-2`), the facing check, and the website's upload moderation. |
-| `TRIPO_API_KEY` | Image-to-3D mesh and auto-rig. About 55 credits (roughly $0.55) per fighter; the paid task ids are checkpointed so a retry never buys the mesh twice. |
-| `FAL_KEY` | Announcer clip via fal's MiniMax speech endpoint. |
-| `MINIMAX_ANNOUNCER_VOICE_ID` | The MiniMax voice clone the announcer clip is spoken with. You create this once in MiniMax from announcer reference audio; see `ANNOUNCER.md`. |
-| `GEMINI_API_KEY` | Optional. Alternative image model used by some experiments. |
-| `MESHY_API_KEY` | Optional. Only `tools/generate_mesh.py` (site props), not the fighter pipeline. |
+| `OPENAI_API_KEY` | Character description (`gpt-5.6-luna`); T-pose sheet, portrait, stock and emblem art (`gpt-image-2`); the facing check; upload moderation on the site. |
+| `TRIPO_API_KEY` | Image-to-3D + auto-rig. ~55 credits (~$0.55) per fighter. Task ids are checkpointed, so a retry doesn't buy the mesh again. |
+| `FAL_KEY` | Announcer clip (fal's MiniMax speech endpoint). |
+| `MINIMAX_ANNOUNCER_VOICE_ID` | The MiniMax voice clone the announcer speaks with. You make this once from announcer reference audio; see `ANNOUNCER.md`. |
+| `GEMINI_API_KEY` | Optional. Alternative image model for some experiments. |
+| `MESHY_API_KEY` | Optional. Only `tools/generate_mesh.py` (site props). |
 
-A full fighter costs about $0.65 in provider fees; each run writes a
-per-stage breakdown to `play/ui/<slug>/cost.json`.
+A fighter costs about $0.65 in provider fees. Each run writes a per-stage
+breakdown to `play/ui/<slug>/cost.json`.
 
 ### One fighter
 
@@ -133,24 +144,23 @@ per-stage breakdown to `play/ui/<slug>/cost.json`.
 python3 pipeline/run_character.py "Weird Al Yankovic" --photo ref.png
 ```
 
-Useful options: `--short WEIRDAL` (the in-game tile caption, up to 10
-capital letters), `--display "Mozart"` (the in-game name and what the announcer
-shouts), `--emblem "a red accordion"` (the series emblem, otherwise inferred),
-`--notes "..."` (steer which depiction, outfit, or era the description picks),
+Options: `--short WEIRDAL` (tile caption, up to 10 capital letters),
+`--display "Mozart"` (in-game name and what the announcer says),
+`--emblem "a red accordion"` (series emblem; inferred if omitted),
+`--notes "..."` (steer the description: which depiction, outfit, era),
 `--variants all` (also build the experimental DK and Yoshi targets).
 
-The stages run in order: `expand` (description) → `tpose` (model sheet) →
-`mesh` (Tripo mesh + rig) → `convert` (fit onto the game skeletons) →
-`portrait` → `stock` → `emblem` → `ui` → `voice`. Each stage is skipped when
-its output already exists, so a failed run resumes where it stopped. Delete a
-stage's output or pass `--force-stage <stage>` to redo one; editing
-`character.json` and re-running is the normal way to fix a description or
-emblem.
+Stages: `expand` (description) → `tpose` (model sheet) → `mesh` (Tripo mesh +
+rig) → `convert` (fit onto the game skeletons) → `portrait` → `stock` →
+`emblem` → `ui` → `voice`. A stage is skipped if its output already exists,
+so a failed run resumes where it stopped. Delete a stage's output or pass
+`--force-stage <stage>` to redo it. To fix a description or emblem, edit
+`character.json` and re-run.
 
-Outputs land in `play/ui/<slug>/` (art, `character.json`, the `.osbui` UI
-pack, `announcer.wav`, and intermediates) plus `play/<slug>.osb6`, the single
-bundle carrying the mesh for every target skeleton. The web UI's `/create`
-page runs exactly this script.
+Output goes to `play/ui/<slug>/` (art, `character.json`, the `.osbui` UI pack,
+`announcer.wav`, intermediates) and `play/<slug>.osb6`, one bundle with the
+mesh for every target skeleton. The site's `/create` page runs this same
+script.
 
 ### Many fighters
 
@@ -158,40 +168,39 @@ page runs exactly this script.
 python3 scripts/batch_characters.py names.txt --workers 3
 ```
 
-One name per line. The driver retries transient provider errors, re-rolls
-moderation-blocked images, skips names that are already complete, and records
-progress under `batch-state/`. Touch `batch-state/STOP` to finish in-flight
-work and exit. `tools/build_wikipedia_people_seed.py` builds popularity-ranked
-name lists from Wikipedia; the editorial rules for who belongs on the roster
-are in `docs/character-roster-editorial-policy.md`.
+One name per line. Retries transient provider errors, re-rolls
+moderation-blocked images, skips names that are already done, and keeps state
+in `batch-state/`. `touch batch-state/STOP` to finish in-flight work and
+exit. `tools/build_wikipedia_people_seed.py` builds popularity-ranked name
+lists from Wikipedia; the rules for who goes on the roster are in
+`docs/character-roster-editorial-policy.md`.
 
-## Publish fighters to the site roster
+## Publishing to the site roster
 
-`web-prototype/config/characters.json` is the ordered allowlist of baked
-fighters. After reviewing a fighter locally:
+`web-prototype/config/characters.json` is the ordered list of baked fighters.
+After checking a fighter locally:
 
 ```bash
 python3 pipeline/baked_roster.py <slug>
 ```
 
-validates the required files and appends the slug (or pass `--publish` to
-`run_character.py`). Then upload the roster's runtime files to the public
-bucket and refresh the checksum pin:
+That validates the required files and appends the slug (`run_character.py
+--publish` does the same). Then upload the runtime files and refresh the
+checksum pin:
 
 ```bash
 cd web-prototype && PUBLIC_BUCKET=<project>-fighter-assets pnpm assets:publish
 ```
 
 Commit `config/characters.json` and `config/baked-assets.json` together.
-Objects are keyed by content hash, so publishing is additive and every past
-commit stays reproducible. Deployment (Cloud Run, Cloud Run job worker,
-Cloudflare edge cache) is one script; see
-[`web-prototype/infra/README.md`](web-prototype/infra/README.md).
+Objects are keyed by content hash, so publishing only adds, and old commits
+stay reproducible. Deploy (Cloud Run, the worker job, Cloudflare) is one
+script: [`web-prototype/infra/README.md`](web-prototype/infra/README.md).
 
 ## Game-derived inputs
 
-A few generator inputs are captured from the game itself rather than
-authored, and every one of them can be rebuilt from your own ROM:
+Some generator inputs come from the game itself. All of them can be rebuilt
+from your ROM:
 
 | Files | What they are | Rebuilt by |
 |---|---|---|
@@ -201,10 +210,16 @@ authored, and every one of them can be rebuilt from your own ROM:
 | `eval/announcer_conditioning_corrected/` | The announcer lines the voice clone is conditioned on, rendered at in-game pitch | `derive_from_rom.py` |
 | `stone-tile-investigation/source-*` | The character-select stone texture | `derive_from_rom.py` |
 
-Hand-authored files next to them (`skels/*.profile.json`, `skels/VALIDATION.md`,
-`assets/css-font/letters`) are not derived. `skels/reference/mario.skel` is a
-legacy capture from an older engine build that `texture_check.py` still reads;
-it is the one file the scripts report as LEGACY instead of reproducing.
+Not derived: the hand-authored `skels/*.profile.json`, `skels/VALIDATION.md`,
+and `assets/css-font/letters`. `skels/reference/mario.skel` is an old capture
+from a different engine build that `texture_check.py` still reads; the scripts
+report it as `LEGACY` and leave it alone.
+
+Why run the engine for skeletons: the ROM stores joint trees and animations,
+not world-space rest frames. The dump hook runs the game's own setup and
+transform code and prints the result, which is simpler and safer than
+reimplementing that in Python. The conform profiles were tuned against these
+exact numbers.
 
 ### Prerequisites
 
@@ -224,13 +239,13 @@ cmake -S . -B build-us -GNinja -DSSB64_VERSION=us -DCMAKE_BUILD_TYPE=Release && 
 python3 tools/derive_from_rom.py --verify --skeletons
 ```
 
-This derives everything into a temporary directory and prints one line per
-file: `IDENTICAL`, `DIFFERS` with a one-line reason (pixel count, which joints
-moved), or `LEGACY`. It exits non-zero on any difference. `--skeletons` boots
+Derives everything into a temp dir and prints one line per file:
+`IDENTICAL`, `DIFFERS` plus a reason (pixel count, which joints moved), or
+`LEGACY`. Non-zero exit on any difference. `--skeletons` launches
 `BattleShip/build-us/BattleShip` thirteen times (once per fighter with
 `SSB64_DUMP_SKELETON`, once on the character-select screen with
-`SSB64_DUMP_SPRITES`); a game window opens and closes each time, about ten
-seconds per launch. Leave it off to check only the archive-based files.
+`SSB64_DUMP_SPRITES`). A window opens and closes each time, ~10 s per launch.
+Leave it off to check just the archive-based files.
 
 ### Regenerate
 
@@ -238,9 +253,8 @@ seconds per launch. Leave it off to check only the archive-based files.
 python3 tools/derive_from_rom.py --skeletons
 ```
 
-Without `--verify` the scripts write straight into the tracked paths. Use
-`--out DIR` to write a mirror of the repo layout somewhere else instead. Other
-useful forms:
+Without `--verify`, files are written in place. `--out DIR` writes a mirror
+of the repo layout elsewhere. Also useful:
 
 ```bash
 python3 tools/derive_skeletons.py --verify --fighters samus,link
@@ -250,23 +264,22 @@ python3 tools/derive_skeletons.py --verify --fighters samus,link
 python3 tools/derive_skeletons.py --verify --from-logs skels
 ```
 
-The first limits the engine runs to named fighters (names or fkind numbers).
-The second skips the engine and re-derives from the committed raw dump logs,
-which checks the parsing and the profile-map transform without a ROM. Pass
-`--build-dir` to either script to use a different native build.
+The first limits engine runs to the named fighters (names or fkind numbers).
+The second skips the engine and re-derives from the committed raw logs, which
+tests the parsing and profile-map transform without a ROM. `--build-dir`
+points either script at a different native build.
 
-The `dl=` field in the skeleton dumps is a host memory address the engine
-prints; the scripts normalize it to its stable low bits so two launches
-produce identical files. The only consumer tests it for zero.
+The `dl=` field in the skeleton dumps is a host pointer the engine prints;
+the scripts normalize it to its stable low bits so two launches match. The
+one consumer only checks whether it's zero.
 
-## More documentation
+## More docs
 
-- `EVAL.md`: the mesh-generation and skinning evaluation harness and its
-  history of experiments.
+- `EVAL.md`: mesh generation / skinning eval harness and its experiment log.
 - `ANNOUNCER.md`: announcer voice generation and the MiniMax clone.
-- `docs/site-visual-assets.md`: how the site's 3D console, cartridge, CRT
-  intro, and other props were made.
+- `docs/site-visual-assets.md`: how the site's console, cartridge, CRT intro,
+  and other props were made.
 - `web-prototype/docs/production-architecture.md`: the hosted generation
-  service (Firestore job protocol, retries, abuse controls).
-- `BattleShip/docs/`: engine internals, the web harness, controller ports,
-  and in-browser ROM extraction.
+  service (job protocol, retries, abuse controls).
+- `BattleShip/docs/`: engine internals, web harness, controller ports,
+  in-browser ROM extraction.

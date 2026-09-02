@@ -68,3 +68,6 @@ artifacts/portrait-style-study/
 # Experiment meshes/bundles under artifacts/experiments are local-only (were LFS).
 artifacts/experiments/*.glb
 artifacts/experiments/*.osb
+
+# Claude Code per-machine launch config.
+.claude/

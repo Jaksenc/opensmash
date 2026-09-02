@@ -20,7 +20,7 @@ python3 pipeline/announcer_voice.py "Queen Elizabeth the Second" --slug queen
 ## Setup
 
 ```sh
-python -m pip install -r requirements-announcer.txt
+python -m pip install -r requirements.txt
 ```
 
 `.env` must contain `FAL_KEY` and
