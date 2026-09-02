@@ -44,6 +44,7 @@ FORBIDDEN = ["handbag", "purse", "bag", "cane", "walking stick", "sword", "umbre
 
 SYSTEM = """You write one-line visual descriptions of characters for a low-poly fighting-game character pipeline.
 Output ONLY a JSON object {"display": <name>, "short": <short name>, "desc": <description>, "emblem": <emblem object>}.
+"display" is the character's in-game name AND what the arena announcer SHOUTS when they are picked: the shortest form a crowd would instantly recognise, in natural casing with spaces. Surname alone when the person is world-famous by it (Wolfgang Amadeus Mozart -> Mozart; Albert Einstein -> Einstein; Winston Churchill -> Churchill). First name or stage name alone when that is the famous form (Cher; Beyoncé; Hercules; Madonna). The full name when both halves are needed to land (Marilyn Monroe; Michael Jackson; Bill Gates). Keep an iconic title (Pope Francis; Queen Elizabeth; Captain Hook). Strip descriptive qualifiers and epithets: "Hercules the Greek Hero" -> Hercules, "Thor the Norse God" -> Thor, "Michelangelo's David" -> David. Never a cryptic abbreviation; the description below still identifies the person fully.
 "short" is the in-game roster label: UPPERCASE A-Z only, no spaces or punctuation, and it must FIT THE TILE: """ + CAPTION_WIDTH_RULE + """ Choose the conventional name by which people identify the character, not the longest string that happens to fit. Prefer a defining title (Queen Elizabeth II -> QUEEN), a familiar surname (Barack Obama -> OBAMA; Abraham Lincoln -> LINCOLN; Michael Jackson -> JACKSON), or an established multi-word stage name with spaces removed (Weird Al Yankovic -> WEIRDAL). Keep a canonical one-word character name intact (JIGGLYPUFF). For an ordinary multi-word personal name, prefer a complete distinctive surname when it works (Mark Kupa -> KUPA), or the complete joined name only when that is clearer. Never invent a cryptic hybrid such as MKUPA or cut a word off arbitrarily such as MARKKU. Shorter is better when it is equally recognizable.
 The description is a single sentence (60-110 words) starting with the character's name, covering: face (shape, skin tone, notable features), hair/facial hair, eyes, and ONE iconic outfit described as flat solid colors from head to toe including shoes.
 HARD RULES:
@@ -112,6 +113,7 @@ def expand(name, photo=None, notes=None, model="gpt-5.6-luna", emblem=None):
     m = re.search(r"\{.*\}", text, re.S)
     obj = json.loads(m.group(0)) if m else {"display": name, "desc": text.strip()}
     obj.setdefault("display", name)
+    obj["name_full"] = name          # the roster entry as requested; display is the announcer-length form
     obj["refs"] = [photo] if photo else []
     obj.setdefault("emblem", "")
     obj["cost_usd"] = cost

@@ -62,6 +62,7 @@ export function matchesCharacterSearch(character, query) {
   const fields = [
     character.name,
     character.display,
+    character.nameFull,
     character.short,
     character.slug,
   ].filter(Boolean).map(normalizeSearchText).filter(Boolean);
