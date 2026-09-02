@@ -20,7 +20,10 @@ import {
 } from '../src/fonts/ssb-name-font.js';
 
 const BUILD_ASSETS = {
-  ...import.meta.glob(['./assets/featured-fighters/*.png', './assets/ui/*.png'], {
+  ...import.meta.glob([
+    './assets/featured-fighters/action-*.png',
+    './assets/ui/*.png',
+  ], {
     eager: true,
     query: '?url',
     import: 'default',
@@ -89,52 +92,32 @@ const VANILLA_ROSTER = Object.freeze([
   { asset: 'purin', portrait: 'jigglypuff', label: 'JIGGLYPUFF', name: 'Jigglypuff' },
   { asset: 'ness', portrait: 'ness', label: 'NESS', name: 'Ness' }
 ]);
-const FEATURED_ROSTER = Object.freeze([
-  {
-    asset: 'joeyflynn', portrait: 'joey-flynn', label: 'JFLYNN',
-    name: 'Joey Flynn', source: 'featured', fkind: 7,
-    bundle: 'joeyflynn-captain.osb'
-  },
-  {
-    asset: 'barackobama', portrait: 'barack-obama', label: 'OBAMA',
-    name: 'Barack Obama', source: 'featured', fkind: 1,
-    bundle: 'barackobama-fox.osb'
-  },
-  {
-    asset: 'queen', portrait: 'queen-elizabeth-ii', label: 'QUEEN',
-    name: 'Queen Elizabeth II', source: 'featured', fkind: 8,
-    bundle: 'queen-kirby.osb'
-  },
-  {
-    asset: 'rohansahai', portrait: 'rohan-sahai', label: 'ROHAN',
-    name: 'Rohan Sahai', source: 'featured', fkind: 5,
-    bundle: 'rohansahai-link.osb'
-  }
-]);
 const ACTION_PORTRAITS = Object.freeze({
   search: 'action-search',
   create: 'action-create'
 });
 const APP_BRIDGE = window.openSmashReactBridge;
-const LIVE_ROSTER = Object.freeze((APP_BRIDGE?.characters || []).map(character => ({
-  asset: character.slug,
-  portrait: `live:${character.slug}`,
-  portraitUrl: character.portrait,
-  label: character.short || character.name,
-  name: character.name,
-  source: character.generated ? 'generated' : 'live',
-  fkind: character.fkind,
-  bundle: character.bundle,
-})));
+function liveRosterCharacter(character) {
+  return {
+    asset: character.slug,
+    portrait: `live:${character.slug}`,
+    portraitUrl: character.portrait,
+    label: character.short || character.name,
+    name: character.name,
+    source: character.generated ? 'generated' : 'live',
+    fkind: character.fkind,
+    bundle: character.bundle,
+  };
+}
+const LIVE_ROSTER = Object.freeze((APP_BRIDGE?.characters || []).map(liveRosterCharacter));
 const INITIAL_FIGHTER_JOBS = APP_BRIDGE?.fighterJobs || [];
 const BAKED_CAPTION_PORTRAITS = new Set(
   VANILLA_ROSTER.map(character => character.portrait)
 );
-// Without a live roster only the featured (generated) fighters render; the
-// vanilla cast has no portrait assets on the site by design.
+// React supplies the manifest-backed roster. If it has not mounted yet the
+// grid starts empty and syncCharacters fills it without a second roster source.
 const ROSTER = Object.freeze([...new Map(
-  (LIVE_ROSTER.length ? LIVE_ROSTER : FEATURED_ROSTER)
-    .map(character => [character.asset, character])
+  LIVE_ROSTER.map(character => [character.asset, character])
 ).values()]);
 const CELL_COUNT = ROSTER.length + 2;
 const CELL_IDS = Object.freeze(Array.from(
@@ -315,13 +298,6 @@ async function loadFeaturedPortrait(portraitName, portraitUrl = null) {
     pixels: context.getImageData(0, 0, CELL_W, CELL_H).data
   });
 }
-
-await Promise.all(FEATURED_ROSTER.map(async character => {
-  CHARACTER_PORTRAITS.set(
-    character.portrait,
-    await loadFeaturedPortrait(character.portrait)
-  );
-}));
 
 await Promise.all(Object.values(ACTION_PORTRAITS).map(async portraitName => {
   const portraitUrl = BUILD_ASSETS[`./assets/featured-fighters/${portraitName}.png`];
@@ -891,6 +867,7 @@ CELL_IDS.forEach((id, index) => {
   button.dataset.label = label;
   button.dataset.rosterCharacter = character.asset;
   button.dataset.portrait = character.portrait;
+  if (character.portraitUrl) button.dataset.portraitUrl = character.portraitUrl;
   button.dataset.displayName = character.name;
   button.dataset.fkind = String(fkind);
   if (character.bundle) button.dataset.bundle = character.bundle;
@@ -1089,7 +1066,7 @@ function applyGridLayout(columns = columnsForContainer()) {
 
   const metrics = document.getElementById('replica-metrics');
   metrics.textContent =
-    `${visibleCells.length}/${CELL_COUNT} targetable cells · ${columns}×${rows} · ${width}×${height} native`;
+    `${visibleCells.length}/${cells.size} targetable cells · ${columns}×${rows} · ${width}×${height} native`;
 
   return currentGridLayout;
 }
@@ -1268,6 +1245,98 @@ function jobCellId(jobId) {
   return `JOB-${jobId}`;
 }
 
+function rosterCellId(slug) {
+  return `ROSTER-${slug}`;
+}
+
+function createRosterCell(character) {
+  const id = rosterCellId(character.asset);
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'replica-cell';
+  button.dataset.character = id;
+  button.dataset.kind = 'fighter';
+  button.setAttribute('role', 'gridcell');
+  button.setAttribute('aria-pressed', 'false');
+  button.append(canvasFromPixels(
+    renderCellFramebuffer(character.label, character.portrait).pixels,
+    CELL_W,
+    CELL_H,
+    'replica-texture-layer'
+  ));
+  attachCellActivation(button);
+  grid.append(button);
+  cells.set(id, button);
+  return button;
+}
+
+async function syncCharacters(characters = []) {
+  const nextRoster = [...new Map(
+    characters.map(character => {
+      const rosterCharacter = liveRosterCharacter(character);
+      return [rosterCharacter.asset, rosterCharacter];
+    })
+  ).values()];
+  const nextSlugs = new Set(nextRoster.map(character => character.asset));
+  const staticFighterCells = [...cells.values()].filter(button =>
+    !button.classList.contains('fighter-job-cell') &&
+    (button.dataset.kind === 'fighter' || button.dataset.kind === 'creation')
+  );
+
+  for (const button of staticFighterCells) {
+    if (nextSlugs.has(button.dataset.rosterCharacter)) continue;
+    cells.delete(button.dataset.character);
+    button.remove();
+  }
+
+  await Promise.all(nextRoster.map(async character => {
+    let button = [...cells.values()].find(candidate =>
+      !candidate.classList.contains('fighter-job-cell') &&
+      candidate.dataset.rosterCharacter === character.asset
+    );
+    // A completed private fighter may already be represented by its job cell.
+    // Keep that richer progress/ready cell instead of drawing a duplicate.
+    if (!button && [...jobCells.values()].some(candidate =>
+      candidate.dataset.kind === 'creation' &&
+      candidate.dataset.rosterCharacter === character.asset
+    )) return;
+    if (!button) button = createRosterCell(character);
+
+    const previousPortraitUrl = button.dataset.portraitUrl || '';
+    button.dataset.label = character.label;
+    button.dataset.rosterCharacter = character.asset;
+    button.dataset.portrait = character.portrait;
+    button.dataset.portraitUrl = character.portraitUrl || '';
+    button.dataset.displayName = character.name;
+    button.dataset.fkind = String(character.fkind ?? 0);
+    if (character.bundle) button.dataset.bundle = character.bundle;
+    else delete button.dataset.bundle;
+    button.setAttribute('aria-label', character.name);
+
+    if (
+      character.portraitUrl &&
+      (previousPortraitUrl !== character.portraitUrl || !CHARACTER_PORTRAITS.has(character.portrait))
+    ) {
+      try {
+        CHARACTER_PORTRAITS.set(
+          character.portrait,
+          await loadFeaturedPortrait(character.portrait, character.portraitUrl)
+        );
+      } catch (error) {
+        console.warn(`Could not load live portrait for ${character.name}:`, error);
+      }
+    }
+    paintCellCanvas(
+      button.querySelector('.replica-texture-layer'),
+      character.label,
+      character.portrait
+    );
+  }));
+
+  filterRoster(fighterSearch?.value || '');
+  return cells;
+}
+
 function createJobCell(job) {
   const id = jobCellId(job.id);
   const button = document.createElement('button');
@@ -1409,9 +1478,11 @@ function setLabel(character, label) {
 }
 
 function randomize() {
-  CELL_IDS.forEach(id => {
+  [...cells.values()].filter(cell =>
+    cell.dataset.kind === 'fighter' || cell.dataset.kind === 'creation'
+  ).forEach(cell => {
     const name = RANDOM_NAME_POOL[Math.floor(Math.random() * RANDOM_NAME_POOL.length)];
-    setLabel(id, name);
+    setLabel(cell.dataset.character, name);
   });
   return cells;
 }
@@ -1471,18 +1542,22 @@ function requestSelection(name) {
   return selected;
 }
 
-cells.forEach(cell => cell.addEventListener('click', () => {
-  if (cell.dataset.kind === 'search') {
-    fighterSearch?.focus({ preventScroll: true });
-    return;
-  }
-  if (cell.dataset.kind === 'create') {
-    if (APP_BRIDGE?.navigate) APP_BRIDGE.navigate('/create');
-    else window.location.assign('/create');
-    return;
-  }
-  requestSelection(cell.dataset.character);
-}));
+function attachCellActivation(cell) {
+  cell.addEventListener('click', () => {
+    if (cell.dataset.kind === 'search') {
+      fighterSearch?.focus({ preventScroll: true });
+      return;
+    }
+    if (cell.dataset.kind === 'create') {
+      if (APP_BRIDGE?.navigate) APP_BRIDGE.navigate('/create');
+      else window.location.assign('/create');
+      return;
+    }
+    requestSelection(cell.dataset.character);
+  });
+}
+
+cells.forEach(attachCellActivation);
 
 const BENCH_W = 24;
 const BENCH_H = 14;
@@ -1639,6 +1714,7 @@ window.characterGrid = Object.freeze({
   select,
   markPick,
   clearPicks,
+  syncCharacters,
   syncJobs,
   filter: filterRoster,
   randomize
@@ -1651,7 +1727,7 @@ window.__replicaMetrics = Object.freeze({
   get columns() { return currentGridLayout.columns; },
   get rows() { return currentGridLayout.rows; },
   cellInterior: CELL_W + 'x' + CELL_H,
-  cellElements: cells.size,
+  get cellElements() { return cells.size; },
   alphabetGlyphs: CAPTION_GLYPHS.size,
   sharedRule: RULE + 'px',
   rasterScale: RASTER_SCALE,
@@ -1662,8 +1738,8 @@ window.__replicaMetrics = Object.freeze({
   runtimeFontAssetRequests: CAPTION_GLYPHS.size,
   sharedCaptionPipeline: true,
   fontGrade: FONT_GRADE,
-  characterPortraits: CHARACTER_PORTRAITS.size,
-  runtimePortraitAssetRequests: CHARACTER_PORTRAITS.size,
+  get characterPortraits() { return CHARACTER_PORTRAITS.size; },
+  get runtimePortraitAssetRequests() { return CHARACTER_PORTRAITS.size; },
   portraitSource: 'OpenSmash transparent portrait cutouts',
   portraitsGraded: false
 });

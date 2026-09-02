@@ -123,9 +123,18 @@ a changed build gets a new URL.
 
 The same script installs a Cache Rule for the shared application shell at `/`
 and `/create`. Browsers keep that HTML for 15 seconds, while Cloudflare keeps it
-for 60 seconds and may serve it stale during background revalidation. User,
-session, and character data remain on the uncached `/api/*` requests made after
-the shell loads.
+for 30 seconds and may serve it stale during background revalidation. User and
+session data remain on uncached `/api/*` requests. On each HTML edge-cache
+miss, the Node server embeds the current public character roster into the Vite
+shell so the grid can render without waiting for Cloud Run. The shared HTML
+never includes cookie-derived/private fighters; after session discovery, a
+signed-in browser refreshes the roster through the no-store characters API and
+reconciles any additional fighters into the live grid.
+
+Before Cloud Build, deployment reads `config/characters.json` and stages exactly
+those baked fighters from committed `pipeline/play` outputs. The API image never
+copies character bundles from ignored `BattleShip/web-dist`, so identical Git
+commits produce identical baked rosters and bundle bytes.
 
 Rotate the shared cookie signing key with overlap after a full deploy has added
 the previous-key secret to both Cloud Run and Cloudflare:

@@ -161,7 +161,7 @@ def main():
     ap.add_argument("--name", required=True)
     ap.add_argument("--preview", default=None)
     a = ap.parse_args()
-    name = a.name.upper()[:7]
+    name = a.name.upper()[:10]
 
     art = Image.open(a.art).convert("RGBA")
 

@@ -29,16 +29,16 @@ test("mobile buttons dispatch matching keydown and keyup events to the engine ca
     contentWindow: { KeyboardEvent: FakeKeyboardEvent },
   };
 
-  assert.equal(dispatchGameKey(frame, "KeyX", true), true);
-  assert.equal(dispatchGameKey(frame, "KeyX", false), true);
+  assert.equal(dispatchGameKey(frame, "KeyJ", true), true);
+  assert.equal(dispatchGameKey(frame, "KeyJ", false), true);
   assert.deepEqual(focusOptions, { preventScroll: true });
   assert.deepEqual(events.map(({ type }) => type), ["keydown", "keyup"]);
-  assert.deepEqual(events.map(({ options }) => options.code), ["KeyX", "KeyX"]);
-  assert.deepEqual(events.map(({ options }) => options.key), ["x", "x"]);
+  assert.deepEqual(events.map(({ options }) => options.code), ["KeyJ", "KeyJ"]);
+  assert.deepEqual(events.map(({ options }) => options.key), ["j", "j"]);
   assert.ok(events.every(({ options }) => options.bubbles && options.cancelable));
 });
 
 test("mobile input fails safely until the engine canvas is ready", () => {
-  assert.equal(dispatchGameKey(null, "KeyX", true), false);
-  assert.equal(dispatchGameKey({ contentDocument: null, contentWindow: {} }, "KeyX", true), false);
+  assert.equal(dispatchGameKey(null, "KeyJ", true), false);
+  assert.equal(dispatchGameKey({ contentDocument: null, contentWindow: {} }, "KeyJ", true), false);
 });
