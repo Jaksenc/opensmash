@@ -568,7 +568,11 @@
     z-index: 1;
     justify-content: center;
     padding: 0 24px;
-    transform: translateY(clamp(78px, 13vh, 120px));
+    /* --rom-options-shift is half the height of the expanded "Can't find your
+       ROM?" panel (set by game-launcher.js) so opening it grows downward
+       instead of re-centring the copy up into the cartridge model. */
+    transform: translateY(calc(clamp(78px, 13vh, 120px) + var(--rom-options-shift, 0px)));
+    overflow-y: auto;
   }
   .launch-flow-controller {
     justify-content: center;
@@ -776,6 +780,98 @@
     display: grid;
   }
   .launch-flow-file-input { display: none; }
+  .launch-flow-text-link {
+    margin-top: 16px;
+    padding: 4px 8px;
+    border: 0;
+    background: none;
+    color: #d9b98f;
+    filter: none;
+    font: 500 clamp(12px, 1.15vw, 15px)/1.3 "Kanit", sans-serif;
+    letter-spacing: .03em;
+    text-decoration: underline;
+    text-decoration-color: rgba(217, 185, 143, .55);
+    text-underline-offset: 3px;
+    text-shadow: 0 2px 0 #260500;
+    cursor: pointer;
+    -webkit-font-smoothing: none;
+  }
+  .launch-flow-text-link:hover,
+  .launch-flow-text-link:focus-visible { color: #fff2d6; text-decoration-color: #fff2d6; outline: 0; }
+  .launch-flow-text-link:disabled { opacity: .45; cursor: default; }
+  .launch-flow-more-options {
+    box-sizing: border-box;
+    width: min(540px, 92vw);
+    margin: 8px auto 0;
+    padding: 10px 16px 12px;
+    border: 1px solid rgba(255, 240, 181, .22);
+    background: rgba(5, 3, 3, .82);
+    text-align: center;
+  }
+  .launch-flow-more-copy {
+    margin: 0;
+    color: #f2d9b1;
+    filter: none;
+    font: 500 clamp(12px, 1.1vw, 14px)/1.35 "Kanit", sans-serif;
+    text-shadow: 0 2px 0 #260500;
+    text-wrap: balance;
+    -webkit-font-smoothing: none;
+  }
+  .launch-flow-more-copy strong { color: #fff2d6; }
+  .launch-flow-more-copy code { color: #fff2d6; font-family: inherit; }
+  .launch-flow-option { margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(255, 240, 181, .12); }
+  .launch-flow-secondary {
+    box-sizing: border-box;
+    min-width: 0;
+    min-height: 34px;
+    margin-top: 6px;
+    padding: 6px 18px;
+    background: #050303;
+    font-size: clamp(13px, 1.15vw, 16px) !important;
+  }
+  .launch-flow-status {
+    width: 100%;
+    margin: 8px auto 0;
+    color: #f2d9b1;
+    filter: none;
+    font: 600 12px/1.45 "Kanit", sans-serif;
+    text-shadow: 0 2px 0 #260500;
+    text-wrap: balance;
+    -webkit-font-smoothing: none;
+  }
+  .launch-flow-handoff-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-end;
+    gap: 8px 12px;
+  }
+  .launch-flow-handoff-input {
+    box-sizing: border-box;
+    width: clamp(140px, 15vw, 180px);
+    min-height: 34px;
+    margin-top: 6px;
+    padding: 5px 12px;
+    border: 1px solid #5d3a2b;
+    border-radius: 0;
+    background: #120b08;
+    color: #fff2d6;
+    font: 700 clamp(18px, 1.8vw, 24px)/1 "Kanit", sans-serif;
+    letter-spacing: .28em;
+    text-align: center;
+    text-transform: uppercase;
+    -webkit-font-smoothing: none;
+  }
+  .launch-flow-handoff-input:focus-visible {
+    border-color: #fff0b5;
+    box-shadow: inset 0 0 0 2px rgba(255, 240, 181, .88);
+    outline: 0;
+  }
+  .launch-flow-handoff-input::placeholder { color: #6a4d3d; letter-spacing: .18em; }
+  .launch-flow-overlay .launch-flow-handoff-input {
+    -webkit-user-select: text;
+    user-select: text;
+  }
   .launch-flow-overlay button,
   .launch-flow-overlay kbd,
   .launch-flow-overlay p,
@@ -846,7 +942,7 @@
     .launch-flow-fire-cell { margin-top: 13px; }
   }
   @media (max-width: 600px) {
-    .launch-flow-upload { transform: translateY(clamp(72px, 12vh, 96px)); }
+    .launch-flow-upload { transform: translateY(calc(clamp(72px, 12vh, 96px) + var(--rom-options-shift, 0px))); }
     .launch-flow-title { font-size: clamp(23px, 7vw, 34px); }
   }
   @media (prefers-reduced-motion: reduce) {

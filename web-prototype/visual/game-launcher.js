@@ -12,6 +12,8 @@ import {
   postRomUploadGate,
 } from './controls-roadblock.js?v=20260901-upload-flow1';
 
+import { holdScreenAwake, isHandoffSupported, receiveRomHandoff } from '../src/rom-handoff-client.js';
+import { isFolderScanSupported, scanFolderForRom } from '../src/rom-folder-scan.js';
 import cartridgeChunkUrl from './assets/cartridge-chunk.wav?url';
 import cartridgeLabelUrl from './assets/cartridge-label-art.png?url';
 import cartridgeModelUrl from './assets/n64-cartridge-tripo.glb?url';
@@ -98,6 +100,18 @@ const fileInput = document.getElementById('rom-file-input');
 const uploadButton = document.getElementById('rom-upload-button');
 const cancelButton = document.getElementById('launch-cancel-button');
 const formError = document.getElementById('rom-form-error');
+// Alternative ROM sources (see src/rom-folder-scan.js and src/rom-handoff-client.js).
+const moreOptionsButton = document.getElementById('rom-more-options-button');
+const moreOptions = document.getElementById('rom-more-options');
+const scanOption = document.getElementById('rom-scan-option');
+const scanButton = document.getElementById('rom-scan-button');
+const scanStatus = document.getElementById('rom-scan-status');
+const handoffPanel = document.getElementById('rom-handoff-panel');
+const handoffCodeInput = document.getElementById('rom-handoff-code');
+const handoffConnectButton = document.getElementById('rom-handoff-connect');
+const handoffStatus = document.getElementById('rom-handoff-status');
+let activeHandoff = null;
+let activeScanAbort = null;
 const controllerStep = document.getElementById('launch-flow-controller-step');
 const controlsMenuButton = document.getElementById('controls-menu-button');
 const controlsCloseButton = document.getElementById('controls-close-button');
@@ -1879,6 +1893,188 @@ function resetRomPrompt() {
     formError.hidden = true;
     formError.textContent = '';
   }
+  resetAlternativeSources();
+}
+
+// --- Alternative ROM sources -------------------------------------------------
+
+function setStatusLine(element, text) {
+  if (!element) return;
+  element.hidden = !text;
+  element.textContent = text || '';
+}
+
+function setAlternativesDisabled(disabled) {
+  if (scanButton) scanButton.disabled = disabled;
+  if (moreOptionsButton) moreOptionsButton.disabled = disabled;
+  if (handoffConnectButton) handoffConnectButton.disabled = disabled;
+  if (handoffCodeInput) handoffCodeInput.disabled = disabled;
+}
+
+function setMoreOptionsOpen(open, { focusCode = false } = {}) {
+  if (!moreOptions || !moreOptionsButton) return;
+  moreOptions.hidden = !open;
+  moreOptionsButton.setAttribute('aria-expanded', String(open));
+  // The upload step is a centred flex column, so extra height would pull the
+  // copy up under the cartridge. Shift the step down by half the panel height
+  // so the panel appears to grow downward.
+  const step = moreOptions.closest('.launch-flow-upload');
+  if (step) {
+    let shift = 0;
+    if (open) {
+      step.style.setProperty('--rom-options-shift', '0px');
+      const rect = moreOptions.getBoundingClientRect();
+      // Grow downward, but never push the panel's bottom edge off-screen on a
+      // short viewport; there the copy is allowed to creep up instead.
+      const available = window.innerHeight - 12 - rect.bottom;
+      shift = Math.max(0, Math.min(Math.round(rect.height / 2), Math.round(available)));
+    }
+    step.style.setProperty('--rom-options-shift', `${shift}px`);
+  }
+  if (open && focusCode) requestAnimationFrame(() => handoffCodeInput?.focus());
+}
+
+function resetAlternativeSources() {
+  activeHandoff?.cancel();
+  activeHandoff = null;
+  activeScanAbort?.abort();
+  activeScanAbort = null;
+  // Folder scanning needs a desktop file picker; a touch layout never has one worth offering.
+  if (scanOption) scanOption.hidden = !isFolderScanSupported() || usesMobileControls();
+  if (moreOptionsButton) {
+    moreOptionsButton.textContent = 'Other options';
+  }
+  if (scanButton) scanButton.textContent = 'Scan a folder for it';
+  if (handoffPanel) handoffPanel.hidden = !isHandoffSupported();
+  if (handoffConnectButton) handoffConnectButton.textContent = 'Connect';
+  if (handoffCodeInput) handoffCodeInput.value = '';
+  setStatusLine(scanStatus, '');
+  setStatusLine(handoffStatus, '');
+  setMoreOptionsOpen(false);
+  setAlternativesDisabled(false);
+}
+
+function showRomError(message) {
+  if (!formError) return;
+  formError.hidden = false;
+  formError.textContent = message;
+}
+
+async function scanFolder() {
+  if (validationBusy || activeScanAbort || !pendingFighter) return;
+  if (formError) { formError.hidden = true; formError.textContent = ''; }
+  activeScanAbort = new AbortController();
+  setAlternativesDisabled(true);
+  if (uploadButton) uploadButton.disabled = true;
+  if (scanButton) scanButton.textContent = 'Scanning…';
+  try {
+    const file = await scanFolderForRom({
+      signal: activeScanAbort.signal,
+      onProgress(progress) {
+        if (progress.phase === 'walking') {
+          setStatusLine(scanStatus, `Looking through ${progress.entries.toLocaleString()} files… ${progress.candidates} likely ROM${progress.candidates === 1 ? '' : 's'} so far`);
+        } else if (progress.phase === 'checking') {
+          setStatusLine(scanStatus, `Checking ${progress.name} (${progress.index} of ${progress.total})…`);
+        }
+      },
+    });
+    setStatusLine(scanStatus, file ? `Found ${file.name}` : '');
+    activeScanAbort = null;
+    setAlternativesDisabled(false);
+    if (uploadButton) uploadButton.disabled = false;
+    if (scanButton) scanButton.textContent = 'Scan a folder for it';
+    if (file) await validateRom(file);
+  } catch (error) {
+    activeScanAbort = null;
+    setAlternativesDisabled(false);
+    if (uploadButton) uploadButton.disabled = false;
+    if (scanButton) scanButton.textContent = 'Scan a folder for it';
+    setStatusLine(scanStatus, '');
+    if (error?.name !== 'ScanCancelled') showRomError(error?.message || 'Could not scan that folder.');
+  }
+}
+
+async function connectHandoff(code) {
+  if (validationBusy || activeHandoff || !pendingFighter) return;
+  if (formError) { formError.hidden = true; formError.textContent = ''; }
+  const session = receiveRomHandoff({
+    code,
+    onState(state, detail = {}) {
+      const labels = {
+        joining: 'Finding the other device…',
+        waiting: 'Waiting for the other device…',
+        connecting: 'Connecting…',
+        receiving: detail.total
+          ? `Receiving ROM… ${Math.round((detail.received / detail.total) * 100)}%`
+          : 'Receiving ROM…',
+        done: 'Received. Checking ROM…',
+      };
+      if (labels[state]) setStatusLine(handoffStatus, labels[state]);
+    },
+  });
+  activeHandoff = session;
+  const releaseWakeLock = holdScreenAwake();
+  setAlternativesDisabled(true);
+  if (uploadButton) uploadButton.disabled = true;
+  if (handoffConnectButton) handoffConnectButton.textContent = 'Connecting…';
+  try {
+    const file = await session.promise;
+    releaseWakeLock();
+    activeHandoff = null;
+    setAlternativesDisabled(false);
+    if (uploadButton) uploadButton.disabled = false;
+    if (handoffConnectButton) handoffConnectButton.textContent = 'Connect';
+    await validateRom(file);
+  } catch (error) {
+    releaseWakeLock();
+    activeHandoff = null;
+    setAlternativesDisabled(false);
+    if (uploadButton) uploadButton.disabled = false;
+    if (handoffConnectButton) handoffConnectButton.textContent = 'Connect';
+    setStatusLine(handoffStatus, '');
+    if (error?.name !== 'HandoffCancelled') {
+      showRomError(error?.message || 'Could not receive the ROM from the other device.');
+      handoffCodeInput?.focus();
+    }
+  }
+}
+
+// Advanced → "Receive from another device": open the play flow with the
+// alternative-source panel already expanded and the code field focused.
+function openRomOptions() {
+  if (hasVerifiedRom()) return;
+  if (overlay?.hidden) {
+    showLaunchFlow({
+      displayName: 'the full game',
+      slug: null,
+      actionType: 'start',
+      fkind: 0,
+      bundle: null,
+    });
+  } else if (overlay?.dataset.step !== 'upload') {
+    return;
+  }
+  setMoreOptionsOpen(true, { focusCode: true });
+}
+
+// Entry point for /?handoff=CODE (scanned QR): open the play flow in receive
+// mode and connect immediately.
+function receiveHandoffFromLink(code) {
+  if (hasVerifiedRom()) return;
+  if (!overlay || !overlay.hidden) {
+    if (overlay?.dataset.step !== 'upload') return;
+  } else {
+    showLaunchFlow({
+      displayName: 'the full game',
+      slug: null,
+      actionType: 'start',
+      fkind: 0,
+      bundle: null,
+    });
+  }
+  setMoreOptionsOpen(true);
+  if (handoffCodeInput) handoffCodeInput.value = code;
+  connectHandoff(code);
 }
 
 function hideControlSkip() {
@@ -2089,6 +2285,7 @@ function closeLaunchFlow(immediate = false) {
 }
 
 function cancelLaunchFlow() {
+  resetAlternativeSources();
   if (createUploadMode && APP_BRIDGE?.cancelCreateRom) {
     createUploadMode = false;
     closeLaunchFlow();
@@ -2219,6 +2416,20 @@ fileInput?.addEventListener('change', () => validateRom(fileInput.files?.[0]));
 cancelButton?.addEventListener('click', () => {
   if (!validationBusy) cancelLaunchFlow();
 });
+scanButton?.addEventListener('click', () => { scanFolder(); });
+moreOptionsButton?.addEventListener('click', () => {
+  if (validationBusy || activeHandoff || activeScanAbort) return;
+  setMoreOptionsOpen(Boolean(moreOptions?.hidden));
+});
+handoffPanel?.addEventListener('submit', event => {
+  event.preventDefault();
+  connectHandoff(handoffCodeInput?.value || '');
+});
+handoffCodeInput?.addEventListener('input', () => {
+  // Mirror what the code alphabet accepts so the field shows the canonical form.
+  const canonical = handoffCodeInput.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (canonical !== handoffCodeInput.value) handoffCodeInput.value = canonical;
+});
 controlsMenuButton?.addEventListener('click', () => {
   if (!usesMobileControls()) showControlsPreview();
 });
@@ -2347,6 +2558,8 @@ window.gameLauncher = Object.freeze({
   close: closeGame,
   reset: resetRom,
   resetControls: resetControllerTutorial,
+  receiveHandoff: receiveHandoffFromLink,
+  openRomOptions,
   sync: syncRomResetButton,
 });
 

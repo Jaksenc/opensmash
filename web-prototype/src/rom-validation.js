@@ -29,6 +29,13 @@ function findN64Header(bytes) {
   return null;
 }
 
+/** Cheap pre-check for scanners: does this buffer start (within the first
+ * 4 KiB) with an N64 header in any byte order? */
+export function hasN64Header(input) {
+  const source = input instanceof Uint8Array ? input : new Uint8Array(input);
+  return findN64Header(source) !== null;
+}
+
 export function normalizeN64(input) {
   const source = input instanceof Uint8Array ? input : new Uint8Array(input);
   const header = findN64Header(source);

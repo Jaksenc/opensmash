@@ -56,6 +56,40 @@ export function LaunchFlow() {
         <input id="rom-file-input" className="launch-flow-file-input" type="file" hidden accept=".zip,.z64,.n64,.v64,.rom,application/zip,application/octet-stream" />
         <FlameAction id="rom-upload-button" type="button">Upload ROM</FlameAction>
         <button id="launch-cancel-button" className="launch-flow-action launch-flow-cancel" type="button">Cancel</button>
+        <button id="rom-more-options-button" className="launch-flow-text-link" type="button" aria-expanded="false" aria-controls="rom-more-options">Other options</button>
+        <div id="rom-more-options" className="launch-flow-more-options" hidden>
+          <p className="launch-flow-more-copy">
+            It&apos;s a 16 MB <code>.z64</code>, <code>.n64</code>, or <code>.v64</code> file (a .zip of one works too), usually in the
+            folder your emulator keeps its ROMs.
+          </p>
+          <div className="launch-flow-option" id="rom-scan-option" hidden>
+            <button id="rom-scan-button" className="launch-flow-action launch-flow-secondary" type="button">Scan a folder for it</button>
+            <p id="rom-scan-status" className="launch-flow-status" aria-live="polite" hidden />
+          </div>
+          <form id="rom-handoff-panel" className="launch-flow-option launch-flow-handoff">
+            <p className="launch-flow-more-copy">
+              Have the ROM on your computer or another device? Open this site there, choose
+              {" "}<strong>Advanced → Send ROM to another device</strong>, and enter the code it shows here.
+            </p>
+            <div className="launch-flow-handoff-row">
+              <input
+                id="rom-handoff-code"
+                className="launch-flow-handoff-input"
+                type="text"
+                inputMode="text"
+                autoComplete="one-time-code"
+                autoCapitalize="characters"
+                autoCorrect="off"
+                spellCheck="false"
+                maxLength="8"
+                placeholder="CODE"
+                aria-label="Handoff code from the other device"
+              />
+              <button id="rom-handoff-connect" className="launch-flow-action launch-flow-secondary" type="submit">Connect</button>
+            </div>
+            <p id="rom-handoff-status" className="launch-flow-status" aria-live="polite" hidden />
+          </form>
+        </div>
         <p id="rom-form-error" className="launch-flow-error" role="alert" hidden />
       </section>
       <section id="launch-flow-controller-step" className="launch-flow-step launch-flow-controller" role="dialog" aria-modal="true" aria-labelledby="how-to-play-title" aria-describedby="launch-control-prompt" tabIndex="-1">

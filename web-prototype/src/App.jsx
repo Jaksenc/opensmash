@@ -8,12 +8,14 @@ import FlameAction from "./FlameAction.jsx";
 import ModalPage from "./ModalPage.jsx";
 import RetroHome from "./RetroHome.jsx";
 import RetroChoiceGrid from "./RetroChoiceGrid.jsx";
+import RomHandoffModal from "./RomHandoffModal.jsx";
 import { matchesCharacterSearch } from "../shared/character-search.js";
 import {
   controlsRoadblockRequired,
   requireControlsRoadblock,
 } from "../visual/controls-roadblock.js";
 import { identifyRomFile } from "./rom-validation.js";
+import { handoffCodeFromLocation } from "../shared/rom-handoff.js";
 import { clearRomStore, hasStoredRom, prewarmEngineArchive, storeRom } from "../shared/rom-store.js";
 import { clearControllerTutorialCompletion } from "../visual/control-tutorial.js";
 import {
@@ -255,7 +257,7 @@ function RomModal({ action, onCancel, onValidated, onPrewarmError }) {
   );
 }
 
-function AdvancedModal({ authorized, debugMode, open, options, onCancel, onResetControllerTutorial, onResetRom, onSave }) {
+function AdvancedModal({ authorized, debugMode, open, options, onCancel, onResetControllerTutorial, onResetRom, onSave, onSendRom, onReceiveRom }) {
   const [draft, setDraft] = useState(options);
   const firstFieldRef = useRef(null);
 
@@ -349,6 +351,30 @@ function AdvancedModal({ authorized, debugMode, open, options, onCancel, onReset
               onChange={(value) => update("bootMode", value)}
             />
           </fieldset>
+
+          {onSendRom && onReceiveRom && (
+            <section className="advanced-debug-tools" aria-labelledby="advanced-handoff-title">
+              <div>
+                <strong id="advanced-handoff-title">Other devices</strong>
+                <small>
+                  {authorized
+                    ? "Send this browser's ROM to a phone or another computer over a direct connection."
+                    : "Already validated the ROM on another device? Pull it over with a code instead of finding the file again."}
+                </small>
+              </div>
+              <div className="advanced-debug-actions">
+                {authorized ? (
+                  <button className="launch-flow-action advanced-handoff-action" type="button" onClick={() => close(onSendRom)}>
+                    Send ROM to another device
+                  </button>
+                ) : (
+                  <button className="launch-flow-action advanced-handoff-action" type="button" onClick={() => close(onReceiveRom)}>
+                    Receive from another device
+                  </button>
+                )}
+              </div>
+            </section>
+          )}
 
           {debugMode && (
             <section className="advanced-debug-tools" aria-labelledby="advanced-debug-title">
@@ -459,6 +485,36 @@ export default function App() {
   const [soundOn, setSoundOn] = useState(() => localStorage.getItem("opensmash-sound") !== "off");
   const [advancedOptions, setAdvancedOptions] = useState(loadAdvancedOptions);
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [handoffOpen, setHandoffOpen] = useState(false);
+
+  // Arriving via a scanned handoff QR (/?handoff=CODE): hand the code to the
+  // launcher, which opens the upload flow in receive mode. The param is
+  // stripped so a reload does not retry a code that was consumed.
+  // The code is read once at mount (a state initialiser) rather than inside
+  // the effect: StrictMode re-runs effects in development, and the second run
+  // would otherwise see the URL after the param has been stripped.
+  const [initialHandoffCode] = useState(() => handoffCodeFromLocation(window.location.search));
+  useEffect(() => {
+    const code = initialHandoffCode;
+    if (!code) return undefined;
+    const url = new URL(window.location.href);
+    if (url.searchParams.has("handoff")) {
+      url.searchParams.delete("handoff");
+      window.history.replaceState(null, "", url.pathname + url.search + url.hash);
+    }
+    let attempts = 0;
+    let timer = 0;
+    function deliver() {
+      if (window.gameLauncher?.receiveHandoff) {
+        window.gameLauncher.receiveHandoff(code);
+        return;
+      }
+      attempts += 1;
+      if (attempts < 200) timer = window.setTimeout(deliver, 50);
+    }
+    deliver();
+    return () => window.clearTimeout(timer);
+  }, [initialHandoffCode]);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [createStage, setCreateStage] = useState(null);
   const [flowMusicActive, setFlowMusicActive] = useState(false);
@@ -1026,7 +1082,10 @@ export default function App() {
           onResetControllerTutorial={resetControllerTutorialFromAdvanced}
           onResetRom={resetRomFromAdvanced}
           onSave={saveAdvancedOptions}
+          onSendRom={() => { setAdvancedOpen(false); setHandoffOpen(true); }}
+          onReceiveRom={() => { setAdvancedOpen(false); window.gameLauncher?.openRomOptions?.(); }}
         />
+        <RomHandoffModal open={handoffOpen} onClose={() => setHandoffOpen(false)} />
       </>
     );
   }
