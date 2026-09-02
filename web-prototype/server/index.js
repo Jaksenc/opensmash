@@ -11,6 +11,7 @@ import { createJobDatabase } from "./job-database.js";
 import { createJobDispatcher } from "./job-dispatcher.js";
 import { createObjectStore } from "./object-store.js";
 import { cacheControlForEnvironment, edgeCacheHeaders } from "./cache-policy.js";
+import { CREATION_DISABLED_MESSAGE, creationEnabled } from "./creation-switch.js";
 import { withInitialState } from "./html-state.js";
 import { resolveProjectPaths } from "./project-paths.js";
 import { assignRosterBases, bundleForBase, FIGHTERS, readOsb6Targets } from "./roster.js";
@@ -618,6 +619,7 @@ async function handleRequest(req, res, vite) {
     return json(res, 200, {
       authorized: Boolean(romSession),
       authenticated: Boolean(user),
+      creationEnabled: creationEnabled(),
       user,
     });
   }
@@ -656,6 +658,16 @@ async function handleRequest(req, res, vite) {
 
   if (req.method === "GET" && pathname === "/api/fighters") {
     return json(res, 200, { jobs: fighterJobs.list(user.uid) });
+  }
+
+  // The killswitch is enforced here, not only in the UI: a paused lab must
+  // also turn away a form posted from a tab that was open before the flip.
+  if (
+    req.method === "POST" &&
+    (pathname === "/api/fighters" || /^\/api\/fighters\/[a-f0-9-]+\/retry$/.test(pathname)) &&
+    !creationEnabled()
+  ) {
+    return json(res, 503, { error: CREATION_DISABLED_MESSAGE, creationDisabled: true });
   }
 
   if (req.method === "POST" && pathname === "/api/fighters") {
@@ -712,23 +724,35 @@ async function handleRequest(req, res, vite) {
       ? fighterJobs.artifact(id, user?.uid, fighterArtifactMatch[2])
       : fighterJobs.artifact(id, user?.uid, "variants", fighterVariantMatch[2]);
     if (!artifact) return json(res, 404, { error: "Fighter asset not found." });
+    // Stream from the object store: bundles are ~1.6 MB each and the API
+    // runs on one small instance, so buffering whole objects per request
+    // (x concurrency) was the largest memory risk in the service.
+    let object;
     try {
-      const contents = await objectStore.read(artifact.key, { public: artifact.public });
-      res.writeHead(200, {
-        "Content-Type": artifact.contentType || "application/octet-stream",
-        "Content-Length": contents.length,
-        "Cache-Control": cacheControlForEnvironment(
-          artifact.public
-            ? "public, max-age=31536000, immutable"
-            : "private, no-store",
-          IS_PRODUCTION,
-        ),
-        Vary: "Cookie",
-      });
-      return req.method === "HEAD" ? res.end() : res.end(contents);
+      object = await objectStore.readStream(artifact.key, { public: artifact.public });
     } catch {
       return json(res, 404, { error: "Fighter asset not found." });
     }
+    res.writeHead(200, {
+      "Content-Type": artifact.contentType || "application/octet-stream",
+      "Content-Length": object.size,
+      "Cache-Control": cacheControlForEnvironment(
+        artifact.public
+          ? "public, max-age=31536000, immutable"
+          : "private, no-store",
+        IS_PRODUCTION,
+      ),
+      Vary: "Cookie",
+    });
+    if (req.method === "HEAD") {
+      object.stream.destroy();
+      return res.end();
+    }
+    object.stream.on("error", (error) => {
+      console.error(`Fighter asset stream failed for ${artifact.key}:`, error);
+      res.destroy();
+    });
+    return object.stream.pipe(res);
   }
 
   const fighterPortraitMatch = pathname.match(/^\/api\/fighters\/([a-f0-9-]+)\/portrait$/);

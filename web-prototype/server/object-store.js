@@ -1,4 +1,5 @@
-import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
+import { createReadStream } from "node:fs";
+import { copyFile, mkdir, readFile, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 function encodeObjectKey(key) {
@@ -56,6 +57,16 @@ class LocalObjectStore {
   async read(key) {
     assertObjectKey(key);
     return readFile(path.join(this.root, key));
+  }
+
+  // Size + readable stream, so the API can serve multi-megabyte bundles
+  // without holding each one in memory for the duration of the response.
+  async readStream(key) {
+    assertObjectKey(key);
+    const filePath = path.join(this.root, key);
+    const info = await stat(filePath);
+    if (!info.isFile()) throw new Error(`Not a file: ${key}`);
+    return { size: info.size, stream: createReadStream(filePath) };
   }
 
   localPath(key) {
@@ -140,6 +151,13 @@ class GcsObjectStore {
     assertObjectKey(key);
     const [contents] = await (isPublic ? this.publicBucket : this.privateBucket).file(key).download();
     return contents;
+  }
+
+  async readStream(key, { public: isPublic = false } = {}) {
+    assertObjectKey(key);
+    const file = (isPublic ? this.publicBucket : this.privateBucket).file(key);
+    const [metadata] = await file.getMetadata();
+    return { size: Number(metadata.size), stream: file.createReadStream() };
   }
 
   localPath() {
