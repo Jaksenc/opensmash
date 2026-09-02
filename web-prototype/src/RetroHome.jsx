@@ -53,11 +53,12 @@ export function LaunchFlow() {
           To play Smash the Weights, upload your legally obtained Super Smash Bros. 64 ROM.
         </p>
         <div id="rom-filename-hint" className="launch-flow-rom-hint">
-          <span className="launch-flow-rom-hint-label">These ROMs are normally named</span>
+          <span className="launch-flow-rom-hint-label">Only the USA release works; it is normally named</span>
           <span className="launch-flow-rom-filenames">
             <code>Super Smash Bros. (USA).z64</code>
-            <code>Super Smash Bros. (Europe) (En,Fr,De).z64</code>
-            <code>Nintendo All-Star! Dairantou Smash Brothers (Japan).z64</code>
+          </span>
+          <span className="launch-flow-rom-hint-label">
+            Your ROM stays in this browser and never uploads. Safari clears it after a week without a visit, so you may be asked again.
           </span>
         </div>
         <input id="rom-file-input" className="launch-flow-file-input" type="file" hidden accept=".zip,.z64,.n64,.v64,.rom,application/zip,application/octet-stream" />
