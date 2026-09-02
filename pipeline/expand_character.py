@@ -51,6 +51,7 @@ HARD RULES:
 - The character must hold NOTHING and nothing may hang from the arms or hands: no handbags, purses, bags, canes, walking sticks, swords, umbrellas, staffs, weapons, phones, cups, books, instruments. Hands are empty and bare or gloved.
 - No text, logos or fine patterns; no fabric texture; mouth closed; age and build stated.
 - If the name is ambiguous or fictional, describe the most widely recognized depiction.
+- If the name is a duo, band, group or team, describe exactly ONE member (the most iconic one) as a single figure; never two figures.
 "emblem" names ONE concrete object for the character's series emblem — a short noun phrase ("a jewelled crown", "a red accordion"), the object that instantly signals this character: something they are famous for, wear, use, or are inseparable from. Never the character, their face or their body. It is drawn as a bold one-colour stencil, so prefer an object with a distinctive outline AND large internal structure (crown, accordion, pocket watch, open book, lighthouse) over a plain disc, ball, shield, generic badge or logo roundel. If the subject is not a public figure, infer the object from what the photo and notes show — clothing, gear, setting, a distinctive accessory or hobby.
 """
 
