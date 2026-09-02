@@ -68,3 +68,10 @@ artifacts/experiments/*.osb
 
 # Claude Code per-machine launch config.
 .claude/
+
+# Editorial roster lists and the seed-roster working files: local, not
+# published. tools/build_wikipedia_people_seed.py reads the config/ lists when
+# present and otherwise runs on pure ranking.
+config/wikipedia-roster-inclusions.txt
+config/wikipedia-roster-exclusions.txt
+artifacts/seed-roster/

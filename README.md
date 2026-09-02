@@ -51,7 +51,7 @@ What's in this repo:
 | `play/` | Local generation output (gitignored). The production roster lives in a public GCS bucket, pinned by `web-prototype/config/baked-assets.json`. |
 | `scripts/`, `tools/` | Batch driver, the derive-from-ROM scripts, sprite extraction, the Wikipedia roster seed. |
 | `eval/` | Mesh eval harness (`EVAL.md`). |
-| `config/`, `docs/`, `assets/` | Roster lists, docs, and the portrait style references the generator uses. |
+| `config/`, `docs/`, `assets/` | Docs and the style references the generator uses. `config/` holds local (gitignored) roster inclusion/exclusion lists. |
 
 ## Running the site
 
@@ -188,7 +188,8 @@ One name per line. Retries transient provider errors, re-rolls
 moderation-blocked images, skips names that are already done, and keeps state
 in `batch-state/`. `touch batch-state/STOP` to finish in-flight work and
 exit. `tools/build_wikipedia_people_seed.py` builds popularity-ranked name
-lists from Wikipedia; the rules for who goes on the roster are in
+lists from Wikipedia. It applies `config/wikipedia-roster-{inclusions,exclusions}.txt`
+if you have them (local files, not in git); the rules we used are in
 `docs/character-roster-editorial-policy.md`.
 
 ## Publishing to the site roster

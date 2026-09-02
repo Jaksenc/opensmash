@@ -565,6 +565,11 @@ def select_people(
 def read_exclusions(paths: list[Path], inline: list[str]) -> set[str]:
     exclusions = {name.strip() for name in inline if name.strip()}
     for path in paths:
+        if path in (DEFAULT_EXCLUSIONS, DEFAULT_INCLUSIONS) and not path.is_file():
+            # The default lists are local editorial files (gitignored); a
+            # checkout without them simply runs on pure ranking.
+            print(f"note: {path.relative_to(PIPELINE_ROOT)} not present, skipping", file=sys.stderr)
+            continue
         exclusions.update(
             line.strip()
             for line in path.read_text(encoding="utf-8").splitlines()

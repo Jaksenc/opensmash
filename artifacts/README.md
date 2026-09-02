@@ -16,9 +16,8 @@ review CSVs, and `SUMMARY.md`. The scripts hardcode paths relative to the
 repository root. `batch-state/` (gitignored) is the driver's live working
 state.
 
-`seed-roster/` is how the batch's roster was assembled: the master CSV with
-tiers and ordering, the audit of every removal and rename, and the two
-1000-name source lists. The generator's live inputs are
-`config/wikipedia-roster-{inclusions,exclusions}.txt`.
+`seed-roster/` (gitignored, local) is how the batch's roster was assembled:
+the master CSV with tiers and ordering, the audit of every removal and
+rename, and the source lists.
 
 Generated fighters live in `play/` (gitignored, published to GCS).
