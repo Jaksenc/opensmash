@@ -45,9 +45,9 @@ const sources = [MANIFEST_PATH];
 const selections = [];
 
 for (const { slug } of manifest) {
-  const bundlePattern = new RegExp(`^${slug}(?:-[a-z0-9]+)?\\.osb$`);
-  const bundles = playFiles.filter((name) => bundlePattern.test(name)).sort();
-  if (!bundles.includes(`${slug}.osb`)) throw new Error(`Missing play/${slug}.osb`);
+  // The shipped bundle is the single OSB6 (atlas once + every target).
+  const bundles = playFiles.filter((name) => name === `${slug}.osb6`);
+  if (!bundles.length) throw new Error(`Missing play/${slug}.osb6`);
 
   const uiRoot = path.join(PLAY_ROOT, "ui", slug);
   const requiredUi = ["character.json", "portrait_raw.png", `${slug}.osbui`, "announcer.wav"];

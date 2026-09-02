@@ -18,6 +18,7 @@ import { pipeline } from "node:stream/promises";
 import { promisify } from "node:util";
 import { ACTIVE_JOB_STATUSES, jobSnapshot, publicJob } from "./job-protocol.js";
 import { QuotaError, assertQuota, quotaLimits, quotaUsage } from "./job-quota.js";
+import { readOsb6Targets } from "./roster.js";
 import { moderateFighterSubmission } from "./submission-moderation.js";
 
 const execFileAsync = promisify(execFile);
@@ -437,7 +438,8 @@ export function createFighterJobs({
     let bundles = [];
     try {
       bundles = (await readdir(playRoot))
-        .filter((name) => (name === `${job.slug}.osb` || name.startsWith(`${job.slug}-`)) && name.endsWith(".osb"));
+        .filter((name) => name === `${job.slug}.osb6` ||
+          ((name === `${job.slug}.osb` || name.startsWith(`${job.slug}-`)) && name.endsWith(".osb")));
     } catch {
       // The play directory may not exist if generation failed very early.
     }
@@ -471,7 +473,7 @@ export function createFighterJobs({
         const outputRoot = path.join(pipelineUiRoot, job.slug);
         await Promise.all([
           access(path.join(outputRoot, "portrait_raw.png")),
-          access(path.join(engineRoot, "bundles", `${job.slug}.osb`)),
+          access(path.join(engineRoot, "bundles", `${job.slug}.osb6`)),
           access(path.join(engineRoot, "bundles", `${job.slug}.osbui`)),
           access(path.join(engineRoot, "bundles", `${job.slug}.wav`)),
         ]);
@@ -489,18 +491,11 @@ export function createFighterJobs({
         const versionRoot = `characters/${job.slug}/versions/${version}`;
         const isPublic = job.visibility !== "private";
         const bundleRoot = path.join(engineRoot, "bundles");
-        const variantFiles = (await readdir(bundleRoot))
-          .filter((name) => name.startsWith(`${job.slug}-`) && name.endsWith(".osb"))
+        // One OSB6 holds every built target; record which so the client can
+        // offer mesh overrides without probing for files.
+        const targets = (await readOsb6Targets(path.join(bundleRoot, `${job.slug}.osb6`)))
+          .filter((target) => target !== "mario")
           .sort();
-        const variants = {};
-        for (const fileName of variantFiles) {
-          const fighter = fileName.slice(job.slug.length + 1, -4);
-          variants[fighter] = await objectStore.putFile(
-            `${versionRoot}/injection/${fileName}`,
-            path.join(bundleRoot, fileName),
-            { contentType: "application/octet-stream", public: isPublic },
-          );
-        }
         job.artifacts = {
           portrait: await objectStore.putFile(
             `${versionRoot}/portrait.png`,
@@ -513,8 +508,8 @@ export function createFighterJobs({
             { contentType: "audio/wav", public: isPublic },
           ),
           bundle: await objectStore.putFile(
-            `${versionRoot}/injection/${job.slug}.osb`,
-            path.join(bundleRoot, `${job.slug}.osb`),
+            `${versionRoot}/injection/${job.slug}.osb6`,
+            path.join(bundleRoot, `${job.slug}.osb6`),
             { contentType: "application/octet-stream", public: isPublic },
           ),
           ui: await objectStore.putFile(
@@ -527,7 +522,7 @@ export function createFighterJobs({
             publicCharacterMetadata(metadata),
             { public: isPublic },
           ),
-          variants,
+          targets,
         };
         for (const [key, fileName] of [["stock", "stock_raw.png"], ["emblem", "emblem_raw.png"]]) {
           try {

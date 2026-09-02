@@ -101,20 +101,14 @@ function resolvedCharacter(character, meshName) {
   const mesh = CHARACTER_MESHES.find(({ value }) => value === meshName);
   if (!mesh || mesh.fkind === character.fkind) return character;
 
-  if (meshName === "mario") {
-    return {
-      ...character,
-      fkind: mesh.fkind,
-      base: meshName,
-      bundle: `${character.slug}.osb`,
-      bundleUrl: character.originalBundleUrl || character.bundleUrl || null,
-    };
-  }
-
-  const bundleUrl = character.variants?.[meshName] || (
-    character.bundleUrl ? null : `bundles/${character.slug}-${meshName}.osb`
-  );
-  if (!bundleUrl) {
+  // One OSB6 per character carries every built target, so an override only
+  // changes which fighter the engine spawns; the file stays the same. The
+  // server lists the built targets in `variants` (array); an object form is
+  // a legacy per-target-file job and its keys mean the same thing.
+  const built = Array.isArray(character.variants)
+    ? character.variants
+    : character.variants ? Object.keys(character.variants) : null;
+  if (meshName !== "mario" && built && !built.includes(meshName)) {
     throw new Error(`${character.name} does not have a ${mesh.label} mesh variant.`);
   }
 
@@ -122,8 +116,6 @@ function resolvedCharacter(character, meshName) {
     ...character,
     fkind: mesh.fkind,
     base: meshName,
-    bundle: `${character.slug}-${meshName}.osb`,
-    bundleUrl,
   };
 }
 

@@ -47,16 +47,13 @@ export function publicJob(job) {
       uiUrl: artifacts.ui?.url || `${assetRoot}/ui`,
       voiceUrl: artifacts.announcer?.url || `${assetRoot}/announcer`,
       manifestUrl: artifacts.manifest?.url || `${assetRoot}/manifest`,
-      variants: Object.fromEntries(
-        Object.entries(artifacts.variants || {}).map(([fighter, artifact]) => [
-          fighter,
-          artifact.url || `${assetRoot}/variants/${encodeURIComponent(fighter)}`,
-        ]),
-      ),
+      // Skeleton targets built into the single OSB6 bundle (legacy jobs
+      // that uploaded one file per target expose the same list).
+      variants: artifacts.targets || Object.keys(artifacts.variants || {}),
       visibility,
       uploader: result.uploader,
       fkind: 0,
-      bundle: `${job.slug}.osb`,
+      bundle: `${job.slug}.osb6`,
     };
     result.costUsd = job.costUsd ?? null;
   }

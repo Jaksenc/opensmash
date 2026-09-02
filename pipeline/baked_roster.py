@@ -19,7 +19,7 @@ def validate_character(slug, pipeline_root=PIPELINE_ROOT):
 
     ui_root = os.path.join(pipeline_root, "play", "ui", slug)
     required = [
-        os.path.join(pipeline_root, "play", f"{slug}.osb"),
+        os.path.join(pipeline_root, "play", f"{slug}.osb6"),
         os.path.join(ui_root, "character.json"),
         os.path.join(ui_root, "portrait_raw.png"),
         os.path.join(ui_root, f"{slug}.osbui"),
