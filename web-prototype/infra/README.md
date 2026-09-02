@@ -113,6 +113,27 @@ CLOUDFLARE_API_TOKEN=... \
 ./infra/configure-domain.sh
 ```
 
+## Pausing fighter creation
+
+Creation is the only part of the site that spends money per request (GPU time,
+image and voice models). `CREATION_ENABLED=0` closes it without touching the
+roster: `/api/session` reports `creationEnabled: false`, the create tile and
+`/create` show the "Fighter creation is paused" notice instead of the creator,
+and
+`POST /api/fighters` and `/api/fighters/:id/retry` answer `503`. Any other
+value, including an unset one, leaves creation open.
+
+```bash
+gcloud run services update opensmash-web --region "$REGION" \
+  --update-env-vars CREATION_ENABLED=0
+```
+
+The switch takes effect on the next `/api/session` call — no redeploy, no edge
+purge, because the shared app shell never carries the flag. Set it back with
+`CREATION_ENABLED=1`. `deploy.sh` rewrites the whole environment, so export
+`CREATION_ENABLED=0` for a deploy that must keep the lab closed. The switch
+only refuses new work: jobs the worker already picked up run to completion.
+
 ## Cloudflare edge cache
 
 The main `deploy.sh` command also deploys the engine worker after Cloud Run. It

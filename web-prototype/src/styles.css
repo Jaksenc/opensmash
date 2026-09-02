@@ -1010,7 +1010,8 @@ body.retro-home::before {
   letter-spacing: .1em;
   text-transform: uppercase;
 }
-.about-overlay {
+.about-overlay,
+.creation-paused-overlay {
   position: fixed;
   inset: 0;
   z-index: 1500;
@@ -1020,7 +1021,8 @@ body.retro-home::before {
   background: #000;
   color: #fff2d6;
 }
-.about-screen {
+.about-screen,
+.creation-paused-screen {
   width: 100%;
   min-height: 100svh;
   display: grid;
@@ -1029,19 +1031,25 @@ body.retro-home::before {
   font-family: "Kanit", sans-serif;
   text-align: center;
 }
-.about-content {
+.about-content,
+.creation-paused-content {
   --launch-control-width: clamp(210px, 23vw, 300px);
   display: flex;
   width: min(760px, 100%);
   flex-direction: column;
   align-items: center;
 }
-.about-title { margin: 0; }
-.about-copy { margin-top: 12px; }
-.about-copy p { margin: 0; }
-.about-copy p + p { margin-top: 12px; }
+.about-title,
+.creation-paused-title { margin: 0; }
+.about-copy,
+.creation-paused-copy { margin-top: 12px; }
+.about-copy p,
+.creation-paused-copy p { margin: 0; }
+.about-copy p + p,
+.creation-paused-copy p + p { margin-top: 12px; }
 .about-legal { opacity: .82; }
-.about-cancel {
+.about-cancel,
+.creation-paused-cancel {
   box-sizing: border-box;
   width: clamp(210px, 23vw, 300px);
   min-width: clamp(210px, 23vw, 300px);
@@ -1049,15 +1057,30 @@ body.retro-home::before {
   margin-top: 22px;
   background: #050303;
 }
+/* The support link takes the launch flow's highlighted primary slot, so it
+   needs the centring a <button> gets for free. */
+.creation-paused-support {
+  display: grid;
+  place-items: center;
+  text-decoration: none;
+}
+.creation-paused-support-cell + .creation-paused-cancel { margin-top: 11px; }
 .about-title,
 .about-copy,
-.about-cancel {
+.about-cancel,
+.creation-paused-title,
+.creation-paused-copy,
+.creation-paused-support,
+.creation-paused-cancel {
   filter: none;
   -webkit-font-smoothing: none;
 }
-body.is-about-open #glove-canvas { z-index: 1800; }
+body.is-about-open #glove-canvas,
+body.is-creation-paused-open #glove-canvas { z-index: 1800; }
 .retro-home .about-overlay,
-.retro-home .about-overlay button { cursor: none; }
+.retro-home .about-overlay button,
+.retro-home .creation-paused-overlay,
+.retro-home .creation-paused-overlay button { cursor: none; }
 .retro-home .modal-backdrop { z-index: 2100; cursor: none; }
 .retro-home .modal,
 .retro-home .modal button,

@@ -3,6 +3,7 @@ import flowMusicUrl from "../visual/assets/skyward-save.mp3?url";
 import viewportLogoUrl from "../visual/assets/branding/super-weights-bros-stacked-white.png?url";
 import AuthGate from "./AuthGate.jsx";
 import CreateVisualShell from "./CreateVisualShell.jsx";
+import CreationPaused from "./CreationPaused.jsx";
 import FighterCreator from "./FighterCreator.jsx";
 import ModalPage from "./ModalPage.jsx";
 import RetroHome from "./RetroHome.jsx";
@@ -347,6 +348,10 @@ export default function App() {
   const [handoffOpen, setHandoffOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [createStage, setCreateStage] = useState(null);
+  // Server killswitch (CREATION_ENABLED). Assumed on until /api/session
+  // answers; the value is re-read on every create click, so a flip takes
+  // effect without the player reloading.
+  const [creationOpen, setCreationOpen] = useState(true);
   const [flowMusicActive, setFlowMusicActive] = useState(false);
   const gameRef = useRef(null);
   const gameFrameRef = useRef(null);
@@ -475,6 +480,7 @@ export default function App() {
         if (cancelled) return;
         setAuthorized(Boolean(session.authorized));
         setUser(session.user || null);
+        setCreationOpen(session.creationEnabled !== false);
         if (isCreatePage && session.user && !session.authorized) {
           setPendingAction({ type: "create" });
         }
@@ -817,7 +823,10 @@ export default function App() {
       const session = await getSession();
       setAuthorized(Boolean(session.authorized));
       setUser(session.user || null);
-      if (!session.user) setCreateStage("auth");
+      const open = session.creationEnabled !== false;
+      setCreationOpen(open);
+      if (!open) setCreateStage("paused");
+      else if (!session.user) setCreateStage("auth");
       else setCreateStage(session.authorized ? "creator" : "rom");
     } catch (error) {
       setPageError(error.message || "Could not start character creation.");
@@ -1096,6 +1105,13 @@ export default function App() {
     .map((character, index) => ({ character, index }))
     .filter(({ character }) => matchesCharacterSearch(character, fighterSearch));
 
+  // /create is a real URL, so the killswitch has to close it too — not just
+  // the create tile on the home page. A closed lab replaces the whole page:
+  // no ROM shell, no sign-in gate, nothing to fill in.
+  if (isCreatePage && !loadingSession && !creationOpen) {
+    return <CreationPaused open onClose={() => window.location.assign("/")} />;
+  }
+
   if (isCreatePage) {
     Object.assign(visualBridgeRef.current, {
       completeCreateRom() { setPendingAction(null); },
@@ -1176,6 +1192,7 @@ export default function App() {
           stage={createStage}
           user={user}
         />
+        <CreationPaused open={createStage === "paused"} onClose={() => setCreateStage(null)} />
         <SettingsModal
           authorized={authorized}
           debugMode={new URLSearchParams(window.location.search).get("debug") === "1"}
