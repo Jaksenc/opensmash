@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-const DEFAULT_CLOSE_DURATION = 480;
-const DEFAULT_FOCUS_DELAY = 680;
+const DEFAULT_CLOSE_DURATION = 400;
+const DEFAULT_FOCUS_DELAY = 570;
 
 export default function ModalPage({
   bodyClass,
