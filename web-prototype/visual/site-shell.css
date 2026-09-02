@@ -649,11 +649,13 @@
     pointer-events: none;
     transition: opacity 380ms ease, visibility 380ms step-end;
   }
-  .launch-flow-overlay.is-model-settled[data-step="upload"] .launch-flow-upload {
+  .launch-flow-overlay.is-upload-revealed[data-step="upload"] .launch-flow-upload {
     opacity: 1;
     visibility: visible;
+    transition: opacity 90ms ease-out, visibility 0s;
+  }
+  .launch-flow-overlay.is-model-settled[data-step="upload"] .launch-flow-upload {
     pointer-events: auto;
-    transition: opacity 120ms ease-out, visibility 0s;
   }
   .launch-flow-overlay[data-step="controller"] .launch-flow-controller {
     visibility: visible;
