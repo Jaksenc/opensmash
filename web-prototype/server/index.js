@@ -5,6 +5,7 @@ import http from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createFighterJobs } from "./fighter-jobs.js";
+import { HandoffError, createHandoffRooms } from "./handoff-rooms.js";
 import { createAuthService } from "./auth.js";
 import { createJobDatabase } from "./job-database.js";
 import { createJobDispatcher } from "./job-dispatcher.js";
@@ -83,6 +84,9 @@ const COOKIE_SECRETS = [
   process.env.COOKIE_SECRET_PREVIOUS,
 ].filter((secret, index, secrets) => secret && secrets.indexOf(secret) === index);
 const MAX_JSON_BODY = 4096;
+// WebRTC offers/answers run a few KiB; the room store caps each message again.
+const MAX_HANDOFF_BODY = 32 * 1024;
+const handoffRooms = createHandoffRooms();
 const ROM_VALIDATION_WINDOW_MS = 15 * 60 * 1000;
 const ROM_VALIDATION_LIMIT = Number(process.env.ROM_VALIDATION_LIMIT || 10);
 const romValidationAttempts = new Map();
@@ -224,9 +228,13 @@ function mutationOriginAllowed(req) {
   return origin === ownOrigin || configured.includes(origin);
 }
 
-function romValidationAllowed(req) {
+function clientAddress(req) {
   const forwarded = String(req.headers["x-forwarded-for"] || "").split(",")[0].trim();
-  const address = forwarded || req.socket.remoteAddress || "unknown";
+  return forwarded || req.socket.remoteAddress || "unknown";
+}
+
+function romValidationAllowed(req) {
+  const address = clientAddress(req);
   const cutoff = Date.now() - ROM_VALIDATION_WINDOW_MS;
   const attempts = (romValidationAttempts.get(address) || []).filter((time) => time >= cutoff);
   if (attempts.length >= ROM_VALIDATION_LIMIT) return false;
@@ -281,12 +289,12 @@ function engineCacheControl(relative, searchParams) {
   return "private, max-age=3600";
 }
 
-async function readJsonBody(req) {
+async function readJsonBody(req, limit = MAX_JSON_BODY) {
   const chunks = [];
   let size = 0;
   for await (const chunk of req) {
     size += chunk.length;
-    if (size > MAX_JSON_BODY) throw new Error("Request body is too large");
+    if (size > limit) throw new Error("Request body is too large");
     chunks.push(chunk);
   }
   return JSON.parse(Buffer.concat(chunks).toString("utf8"));
@@ -663,6 +671,48 @@ async function handleRequest(req, res, vite) {
     const filePath = fighterJobs.announcerPath(fighterAnnouncerMatch[1], user?.uid);
     if (filePath && (await serveFile(req, res, filePath, "public, max-age=60"))) return;
     return json(res, 404, { error: "Fighter announcer clip is not ready." });
+  }
+
+  // ROM handoff signalling (shared/rom-handoff.js, server/handoff-rooms.js).
+  // Only SDP and ICE candidates pass through here; the ROM streams
+  // peer-to-peer between the player's own devices.
+  const handoffMatch = pathname.match(/^\/api\/handoff\/rooms(?:\/([A-Za-z0-9]{1,12})\/(join|messages|close))?$/);
+  if (handoffMatch) {
+    const [, code, verb] = handoffMatch;
+    try {
+      if (!code && req.method === "POST") {
+        // Hosting requires a validated ROM session: the host is about to
+        // stream the ROM it already proved it holds.
+        if (!romSession) return json(res, 401, { error: "Validate your ROM on this device before sending it to another." });
+        return json(res, 200, handoffRooms.create({ address: clientAddress(req) }));
+      }
+      if (code && verb === "join" && req.method === "POST") {
+        return json(res, 200, handoffRooms.join(code));
+      }
+      if (code && verb === "messages" && req.method === "POST") {
+        const body = await readJsonBody(req, MAX_HANDOFF_BODY);
+        return json(res, 200, handoffRooms.post(code, {
+          role: String(body.role || ""),
+          key: String(body.key || ""),
+          message: body.message,
+        }));
+      }
+      if (code && verb === "messages" && req.method === "GET") {
+        return json(res, 200, handoffRooms.poll(code, {
+          role: String(url.searchParams.get("role") || ""),
+          key: String(url.searchParams.get("key") || ""),
+          after: Number(url.searchParams.get("after") || 0),
+        }), { "Cache-Control": "no-store" });
+      }
+      if (code && verb === "close" && req.method === "POST") {
+        const body = await readJsonBody(req);
+        return json(res, 200, handoffRooms.close(code, { role: String(body.role || ""), key: String(body.key || "") }));
+      }
+      return json(res, 405, { error: "Method not allowed" });
+    } catch (error) {
+      if (error instanceof HandoffError) return json(res, error.status, { error: error.message });
+      return json(res, 400, { error: error.message || "Invalid request" });
+    }
   }
 
   if (req.method === "POST" && pathname === "/api/validate-rom") {

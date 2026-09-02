@@ -75,6 +75,35 @@ package already contains the project's extracted engine assets.
 Use the `Dev: clear ROM` button in the header to expire the validation cookie
 and exercise the first-run flow again.
 
+### Other ways to provide the ROM
+
+All three paths end in the same `identifyRomFile` → `POST /api/validate-rom`
+→ IndexedDB sequence as the upload button, so the engine and the session
+cookie cannot tell them apart.
+
+- **Send ROM to another device** (More menu, or Advanced when signed in with a
+  ROM). The host browser opens a signalling room (`POST /api/handoff/rooms`,
+  requires the ROM cookie), shows a QR code + 6-character code, and streams its
+  stored ROM over a WebRTC data channel to the device that scans it
+  (`src/rom-handoff-client.js`, protocol in `shared/rom-handoff.js`). The
+  server relays only SDP and ICE candidates (`server/handoff-rooms.js`,
+  in-memory, 10-minute rooms — move to Firestore before scaling the API past
+  one instance). STUN only; devices should share a Wi-Fi network. On the phone
+  the play flow's **Can't find your ROM?** panel (worded "Have it on your
+  computer? Send it to this phone" on touch devices) or opening
+  `/?handoff=CODE` receives it. Both ends hold a screen wake lock while a
+  handoff is pending: a locked phone or closed lid suspends the tab and drops
+  the connection, so the host modal says to keep the window open.
+- **Scan a folder** (desktop Chromium only, hidden elsewhere; lives in the same
+  collapsed panel). Uses
+  `showDirectoryPicker`, walks the tree with size/extension pre-filters and
+  hard limits (`shared/rom-scan-filter.js`), probes candidates for an N64
+  header, and hands the first identified file to the upload path
+  (`src/rom-folder-scan.js`).
+- **Persistent storage**. `storeRom` asks `navigator.storage.persist()` so
+  Safari does not evict the ROM after a week away; a refusal is logged and
+  the flow continues.
+
 ## Generate a fighter
 
 Open `/create`, sign in, validate a supported ROM, and submit a name,

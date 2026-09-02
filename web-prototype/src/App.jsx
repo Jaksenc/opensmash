@@ -6,6 +6,7 @@ import CreateVisualShell from "./CreateVisualShell.jsx";
 import FighterCreator from "./FighterCreator.jsx";
 import ModalPage from "./ModalPage.jsx";
 import RetroHome from "./RetroHome.jsx";
+import RomHandoffModal from "./RomHandoffModal.jsx";
 import SettingsModal from "./SettingsModal.jsx";
 import { matchesCharacterSearch } from "../shared/character-search.js";
 import { mergeCharactersBySlug } from "../shared/character-roster.js";
@@ -18,6 +19,7 @@ import {
   requireControlsRoadblock,
 } from "../visual/controls-roadblock.js";
 import { identifyRomFile } from "./rom-validation.js";
+import { handoffCodeFromLocation } from "../shared/rom-handoff.js";
 import { clearRomStore, hasStoredRom, prewarmEngineArchive, storeRom } from "../shared/rom-store.js";
 import { lockPageScroll } from "../shared/page-scroll-lock.js";
 import { clearControllerTutorialCompletion } from "../visual/control-tutorial.js";
@@ -328,6 +330,7 @@ export default function App() {
   const [advancedOptions, setAdvancedOptions] = useState(loadAdvancedOptions);
   const gamepads = useGamepads();
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [handoffOpen, setHandoffOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [createStage, setCreateStage] = useState(null);
   const [flowMusicActive, setFlowMusicActive] = useState(false);
@@ -348,6 +351,31 @@ export default function App() {
     });
   }, []);
   const pageError = pageErrorToast?.message || "";
+
+  // A handoff QR opens the receiver directly, then removes the one-time code
+  // from the URL so a reload cannot consume it twice. Keep the code in state
+  // because React StrictMode intentionally re-runs effects in development.
+  const [initialHandoffCode] = useState(() => handoffCodeFromLocation(window.location.search));
+  useEffect(() => {
+    if (!initialHandoffCode) return undefined;
+    const url = new URL(window.location.href);
+    if (url.searchParams.has("handoff")) {
+      url.searchParams.delete("handoff");
+      window.history.replaceState(null, "", url.pathname + url.search + url.hash);
+    }
+    let attempts = 0;
+    let timer = 0;
+    function deliver() {
+      if (window.gameLauncher?.receiveHandoff) {
+        window.gameLauncher.receiveHandoff(initialHandoffCode);
+        return;
+      }
+      attempts += 1;
+      if (attempts < 200) timer = window.setTimeout(deliver, 50);
+    }
+    deliver();
+    return () => window.clearTimeout(timer);
+  }, [initialHandoffCode]);
 
   useEffect(() => {
     if (!pageErrorToast) return undefined;
@@ -1024,8 +1052,11 @@ export default function App() {
           onRestoreDefaults={restoreDefaultSettings}
           onResetControllerTutorial={resetControllerTutorialFromAdvanced}
           onResetRom={resetRomFromAdvanced}
+          onSendRom={() => { setAdvancedOpen(false); setHandoffOpen(true); }}
+          onReceiveRom={() => { setAdvancedOpen(false); window.gameLauncher?.openRomOptions?.(); }}
           onSound={toggleSound}
         />
+        <RomHandoffModal open={handoffOpen} onClose={() => setHandoffOpen(false)} />
       </>
     );
   }
@@ -1216,8 +1247,11 @@ export default function App() {
         onRestoreDefaults={restoreDefaultSettings}
         onResetControllerTutorial={resetControllerTutorialFromAdvanced}
         onResetRom={resetRomFromAdvanced}
+        onSendRom={() => { setAdvancedOpen(false); setHandoffOpen(true); }}
+        onReceiveRom={() => { setAdvancedOpen(false); window.gameLauncher?.openRomOptions?.(); }}
         onSound={toggleSound}
       />
+      <RomHandoffModal open={handoffOpen} onClose={() => setHandoffOpen(false)} />
 
       {pendingAction && pendingAction.type !== "create" && (
         <RomModal
