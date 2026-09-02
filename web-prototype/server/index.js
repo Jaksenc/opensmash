@@ -12,6 +12,7 @@ import { createObjectStore } from "./object-store.js";
 import { withInitialState } from "./html-state.js";
 import { assignRosterBases, bundleForBase, FIGHTERS } from "./roster.js";
 import { matchesCharacterSearch } from "../shared/character-search.js";
+import { bakedRosterEntries } from "../shared/baked-roster.js";
 import { ROMS_BY_SHA1, UNSUPPORTED_ROMS_BY_SHA1 } from "../shared/rom-catalog.js";
 
 const APP_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -22,6 +23,7 @@ const APP_SHELL_CACHE_CONTROL = "public, max-age=15";
 const APP_SHELL_EDGE_CACHE_CONTROL =
   "public, max-age=30, stale-while-revalidate=300, stale-if-error=86400";
 const ENGINE_ROOT = path.join(REPO_ROOT, "BattleShip", "web-dist");
+const PIPELINE_PLAY_ROOT = path.join(REPO_ROOT, "pipeline", "play");
 const PIPELINE_UI_ROOT = path.join(REPO_ROOT, "pipeline", "play", "ui");
 const SITE_ASSETS_ROOT = path.join(APP_ROOT, "visual", "assets");
 const CHARACTERS_CONFIG = path.join(APP_ROOT, "config", "characters.json");
@@ -258,16 +260,11 @@ async function readJsonBody(req) {
 }
 
 async function configuredCharacters(query = "", user = null) {
-  const config = JSON.parse(await readFile(CHARACTERS_CONFIG, "utf8"));
-  const featuredOrder = new Map(
-    config.map((entry, index) => [typeof entry === "string" ? entry : entry.slug, index]),
-  );
+  const config = await bakedCharacterConfig();
   const result = [];
 
-  for (const character of await engineRoster()) {
+  for (const character of await engineRoster(config)) {
     const { slug } = character;
-    if (!/^[a-z0-9]+$/.test(slug)) continue;
-    if (!fighterJobs.isSlugAccessible(slug, user?.uid)) continue;
 
     const fighterName = character.base || "mario";
     const fkind = FIGHTERS.indexOf(fighterName);
@@ -277,7 +274,7 @@ async function configuredCharacters(query = "", user = null) {
     try {
       await access(path.join(characterRoot, "portrait_raw.png"));
       const bundle = bundleForBase(slug, fighterName);
-      await access(path.join(ENGINE_ROOT, "bundles", bundle));
+      await access(path.join(PIPELINE_PLAY_ROOT, bundle));
       result.push({
         slug,
         name: character.display,
@@ -295,12 +292,6 @@ async function configuredCharacters(query = "", user = null) {
     }
   }
 
-  result.sort((left, right) => {
-    const leftRank = featuredOrder.get(left.slug) ?? Number.MAX_SAFE_INTEGER;
-    const rightRank = featuredOrder.get(right.slug) ?? Number.MAX_SAFE_INTEGER;
-    return leftRank - rightRank || left.name.localeCompare(right.name);
-  });
-
   const configuredSlugs = new Set(result.map((character) => character.slug));
   for (const job of fighterJobs.listVisible(user?.uid)) {
     if (job.status !== "complete" || !job.character || configuredSlugs.has(job.slug)) continue;
@@ -310,14 +301,21 @@ async function configuredCharacters(query = "", user = null) {
   return result.filter((character) => matchesCharacterSearch(character, query));
 }
 
-async function engineRoster() {
-  const bundleRoot = path.join(ENGINE_ROOT, "bundles");
-  const files = new Set(await readdir(bundleRoot));
+async function bakedCharacterConfig() {
+  return bakedRosterEntries(JSON.parse(await readFile(CHARACTERS_CONFIG, "utf8")));
+}
+
+async function engineRoster(config = null) {
+  const entries = config || await bakedCharacterConfig();
+  const files = new Set(await readdir(PIPELINE_PLAY_ROOT));
   const characters = [];
 
-  for (const file of [...files].sort()) {
-    if (!file.endsWith(".osb") || file.slice(0, -4).includes("-")) continue;
-    const slug = file.slice(0, -4);
+  for (const entry of entries) {
+    const { slug } = entry;
+    if (!files.has(`${slug}.osb`)) {
+      console.warn(`Skipping baked character '${slug}': play/${slug}.osb is missing`);
+      continue;
+    }
     const variants = [...files]
       .filter((candidate) => candidate.startsWith(`${slug}-`) && candidate.endsWith(".osb"))
       .map((candidate) => candidate.slice(slug.length + 1, -4))
@@ -328,20 +326,43 @@ async function engineRoster() {
     } catch {
       // Bundle-only characters still work with generated labels.
     }
-    const display = metadata.display || slug;
+    const display = entry.name || metadata.display || slug;
+    let uiFiles = new Set();
+    try {
+      uiFiles = new Set(await readdir(path.join(PIPELINE_UI_ROOT, slug)));
+    } catch {
+      // configuredCharacters reports the missing required portrait clearly.
+    }
     characters.push({
       slug,
       display,
-      short: metadata.short || display.toUpperCase().replace(/[^A-Z]/g, "").slice(0, 7),
-      base: metadata.base ?? null,
-      preferredBases: metadata.preferred_bases,
+      short: entry.short || metadata.short || display.toUpperCase().replace(/[^A-Z]/g, "").slice(0, 7),
+      base: entry.base ?? metadata.base ?? null,
+      preferredBases: entry.preferredBases || metadata.preferred_bases,
       variants,
-      ui: files.has(`${slug}.osbui`),
-      voice: files.has(`${slug}.wav`),
+      ui: uiFiles.has(`${slug}.osbui`),
+      voice: uiFiles.has("announcer.wav"),
     });
   }
 
   return assignRosterBases(characters);
+}
+
+async function bakedEngineFile(relative) {
+  const match = relative.match(/^bundles\/([a-z0-9]+)(?:-([a-z0-9]+))?\.(osb|osbui|wav)$/);
+  if (!match) return null;
+  const [, slug, variant, extension] = match;
+  const configured = new Set((await bakedCharacterConfig()).map((entry) => entry.slug));
+  if (!configured.has(slug) || (variant && extension !== "osb")) return null;
+
+  if (extension === "osb") {
+    return path.join(PIPELINE_PLAY_ROOT, `${slug}${variant ? `-${variant}` : ""}.osb`);
+  }
+  return path.join(
+    PIPELINE_UI_ROOT,
+    slug,
+    extension === "osbui" ? `${slug}.osbui` : "announcer.wav",
+  );
 }
 
 async function serveAppShell(req, res) {
@@ -591,7 +612,15 @@ async function handleRequest(req, res, vite) {
     if (!validSession(req)) return json(res, 401, { error: "ROM validation required" });
     const relative = pathname.slice("/engine/".length) || "index.html";
     const bundleMatch = relative.match(/^bundles\/([a-z0-9]+)(?:-|\.)/);
-    if (bundleMatch && !fighterJobs.isSlugAccessible(bundleMatch[1], user?.uid)) {
+    const bakedFile = bundleMatch ? await bakedEngineFile(relative) : null;
+    const visibleDynamicBundle = bundleMatch && fighterJobs
+      .listVisible(user?.uid)
+      .some((job) => job.slug === bundleMatch[1]);
+    if (bundleMatch && !bakedFile && !visibleDynamicBundle) {
+      return json(res, 404, { error: "Engine file not found" });
+    }
+    if (bakedFile) {
+      if (await serveFile(req, res, bakedFile, engineCacheControl(relative, url.searchParams))) return;
       return json(res, 404, { error: "Engine file not found" });
     }
     const filePath = safeFile(ENGINE_ROOT, relative);
@@ -602,15 +631,15 @@ async function handleRequest(req, res, vite) {
   if (pathname === "/bundles.json" || pathname === "/roster.json") {
     if (!validSession(req)) return json(res, 401, { error: "ROM validation required" });
     if (pathname === "/bundles.json") {
-      const names = (await readdir(path.join(ENGINE_ROOT, "bundles")))
-        .filter((name) => /\.(osb|osbui|wav)$/.test(name))
-        .filter((name) => fighterJobs.isSlugAccessible(name.match(/^([a-z0-9]+)/)?.[1], user?.uid))
-        .sort();
+      const names = (await engineRoster()).flatMap((character) => [
+        `${character.slug}.osb`,
+        ...character.variants.map((variant) => `${character.slug}-${variant}.osb`),
+        ...(character.ui ? [`${character.slug}.osbui`] : []),
+        ...(character.voice ? [`${character.slug}.wav`] : []),
+      ]).sort();
       return json(res, 200, names);
     }
-    return json(res, 200, (await engineRoster()).filter(
-      (character) => fighterJobs.isSlugAccessible(character.slug, user?.uid),
-    ));
+    return json(res, 200, await engineRoster());
   }
 
   if (pathname.startsWith("/character-assets/")) {
@@ -618,9 +647,6 @@ async function handleRequest(req, res, vite) {
       /^\/character-assets\/([a-z0-9]+)\/(portrait\.png|announcer\.wav)$/,
     );
     if (!match) return json(res, 404, { error: "Character asset not found" });
-    if (!fighterJobs.isSlugAccessible(match[1], user?.uid)) {
-      return json(res, 404, { error: "Character asset not found" });
-    }
     const allowed = (await engineRoster()).some((character) => character.slug === match[1]);
     if (!allowed) return json(res, 404, { error: "Character asset not found" });
     const fileName = match[2] === "portrait.png" ? "portrait_raw.png" : "announcer.wav";

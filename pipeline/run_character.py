@@ -3,7 +3,7 @@
 
   run_character.py "Weird Al Yankovic" [--short WEIRDAL] [--photo ref.png]
                    [--emblem "context or object"] [--out play/ui/<slug>]
-                   [--variants TARGET,...|all] [--force-stage <stage>]
+                   [--variants TARGET,...|all] [--force-stage <stage>] [--publish]
 
 Stages (each skipped if its output already exists — delete a file or use
 --force-stage to redo): expand -> tpose -> mesh (Tripo v3 + rig) ->
@@ -262,6 +262,8 @@ def main():
              "donkey/yoshi, while 'all' includes those experimental targets")
     ap.add_argument("--force-stage", default=None,
                     choices=["expand", "tpose", "mesh", "convert", "variants", "portrait", "stock", "emblem", "ui", "voice"])
+    ap.add_argument("--publish", action="store_true",
+                    help="after a successful run, validate and add this manual character to the baked roster")
     a = ap.parse_args()
 
     slug = re.sub(r"[^a-z0-9]", "", a.name.lower())[:16]
@@ -452,6 +454,13 @@ def main():
             dst = os.path.join(WEBDIST, base)
             open(dst, "wb").write(open(src, "rb").read())
         log(f"staged into web-dist/bundles ({len(stage_files)} files)")
+    if a.publish:
+        canonical_out = os.path.join(HERE, "play", "ui", slug)
+        if os.path.realpath(out) != os.path.realpath(canonical_out):
+            raise RuntimeError("--publish requires the canonical play/ui/<slug> output directory")
+        from baked_roster import publish_character
+        changed = publish_character(slug)
+        log(f"{'published' if changed else 'already present in'} baked roster manifest")
     url = (f"http://localhost:8600/index.html?inject=bundles/{slug}.osb"
            f"&inject_ui=bundles/{slug}.osbui&inject_voice=bundles/{slug}.wav"
            f"&SSB64_START_SCENE=16")
