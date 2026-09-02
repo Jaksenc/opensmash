@@ -50,17 +50,14 @@ export function LaunchFlow() {
       <section className="launch-flow-step launch-flow-upload" role="dialog" aria-modal="true" aria-labelledby="launch-flow-title" aria-describedby="launch-flow-copy rom-filename-hint">
         <h2 id="launch-flow-title" className="visually-hidden">Play Smash the Weights</h2>
         <p id="launch-flow-copy" className="launch-flow-copy">
-          To play Smash the Weights, upload your legally obtained Super Smash Bros. 64 ROM. It stays on your
-          device: the game's assets are built from it locally and never uploaded.
+          To play Smash the Weights, upload your legally obtained Super Smash Bros. 64 ROM. It stays on your device.
         </p>
         <div id="rom-filename-hint" className="launch-flow-rom-hint">
           <span className="launch-flow-rom-hint-label">Only the USA release works; it is normally named</span>
           <span className="launch-flow-rom-filenames">
             <code>Super Smash Bros. (USA).z64</code>
           </span>
-          <span className="launch-flow-rom-hint-label">
-            Your ROM stays in this browser and never uploads. Safari clears it after a week without a visit, so you may be asked again.
-          </span>
+          <span className="launch-flow-rom-hint-label">Safari may ask again after a week away.</span>
         </div>
         <input id="rom-file-input" className="launch-flow-file-input" type="file" hidden accept=".zip,.z64,.n64,.v64,.rom,application/zip,application/octet-stream" />
         <FlameAction id="rom-upload-button" type="button">Upload ROM</FlameAction>
@@ -403,10 +400,7 @@ export default function RetroHome({
                   create custom fighters and play them inside the original game.
                 </p>
                 <p className="launch-flow-copy">You must supply a legally obtained copy of the game ROM to play.</p>
-                <p className="launch-flow-copy">
-                  Your ROM never leaves your browser. The game's assets are built from it on your own device and
-                  kept in local browser storage; nothing from the ROM is uploaded to or served by our servers.
-                </p>
+                <p className="launch-flow-copy">Your ROM and its assets stay on your device. Nothing is uploaded.</p>
                 <p className="launch-flow-copy about-legal">
                   OpenSmash is not affiliated with, endorsed by, or sponsored by Nintendo. Super Smash Bros., Nintendo
                   64, and all related characters, names, and marks are trademarks of Nintendo and their respective
