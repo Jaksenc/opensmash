@@ -768,17 +768,21 @@
     margin-top: 11px;
     background: #050303;
   }
-  .launch-flow-controller .launch-flow-controls-close {
+  .launch-flow-controller .launch-flow-controls-bottom {
     --launch-control-width: clamp(210px, 23vw, 300px);
     position: fixed;
     left: 50%;
     bottom: clamp(16px, 3vw, 36px);
     z-index: 4;
-    display: none;
-    min-height: 0;
+    box-sizing: border-box;
+    width: var(--launch-control-width);
+    min-width: var(--launch-control-width);
+    height: 48px;
+    min-height: 48px;
     margin: 0;
     transform: translateX(-50%);
   }
+  .launch-flow-controller .launch-flow-controls-close { display: none; }
   .launch-flow-overlay[data-mode="controls-preview"] .launch-flow-controls-close {
     display: grid;
   }
