@@ -312,7 +312,10 @@
     background: transparent;
   }
   @media (max-width: 1024px) {
-    .retro-site-header { padding-inline: clamp(9px, 1.4vw, 16px); }
+    .retro-site-header {
+      padding-left: clamp(9px, 1.4vw, 16px);
+      padding-right: calc(clamp(9px, 1.4vw, 16px) + 4px);
+    }
   }
   .retro-site-logo {
     position: relative;
