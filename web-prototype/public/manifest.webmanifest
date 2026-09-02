@@ -1,0 +1,14 @@
+{
+  "name": "OpenSmash",
+  "short_name": "OpenSmash",
+  "description": "Super Smash Bros. 64 in the browser with generated fighters.",
+  "start_url": "/",
+  "display": "fullscreen",
+  "orientation": "any",
+  "background_color": "#090807",
+  "theme_color": "#090807",
+  "icons": [
+    { "src": "/favicon.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }
+  ]
+}
