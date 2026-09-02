@@ -422,6 +422,9 @@
     user-select: none;
     -webkit-user-drag: none;
   }
+  @media (min-width: 1025px) {
+    .retro-site-logo { transform: translate(-8px, 3px); }
+  }
   .retro-site-nav {
     display: flex;
     align-items: center;
