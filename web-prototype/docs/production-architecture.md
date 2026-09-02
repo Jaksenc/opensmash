@@ -24,8 +24,14 @@ contracts. This keeps the production architecture straightforward.
 
 ## Request and job flow
 
-1. The browser hashes the selected ROM locally and submits only SHA-256 and byte
+1. The browser hashes the selected ROM locally and submits only SHA-1 and byte
    count. The API sets a signed, HTTP-only, secure cookie for an accepted hash.
+   The browser then keeps the canonical ROM bytes in IndexedDB
+   (`shared/rom-store.js`); the engine iframe reads them and builds
+   `BattleShip.o2r` locally with Torch compiled to wasm
+   (`BattleShip/docs/web_rom_extraction.md`). No ROM-derived asset is served
+   by the API or cached at the edge; the engine package holds only code,
+   shaders, fonts, and extraction recipes.
 2. Every fighter mutation checks both the ROM cookie and a revocation-aware
    Firebase session cookie. `/create` blocks its UI until both checks succeed.
 3. The browser uploads the reference photo, visibility, and rights attestation.
@@ -129,7 +135,10 @@ container interruption can spend twice for the same mesh.
 
 The browser-side ROM hash check proves that the browser supplied an accepted
 hash string; it does not prove possession to a hostile client. Keep it as a
-legal/product gate, not an authorization or anti-abuse boundary.
+legal/product gate, not an authorization or anti-abuse boundary. Possession is
+enforced by construction instead: the game's Nintendo-derived assets exist
+only as an archive the browser builds from a ROM it holds, so a minted cookie
+without a ROM yields an engine with nothing to render.
 
 Implemented controls include Firebase uploader identity and account disabling,
 one active job per owner, per-user daily and global queue limits, rights

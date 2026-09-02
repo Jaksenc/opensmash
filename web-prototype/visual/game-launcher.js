@@ -91,6 +91,9 @@ const controllerStep = document.getElementById('launch-flow-controller-step');
 const controlsMenuButton = document.getElementById('controls-menu-button');
 const controlsCloseButton = document.getElementById('controls-close-button');
 const controlPrompt = document.getElementById('launch-control-prompt');
+const controlSkipButton = document.getElementById('launch-control-skip');
+const CONTROL_SKIP_DELAY_MS = 2000;
+let controlSkipTimer = 0;
 const controlKeycaps = [...document.querySelectorAll('[data-control-key]')];
 const controllerCallouts = document.getElementById('controller-callouts');
 const controllerCalloutLines = document.getElementById('controller-callout-lines');
@@ -1751,7 +1754,35 @@ function resetRomPrompt() {
   }
 }
 
+function hideControlSkip() {
+  clearTimeout(controlSkipTimer);
+  controlSkipTimer = 0;
+  if (controlSkipButton) controlSkipButton.hidden = true;
+}
+
+// Offer "Skip" shortly after the controller step appears (launch mode only —
+// the controls preview has its own Close button).
+function scheduleControlSkip() {
+  hideControlSkip();
+  if (!controlSkipButton || controlsPreviewMode) return;
+  controlSkipTimer = window.setTimeout(() => {
+    if (!overlay || overlay.hidden || overlay.dataset.step !== 'controller' ||
+        controlCheckComplete || controlsPreviewMode) return;
+    controlSkipButton.hidden = false;
+  }, CONTROL_SKIP_DELAY_MS);
+}
+
+function skipControlCheck() {
+  if (!overlay || overlay.hidden || overlay.dataset.step !== 'controller' || controlsPreviewMode) return;
+  hideControlSkip();
+  controlCheckComplete = true;
+  controlExitPending = false;
+  clearTimeout(flowTimer);
+  continueToGame();
+}
+
 function resetControlCheck() {
+  hideControlSkip();
   controlCheckComplete = false;
   controlExitPending = false;
   completedControlKeys.clear();
@@ -1787,6 +1818,7 @@ function registerControlKey(event) {
     }
     controlCheckComplete = true;
     rememberCompletedControllerTutorial();
+    hideControlSkip();
     controlPrompt?.classList.add('is-complete');
     clearTimeout(flowTimer);
     const flipInProgress = controllerZRevealUntil > performance.now() ||
@@ -1840,6 +1872,7 @@ function showRequiredControls(fighter) {
   document.body.classList.add('is-launch-flow-open');
   ensureFlowRenderer();
   showFlowModel('controller');
+  scheduleControlSkip();
   requestAnimationFrame(() => {
     overlay.classList.add('is-visible');
     flowTimer = window.setTimeout(() => controllerStep?.focus(), 1150);
@@ -1951,6 +1984,7 @@ function transitionToController() {
     if (sequence !== flowSequence || overlay.hidden) return;
     overlay.dataset.step = 'controller';
     showFlowModel('controller');
+    scheduleControlSkip();
     flowTimer = window.setTimeout(() => controllerStep?.focus(), 1150);
   });
 }
@@ -1981,6 +2015,7 @@ async function validateRom(file) {
           extracting: 'Opening archive…',
           hashing: 'Checking ROM…',
           validating: 'Checking ROM…',
+          storing: 'Storing ROM…',
         })[status] || 'Checking ROM…';
       });
     } else {
@@ -2123,6 +2158,7 @@ grid?.addEventListener('characterselect', event => {
 });
 
 resetRomButton?.addEventListener('click', resetRom);
+controlSkipButton?.addEventListener('click', skipControlCheck);
 window.addEventListener('resize', resizeFlowRenderer);
 window.addEventListener('keydown', event => {
   if (registerControlKey(event)) return;
