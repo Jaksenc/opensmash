@@ -234,6 +234,7 @@ export function createFighterJobs({
 }) {
   const jobsRoot = path.resolve(process.env.FIGHTER_JOBS_ROOT || path.join(appRoot, "data", "fighter-jobs"));
   const pipelineRoot = path.join(repoRoot, "pipeline");
+  const playRoot = path.join(repoRoot, "play");
   const pipelineScript = path.join(pipelineRoot, "run_character.py");
   const normalizeImageScript = path.join(appRoot, "server", "normalize-image.py");
   const jobs = new Map();
@@ -337,7 +338,7 @@ export function createFighterJobs({
   async function restoreCheckpoint(job) {
     for (const file of job.checkpoint?.files || []) {
       const destination = file.scope === "play"
-        ? path.join(pipelineRoot, "play", file.name)
+        ? path.join(playRoot, file.name)
         : path.join(pipelineUiRoot, job.slug, file.name);
       await objectStore.getFile(file.key, destination);
     }
@@ -364,7 +365,6 @@ export function createFighterJobs({
         // Missing files simply mean that stage had not completed yet.
       }
     }
-    const playRoot = path.join(pipelineRoot, "play");
     try {
       const bundles = (await readdir(playRoot))
         .filter((name) => (name === `${job.slug}.osb` || name.startsWith(`${job.slug}-`)) && name.endsWith(".osb"));
