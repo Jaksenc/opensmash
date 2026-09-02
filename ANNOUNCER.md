@@ -23,9 +23,28 @@ python3 pipeline/announcer_voice.py "Queen Elizabeth the Second" --slug queen
 python -m pip install -r requirements.txt
 ```
 
-`.env` must contain `FAL_KEY` and
-`MINIMAX_ANNOUNCER_VOICE_ID`. The file is ignored by git; `.env.example` lists
-the required variable names without secrets.
+`.env` must contain `FAL_KEY` and `MINIMAX_ANNOUNCER_VOICE_ID`. The file is
+ignored by git; `.env.example` lists the variable names without secrets.
+
+## Making the voice clone
+
+The voice id is a MiniMax clone of the game's announcer. The reference it is
+built from is rendered out of the ROM by `pipeline/render_announcer_refs.py`
+(`tools/derive_from_rom.py` runs it): `conditioning_style.wav` is the twelve
+fighter names at in-game pitch (14 s), `conditioning_identity.wav` the menu
+phrases (10 s). To create the clone on your own fal account:
+
+```sh
+python3 pipeline/create_announcer_voice.py
+```
+
+It uploads the name montage, calls `fal-ai/minimax/voice-clone` with a short
+preview line, saves the preview as `announcer-clone-preview.wav`, and prints
+`MINIMAX_ANNOUNCER_VOICE_ID=...` to paste into `.env`. `--audio` swaps the
+reference, `--dry-run` shows the request without spending anything. MiniMax
+charges per clone, and a clone unused for TTS for seven days is deleted, so
+generate a clip soon after. Judge the preview by ear (see the notes at the
+bottom of this file on why metrics don't work).
 
 ## Command line
 

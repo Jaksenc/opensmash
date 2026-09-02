@@ -13,36 +13,22 @@ own ROM.
 
 ## Upstream projects
 
-Everything below the site is a chain of forks. We keep our own copies of each
-so the wasm build and the pipeline hooks stay pinned; the BattleShip
-submodules point at these copies.
+Everything below the site is a chain of forks. We keep our own copies so the
+wasm build and the pipeline hooks stay pinned; BattleShip's submodules point
+at these copies.
 
 | Our copy | Forked from | What it is |
 |---|---|---|
-| [turtlesoupy/BattleShip](https://github.com/turtlesoupy/BattleShip) | [JRickey/BattleShip](https://github.com/JRickey/BattleShip) | The PC port: native macOS/Linux/Windows/Android plus our Emscripten build, the fighter-injection code (`port/`), and the pipeline dump hooks. |
-| [turtlesoupy/ssb-decomp-re](https://github.com/turtlesoupy/ssb-decomp-re) | [VetriTheRetri/ssb-decomp-re](https://github.com/VetriTheRetri/ssb-decomp-re) | The game decompilation. BattleShip vendors it as `decomp/`. |
+| [turtlesoupy/BattleShip](https://github.com/turtlesoupy/BattleShip) | [JRickey/BattleShip](https://github.com/JRickey/BattleShip) | The PC port. Native macOS/Linux/Windows/Android plus our Emscripten build, the fighter-injection code (`port/`), and the pipeline dump hooks. |
+| [turtlesoupy/ssb-decomp-re](https://github.com/turtlesoupy/ssb-decomp-re) | [VetriTheRetri/ssb-decomp-re](https://github.com/VetriTheRetri/ssb-decomp-re) | The game decompilation. Vendored as `decomp/`. |
 | [turtlesoupy/libultraship](https://github.com/turtlesoupy/libultraship) | [JRickey/libultraship](https://github.com/JRickey/libultraship/tree/ssb64) ← [Kenix3/libultraship](https://github.com/Kenix3/libultraship) | Rendering, audio, and input layer for N64 ports. Vendored as `libultraship/`. |
-| [turtlesoupy/Torch](https://github.com/turtlesoupy/Torch) | [JRickey/Torch](https://github.com/JRickey/Torch/tree/ssb64) ← [HarbourMasters/Torch](https://github.com/HarbourMasters/Torch) | Extracts assets from the ROM into the `.o2r` archive. We also compile it to wasm so the browser can do this. Vendored as `torch/`. |
+| [turtlesoupy/Torch](https://github.com/turtlesoupy/Torch) | [JRickey/Torch](https://github.com/JRickey/Torch/tree/ssb64) ← [HarbourMasters/Torch](https://github.com/HarbourMasters/Torch) | Extracts assets from the ROM into the `.o2r` archive. Also compiled to wasm so the browser can do this. Vendored as `torch/`. |
 
-BattleShip's own README covers licenses and credits for those projects.
+BattleShip's README has the licenses and credits for those projects.
 
-## Layout
+## Getting the code
 
-| | Where | What |
-|---|---|---|
-| Engine | sibling repo `BattleShip/` | The game, built to WebAssembly. Ships Torch compiled to wasm so the browser can build the asset archive from the ROM. |
-| Generator | `pipeline/` | Python. `run_character.py` turns a name + photo into a playable fighter. |
-| Website | `web-prototype/` | React site + Node server. Character grid, ROM check, launching the engine, and the hosted "create a fighter" flow (Cloud Run, Firestore, GCS). |
-| Skeletons | `skels/` | The twelve target skeletons, per-fighter conform profiles, and the reference part data the converter fits meshes onto. |
-| Roster | `play/` (gitignored) + GCS | Local generation output. The production roster lives in a public GCS bucket, pinned by `web-prototype/config/baked-assets.json`. |
-
-Also: `scripts/` (batch driver), `tools/` (utilities), `eval/` (mesh eval
-harness, see `EVAL.md`), `config/` (roster lists), `docs/`.
-`requirements.txt` is the Python dependency list.
-
-## Clone layout
-
-The two repos sit next to each other, with emsdk alongside:
+Clone the two repos next to each other, with emsdk alongside:
 
 ```
 opensmash/
@@ -51,27 +37,33 @@ opensmash/
   emsdk/         https://github.com/emscripten-core/emsdk
 ```
 
-The server looks for the engine at `pipeline/BattleShip/web-dist`, then
-`../BattleShip/web-dist`. A symlink (`ln -s ../BattleShip pipeline/BattleShip`)
-or the sibling layout both work.
+The site server looks for the engine at `pipeline/BattleShip/web-dist`, then
+`../BattleShip/web-dist`. Either a symlink
+(`ln -s ../BattleShip pipeline/BattleShip`) or the sibling layout works.
 
-You need:
+What's in this repo:
 
-- Node 20+ and pnpm (`corepack enable`; the lockfile pins pnpm 11).
-- Python 3.11+ and `pip install -r requirements.txt`, plus `ffmpeg` for
-  announcer audio.
-- A Super Smash Bros. USA (NTSC-U v1.0) ROM, SHA-1
-  `e2929e10fccc0aa84e5776227e798abc07cedabf`. Don't commit it. Other regions
-  are rejected; the engine is built per region.
-- Emscripten, if you're building the engine yourself.
-- API keys, if you're generating fighters (below).
+| | What |
+|---|---|
+| `pipeline/` | The generator. `run_character.py` turns a name + photo into a playable fighter. |
+| `web-prototype/` | The site: React frontend + Node server. Character grid, ROM check, launching the engine, and the hosted "create a fighter" flow (Cloud Run, Firestore, GCS). |
+| `skels/` | The twelve target skeletons, per-fighter conform profiles, and the reference part data the converter fits meshes onto. |
+| `play/` | Local generation output (gitignored). The production roster lives in a public GCS bucket, pinned by `web-prototype/config/baked-assets.json`. |
+| `scripts/`, `tools/` | Batch driver, utilities, the derive-from-ROM scripts. |
+| `eval/` | Mesh eval harness (`EVAL.md`). |
+| `config/`, `docs/`, `assets/` | Roster lists, docs, site and branding assets. |
 
-## Running the site locally
+## Running the site
+
+You need Node 20+ with pnpm (`corepack enable`), a Super Smash Bros. USA
+(NTSC-U v1.0) ROM with SHA-1 `e2929e10fccc0aa84e5776227e798abc07cedabf`
+(other regions are rejected), and Emscripten if you're building the engine
+yourself. Don't commit the ROM.
 
 ### 1. Build the engine
 
-From `BattleShip/`, with the ROM at its root as `baserom.us.z64` and emsdk
-activated (`source ../emsdk/emsdk_env.sh`):
+From `BattleShip/`, with the ROM at `baserom.us.z64` and emsdk activated
+(`source ../emsdk/emsdk_env.sh`):
 
 ```bash
 emcmake cmake -B build-wasm -G Ninja -DCMAKE_BUILD_TYPE=Release -DSSB64_VERSION=us
@@ -121,22 +113,46 @@ hosted generation flow are documented in
 
 ## Generating a fighter
 
-### Keys
+### Prerequisites
 
-Copy `.env.example` to `.env` in the repo root (gitignored, every pipeline
-script reads it):
+- Python 3.11+ and `pip install -r requirements.txt`. `ffmpeg` on your PATH
+  for the announcer audio.
+- The ROM, as above. The generator doesn't read it directly, but the
+  skeleton and sprite inputs it uses were derived from it (see
+  [Game-derived inputs](#game-derived-inputs)); they're committed, so you
+  only need the ROM to regenerate them.
+- Keys. Copy `.env.example` to `.env` in the repo root (gitignored; every
+  pipeline script reads it):
 
 | Key | Used for |
 |---|---|
 | `OPENAI_API_KEY` | Character description (`gpt-5.6-luna`); T-pose sheet, portrait, stock and emblem art (`gpt-image-2`); the facing check; upload moderation on the site. |
 | `TRIPO_API_KEY` | Image-to-3D + auto-rig. ~55 credits (~$0.55) per fighter. Task ids are checkpointed, so a retry doesn't buy the mesh again. |
-| `FAL_KEY` | Announcer clip (fal's MiniMax speech endpoint). |
-| `MINIMAX_ANNOUNCER_VOICE_ID` | The MiniMax voice clone the announcer speaks with. You make this once from announcer reference audio; see `ANNOUNCER.md`. |
+| `FAL_KEY` | Announcer clips (fal's MiniMax speech endpoint) and creating the announcer voice. |
+| `MINIMAX_ANNOUNCER_VOICE_ID` | The MiniMax voice clone the announcer speaks with. Made once; see below. |
 | `GEMINI_API_KEY` | Optional. Alternative image model for some experiments. |
 | `MESHY_API_KEY` | Optional. Only `tools/generate_mesh.py` (site props). |
 
 A fighter costs about $0.65 in provider fees. Each run writes a per-stage
 breakdown to `play/ui/<slug>/cost.json`.
+
+### The announcer voice (once)
+
+The announcer is a MiniMax voice clone of the game's announcer. The reference
+audio is rendered from the ROM (`eval/announcer_conditioning_corrected/`,
+regenerated by `derive_from_rom.py`). To make the clone on your own fal
+account:
+
+```bash
+python3 pipeline/create_announcer_voice.py
+```
+
+That uploads the 14-second name montage, calls fal's `minimax/voice-clone`,
+saves a preview WAV, and prints the voice id. Put it in `.env` as
+`MINIMAX_ANNOUNCER_VOICE_ID`. MiniMax charges a small fee per clone, and a
+clone that isn't used for TTS within seven days is deleted, so generate at
+least one announcer clip after making it. `ANNOUNCER.md` has the details and
+the provider settings that were tuned by ear.
 
 ### One fighter
 
@@ -202,12 +218,12 @@ script: [`web-prototype/infra/README.md`](web-prototype/infra/README.md).
 Some generator inputs come from the game itself. All of them can be rebuilt
 from your ROM:
 
-| Files | What they are | Rebuilt by |
+| Files | What | Rebuilt by |
 |---|---|---|
-| `skels/*.skel`, `skels/fk*-all.log`, `skels/parts/*.json` | The twelve fighters' rest-pose skeletons and part geometry, which the converter fits generated meshes onto | `derive_skeletons.py` (runs the engine) |
-| `assets/css-font/portraits`, `assets/css-font/locked` | Character-select portrait tiles, fire slot, question mark, shadows | `derive_from_rom.py` |
-| `web-prototype/visual/assets/ui_refs/` | Tile and name sprites, stock icon, emblem sheet, and the glyph atlases the UI packer composes names from | `derive_from_rom.py` (four letters need `--skeletons`) |
-| `eval/announcer_conditioning_corrected/` | The announcer lines the voice clone is conditioned on, rendered at in-game pitch | `derive_from_rom.py` |
+| `skels/*.skel`, `skels/fk*-all.log`, `skels/parts/*.json` | Rest-pose skeletons and part geometry for the twelve fighters | `derive_skeletons.py` (runs the engine) |
+| `assets/css-font/portraits`, `assets/css-font/locked` | Character-select portraits, fire slot, question mark, shadows | `derive_from_rom.py` |
+| `web-prototype/visual/assets/ui_refs/` | Tile and name sprites, stock icon, emblem sheet, glyph atlases | `derive_from_rom.py` (four letters need `--skeletons`) |
+| `eval/announcer_conditioning_corrected/` | Announcer lines the voice clone is conditioned on, at in-game pitch | `derive_from_rom.py` |
 | `stone-tile-investigation/source-*` | The character-select stone texture | `derive_from_rom.py` |
 
 Not derived: the hand-authored `skels/*.profile.json`, `skels/VALIDATION.md`,
@@ -223,15 +239,15 @@ exact numbers.
 
 ### Prerequisites
 
-- The ROM at `BattleShip/baserom.us.z64` (the script checks its SHA-1).
-- A native engine build, which also extracts the `BattleShip.o2r` asset
-  archive the sprite extraction reads. From `BattleShip/`:
+- The ROM at `BattleShip/baserom.us.z64` (SHA-1 is checked).
+- A native engine build, which also produces the `BattleShip.o2r` archive the
+  sprite extraction reads. From `BattleShip/`:
 
 ```bash
 cmake -S . -B build-us -GNinja -DSSB64_VERSION=us -DCMAKE_BUILD_TYPE=Release && cmake --build build-us -j
 ```
 
-- Python with `numpy` and `Pillow`.
+- Python with `numpy` and `Pillow` (in `requirements.txt`).
 
 ### Verify
 
@@ -276,7 +292,7 @@ one consumer only checks whether it's zero.
 ## More docs
 
 - `EVAL.md`: mesh generation / skinning eval harness and its experiment log.
-- `ANNOUNCER.md`: announcer voice generation and the MiniMax clone.
+- `ANNOUNCER.md`: announcer voice generation, the clone, provider settings.
 - `docs/site-visual-assets.md`: how the site's console, cartridge, CRT intro,
   and other props were made.
 - `web-prototype/docs/production-architecture.md`: the hosted generation
