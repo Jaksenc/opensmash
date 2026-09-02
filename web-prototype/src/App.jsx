@@ -235,7 +235,7 @@ function RomModal({ action, onCancel, onValidated, onPrewarmError }) {
         <p className="eyebrow">One-time check</p>
         <h2 id="rom-title">Choose your ROM to continue</h2>
         <p className="modal-copy">Choose your legally obtained Smash 64 ROM (USA release) to launch {target}.</p>
-        <p className="modal-copy modal-copy-secondary">It stays on your device. Safari may ask again after a week away.</p>
+        <p className="modal-copy modal-copy-secondary">It never leaves your device.</p>
         <form onSubmit={validate}>
           <label className={`file-picker ${file ? "has-file" : ""}`}>
             <input
