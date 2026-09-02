@@ -2,8 +2,12 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { min-height: 100%; }
   @media (hover: hover) and (pointer: fine) {
-    html.is-custom-cursor-ready,
-    html.is-custom-cursor-ready * { cursor: none !important; }
+    /* The rendered GLB is the desktop pointer. Suppress the native cursor
+       from first paint instead of flashing it while the model loads. */
+    html,
+    html * { cursor: none !important; }
+    body.show-native-cursor,
+    body.show-native-cursor * { cursor: auto !important; }
   }
   html { background: #000; }
   body {
@@ -472,7 +476,10 @@
   .intro-video-frame.is-game-running .intro-game-frame {
     opacity: 1;
     visibility: visible;
-    pointer-events: auto;
+    /* The emulator is keyboard/gamepad driven. Let the parent surface own
+       pointer hit-testing so the rendered glove receives uninterrupted
+       absolute coordinates even when the frame is cross-origin. */
+    pointer-events: none;
   }
   .intro-video-frame.is-game-running .intro-video {
     opacity: 0;

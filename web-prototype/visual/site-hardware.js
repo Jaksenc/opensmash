@@ -1936,6 +1936,11 @@ let gripTarget = 0, gripAmount = 0;   // closed-fist pose, see setGrip()
 // the same rig and springs, so it waggles and jiggles like everything else.
 window.setGrip = v => { gripTarget = THREE.MathUtils.clamp(v, 0, 1); };
 
+function setHandCursorPressed(pressed, root = document.documentElement) {
+  root.classList.toggle('is-hand-cursor-pressed', pressed);
+  grabbing = pressed;
+}
+
 const ndc = new THREE.Vector2();
 const GLOVE_DEPTH = 0.55;
 const rayPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), -GLOVE_DEPTH);
@@ -2188,7 +2193,7 @@ function updateTargetFromEmbeddedGame(event) {
       data?.type !== 'opensmash-game-pointer') return;
 
   if (data.kind === 'up' || data.kind === 'cancel') {
-    grabbing = false;
+    setHandCursorPressed(false);
     return;
   }
 
@@ -2199,14 +2204,51 @@ function updateTargetFromEmbeddedGame(event) {
     clientX: frameRect.left + Number(data.x || 0) * frameRect.width / sourceWidth,
     clientY: frameRect.top + Number(data.y || 0) * frameRect.height / sourceHeight,
   });
-  if (data.kind === 'down') grabbing = true;
+  if (data.kind === 'down') setHandCursorPressed(true);
+  if (data.kind === 'move' && Number(data.buttons) === 0) setHandCursorPressed(false);
 }
 
-window.addEventListener('pointermove', updateTargetFromEvent);
-window.addEventListener('pointerdown', e => { grabbing = true; updateTargetFromEvent(e); });
-window.addEventListener('pointerup', () => { grabbing = false; });
-window.addEventListener('pointerleave', () => { grabbing = false; });
+function updateCursorFromPageEvent(event) {
+  updateTargetFromEvent(event);
+  if (event.type === 'pointerdown' || event.type === 'mousedown') {
+    setHandCursorPressed(true);
+  }
+  if (event.type === 'pointerup' || event.type === 'pointercancel' || event.type === 'mouseup') {
+    setHandCursorPressed(false);
+  }
+  // A move with no mouse button held is authoritative even if pointerup was
+  // captured by an iframe, browser chrome, or a component's pointer capture.
+  if ((event.type === 'mousemove' ||
+       (event.type === 'pointermove' && event.pointerType === 'mouse')) &&
+      event.buttons === 0) {
+    setHandCursorPressed(false);
+  }
+}
+
+for (const eventType of [
+  'pointerover', 'pointermove', 'pointerdown', 'pointerup', 'pointercancel',
+  'mouseover', 'mousemove', 'mousedown', 'mouseup',
+]) {
+  window.addEventListener(eventType, updateCursorFromPageEvent, {
+    capture: true,
+    passive: true,
+  });
+}
+window.addEventListener('blur', () => { setHandCursorPressed(false); });
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) setHandCursorPressed(false);
+});
 window.addEventListener('message', updateTargetFromEmbeddedGame);
+
+// The emulator does not use mouse input, but it still needs keyboard focus.
+// Its iframe is pointer-transparent so the parent can keep tracking the glove;
+// focus it only after release so the hand's held-click tilt is not interrupted
+// by the parent window losing focus mid-gesture.
+embeddedGameFrame?.closest('.intro-video-frame')?.addEventListener('click', event => {
+  if (!event.currentTarget.classList.contains('is-game-running')) return;
+  if (event.target instanceof Element && event.target.closest('.retro-game-tools')) return;
+  embeddedGameFrame.contentWindow?.focus();
+});
 
 // ---------------------------------------------------------------------------
 // Debug capture: freeze the pose, render through the retro pipeline into a
