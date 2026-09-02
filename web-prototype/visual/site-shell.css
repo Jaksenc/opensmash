@@ -534,7 +534,8 @@
     border: 0;
     background: #000;
     object-fit: cover;
-    pointer-events: none;
+    /* YouTube's native controls are live; the glove poofs out at the edge. */
+    pointer-events: auto;
   }
   .hero-logo-canvas,
   .hero-logo-fallback {

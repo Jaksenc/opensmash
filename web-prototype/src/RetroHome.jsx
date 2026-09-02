@@ -1,11 +1,14 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import introVideoUrl from "../visual/assets/intro-crt.mp4?url";
 import logoFallbackUrl from "../visual/assets/smash-the-weights-logo.png?url";
 import FlameAction from "./FlameAction.jsx";
 import MobileControls from "./MobileControls.jsx";
 import ModalPage from "./ModalPage.jsx";
+import {
+  controlEmbeddedTrailer,
+  disableEmbeddedTrailerCaptions,
+  TRAILER_EMBED_URL,
+} from "./embedded-trailer.js";
 import { startHomeRuntime } from "./visual-runtime.js";
-import { transitionMediaVolume } from "./audio-envelope.js";
 
 const MOBILE_CONTROLS_MEDIA = "(hover: none) and (pointer: coarse)";
 const ROM_FILENAME = "Super Smash Bros. (USA).z64";
@@ -233,6 +236,7 @@ export default function RetroHome({
 }) {
   const aboutCancelRef = useRef(null);
   const introVideoRef = useRef(null);
+  const trailerInteractedRef = useRef(false);
   const moreMenuRef = useRef(null);
   const gameSurfaceRef = useRef(null);
   const cinematicFirstRectRef = useRef(null);
@@ -326,54 +330,36 @@ export default function RetroHome({
   }, [engine]);
 
   useEffect(() => {
-    const video = introVideoRef.current;
-    if (!video) return undefined;
-    return transitionMediaVolume(video, launchFlowOpen || engine ? 0 : 1);
+    const player = introVideoRef.current;
+    if (!player) return;
+    controlEmbeddedTrailer(player, launchFlowOpen || engine ? "pauseVideo" : "playVideo");
   }, [engine, launchFlowOpen]);
 
-  // Browsers only guarantee muted autoplay. The element always starts muted;
-  // when sound is on we try to unmute right away (allowed on return visits in
-  // Chrome) and otherwise unmute on the first gesture anywhere on the page.
+  // Muted autoplay is reliable; when sound is enabled, retry unmuting on the
+  // next user gesture so the YouTube player satisfies browser autoplay rules.
   useEffect(() => {
-    const video = introVideoRef.current;
-    if (!video) return undefined;
+    const player = introVideoRef.current;
+    if (!player) return undefined;
     if (!soundOn) {
-      video.muted = true;
+      controlEmbeddedTrailer(player, "mute");
       return undefined;
     }
-    let cancelled = false;
     const gestureEvents = ["pointerdown", "keydown", "touchstart"];
     const removeGestureListeners = () => {
       for (const type of gestureEvents) document.removeEventListener(type, unmuteOnGesture, true);
     };
     function unmuteOnGesture() {
+      trailerInteractedRef.current = true;
       removeGestureListeners();
-      if (cancelled) return;
-      video.muted = false;
-      if (video.paused && !engine) {
-        video.play().catch(() => { video.muted = true; });
-      }
+      controlEmbeddedTrailer(player, "unMute");
+      if (!engine) controlEmbeddedTrailer(player, "playVideo");
     }
-    const tryUnmute = async () => {
-      video.muted = false;
-      try {
-        await video.play();
-        if (cancelled) return;
-        if (video.muted) throw new Error("still muted");
-      } catch {
-        if (cancelled) return;
-        video.muted = true;
-        // Keep the muted loop running while we wait for a gesture.
-        video.play().catch(() => {});
-        for (const type of gestureEvents) document.addEventListener(type, unmuteOnGesture, true);
-      }
-    };
-    tryUnmute();
-    return () => {
-      cancelled = true;
-      removeGestureListeners();
-    };
-  }, [soundOn]);
+    if (trailerInteractedRef.current) {
+      controlEmbeddedTrailer(player, "unMute");
+    }
+    for (const type of gestureEvents) document.addEventListener(type, unmuteOnGesture, true);
+    return removeGestureListeners;
+  }, [engine, soundOn]);
 
   function toggleMobileControls(event) {
     if (!mobileLayout) return;
@@ -505,22 +491,33 @@ export default function RetroHome({
             ref={gameSurfaceRef}
             className={`game-surface-shell ${mobileControlsVisible ? "has-mobile-control-deck" : ""} ${immersive ? "is-immersive" : ""} ${trailerCinematic ? "is-cinematic" : ""}`}
           >
-            <div className={`intro-video-frame ${engine ? "is-game-running" : ""}`} ref={gameFrameRef}>
-              <video
+            <div
+              className={`intro-video-frame ${engine ? "is-game-running" : ""}`}
+              ref={gameFrameRef}
+            >
+              <iframe
                 ref={introVideoRef}
                 id="intro-video"
                 className="intro-video"
-                src={introVideoUrl}
-                muted
-                autoPlay
-                loop
-                playsInline
-                preload="auto"
-                aria-label="Super Weights Bros intro video"
+                src={TRAILER_EMBED_URL}
+                title="smash.fun Introduction"
+                allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture; web-share"
+                referrerPolicy="strict-origin-when-cross-origin"
+                allowFullScreen
+                onLoad={(event) => {
+                  disableEmbeddedTrailerCaptions(event.currentTarget);
+                  controlEmbeddedTrailer(
+                    event.currentTarget,
+                    soundOn && trailerInteractedRef.current ? "unMute" : "mute",
+                  );
+                  if (!engine && !launchFlowOpen) {
+                    controlEmbeddedTrailer(event.currentTarget, "playVideo");
+                  }
+                }}
               />
               <img className="intro-video-rule-layer" alt="" aria-hidden="true" />
               <iframe ref={engineRef} id="intro-game-frame" className="intro-game-frame" src={engine?.src || "about:blank"} title={engine ? "OpenSmash game engine" : "Super Weights Bros game"} allow="autoplay; gamepad; fullscreen" />
-              <button
+              {engine && <button
                 className="game-fullscreen-control"
                 type="button"
                 aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
@@ -540,7 +537,7 @@ export default function RetroHome({
                     </>
                   )}
                 </svg>
-              </button>
+              </button>}
             </div>
             {trailerMode && trailerCinematic && (
               <button

@@ -7,6 +7,7 @@ import cartridgeModelUrl from './assets/n64-cartridge-tripo.glb?url';
 import consoleModelUrl from './assets/hybrid-four-port-console-fitted.glb?url';
 import cursorModelUrl from './assets/hand-cursor-meshy.glb?url';
 import tvModelUrl from './assets/tripo-crt-tv.glb?url';
+import { controlEmbeddedTrailer } from '../src/embedded-trailer.js';
 import {
   generateStoneFromSeed,
   stoneTileDataUrl,
@@ -60,8 +61,8 @@ const cameraRestQuaternion = camera.quaternion.clone();
 
 scene.add(new THREE.HemisphereLight(0xffffff, 0x9a9aa8, 0.4));
 
-// The uploaded intro clip is the main-page hero and also drives the optional
-// pre-boot hardware CRT texture.
+// The embedded trailer is the main-page hero. The optional pre-boot hardware
+// CRT uses a dark placeholder because cross-origin embeds cannot be WebGL textures.
 const mainHardwareTvRig = new THREE.Group();
 const mainHardwareTvVisual = new THREE.Group();
 const starterTvDisplay = new THREE.Group();
@@ -73,8 +74,7 @@ mainHardwareTvRig.visible = CARTRIDGE_INTRO_ENABLED;
 let mainHardwareTvUnitH = 0;
 
 // ---------------------------------------------------------------------------
-// Starter-screen Trinitron: a Tripo-generated cabinet with the local intro clip
-// projected onto a curved, emissive CRT surface.
+// Starter-screen Trinitron: a Tripo-generated cabinet with a curved CRT surface.
 // ---------------------------------------------------------------------------
 const introVideo = document.getElementById('intro-video');
 const soundToggle = document.getElementById('sound-toggle');
@@ -103,7 +103,7 @@ function syncEmbeddedGameAudio(attempt = 0) {
 }
 
 function applySoundPreference() {
-  introVideo.muted = !soundOn;
+  controlEmbeddedTrailer(introVideo, soundOn ? 'unMute' : 'mute');
   window.openSmashSoundOn = soundOn;
   if (soundToggle) soundToggle.setAttribute('aria-pressed', String(soundOn));
   if (soundToggleState) soundToggleState.textContent = soundOn ? 'On' : 'Off';
@@ -115,7 +115,7 @@ soundToggle?.addEventListener('click', () => {
   try { localStorage.setItem(SOUND_STORAGE_KEY, soundOn ? 'on' : 'off'); }
   catch { /* The current preference still applies for this session. */ }
   applySoundPreference();
-  if (soundOn) introVideo.play().catch(() => {});
+  if (soundOn) controlEmbeddedTrailer(introVideo, 'playVideo');
 });
 embeddedGameFrame?.addEventListener('load', () => syncEmbeddedGameAudio());
 applySoundPreference();
@@ -145,11 +145,17 @@ const tvCabinetMaterial = new THREE.MeshStandardMaterial({
   roughness: 0.68,
   metalness: 0.08,
 });
-const introVideoTexture = new THREE.VideoTexture(introVideo);
+const introVideoTexture = new THREE.DataTexture(
+  new Uint8Array([2, 2, 2, 255]),
+  1,
+  1,
+  THREE.RGBAFormat,
+);
 introVideoTexture.colorSpace = THREE.SRGBColorSpace;
 introVideoTexture.minFilter = THREE.LinearFilter;
 introVideoTexture.magFilter = THREE.LinearFilter;
 introVideoTexture.generateMipmaps = false;
+introVideoTexture.needsUpdate = true;
 
 const crtScreenMaterial = new THREE.ShaderMaterial({
   transparent: true,
@@ -297,15 +303,6 @@ new GLTFLoader().load(tvModelUrl, gltf => {
   resize();
 }, undefined, error => console.error('Could not load Tripo CRT television', error));
 
-introVideo.addEventListener('loadedmetadata', () => {
-  if (!introVideo.videoWidth || !introVideo.videoHeight) return;
-  crtScreenMaterial.uniforms.videoResolution.value.set(
-    introVideo.videoWidth, introVideo.videoHeight
-  );
-  crtScreenMaterial.uniforms.videoAspect.value =
-    introVideo.videoWidth / introVideo.videoHeight;
-});
-
 // ---------------------------------------------------------------------------
 // N64 retro pipeline: render tiny -> nearest-neighbor upscale, posterized
 // grays, Bayer-dithered alpha edge, and a 1-texel dark outline.
@@ -415,6 +412,7 @@ postScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), postMat));
 const VIEW_H = 2 * Math.tan(THREE.MathUtils.degToRad(35 / 2)) * 16;
 const GLOVE_PX = 32;   // tuned so the rendered silhouette spans the sprite's 36 rows
 let handUnitH = 0;     // hand height in world units; set once the mesh is built
+let gloveBaseScale = 0; // viewport-fitted glove scale before the poof presence spring
 const CONSOLE_PX = 150;
 const MAIN_HARDWARE_TV_PX = 124;
 const CARTRIDGE_FIT_SCALE = 0.44;
@@ -435,7 +433,8 @@ function applyGloveScale(viewportPixelH, targetScreenPx = GLOVE_PX * SHADER_DEFA
   if (!handUnitH) return;
   let s = targetScreenPx * (VIEW_H / viewportPixelH) / handUnitH;
   if (location.hash.includes('big')) s *= 4;
-  glove.scale.setScalar(s);
+  gloveBaseScale = s;
+  glove.scale.setScalar(s * glovePresence);
   keyLight.intensity = 24 * s * s;   // inverse-square compensation
 }
 
@@ -701,6 +700,80 @@ const keyLight = new THREE.PointLight(0xffffff, 18, 0, 2);
 keyLight.position.set(-1.6, -0.4, 2.6);
 glove.add(keyLight);
 scene.add(glove);
+
+// ---------------------------------------------------------------------------
+// Poof: the glove is a page-owned cursor, so it cannot follow the pointer into
+// a pointer-receiving iframe (the native cursor takes over there) and it only
+// gets in the way over the running game. Rather than freezing at the edge, it
+// vanishes in a little puff of smoke when the pointer crosses in and pops back
+// with another puff on the way out.
+// ---------------------------------------------------------------------------
+let glovePresence = 1;        // 0 = poofed away, 1 = fully present
+let glovePresenceVel = 0;
+let glovePresenceTarget = 1;
+let gloveHidden = false;
+const PUFF_COUNT = 7;
+const PUFF_LIFE = 0.42;
+const puffGeometry = new THREE.CircleGeometry(1, 10);
+const puffs = Array.from({ length: PUFF_COUNT }, () => {
+  const mesh = new THREE.Mesh(puffGeometry, new THREE.MeshBasicMaterial({
+    color: 0xf2efe8, transparent: true, opacity: 0, depthTest: false, depthWrite: false,
+  }));
+  mesh.visible = false;
+  mesh.renderOrder = 5;
+  scene.add(mesh);
+  return { mesh, age: PUFF_LIFE, dx: 0, dy: 0, size: 1 };
+});
+
+function spawnPoof(x, y) {
+  const radius = Math.max(0.02, gloveBaseScale * handUnitH * 0.28);
+  for (let i = 0; i < puffs.length; i++) {
+    const puff = puffs[i];
+    const angle = (i / puffs.length) * Math.PI * 2 + Math.random() * 0.6;
+    const dist = radius * (0.9 + Math.random() * 0.7);
+    puff.age = -Math.random() * 0.05;
+    puff.dx = Math.cos(angle) * dist;
+    puff.dy = Math.sin(angle) * dist;
+    puff.size = radius * (0.55 + Math.random() * 0.45);
+    puff.mesh.position.set(x, y, GLOVE_DEPTH + 0.01);
+    puff.mesh.visible = true;
+  }
+}
+
+function updatePoof(dt) {
+  for (const puff of puffs) {
+    if (!puff.mesh.visible) continue;
+    puff.age += dt;
+    if (puff.age >= PUFF_LIFE) { puff.mesh.visible = false; continue; }
+    const k = Math.max(0, puff.age / PUFF_LIFE);
+    const out = 1 - (1 - k) * (1 - k);        // ease-out drift
+    puff.mesh.position.x = mouse.x + puff.dx * (0.35 + out * 0.65);
+    puff.mesh.position.y = mouse.y + puff.dy * (0.35 + out * 0.65) + k * puff.size * 0.4;
+    puff.mesh.scale.setScalar(puff.size * (0.5 + out * 0.9) * (1 - k * 0.35));
+    puff.mesh.material.opacity = (1 - k) * (1 - k) * 0.95;
+  }
+  // Underdamped spring so the return overshoots a touch (cartoon pop).
+  const K = 320, D = gloveHidden ? 34 : 22;
+  glovePresenceVel += ((glovePresenceTarget - glovePresence) * K - glovePresenceVel * D) * dt;
+  glovePresence = Math.max(0, glovePresence + glovePresenceVel * dt);
+  if (gloveBaseScale) glove.scale.setScalar(gloveBaseScale * glovePresence);
+}
+
+function setGloveHidden(hidden) {
+  if (hidden === gloveHidden) return;
+  gloveHidden = hidden;
+  glovePresenceTarget = hidden ? 0 : 1;
+  if (glove.visible && !prefersReducedMotion) spawnPoof(mouse.x, mouse.y);
+  if (prefersReducedMotion) { glovePresence = glovePresenceTarget; glovePresenceVel = 0; }
+}
+
+const heroFrame = document.querySelector('.intro-video-frame');
+function pointerShouldPoof(target, clientX, clientY) {
+  if (target instanceof HTMLIFrameElement) return true;
+  if (!heroFrame?.classList.contains('is-game-running')) return false;
+  const r = heroFrame.getBoundingClientRect();
+  return clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom;
+}
 
 function syncCustomCursorAvailability() {
   const available = customCursorQuery.matches && customCursorMeshReady &&
@@ -2206,10 +2279,15 @@ function updateTargetFromEmbeddedGame(event) {
   });
   if (data.kind === 'down') setHandCursorPressed(true);
   if (data.kind === 'move' && Number(data.buttons) === 0) setHandCursorPressed(false);
+  setGloveHidden(true);
 }
 
 function updateCursorFromPageEvent(event) {
   updateTargetFromEvent(event);
+  if (event.type === 'pointerover' || event.type === 'pointermove' ||
+      event.type === 'mouseover' || event.type === 'mousemove') {
+    setGloveHidden(pointerShouldPoof(event.target, event.clientX, event.clientY));
+  }
   if (event.type === 'pointerdown' || event.type === 'mousedown') {
     setHandCursorPressed(true);
   }
@@ -2346,13 +2424,11 @@ function setCartridgeState(next) {
 }
 
 function startStarterVideoPlayback() {
-  introVideo.play().catch(() => {
-    // If autoplay is declined, the first starter-page gesture retries it.
-  });
+  controlEmbeddedTrailer(introVideo, 'playVideo');
 }
 
 function restartStarterVideoPlayback() {
-  introVideo.currentTime = 0;
+  controlEmbeddedTrailer(introVideo, 'seekTo', [0, true]);
   startStarterVideoPlayback();
 }
 
@@ -2688,6 +2764,7 @@ function tick() {
   }
   poseFingers(ease, gEase);
   pinPointerTip();
+  updatePoof(dt);
 
   if (DBG.includes('raw') || !shaderSettings.enabled) {
     renderer.setRenderTarget(null);

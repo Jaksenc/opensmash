@@ -77,15 +77,11 @@ The tuning controls remain part of the page but are hidden from the final UI.
 
 `asset-sources/tripo-crt-tv.glb` is a 10k-face-target, geometry-only Tripo v3.0
 image-to-model result generated from the supplied Trinitron reference. The
-optional cartridge intro gives the cabinet an authored charcoal material and
-places the local `asset-sources/intro-crt.mp4` clip on a segmented, physically curved
-screen. The default route loads the character-grid site directly and plays the
-same clip in the 4:3 video container at the top of the page.
-Its dedicated Three.js shader adds barrel distortion, scanlines, an RGB
-phosphor mask, chromatic separation, a rolling brightness band, vignette,
-flicker, and fine analog noise. The optimized 1280×960 H.264 clip preserves the
-original 4:3 framing while reducing the browser payload from 108 MB to about
-7.4 MB.
+optional cartridge intro gives the cabinet an authored charcoal material and a
+segmented, physically curved screen. The default route loads the character-grid
+site directly and plays the hosted YouTube trailer in the 4:3 video container
+at the top of the page. The embedded player autoplays muted, loops, and follows
+the site's sound preference after the user's first interaction.
 
 Append `?intro=cartridge` to the local URL to preview the preserved cartridge
 insertion experience. The default URL opens the running main screen directly.
@@ -166,4 +162,3 @@ default. This folder is git-ignored because generated GLBs can be large. Use `--
 
 Generation consumes provider credits. `--textured` may consume additional
 credits, and Meshy's textured flow runs a preview task followed by a refine task.
-

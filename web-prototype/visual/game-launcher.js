@@ -15,6 +15,7 @@ import { hasShortcutModifier } from '../shared/keyboard-input.js';
 import { lockPageScroll } from '../shared/page-scroll-lock.js';
 
 import { holdScreenAwake, isHandoffSupported, receiveRomHandoff } from '../src/rom-handoff-client.js';
+import { controlEmbeddedTrailer } from '../src/embedded-trailer.js';
 import cartridgeChunkUrl from './assets/cartridge-chunk.wav?url';
 import cartridgeLabelUrl from './assets/cartridge-label-art.png?url';
 import cartridgeModelUrl from './assets/n64-cartridge-tripo.glb?url';
@@ -417,7 +418,7 @@ function launch(fighter) {
   } else {
     clearPicks();
   }
-  introVideo?.pause();
+  controlEmbeddedTrailer(introVideo, 'pauseVideo');
   gameFrame.title = `${fighter.displayName} — Super Weights Bros`;
   const source = APP_BRIDGE?.launch
     ? APP_BRIDGE.launch({ type: fighter.actionType || 'character', slug: fighter.slug, picks: picks.map(pick => pick.slug) })
@@ -444,8 +445,8 @@ function closeGame() {
   gameFrame.title = 'Super Weights Bros game';
   videoFrame.classList.remove('is-game-running');
   if (introVideo) {
-    introVideo.currentTime = 0;
-    introVideo.play().catch(() => {});
+    controlEmbeddedTrailer(introVideo, 'seekTo', [0, true]);
+    controlEmbeddedTrailer(introVideo, 'playVideo');
   }
 }
 
