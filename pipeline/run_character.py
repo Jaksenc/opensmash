@@ -74,7 +74,8 @@ def gen_cost(out):
 
 N64_TEMPLATE = (
     "A screenshot of a very low-poly 1996 Nintendo 64 fighting-game character "
-    "model in T-pose: full body, front view, arms straight out horizontally, "
+    "model in T-pose: exactly ONE figure, alone, full body, front view, arms "
+    "straight out horizontally, "
     "legs clearly apart with a gap between the feet, plain light-gray "
     "background, roughly 800 triangles, facial features painted flat onto the "
     "texture. The character: {desc} Chunky fighter proportions: oversized "
@@ -417,6 +418,24 @@ def main():
         torn = re.search(r"torn-tri cut: (\d+)", outtxt)
         if torn and int(torn.group(1)) > 80:
             raise RuntimeError(f"torn-tri gate: {torn.group(1)} > 80 — bad mesh, re-roll tpose/mesh")
+        # Facing gate: the converter's geometric cues (skin colour, head
+        # offset, toe reach) misread non-human bodies (Cthulhu, the Jersey
+        # Devil walked backwards). Render the bundle and let the vision
+        # model compare against the t-pose, which is the front by
+        # construction; redo the conversion with --flip-facing if needed.
+        try:
+            fc = json.loads(sh(["python3", pipeline_script("facing_check.py"), F("bundle.json"), F("tpose.png")],
+                               timeout=300).strip().splitlines()[-1])
+            bill("facing", fc.get("cost_usd"))
+            if fc.get("flipped"):
+                log(f"convert: facing check says the model faces away ({fc.get('confidence')}) — reconverting with --flip-facing")
+                sh(["python3", pipeline_script("convert_rigged.py"), "--mild-color", "--no-profile", "--flatten",
+                    "--flip-facing", F("rigged.glb"), "skels/mario-frames.skel", F("bundle.json")], timeout=900)
+                open(F("facing_flipped"), "w").write("1")
+            else:
+                log(f"convert: facing check ok ({fc.get('confidence')})")
+        except Exception as e:  # never block a character on the gate itself
+            log(f"convert: facing check unavailable ({str(e)[-120:]}) — keeping the converter's call")
         sh(["python3", pipeline_script("convert_rigged.py"), "--binary5", F("bundle.json"), osb], timeout=300)
 
     # 4b. variants -------------------------------------------------------
