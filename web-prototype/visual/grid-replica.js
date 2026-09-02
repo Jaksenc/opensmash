@@ -1,44 +1,31 @@
-// Responsive extension of the supplied OpenSmash character grid. The lattice,
-// fire, captions, and interaction stay code-rendered; character portraits are
-// layered into the cells as transparent cutouts. Only generated/featured
+// Responsive extension of the supplied OpenSmash character grid. Portraits
+// are native lazy images; exact bitmap captions are composited only near the
+// viewport so a large roster can paint incrementally. Only generated/featured
 // fighters are drawn — the original game's portraits are never bundled or
-// served by the site (VANILLA_ROSTER below is metadata only: fkind order,
-// labels, and the caption-font baking flags).
+// served by the site (VANILLA_ROSTER below is metadata only: fkind order and
+// labels).
 
 import {
   rosterGridDimensions,
   rosterReserveHeight,
 } from '../shared/roster-layout.js';
 import { formatFighterJobCellError } from '../shared/fighter-job-ui.js';
-// Character-select name font: the tan 7 px captions baked into the decomp's
-// portrait tiles, rebuilt as a bitmap font with the original spacing rules
-// (see tools/cssfont and font-playground.html).
-import {
-  SSB_NAME_FONT,
-  layoutText as layoutNameFont,
-  renderIA as renderNameFontIA,
-  toImageData as nameFontImageData,
-} from '../src/fonts/ssb-name-font.js';
 
-const BUILD_ASSETS = {
-  ...import.meta.glob([
-    './assets/featured-fighters/action-*.png',
-    './assets/ui/*.png',
-  ], {
-    eager: true,
-    query: '?url',
-    import: 'default',
-  }),
-};
+const ACTION_ICON_ASSETS = import.meta.glob('./assets/ui/*.png', {
+  eager: true,
+  query: '?url',
+  import: 'default',
+});
 
-function buildAssetUrl(relativePath) {
-  const url = BUILD_ASSETS[`./assets/${relativePath}`];
-  if (!url) throw new Error(`Missing visual asset: ${relativePath}`);
-  return url;
+function actionIconUrl(fileName) {
+  return ACTION_ICON_ASSETS[`./assets/ui/${fileName}`] || '';
 }
 
-const RASTER_DEBUG = new URLSearchParams(window.location.search);
-
+let captionFont = null;
+const captionFontReady = import('../src/fonts/ssb-name-font.js').then(module => {
+  captionFont = module;
+  return module;
+});
 const CELL_W = 45;
 const CELL_H = 43;
 const RULE = 2;
@@ -50,24 +37,6 @@ const GRID_COLUMN_BREAKPOINTS = Object.freeze([
   { minWidth: 0, columns: 4 }
 ]);
 const RASTER_SCALE = 2;
-// Placeholder portraits already carry their native roster captions. Keep the
-// code-rendered font pipeline intact, but hide it until caption-free art lands.
-const USE_SOURCE_PORTRAIT_CAPTIONS = true;
-// Preserve the extracted native glyph topology, smooth it into a 2x label
-// framebuffer, then composite those finite samples as the visible pixel grid.
-const requestedSmoothMix = Number(RASTER_DEBUG.get('smoothMix'));
-const LABEL_SMOOTH_MIX = Math.max(0, Math.min(
-  1, RASTER_DEBUG.has('smoothMix') && Number.isFinite(requestedSmoothMix)
-    ? requestedSmoothMix : 0.5
-));
-const GEOMETRY_PIXEL_STEP = 4;
-const STONE_BACKGROUND_SEED = 3075641479;
-const FIRE_RGBA5551 = 'eIeRh5mFqkXDQ9QBzIXcydTJ1IfUQcvBw8HLgcNBw0HCwbsBw0HLwdRB1IPUydSH1MnUydRBzAHDAbLDqcWJRWgHQIVgh1hHWIVIhzCHOEVIhXBHiUeZh7rBcMeJBaIHskXLg8wB1IfUyd0L1MfMQ8vBw4HDgcMBy0G6wbLBw0HUAdRB1IXdC9TJ1QvUydRBzAHDQbKDqgeRR2BFUEdgRWBHaEdYR0iHQIVgR3jFiUWiBbrBCEMIQwhDCEMIQwhDGEMghShFGEMQQyBFIIUwhUCFSEdQh1iHYEdYR1CFSEdYh2BFaAdgR3hHWEVIhyhFIEUoRShFMIUwhTBFKIUoRSBFKEUohSBDEEUQQwhDCEMIQwhDCEMIQwhDGEMgRShFIIMYQxhFKEUwhUBHSIdQh2BHYEVgR1BHWEdYR2iFaEdgR3BHYEVAhShHMEUwhTCFMIU4hzBFMIUwhShFMEUoRSiFEEUQQwhDCEMIQwhDCEMIQwhDEEMoRSBFIEUYgyBFKIU4RUiHSIdYR2BHYIVgR2BFYEdgR2hFWIdoB3gHYIVARzCFMEU4hTCFOEUwhTiHMIUwhTBFOIUwRSCFEEMQQwhDCEMIQwhDCEMIQwhDEEMoRSiFIEUYQyBFMIU4R1BHQIVYR2iHYEVwR2hFYEdgR2BHWEVwB3AHYIc4RTiFOIU4hziFOEU4hzCFOIUwRTCFOEU4hSBFEEUIQQhDCEMIQwhDCEMIQwhDEEMgRSiFKEUYQyBFMIdAhVBFSIdgRWhHaAd4B3BFaAdgh2BFYEd4R2gHUIVAhzhFQIc4hzhFOIU4hziFOIcwRTCFOIUwhyBDEEUIQQhDCEMIQwhDCEMIQwhDCEMgRSiFKEMgRSiFMIVIhUiHUEdgR3hFeAd4SXhHaAVoR1hHcAdwR3AHSIU4hUBFQEdAhzhFQIc4hTiFOIc4hTiFOEUwRRiFEEMIQwhDCEMIQwhDCEMIQwhDCEMgQyiFKEcogyhHOIVIR1CFSEdwR3hFeAeAh3gFcEdoR2BHcAd4R2hFQEdAhUBHQIVAh0hFQIc4RTiHMIU4hTiHOEUohSBDEEUIQQhDCEMIAwhDCEMIAwhDCEMYgyhFKIUoRTCFOIdQh1BHWEVwBYCHeEWAh4BHcAdoB2hFeEVwB2CFQIdAhUCHSIVARUiFSIdARTiHOIU4RUCHMIUohRhFEEMIQwhDCEMIQwhDCEMIQwhDCEMYQyiFMEUwhShFQIdQh1hFaEd4RYBHgIWAh4CHcAdwBXBHgIVwB1iHQEVAh0CFQEdIhVCHSEdAh0BFOIc4RUCHOIUgRRhFEIMIAQhDCEMIQwhDCEMIQQhDCEMYRSiFMEUwRzCFQIdYR2BHaEWASYCFgMWIxYCFeEdwR4CHgMVwB1CFQEdAh0CFSIdIh1BHUEdIR0CFOEVAh0CHMIUoRRhDEEMIQwhDCEMIQwhDCEMIQwhDCEMQQzCHMEUwhTiFSIdgR2BHaEWAyYiHiMeIxYjHgMd4R4jFgMdwR1BHQIVAhUiHQEdQhVhHSIdQR0CFQIdIRUiHOIUgRRhDGEMIQwhDCEMIQwhDCEMIQwhDCEMQQyhFOIUwRUCHWIdYRWBHaEWIx4iHiMeRB4kFiMeAxYkHiMdoRVCFQEdIhUCFUEdIRVhFUEdQh0iHSEdQh0iHOIUoRRhDEEMIQwhDCEMIQwgDCEMIQwhDCEMYQzBFMIVAhUhHWIdgR2hFaAeAx5EFiMeRBZFHiQWRR5FHgIdoRVBHSIdAhUhHUIdYRVhHUIVQR0iFSIdQR1BHOIUohRBDGEUIQQhDCEMQQwhDCEMQQwhDCEMoRTCFQEVIhVCHYEdgh2CHaAeAx5EHiMeZRZlHkUeZhZFFgQVwB1iFSEdAh1CFUEdoRViHWEdQR1BHSIdYRUiFQIcohRhDEIUIAwhDCEMQQxBDGEUYQxBDGEUwhTiFSEdQh1BHYIdgR2BFcEeAhZlHkUWZRaHHmUWZhZGFiQd4B1iFUEdQh1iFUIdoB2hFUIdQR1CHUEdYRUiHQIcohRhDEEUQQwhBCEEgRSBFKIUoRRhFKIVAh0BHUIdYh1iFWIdgR2BFeAeJB5lFmUWhx6HFoYehh5mFiQd4R2BHWIVYR2BHYEdwRWhFUEdIRVCHUEdQhUiHQIUwRSCFIIUQQwhDEEMwhThHOIUwhShFQIVIR0iHWIVgR1hHYIdoR2AFgEeJB5mFmUWpxaIFqcWhxaHFkQeAx3AHYIVgR2hFcAd4R2BFUEdQh1BHWEVYh0hHQIcwhSBFKIUgRRBDIIU4RUiHSEdARTiFSIdYh1BFWEdoR2BHYEdoR3hHgIeRR6FFoYWiBaIFqgWiBanFmYWJB3hHaAdoB3BFgIdwBWCHUEVQR1BFWIdYRUiHQEU4hRBDOIUwRxhF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';
-// Exact port of opensmash/pixel_font.py's portrait-caption alphabet. The rows
-// were transcribed from the vanilla tile dumps; every label is composed from
-// these same native pixels, so arbitrary names use the identical face, outline,
-// tracking, fitting, and browser-capture path as the original roster names.
-const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 const CAPTION_CHARS = /[^A-Z. ]/g;
 const RANDOM_NAME_POOL = Object.freeze([
   'ALEX', 'AMIR', 'ANNA', 'ARIA', 'ASH', 'AVA', 'BEAU', 'BEN',
@@ -110,9 +79,6 @@ function liveRosterCharacter(character) {
 }
 const LIVE_ROSTER = Object.freeze((APP_BRIDGE?.characters || []).map(liveRosterCharacter));
 const INITIAL_FIGHTER_JOBS = APP_BRIDGE?.fighterJobs || [];
-const BAKED_CAPTION_PORTRAITS = new Set(
-  VANILLA_ROSTER.map(character => character.portrait)
-);
 // React supplies the manifest-backed roster. If it has not mounted yet the
 // grid starts empty and syncCharacters fills it without a second roster source.
 const ROSTER = Object.freeze([...new Map(
@@ -136,23 +102,6 @@ function fromBase64(s) {
   return Uint8Array.from(raw, ch => ch.charCodeAt(0));
 }
 
-function decodeFire() {
-  const src = fromBase64(FIRE_RGBA5551);
-  const out = new Uint8ClampedArray(CELL_W * CELL_H * 4);
-  for (let p = 0; p < CELL_W * CELL_H; p++) {
-    const v = (src[p * 2] << 8) | src[p * 2 + 1];
-    const r = (v >>> 11) & 31, g = (v >>> 6) & 31, b = (v >>> 1) & 31;
-    const i = p * 4;
-    out[i] = (r << 3) | (r >>> 2);
-    out[i + 1] = (g << 3) | (g >>> 2);
-    out[i + 2] = (b << 3) | (b >>> 2);
-    out[i + 3] = (v & 1) ? 255 : 0;
-  }
-  return out;
-}
-
-const FIRE = decodeFire();
-
 function put(dst, width, x, y, r, g, b, a = 255) {
   if (x < 0 || y < 0 || x >= width || y >= dst.length / 4 / width) return;
   const i = (y * width + x) * 4;
@@ -168,273 +117,141 @@ function put(dst, width, x, y, r, g, b, a = 255) {
   dst[i + 3] = Math.round(outputAlpha * 255);
 }
 
-function drawFire(dst) {
-  for (let y = 0; y < CELL_H; y++) for (let x = 0; x < CELL_W; x++) {
-    // Rows 0-1 are the texture's hot storage lip. The screenshot shows the
-    // lattice covering that lip, so the first visible rows continue from 2-3.
-    // The storage texture's final row is transparent; repeat row 41 so the
-    // flame reaches the bottom rule instead of leaving a dark one-pixel gap.
-    const fireY = y === CELL_H - 1 ? CELL_H - 2 : (y < 2 ? y + 2 : y);
-    const s = (fireY * CELL_W + x) * 4;
-    put(dst, CELL_W, x, y, FIRE[s], FIRE[s + 1], FIRE[s + 2], FIRE[s + 3]);
-  }
-}
-
-
-const CAPTION_SOURCE_IMAGES = new Map();
-
-async function loadCaptionImage(url) {
-  if (!CAPTION_SOURCE_IMAGES.has(url)) {
-    CAPTION_SOURCE_IMAGES.set(url, (async () => {
-      const image = new Image();
-      image.decoding = 'async';
-      image.src = url;
-      await image.decode();
-      const canvas = document.createElement('canvas');
-      canvas.width = image.naturalWidth;
-      canvas.height = image.naturalHeight;
-      const context = canvas.getContext('2d', { willReadFrequently: true });
-      context.drawImage(image, 0, 0);
-      return Object.freeze({
-        width: canvas.width,
-        height: canvas.height,
-        pixels: context.getImageData(0, 0, canvas.width, canvas.height).data
-      });
-    })());
-  }
-  return CAPTION_SOURCE_IMAGES.get(url);
-}
-
-
-// One entry per letter (plus '.'), as RGBA tiles in cell coordinates: the
-// glyph box (outline row, 7 face rows, outline row) sits at rows 2..10 like
-// the baked captions, so existing consumers see the same geometry.
-const CAPTION_GLYPHS = new Map([...ALPHABET, '.'].map(char => {
-  const glyph = SSB_NAME_FONT.glyphs[char];
-  const r = renderNameFontIA(char, { exact: false });
-  const image = nameFontImageData(r);
-  const top = SSB_NAME_FONT.faceRow - r.originY;
-  const height = top + r.height;
-  const pixels = new Uint8ClampedArray(r.width * height * 4);
-  pixels.set(image.data, top * r.width * 4);
-  return [char, Object.freeze({
-    char, width: r.width, height, advance: glyph.faceW + SSB_NAME_FONT.defaultGap,
-    originX: r.originX, pixels, extracted: !glyph.synth, synth: !!glyph.synth
-  })];
-}));
-
-function cutOutPortrait(source, sourceLabel) {
-  const bakedCaption = renderCaption(sourceLabel);
-  const bakedCaptionRight = Math.min(CELL_W - 1, 4 + bakedCaption.width + 1);
-  const bakedCaptionBottom = Math.min(CELL_H - 1, bakedCaption.height + 1);
-  const pixels = new Uint8ClampedArray(CELL_W * CELL_H * 4);
-  for (let y = 0; y < CELL_H; y++) for (let x = 0; x < CELL_W; x++) {
-    const sourceIndex = (y * source.width + x) * 4;
-    const targetIndex = (y * CELL_W + x) * 4;
-    const r = source.pixels[sourceIndex];
-    const g = source.pixels[sourceIndex + 1];
-    const b = source.pixels[sourceIndex + 2];
-    const a = source.pixels[sourceIndex + 3];
-    // The decomp portrait sprite carries a one-texel frame of its own. Our
-    // shared rule canvas supplies the grid border, so omit this baked ring to
-    // avoid a doubled inset frame around every character.
-    if (x === 0 || y === 0 || x === CELL_W - 1 || y === CELL_H - 1) continue;
-    // These decomp tiles also contain the original roster name in their top
-    // band. Clear its full ink box (including the antialiased fringe) before
-    // our code-rendered caption is composited, otherwise two labels overlap.
-    if (!USE_SOURCE_PORTRAIT_CAPTIONS
-      && x >= 3 && x <= bakedCaptionRight && y <= bakedCaptionBottom) continue;
-    // The source PNGs carry their own cutout alpha. Drop any residual black
-    // matte in transparent edge samples without erasing dark costume/face ink.
-    if (!a || (a < 128 && Math.max(r, g, b) < 24)) continue;
-    pixels[targetIndex] = r;
-    pixels[targetIndex + 1] = g;
-    pixels[targetIndex + 2] = b;
-    pixels[targetIndex + 3] = a;
-  }
-  return Object.freeze({ width: CELL_W, height: CELL_H, pixels });
-}
-
-// Portrait pixel data by portrait name. Populated from featured-fighter and
-// live-roster PNGs only; vanilla names simply have no entry.
-const CHARACTER_PORTRAITS = new Map();
-
-async function loadFeaturedPortrait(portraitName, portraitUrl = null) {
-  const image = new Image();
-  image.decoding = 'async';
-  image.src = portraitUrl || buildAssetUrl(`featured-fighters/${portraitName}.png`);
-  await image.decode();
-
-  const canvas = document.createElement('canvas');
-  canvas.width = CELL_W;
-  canvas.height = CELL_H;
-  const context = canvas.getContext('2d', { willReadFrequently: true });
-  const sourceAspect = image.naturalWidth / image.naturalHeight;
-  const targetAspect = CELL_W / CELL_H;
-  let sourceX = 0;
-  let sourceY = 0;
-  let sourceWidth = image.naturalWidth;
-  let sourceHeight = image.naturalHeight;
-
-  if (sourceAspect > targetAspect) {
-    sourceWidth = image.naturalHeight * targetAspect;
-    sourceX = (image.naturalWidth - sourceWidth) / 2;
-  } else {
-    sourceHeight = image.naturalWidth / targetAspect;
-    sourceY = (image.naturalHeight - sourceHeight) / 2;
-  }
-
-  context.imageSmoothingEnabled = true;
-  context.imageSmoothingQuality = 'high';
-  context.drawImage(
-    image,
-    sourceX, sourceY, sourceWidth, sourceHeight,
-    0, 0, CELL_W, CELL_H
-  );
-  return Object.freeze({
-    width: CELL_W,
-    height: CELL_H,
-    pixels: context.getImageData(0, 0, CELL_W, CELL_H).data
-  });
-}
-
-// SEARCH / CREATE tiles borrow the game's locked-fighter look: the sprite is a
-// coverage mask (like MNPlayersPortraits' question mark) tinted between the
-// game's primitive colour (light face) and environment colour (dark rim), drawn
-// over per-frame static (the decomp draws that slot with the RDP NOISE
-// combiner at 0x30 blend, see mnPlayersVSPortraitProcDisplay).
-const ICON_PRIM = Object.freeze([0xC4, 0xB9, 0xA9]);
-const ICON_ENV = Object.freeze([0x5B, 0x41, 0x33]);
-const STATIC_BLEND = 0x30 / 255;
-
-async function loadTintedIcon(fileName) {
-  const source = await loadCaptionImage(buildAssetUrl(`ui/${fileName}`));
-  const pixels = new Uint8ClampedArray(CELL_W * CELL_H * 4);
-  for (let y = 1; y < Math.min(CELL_H, source.height) - 1; y++) {
-    for (let x = 1; x < Math.min(CELL_W, source.width) - 1; x++) {
-      const i = (y * source.width + x) * 4;
-      const k = source.pixels[i] / 255;
-      const a = source.pixels[i + 3];
-      if (!a) continue;
-      const o = (y * CELL_W + x) * 4;
-      pixels[o] = Math.round(ICON_ENV[0] + (ICON_PRIM[0] - ICON_ENV[0]) * k);
-      pixels[o + 1] = Math.round(ICON_ENV[1] + (ICON_PRIM[1] - ICON_ENV[1]) * k);
-      pixels[o + 2] = Math.round(ICON_ENV[2] + (ICON_PRIM[2] - ICON_ENV[2]) * k);
-      pixels[o + 3] = a;
-    }
-  }
-  return Object.freeze({ width: CELL_W, height: CELL_H, pixels });
-}
-
-const ACTION_ICONS = Object.freeze({
-  search: await loadTintedIcon('SearchGlass.png'),
-  create: await loadTintedIcon('Plus.png')
-});
-
-// The locked slot's silhouette layer is dark and mostly opaque; the NOISE
-// combiner pushes each texel 0x30/255 of the way toward random per-frame
-// noise, in colour and alpha. Without a silhouette we keep the same numbers
-// over a flat dark layer, which reads as the game's dim static.
-function drawStatic(dst, rng) {
-  const baseTone = 22, baseAlpha = 0.48;
-  for (let y = 1; y < CELL_H - 1; y++) for (let x = 1; x < CELL_W - 1; x++) {
-    const noise = rng() * 255;
-    const tone = Math.round(baseTone + (noise - baseTone) * STATIC_BLEND * 1.6);
-    const alpha = Math.round(255 * (baseAlpha + (baseAlpha - noise / 255) * STATIC_BLEND));
-    put(dst, CELL_W, x, y, tone, tone, tone, Math.max(0, Math.min(255, alpha)));
-  }
-}
-
-function compositeIcon(dst, icon, opacity = 1) {
-  for (let y = 0; y < CELL_H; y++) for (let x = 0; x < CELL_W; x++) {
-    const i = (y * CELL_W + x) * 4;
-    if (!icon.pixels[i + 3]) continue;
-    put(dst, CELL_W, x, y, icon.pixels[i], icon.pixels[i + 1], icon.pixels[i + 2], Math.round(icon.pixels[i + 3] * opacity));
-  }
-}
-
-await Promise.all(LIVE_ROSTER.map(async character => {
-  try {
-    CHARACTER_PORTRAITS.set(
-      character.portrait,
-      await loadFeaturedPortrait(character.portrait, character.portraitUrl)
-    );
-  } catch (error) {
-    console.warn(`Could not load live portrait for ${character.name}:`, error);
-  }
-}));
-
-
-
-
-
 
 function layoutCaption(text, tracking = 0) {
-  const layout = layoutNameFont(text, { exact: false, tracking });
-  if (!layout.glyphs.length) return { glyphs: [], width: 0, left: 0 };
-  let left = Infinity, right = -Infinity;
+  if (!captionFont) return { width: text.length * 5 };
+  const layout = captionFont.layoutText(text, { exact: false, tracking });
+  if (!layout.glyphs.length) return { width: 0 };
+  let right = -Infinity;
   for (const { id, x } of layout.glyphs) {
-    const glyph = SSB_NAME_FONT.glyphs[id];
-    left = Math.min(left, x + glyph.ox);
+    const glyph = captionFont.SSB_NAME_FONT.glyphs[id];
     right = Math.max(right, x + glyph.ox + glyph.w);
   }
-  // width measured from the first face origin (cell column 4) to the last
-  // glyph's outline edge — the extent that has to fit inside the cell.
-  return { glyphs: layout.glyphs, width: right, left };
+  return { width: right };
 }
 
-function measureCaption(text, tracking = 0) {
-  return layoutCaption(text, tracking).width;
+function normalizeCaption(value) {
+  return String(value).toUpperCase().replace(CAPTION_CHARS, '').trim();
 }
 
 function fitCaption(value, maxWidth = CELL_W - 5) {
-  let text = String(value).toUpperCase().replace(CAPTION_CHARS, '').trim();
+  let text = normalizeCaption(value);
   for (const tracking of [0, -1]) {
-    const width = measureCaption(text, tracking);
+    const width = layoutCaption(text, tracking).width;
     if (width <= maxWidth) return Object.freeze({ text, tracking, width: Math.max(1, width) });
   }
-  while (text && measureCaption(text, -1) > maxWidth) text = text.slice(0, -1).trim();
-  return Object.freeze({ text, tracking: -1, width: Math.max(1, measureCaption(text, -1)) });
+  while (text && layoutCaption(text, -1).width > maxWidth) text = text.slice(0, -1).trim();
+  return Object.freeze({
+    text,
+    tracking: -1,
+    width: Math.max(1, layoutCaption(text, -1).width),
+  });
 }
 
-
-
 function renderCaption(value, maxWidth = CELL_W - 5) {
+  if (!captionFont) throw new Error('Caption font is not ready');
   const layout = fitCaption(value, maxWidth);
-  const r = renderNameFontIA(layout.text, { exact: false, tracking: layout.tracking });
-  // Cell-space bitmap: x=0 is the first face origin (cell column 4), y=0 the
-  // cell's top row; the font's left outline margin lands at negative x and is
-  // clipped by put(), matching how the baked tiles sit against the frame.
-  const top = SSB_NAME_FONT.faceRow - r.originY;
-  const height = Math.max(10, top + r.height);
+  const rendered = captionFont.renderIA(layout.text, {
+    exact: false,
+    tracking: layout.tracking,
+  });
+  const top = captionFont.SSB_NAME_FONT.faceRow - rendered.originY;
+  const height = Math.max(10, top + rendered.height);
   const pixels = new Uint8ClampedArray(Math.max(1, layout.width) * height * 4);
-  if (r.width) {
-    const image = nameFontImageData(r);
-    for (let y = 0; y < r.height; y++) for (let x = 0; x < r.width; x++) {
-      const source = (y * r.width + x) * 4;
+  if (rendered.width) {
+    const image = captionFont.toImageData(rendered);
+    for (let y = 0; y < rendered.height; y++) for (let x = 0; x < rendered.width; x++) {
+      const source = (y * rendered.width + x) * 4;
       put(
-        pixels, Math.max(1, layout.width), x - r.originX, y + top,
-        image.data[source], image.data[source + 1], image.data[source + 2], image.data[source + 3]
+        pixels, Math.max(1, layout.width), x - rendered.originX, y + top,
+        image.data[source], image.data[source + 1],
+        image.data[source + 2], image.data[source + 3]
       );
     }
   }
   return Object.freeze({ ...layout, height, pixels });
 }
 
-function drawLabel(dst, value, opacity = 1) {
+function drawLabel(dst, value) {
   const caption = renderCaption(value);
   if (!caption.text) return;
-  // The baked tile captions start their first face column at x=4, y=3.
-  const originX = 4;
-  const originY = 0;
   for (let y = 0; y < caption.height; y++) for (let x = 0; x < caption.width; x++) {
     const source = (y * caption.width + x) * 4;
     put(
-      dst, CELL_W, originX + x, originY + y,
+      dst, CELL_W, 4 + x, y,
       caption.pixels[source], caption.pixels[source + 1],
-      caption.pixels[source + 2], Math.round(caption.pixels[source + 3] * opacity)
+      caption.pixels[source + 2], caption.pixels[source + 3]
     );
   }
+}
+
+function scalePixels2x(pixels, width, height, smooth) {
+  const scaledWidth = width * 2;
+  const scaledHeight = height * 2;
+  const scaled = new Uint8ClampedArray(scaledWidth * scaledHeight * 4);
+  for (let y = 0; y < scaledHeight; y++) for (let x = 0; x < scaledWidth; x++) {
+    const sourceX = x >> 1;
+    const sourceY = y >> 1;
+    const target = (y * scaledWidth + x) * 4;
+    if (!smooth) {
+      const source = (sourceY * width + sourceX) * 4;
+      scaled.set(pixels.subarray(source, source + 4), target);
+      continue;
+    }
+    const nextX = Math.min(width - 1, sourceX + 1);
+    const nextY = Math.min(height - 1, sourceY + 1);
+    const fx = (x & 1) * 0.5;
+    const fy = (y & 1) * 0.5;
+    const samples = [
+      [sourceX, sourceY, (1 - fx) * (1 - fy)],
+      [nextX, sourceY, fx * (1 - fy)],
+      [sourceX, nextY, (1 - fx) * fy],
+      [nextX, nextY, fx * fy],
+    ];
+    let alpha = 0;
+    const premultiplied = [0, 0, 0];
+    for (const [sampleX, sampleY, weight] of samples) {
+      if (!weight) continue;
+      const source = (sampleY * width + sampleX) * 4;
+      const sampleAlpha = pixels[source + 3] / 255;
+      alpha += sampleAlpha * weight;
+      for (let channel = 0; channel < 3; channel++) {
+        premultiplied[channel] += pixels[source + channel] * sampleAlpha * weight;
+      }
+    }
+    if (alpha > 0) {
+      for (let channel = 0; channel < 3; channel++) {
+        scaled[target + channel] = Math.round(premultiplied[channel] / alpha);
+      }
+      scaled[target + 3] = Math.round(alpha * 255);
+    }
+  }
+  return Object.freeze({ width: scaledWidth, height: scaledHeight, pixels: scaled });
+}
+
+function blendPixelFrames(nearest, smooth, mix = 0.5) {
+  const pixels = new Uint8ClampedArray(nearest.pixels.length);
+  for (let index = 0; index < pixels.length; index += 4) {
+    const nearestAlpha = nearest.pixels[index + 3] / 255;
+    const smoothAlpha = smooth.pixels[index + 3] / 255;
+    const alpha = nearestAlpha * (1 - mix) + smoothAlpha * mix;
+    if (alpha > 0) for (let channel = 0; channel < 3; channel++) {
+      pixels[index + channel] = Math.round((
+        nearest.pixels[index + channel] * nearestAlpha * (1 - mix) +
+        smooth.pixels[index + channel] * smoothAlpha * mix
+      ) / alpha);
+    }
+    pixels[index + 3] = Math.round(alpha * 255);
+  }
+  return Object.freeze({ width: nearest.width, height: nearest.height, pixels });
+}
+
+function renderLabelFramebuffer(value) {
+  const native = new Uint8ClampedArray(CELL_W * CELL_H * 4);
+  drawLabel(native, value);
+  const nearest = scalePixels2x(native, CELL_W, CELL_H, false);
+  const smooth = scalePixels2x(native, CELL_W, CELL_H, true);
+  return blendPixelFrames(nearest, smooth);
 }
 
 function decodeReferenceRules() {
@@ -567,256 +384,107 @@ function renderSharedPanelRules(frameWidth, frameHeight, columns, rows) {
   return dst;
 }
 
-function renderCellBackground() {
-  const dst = new Uint8ClampedArray(CELL_W * CELL_H * 4);
-  for (let i = 0; i < dst.length; i += 4) { dst[i] = 8; dst[i + 1] = 5; dst[i + 2] = 4; dst[i + 3] = 255; }
-  drawFire(dst);
-  return dst;
-}
+const PAINT_SCRATCH = document.createElement('canvas');
 
-function seededRandom(seed) {
-  let state = seed >>> 0;
-  return () => {
-    state += 0x6D2B79F5;
-    let value = state;
-    value = Math.imul(value ^ value >>> 15, value | 1);
-    value ^= value + Math.imul(value ^ value >>> 7, value | 61);
-    return ((value ^ value >>> 14) >>> 0) / 4294967296;
-  };
-}
-
-function renderActionCellBackground(seed) {
-  const random = seededRandom(seed);
-  const dst = new Uint8ClampedArray(CELL_W * CELL_H * 4);
-
-  for (let y = 0; y < CELL_H; y++) for (let x = 0; x < CELL_W; x++) {
-    const grain = random();
-    const tone = grain < 0.08
-      ? 3 + Math.floor(random() * 2)
-      : grain > 0.92
-        ? 14 + Math.floor(random() * 10)
-        : 6 + Math.floor(random() * 5);
-    const target = (y * CELL_W + x) * 4;
-    dst[target] = tone;
-    dst[target + 1] = Math.max(0, tone - 1);
-    dst[target + 2] = Math.max(0, tone - 2);
-    dst[target + 3] = 255;
-  }
-
-  return dst;
-}
-
-const ACTION_CELL_BACKGROUND_PIXELS = Object.freeze({
-  search: renderActionCellBackground(STONE_BACKGROUND_SEED),
-  create: renderActionCellBackground(STONE_BACKGROUND_SEED ^ 0x9E3779B9)
-});
-
-function scalePixels2x(pixels, width, height, smooth) {
-  const scaledWidth = width * 2;
-  const scaledHeight = height * 2;
-  const scaled = new Uint8ClampedArray(scaledWidth * scaledHeight * 4);
-  for (let y = 0; y < scaledHeight; y++) for (let x = 0; x < scaledWidth; x++) {
-    const sourceX = x >> 1;
-    const sourceY = y >> 1;
-    const target = (y * scaledWidth + x) * 4;
-    if (!smooth) {
-      const source = (sourceY * width + sourceX) * 4;
-      scaled.set(pixels.subarray(source, source + 4), target);
-      continue;
-    }
-    const nextX = Math.min(width - 1, sourceX + 1);
-    const nextY = Math.min(height - 1, sourceY + 1);
-    const fx = (x & 1) * 0.5;
-    const fy = (y & 1) * 0.5;
-    const samples = [
-      [sourceX, sourceY, (1 - fx) * (1 - fy)],
-      [nextX, sourceY, fx * (1 - fy)],
-      [sourceX, nextY, (1 - fx) * fy],
-      [nextX, nextY, fx * fy]
-    ];
-    let alpha = 0;
-    const premultiplied = [0, 0, 0];
-    for (const [sampleX, sampleY, weight] of samples) {
-      if (!weight) continue;
-      const source = (sampleY * width + sampleX) * 4;
-      const sampleAlpha = pixels[source + 3] / 255;
-      alpha += sampleAlpha * weight;
-      for (let channel = 0; channel < 3; channel++) {
-        premultiplied[channel] += pixels[source + channel] * sampleAlpha * weight;
-      }
-    }
-    if (alpha > 0) {
-      for (let channel = 0; channel < 3; channel++) {
-        scaled[target + channel] = Math.round(premultiplied[channel] / alpha);
-      }
-      scaled[target + 3] = Math.round(alpha * 255);
-    }
-  }
-  return Object.freeze({ width: scaledWidth, height: scaledHeight, pixels: scaled });
-}
-
-function blendPixelFrames(nearest, smooth, mix) {
-  const pixels = new Uint8ClampedArray(nearest.pixels.length);
-  for (let index = 0; index < pixels.length; index += 4) {
-    const nearestAlpha = nearest.pixels[index + 3] / 255;
-    const smoothAlpha = smooth.pixels[index + 3] / 255;
-    const alpha = nearestAlpha * (1 - mix) + smoothAlpha * mix;
-    if (alpha > 0) for (let channel = 0; channel < 3; channel++) {
-      pixels[index + channel] = Math.round((
-        nearest.pixels[index + channel] * nearestAlpha * (1 - mix) +
-        smooth.pixels[index + channel] * smoothAlpha * mix
-      ) / alpha);
-    }
-    pixels[index + 3] = Math.round(alpha * 255);
-  }
-  return Object.freeze({ width: nearest.width, height: nearest.height, pixels });
-}
-
-function compositePortrait(dst, portraitName) {
-  const portrait = CHARACTER_PORTRAITS.get(portraitName);
-  if (!portrait) return;
-  for (let y = 0; y < CELL_H; y++) for (let x = 0; x < CELL_W; x++) {
-    const source = (y * CELL_W + x) * 4;
-    put(
-      dst, CELL_W, x, y,
-      portrait.pixels[source], portrait.pixels[source + 1],
-      portrait.pixels[source + 2], portrait.pixels[source + 3]
-    );
-  }
-}
-
-function renderCellFramebuffer(
-  name,
-  portraitName = null,
-  labelOpacity = 1,
-  backgroundPixels = null,
-  options = {}
-) {
-  const native = backgroundPixels
-    ? new Uint8ClampedArray(backgroundPixels)
-    : renderCellBackground();
-  compositePortrait(native, portraitName);
-  if (options.static) drawStatic(native, Math.random);
-  if (options.icon) compositeIcon(native, options.icon, labelOpacity);
-  const background = scalePixels2x(native, CELL_W, CELL_H, false);
-  if (!name || (portraitName && USE_SOURCE_PORTRAIT_CAPTIONS &&
-    BAKED_CAPTION_PORTRAITS.has(portraitName))) return background;
-  const nativeLabel = new Uint8ClampedArray(CELL_W * CELL_H * 4);
-  drawLabel(nativeLabel, name, labelOpacity);
-  const nearestLabel = scalePixels2x(nativeLabel, CELL_W, CELL_H, false);
-  const smoothLabel = scalePixels2x(nativeLabel, CELL_W, CELL_H, true);
-  const label = blendPixelFrames(nearestLabel, smoothLabel, LABEL_SMOOTH_MIX);
-  for (let y = 0; y < label.height; y++) for (let x = 0; x < label.width; x++) {
-    const source = (y * label.width + x) * 4;
-    put(
-      background.pixels, background.width, x, y,
-      label.pixels[source], label.pixels[source + 1],
-      label.pixels[source + 2], label.pixels[source + 3]
-    );
-  }
-  return background;
-}
-
-// Scratch canvases shared by every paint. A roster cell is painted once
-// into these and then stored as an <img> (see canvasFromPixels), so the DOM
-// holds no per-cell canvas backing stores: at 1000 fighters that is the
-// difference between a few MB of PNG and Safari's canvas memory cap.
-const SCRATCH = {
-  source: document.createElement('canvas'),
-  stepped: document.createElement('canvas'),
-  output: document.createElement('canvas'),
-};
-
-function scratchCanvas(name, width, height) {
-  const canvas = SCRATCH[name];
-  if (canvas.width !== width) canvas.width = width;
-  if (canvas.height !== height) canvas.height = height;
-  return canvas;
-}
-
-function paintPixels(
-  target, pixels, width, height, displayScale = 1,
-  pixelStep = 1, stepMix = 1, captureRect = null
-) {
-  const source = scratchCanvas('source', width, height);
-  source.getContext('2d').putImageData(new ImageData(pixels, width, height), 0, 0);
-
-  let renderSource = source;
-  if (pixelStep > 1) {
-    const stepped = scratchCanvas('stepped', width * pixelStep, height * pixelStep);
-    const steppedCtx = stepped.getContext('2d');
-    steppedCtx.imageSmoothingEnabled = false;
-    steppedCtx.clearRect(0, 0, stepped.width, stepped.height);
-    steppedCtx.drawImage(source, 0, 0, stepped.width, stepped.height);
-    renderSource = stepped;
-  }
-
-  const scaleX = typeof displayScale === 'number' ? displayScale : displayScale.x;
-  const scaleY = typeof displayScale === 'number' ? displayScale : displayScale.y;
-  const canvas = typeof target.getContext === 'function'
-    ? target
-    : scratchCanvas('output', Math.round(width * scaleX), Math.round(height * scaleY));
-  canvas.width = Math.round(width * scaleX);
-  canvas.height = Math.round(height * scaleY);
-  const ctx = canvas.getContext('2d', {
-    willReadFrequently: scaleX === 1 && scaleY === 1
-  });
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  if (displayScale === 1 && !captureRect) {
-    ctx.putImageData(new ImageData(pixels, width, height), 0, 0);
-  } else {
-    const target = captureRect || { x: 0, y: 0, width: 1, height: 1 };
-    const dx = target.x * canvas.width;
-    const dy = target.y * canvas.height;
-    const dw = target.width * canvas.width;
-    const dh = target.height * canvas.height;
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'low';
-    if (pixelStep > 1 && stepMix < 1) {
-      ctx.drawImage(source, dx, dy, dw, dh);
-      ctx.globalAlpha = stepMix;
-    }
-    // Match the captured game texture path: magnify the 2x texture lattice
-    // without interpolation, then let the browser's final CSS reduction
-    // supply the single antialiasing pass visible in the screenshot.
-    if (pixelStep > 1) ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(renderSource, dx, dy, dw, dh);
-    ctx.globalAlpha = 1;
-  }
+function paintPixels(target, pixels, width, height) {
+  const canvas = typeof target.getContext === 'function' ? target : PAINT_SCRATCH;
+  canvas.width = width;
+  canvas.height = height;
+  canvas.getContext('2d').putImageData(new ImageData(pixels, width, height), 0, 0);
   if (canvas !== target) target.src = canvas.toDataURL('image/png');
 }
 
-// A painted cell texture as a plain <img>: same pixels as before (rendered
-// through the shared scratch canvas and stored as a PNG data URL), but no
-// live canvas per cell. paintPixels() repaints an <img> target in place.
-function canvasFromPixels(
-  pixels, width, height, className = '', displayScale = 1,
-  pixelStep = 1, stepMix = 1, captureRect = null
-) {
+function createImageLayer(className) {
   const image = document.createElement('img');
   image.className = className;
-  image.setAttribute('aria-hidden', 'true');
   image.alt = '';
   image.decoding = 'async';
   image.draggable = false;
-  paintPixels(image, pixels, width, height, displayScale, pixelStep, stepMix, captureRect);
+  image.setAttribute('aria-hidden', 'true');
   return image;
 }
 
-function paintCellCanvas(
-  canvas,
-  label,
-  portraitName,
-  labelOpacity = 1,
-  backgroundPixels = null,
-  options = {}
-) {
-  const framebuffer = renderCellFramebuffer(
-    label, portraitName, labelOpacity, backgroundPixels, options
-  );
-  paintPixels(
-    canvas, framebuffer.pixels, framebuffer.width, framebuffer.height
-  );
+function setActionIcon(button, fileName, kind) {
+  const image = createImageLayer(`replica-action-icon is-${kind}`);
+  image.loading = 'eager';
+  image.src = actionIconUrl(fileName);
+  button.prepend(image);
+}
+
+function ensureLabel(button) {
+  let label = button.querySelector('.replica-label');
+  if (!label) {
+    label = document.createElement('span');
+    label.className = 'replica-label';
+    label.setAttribute('aria-hidden', 'true');
+    button.append(label);
+  }
+  return label;
+}
+
+async function paintExactCaption(button, value) {
+  await captionFontReady;
+  const source = normalizeCaption(value);
+  if (button.dataset.captionSource !== source) return;
+  const text = fitCaption(source).text;
+  ensureLabel(button).textContent = text;
+  button.dataset.label = text;
+  let image = button.querySelector('.replica-caption-layer');
+  if (!image) {
+    image = createImageLayer('replica-caption-layer');
+    button.append(image);
+  }
+  const framebuffer = renderLabelFramebuffer(text);
+  paintPixels(image, framebuffer.pixels, framebuffer.width, framebuffer.height);
+  button.classList.add('has-bitmap-caption');
+}
+
+const captionObserver = 'IntersectionObserver' in window
+  ? new IntersectionObserver(entries => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        void paintExactCaption(entry.target, entry.target.dataset.captionSource || '');
+        captionObserver.unobserve(entry.target);
+      }
+    }, { rootMargin: '600px 0px' })
+  : null;
+
+function setCellLabel(button, value) {
+  const source = normalizeCaption(value);
+  const text = captionFont ? fitCaption(source).text : source.slice(0, 8);
+  ensureLabel(button).textContent = text;
+  button.dataset.label = text;
+  button.dataset.captionSource = source;
+  const alreadyRendered = button.classList.contains('has-bitmap-caption');
+  button.classList.remove('has-bitmap-caption');
+  if (!captionObserver || alreadyRendered || ['search', 'create'].includes(button.dataset.kind)) {
+    void paintExactCaption(button, source);
+  } else {
+    captionObserver.observe(button);
+  }
+  return text;
+}
+
+function setNativePortrait(button, character) {
+  let image = button.querySelector('.replica-portrait-layer');
+  if (!image) {
+    image = createImageLayer('replica-portrait-layer');
+    image.loading = 'lazy';
+    image.width = CELL_W * RASTER_SCALE;
+    image.height = CELL_H * RASTER_SCALE;
+    button.prepend(image);
+  }
+  const portraitUrl = character.portraitUrl || '';
+  if (portraitUrl) {
+    if (image.getAttribute('src') !== portraitUrl) image.src = portraitUrl;
+  } else {
+    image.removeAttribute('src');
+  }
+  setCellLabel(button, character.label);
+}
+
+function clearNativePortrait(button) {
+  button.querySelector('.replica-portrait-layer')?.remove();
 }
 
 const grid = document.getElementById('replica-grid');
@@ -898,28 +566,18 @@ CELL_IDS.forEach((id, index) => {
     input.type = 'search';
     input.autocomplete = 'off';
     input.spellcheck = false;
+    input.placeholder = 'SEARCH';
     input.setAttribute('autocapitalize', 'characters');
     input.setAttribute('aria-label', 'Search fighters');
     button.append(input);
   }
-  const framebuffer = renderCellFramebuffer(
-    label,
-    character.portrait,
-    1,
-    isSearch
-      ? ACTION_CELL_BACKGROUND_PIXELS.search
-      : isCreate
-        ? ACTION_CELL_BACKGROUND_PIXELS.create
-        : null,
-    isSearch
-      ? { static: true, icon: ACTION_ICONS.search }
-      : isCreate
-        ? { static: true, icon: ACTION_ICONS.create }
-        : {}
-  );
-  button.append(canvasFromPixels(
-    framebuffer.pixels, framebuffer.width, framebuffer.height, 'replica-texture-layer'
-  ));
+  if (isSearch || isCreate) {
+    setActionIcon(button, isSearch ? 'SearchGlass.png' : 'Plus.png', isSearch ? 'search' : 'create');
+    setCellLabel(button, label);
+  }
+  else if (!isSearch) {
+    setNativePortrait(button, character);
+  }
   grid.append(button);
   cells.set(id, button);
 });
@@ -1124,46 +782,17 @@ function selectableRosterCell(target) {
 
 function updateSearchTile(query = '') {
   if (!searchCell) return;
-  const value = String(query).trim();
+  const value = String(query).toUpperCase();
   const active = document.activeElement === fighterSearch;
-  const displayLabel = value || 'SEARCH';
-  const caption = renderCaption(displayLabel);
-  const caretX = value
-    ? Math.min(CELL_W - 2, 4 + caption.width + 1)
-    : 3;
-
+  const caption = fitCaption(value || 'SEARCH');
+  const caretX = value ? Math.min(CELL_W - 2, 4 + caption.width + 1) : 3;
   searchCell.classList.toggle('is-searching', active);
   searchCell.style.setProperty('--search-caret-left', `${100 * caretX / CELL_W}%`);
-  // The SEARCH caption (or the typed query) always sits at the top; the glass
-  // shows while idle and steps aside while the box is focused or has text.
-  const showGlass = !active && !value;
-  paintCellCanvas(
-    searchCell.querySelector('.replica-texture-layer'),
-    displayLabel,
-    null,
-    active && !value ? 0.5 : 1,
-    ACTION_CELL_BACKGROUND_PIXELS.search,
-    showGlass ? { static: true, icon: ACTION_ICONS.search } : { static: true }
-  );
+  if (fighterSearch && fighterSearch.value !== value) fighterSearch.value = value;
+  const searchIcon = searchCell.querySelector('.replica-action-icon');
+  if (searchIcon) searchIcon.hidden = active || Boolean(value);
+  setCellLabel(searchCell, value || 'SEARCH');
 }
-
-// Re-roll the static every frame like the RDP does, at a retro-ish cadence.
-const createCell = [...cells.values()].find(button => button.dataset.kind === 'create');
-function repaintActionCells() {
-  if (document.hidden) return;
-  updateSearchTile(fighterSearch?.value || '');
-  if (createCell && !createCell.hidden) {
-    paintCellCanvas(
-      createCell.querySelector('.replica-texture-layer'),
-      'CREATE',
-      null,
-      1,
-      ACTION_CELL_BACKGROUND_PIXELS.create,
-      { static: true, icon: ACTION_ICONS.create }
-    );
-  }
-}
-setInterval(repaintActionCells, 1000 / 12);
 
 function filterRoster(query = '') {
   const normalized = String(query).trim().toLocaleLowerCase();
@@ -1285,12 +914,7 @@ function createRosterCell(character) {
   button.dataset.kind = 'fighter';
   button.setAttribute('role', 'gridcell');
   button.setAttribute('aria-pressed', 'false');
-  button.append(canvasFromPixels(
-    renderCellFramebuffer(character.label, character.portrait).pixels,
-    CELL_W,
-    CELL_H,
-    'replica-texture-layer'
-  ));
+  setNativePortrait(button, character);
   attachCellActivation(button);
   grid.append(button);
   cells.set(id, button);
@@ -1316,7 +940,7 @@ async function syncCharacters(characters = []) {
     button.remove();
   }
 
-  await Promise.all(nextRoster.map(async character => {
+  for (const character of nextRoster) {
     let button = [...cells.values()].find(candidate =>
       !candidate.classList.contains('fighter-job-cell') &&
       candidate.dataset.rosterCharacter === character.asset
@@ -1326,10 +950,9 @@ async function syncCharacters(characters = []) {
     if (!button && [...jobCells.values()].some(candidate =>
       candidate.dataset.kind === 'creation' &&
       candidate.dataset.rosterCharacter === character.asset
-    )) return;
+    )) continue;
     if (!button) button = createRosterCell(character);
 
-    const previousPortraitUrl = button.dataset.portraitUrl || '';
     button.dataset.label = character.label;
     button.dataset.rosterCharacter = character.asset;
     button.dataset.portrait = character.portrait;
@@ -1340,25 +963,8 @@ async function syncCharacters(characters = []) {
     else delete button.dataset.bundle;
     button.setAttribute('aria-label', character.name);
 
-    if (
-      character.portraitUrl &&
-      (previousPortraitUrl !== character.portraitUrl || !CHARACTER_PORTRAITS.has(character.portrait))
-    ) {
-      try {
-        CHARACTER_PORTRAITS.set(
-          character.portrait,
-          await loadFeaturedPortrait(character.portrait, character.portraitUrl)
-        );
-      } catch (error) {
-        console.warn(`Could not load live portrait for ${character.name}:`, error);
-      }
-    }
-    paintCellCanvas(
-      button.querySelector('.replica-texture-layer'),
-      character.label,
-      character.portrait
-    );
-  }));
+    setNativePortrait(button, character);
+  }
 
   filterRoster(fighterSearch?.value || '');
   return cells;
@@ -1380,10 +986,7 @@ function createJobCell(job) {
   button.setAttribute('aria-pressed', 'false');
   button.setAttribute('aria-disabled', 'true');
 
-  const framebuffer = renderCellFramebuffer(job.name);
-  button.append(canvasFromPixels(
-    framebuffer.pixels, framebuffer.width, framebuffer.height, 'replica-texture-layer'
-  ));
+  setCellLabel(button, job.name);
 
   const spinner = document.createElement('span');
   spinner.className = 'fighter-job-spinner';
@@ -1461,27 +1064,19 @@ async function updateJobCell(job) {
   button.setAttribute('aria-disabled', String(!complete && !failed));
 
   if (complete) {
+    const character = liveRosterCharacter(job.character);
     button.dataset.kind = 'creation';
     button.dataset.character = job.character.slug;
-    button.dataset.portrait = `job:${job.id}`;
+    button.dataset.portrait = character.portrait;
+    button.dataset.portraitUrl = character.portraitUrl || '';
     button.dataset.fkind = String(job.character.fkind || 0);
     if (job.character.bundle) button.dataset.bundle = job.character.bundle;
-    try {
-      CHARACTER_PORTRAITS.set(
-        button.dataset.portrait,
-        await loadFeaturedPortrait(button.dataset.portrait, job.character.portrait)
-      );
-    } catch (error) {
-      console.warn(`Could not load generated portrait for ${job.name}:`, error);
-    }
+    setNativePortrait(button, character);
   } else {
     button.dataset.kind = 'job';
+    clearNativePortrait(button);
+    setCellLabel(button, job.character?.short || job.character?.name || job.name);
   }
-  paintCellCanvas(
-    button.querySelector('.replica-texture-layer'),
-    job.character?.short || job.character?.name || job.name,
-    complete ? button.dataset.portrait : null
-  );
   return button;
 }
 
@@ -1520,11 +1115,8 @@ function setLabel(character, label) {
   const cell = getCell(character);
   if (!cell) return null;
   const fitted = fitCaption(label).text;
-  cell.dataset.label = fitted;
+  setCellLabel(cell, fitted);
   cell.setAttribute('aria-label', fitted || cell.dataset.character);
-  paintCellCanvas(
-    cell.querySelector('.replica-texture-layer'), fitted, cell.dataset.portrait
-  );
   return cell;
 }
 
@@ -1610,145 +1202,6 @@ function attachCellActivation(cell) {
 
 cells.forEach(attachCellActivation);
 
-const BENCH_W = 24;
-const BENCH_H = 14;
-
-function stageCaption(caption) {
-  const pixels = new Uint8ClampedArray(BENCH_W * BENCH_H * 4);
-  const originX = Math.floor((BENCH_W - caption.width) / 2);
-  const originY = Math.floor((BENCH_H - caption.height) / 2);
-  for (let y = 0; y < caption.height; y++) for (let x = 0; x < caption.width; x++) {
-    const source = (y * caption.width + x) * 4;
-    put(
-      pixels, BENCH_W, originX + x, originY + y,
-      caption.pixels[source], caption.pixels[source + 1],
-      caption.pixels[source + 2], caption.pixels[source + 3]
-    );
-  }
-  return pixels;
-}
-
-function strictPixelGrade(expected, actual) {
-  let mismatchedPixels = 0;
-  for (let i = 0; i < expected.length; i += 4) {
-    if (
-      expected[i] !== actual[i] ||
-      expected[i + 1] !== actual[i + 1] ||
-      expected[i + 2] !== actual[i + 2] ||
-      expected[i + 3] !== actual[i + 3]
-    ) mismatchedPixels++;
-  }
-  return {
-    mismatchedPixels,
-    totalPixels: expected.length / 4,
-    score: 100 * (expected.length / 4 - mismatchedPixels) / (expected.length / 4)
-  };
-}
-
-function glyphIntegrityIssue(char, glyph) {
-  const ink = (x, y) => x >= 0 && y >= 0 && x < glyph.width && y < glyph.height &&
-    glyph.pixels[(y * glyph.width + x) * 4 + 3] > 0;
-  const rowInk = y => Array.from({ length: glyph.width }, (_, x) => x).filter(x => ink(x, y));
-  if (![3, 4, 5, 6, 7, 8, 9].some(y => rowInk(y).length)) return 'empty glyph';
-  if (char === 'T') {
-    if (rowInk(3).length < 4) return 'incomplete top bar';
-    if ([4, 5, 6, 7, 8, 9].some(y => rowInk(y).length > 2)) return 'horizontal stem artifact';
-  }
-  if (char === 'Z') {
-    if (glyph.width > 5 || rowInk(3).length < 4 || rowInk(9).length < 4) return 'bulky Z';
-    if ([4, 5, 6, 7, 8].some(y => rowInk(y).length > 2)) return 'thick Z diagonal';
-  }
-  if (char === 'R' && glyph.width > 5) return 'borrowed lower-left pixel';
-  if (char === 'Q') {
-    const bowl = CAPTION_GLYPHS.get('O');
-    if (glyph.width !== bowl.width + 1 || !ink(glyph.width - 1, 9)) return 'missing Q tail';
-  }
-  if ((char === 'C' || char === 'L') &&
-      [3, 4, 5, 6, 7, 8, 9].some(y => ink(glyph.width - 1, y))) {
-    return 'missing right side-bearing';
-  }
-  if (char === 'O' && ink(0, 3)) return 'rogue upper-left pixel';
-  if (char === 'I' && glyph.width !== 2) return 'contaminated I stem';
-  return '';
-}
-
-function buildFontBench() {
-  const bench = document.getElementById('font-glyph-grid');
-  if (!bench) {
-    return Object.freeze({
-      validGlyphs: 0,
-      exactGlyphs: 0,
-      mismatchedPixels: 0,
-      totalPixels: 0,
-      score: 0,
-    });
-  }
-  let mismatchedPixels = 0;
-  let totalPixels = 0;
-  let validGlyphs = 0;
-
-  for (const char of ALPHABET) {
-    const glyph = CAPTION_GLYPHS.get(char);
-    // Grade the pixel buffers directly; cell textures are <img> elements
-    // now, so there is no canvas to read back (and none was needed).
-    const sourcePixels = stageCaption(glyph);
-    const actual = stageCaption(renderCaption(char, BENCH_W));
-    const grade = strictPixelGrade(sourcePixels, actual);
-    const integrityIssue = glyphIntegrityIssue(char, glyph);
-    if (!integrityIssue) validGlyphs++;
-    mismatchedPixels += grade.mismatchedPixels;
-    totalPixels += grade.totalPixels;
-
-    const figure = document.createElement('figure');
-    figure.className = `glyph-pair${grade.mismatchedPixels || integrityIssue ? '' : ' is-exact'}`;
-    figure.dataset.character = char;
-    figure.dataset.mismatchedPixels = String(grade.mismatchedPixels);
-    figure.dataset.integrityIssue = integrityIssue;
-
-    const caption = document.createElement('figcaption');
-    const character = document.createElement('strong');
-    const score = document.createElement('output');
-    character.textContent = char;
-    score.textContent = integrityIssue ? 'FAIL' : 'PASS';
-    if (integrityIssue) score.title = integrityIssue;
-    caption.append(character, score);
-
-    const gameRow = document.createElement('div');
-    gameRow.className = 'glyph-row';
-    const gameLabel = document.createElement('span');
-    gameLabel.className = 'glyph-row-label';
-    gameLabel.textContent = 'Font';
-    const gameStage = document.createElement('span');
-    gameStage.className = 'glyph-stage';
-    sourceCanvas.setAttribute('role', 'img');
-    sourceCanvas.setAttribute('aria-label', `${char} from the extracted OpenSmash tile-caption font`);
-    gameStage.append(sourceCanvas);
-    gameRow.append(gameLabel, gameStage);
-
-    const codeRow = document.createElement('div');
-    codeRow.className = 'glyph-row';
-    const codeLabel = document.createElement('span');
-    codeLabel.className = 'glyph-row-label';
-    codeLabel.textContent = 'Code';
-    const codeStage = document.createElement('span');
-    codeStage.className = 'glyph-stage';
-    codeStage.append(canvas);
-    codeRow.append(codeLabel, codeStage);
-
-    figure.append(caption, gameRow, codeRow);
-    bench.append(figure);
-  }
-
-  const exactGlyphs = [...bench.children].filter(node => node.dataset.mismatchedPixels === '0').length;
-  const score = 100 * (totalPixels - mismatchedPixels) / totalPixels;
-  document.getElementById('font-bench-detail').textContent =
-    `${validGlyphs}/26 topology checks · ${exactGlyphs}/26 compositor matches · ${mismatchedPixels.toLocaleString()} RGBA mismatches`;
-  document.getElementById('font-bench-score').textContent = `${validGlyphs}/26 valid`;
-  return Object.freeze({ validGlyphs, exactGlyphs, mismatchedPixels, totalPixels, score });
-}
-
-const FONT_GRADE = buildFontBench();
-
 // Public, DOM-first hooks for future game/UI work. Example:
 // characterGrid.setLabel('CELL-001', 'CUSTOM'); characterGrid.highlight('CELL-042');
 window.characterGrid = Object.freeze({
@@ -1769,7 +1222,10 @@ window.characterGrid = Object.freeze({
   randomize
 });
 
-await syncJobs(INITIAL_FIGHTER_JOBS);
+// Job reconciliation is additive; it must never hold the initial roster paint.
+syncJobs(INITIAL_FIGHTER_JOBS).catch(error => {
+  console.warn('Could not reconcile fighter jobs:', error);
+});
 
 window.__replicaMetrics = Object.freeze({
   get nativeGrid() { return currentGridLayout.width + 'x' + currentGridLayout.height; },
@@ -1777,19 +1233,14 @@ window.__replicaMetrics = Object.freeze({
   get rows() { return currentGridLayout.rows; },
   cellInterior: CELL_W + 'x' + CELL_H,
   get cellElements() { return cells.size; },
-  alphabetGlyphs: CAPTION_GLYPHS.size,
   sharedRule: RULE + 'px',
-  rasterScale: RASTER_SCALE,
-  fireTexels: CELL_W * CELL_H,
-  labelGlyphPixels: [...CAPTION_GLYPHS.values()].reduce(
-    (total, glyph) => total + glyph.width * glyph.height, 0
-  ),
-  runtimeFontAssetRequests: CAPTION_GLYPHS.size,
-  sharedCaptionPipeline: true,
-  fontGrade: FONT_GRADE,
-  get characterPortraits() { return CHARACTER_PORTRAITS.size; },
-  get runtimePortraitAssetRequests() { return CHARACTER_PORTRAITS.size; },
-  portraitSource: 'OpenSmash transparent portrait cutouts',
+  captionRendering: 'viewport-lazy extracted SSB bitmap',
+  runtimeFontAssetRequests: 0,
+  get renderedCaptions() { return grid.querySelectorAll('.replica-caption-layer').length; },
+  get characterPortraits() { return grid.querySelectorAll('.replica-portrait-layer').length; },
+  get runtimePortraitAssetRequests() { return grid.querySelectorAll('.replica-portrait-layer[src]').length; },
+  portraitSource: 'native HTML image elements',
+  portraitPreprocessing: false,
   portraitsGraded: false
 });
 
