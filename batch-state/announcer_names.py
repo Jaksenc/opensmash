@@ -7,14 +7,14 @@ the clip) — --apply only touches rows whose proposed != current."""
 import csv, json, os, re, sys
 from concurrent.futures import ThreadPoolExecutor
 sys.path.insert(0, "pipeline"); from gen import http, ENV, token_cost
+VETO = 'Drop an epithet or qualifier ONLY when what remains is unmistakable on its own (Hercules the Greek Hero -> Hercules; Thor the Norse God -> Thor; Sinbad the Sailor -> Sinbad). Keep it when the bare name is common or ambiguous: Eddie the Eagle, Jack the Giant Killer, Vlad the Impaler, Francis of Assisi (a bare "Francis" is the Pope by ear), Alice in Wonderland, Kaiser Wilhelm, Terence Tao and Michelangelo\'s David all stay EXACTLY as they are — never "Eddie", "Jack", "Vlad", "Francis", "Alice", "Wilhelm", "Tao" or "David".'
 RULE = ('You name fighters for a 1999 arena fighting game. Given the roster entry and its description, return the name the '
         'ARENA ANNOUNCER shouts when the fighter is picked, which is also shown as the in-game name: the shortest form a crowd '
         'would instantly recognise, natural casing, spaces allowed. Surname alone when world-famous by it (Wolfgang Amadeus '
         'Mozart -> Mozart; Albert Einstein -> Einstein; Winston Churchill -> Churchill). First or stage name alone when that is '
         'the famous form (Cher; Beyoncé; Hercules; Madonna). Full name when both halves are needed (Marilyn Monroe; Michael '
         'Jackson; Bill Gates; George Washington). Keep an iconic title (Pope Francis; Queen Elizabeth; Captain Hook; Mister '
-        'Rogers). Strip descriptive qualifiers/epithets ("Hercules the Greek Hero" -> Hercules; "Thor the Norse God" -> Thor; '
-        '"Michelangelo\'s David" -> David; "The Statue of Liberty" stays as is because that is the name). Never an abbreviation. '
+        'Rogers). ' + VETO + ' "The Statue of Liberty" stays as is because that is the name. Never an abbreviation. '
         'If the current display is already right, return it unchanged.')
 SCHEMA = {"type": "object", "properties": {"display": {"type": "string"}, "reason": {"type": "string"}},
           "required": ["display", "reason"], "additionalProperties": False}
