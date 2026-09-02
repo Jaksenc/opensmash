@@ -14,6 +14,16 @@ import {
   requireControlsRoadblock,
 } from "../visual/controls-roadblock.js";
 import { identifyRomFile } from "./rom-validation.js";
+import { clearRomStore, hasStoredRom, prewarmEngineArchive, storeRom } from "../shared/rom-store.js";
+
+// Fire-and-forget: build the engine's asset archive while the launch flow
+// animates, so the engine boots straight from the cache.
+function prewarmArchiveInBackground() {
+  prewarmEngineArchive().then(
+    (result) => { if (result) console.info("[rom] engine archive", result.source, result.ms ? `${Math.round(result.ms)}ms` : ""); },
+    (error) => console.warn("[rom] engine archive prewarm failed:", error),
+  );
+}
 import { clearControllerTutorialCompletion } from "../visual/control-tutorial.js";
 import {
   FLOW_MUSIC_MAX_VOLUME,
@@ -131,7 +141,14 @@ function loadAdvancedOptions() {
 async function getSession() {
   const response = await fetch("/api/session", { cache: "no-store" });
   if (!response.ok) return { authorized: false, authenticated: false, user: null };
-  return response.json();
+  const session = await response.json();
+  // The engine builds its assets from the ROM stored in this browser, so a
+  // valid ROM cookie alone does not make the session playable. Re-prompt for
+  // the ROM when the stored bytes are gone (cleared site data, private window).
+  if (session.authorized && !(await hasStoredRom())) {
+    return { ...session, authorized: false, romMissing: true };
+  }
+  return session;
 }
 
 function RomModal({ action, onCancel, onValidated }) {
@@ -164,6 +181,10 @@ function RomModal({ action, onCancel, onValidated }) {
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "ROM validation failed");
+      // The engine builds its assets from these bytes inside the browser.
+      setStatus("storing");
+      await storeRom(rom);
+      prewarmArchiveInBackground();
       onValidated(result.rom);
     } catch (validationError) {
       setStatus("idle");
@@ -216,6 +237,7 @@ function RomModal({ action, onCancel, onValidated }) {
             {status === "extracting" && "Opening archive…"}
             {status === "hashing" && "Checking ROM…"}
             {status === "validating" && "Checking ROM…"}
+            {status === "storing" && "Storing ROM in this browser…"}
             {status === "idle" && (action?.type === "create" ? "Validate & create" : "Validate & play")}
           </button>
         </form>
@@ -790,6 +812,10 @@ export default function App() {
     });
     const result = await response.json();
     if (!response.ok) throw new Error(result.error || "ROM validation failed");
+    // The engine builds its assets from these bytes inside the browser.
+    onStatus?.("storing");
+    await storeRom(rom);
+    prewarmArchiveInBackground();
     setAuthorized(true);
     const session = await getSession();
     setUser(session.user || null);
@@ -829,6 +855,11 @@ export default function App() {
     if (!response.ok) {
       setPageError("Could not clear ROM verification");
       return;
+    }
+    try {
+      await clearRomStore();
+    } catch (error) {
+      console.warn("Could not clear the stored ROM:", error);
     }
     setAuthorized(false);
     setPendingAction(null);

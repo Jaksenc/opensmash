@@ -1,29 +1,14 @@
 // Responsive extension of the supplied OpenSmash character grid. The lattice,
-// fire, captions, and interaction stay code-rendered; only the twelve native
-// character portraits are layered into the cells as transparent cutouts.
+// fire, captions, and interaction stay code-rendered; character portraits are
+// layered into the cells as transparent cutouts. Only generated/featured
+// fighters are drawn — the original game's portraits are never bundled or
+// served by the site (VANILLA_ROSTER below is metadata only: fkind order,
+// labels, and the caption-font baking flags).
 
 const BUILD_ASSETS = {
   ...import.meta.glob([
     './assets/ui_refs/tile_*.png',
     './assets/ui_refs/tileglyph_*.png',
-  ], {
-    eager: true,
-    query: '?url',
-    import: 'default',
-  }),
-  ...import.meta.glob([
-    './assets/charselect/mario.png',
-    './assets/charselect/fox.png',
-    './assets/charselect/dk.png',
-    './assets/charselect/samus.png',
-    './assets/charselect/luigi.png',
-    './assets/charselect/link.png',
-    './assets/charselect/yoshi.png',
-    './assets/charselect/falcon.png',
-    './assets/charselect/kirby.png',
-    './assets/charselect/pikachu.png',
-    './assets/charselect/jigglypuff.png',
-    './assets/charselect/ness.png',
   ], {
     eager: true,
     query: '?url',
@@ -175,8 +160,10 @@ const INITIAL_FIGHTER_JOBS = APP_BRIDGE?.fighterJobs || [];
 const BAKED_CAPTION_PORTRAITS = new Set(
   VANILLA_ROSTER.map(character => character.portrait)
 );
+// Without a live roster only the featured (generated) fighters render; the
+// vanilla cast has no portrait assets on the site by design.
 const ROSTER = Object.freeze([...new Map(
-  (LIVE_ROSTER.length ? LIVE_ROSTER : [...FEATURED_ROSTER, ...VANILLA_ROSTER])
+  (LIVE_ROSTER.length ? LIVE_ROSTER : FEATURED_ROSTER)
     .map(character => [character.asset, character])
 ).values()]);
 const CELL_COUNT = ROSTER.length + 2;
@@ -380,13 +367,9 @@ function cutOutPortrait(source, sourceLabel) {
   return Object.freeze({ width: CELL_W, height: CELL_H, pixels });
 }
 
-const CHARACTER_PORTRAITS = new Map(await Promise.all(VANILLA_ROSTER.map(async character => [
-  character.portrait,
-  cutOutPortrait(
-    await loadCaptionImage(buildAssetUrl(`charselect/${character.portrait}.png`)),
-    character.label,
-  )
-])));
+// Portrait pixel data by portrait name. Populated from featured-fighter and
+// live-roster PNGs only; vanilla names simply have no entry.
+const CHARACTER_PORTRAITS = new Map();
 
 async function loadFeaturedPortrait(portraitName, portraitUrl = null) {
   const image = new Image();

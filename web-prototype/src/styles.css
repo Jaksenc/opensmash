@@ -708,6 +708,21 @@ body:has(.advanced-overlay:not([hidden])) { overflow: hidden; }
   min-width: 0;
   min-height: 0;
 }
+/* "Skip" fades in a couple of seconds into the controller check so a
+ * stalled flip animation or a missing key can never trap the player. */
+.launch-flow-controller .launch-flow-skip {
+  pointer-events: auto; /* instructions block passes clicks through to the 3D scene */
+  margin-top: 10px;
+  opacity: 0;
+  animation: launch-flow-skip-in 600ms ease-out forwards;
+}
+.launch-flow-controller .launch-flow-skip[hidden] { display: none; }
+@keyframes launch-flow-skip-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 0.85; transform: none; }
+}
+.launch-flow-controller .launch-flow-skip:hover,
+.launch-flow-controller .launch-flow-skip:focus-visible { opacity: 1; }
 .launch-flow-upload .launch-flow-fire-cell,
 .launch-flow-upload .launch-flow-cancel,
 .launch-flow-controller .launch-flow-controls-close {
