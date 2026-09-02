@@ -109,7 +109,7 @@ and sibling `BattleShip` repositories (including untracked files under
 and the engine package; enables APIs, buckets, service accounts, secrets and
 IAM (idempotent); validates `config/baked-assets.json` against
 `config/characters.json` and refreshes the public bucket's CORS rule; runs
-two Cloud Builds (API, worker); deploys the worker job and the API service;
+the API and worker Cloud Builds in parallel and waits for both; deploys the worker job and the API service;
 then reconciles Cloudflare if credentials were given. The first deploy creates
 `opensmash-cookie-secret-previous` by copying the current signing key;
 subsequent rotations maintain it. A deploy interrupted before

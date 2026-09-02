@@ -201,14 +201,41 @@ let raw = ""; process.stdin.on("data", (d) => raw += d).on("end", () => {
 gcloud storage buckets update "gs://${PUBLIC_BUCKET}" --cors-file="$cors_file"
 
 cd "$WORKSPACE_ROOT"
-gcloud builds submit . \
+# The two images share nothing, so submit both builds and wait for both.
+# Each submit still uploads its own context synchronously (small now).
+API_BUILD_ID="$(gcloud builds submit . --async --format='value(id)' \
   --ignore-file pipeline/web-prototype/docker/api.Dockerfile.dockerignore \
   --config pipeline/web-prototype/infra/cloudbuild-api.yaml \
-  --substitutions "_IMAGE=${API_IMAGE}"
-gcloud builds submit . \
+  --substitutions "_IMAGE=${API_IMAGE}")"
+WORKER_BUILD_ID="$(gcloud builds submit . --async --format='value(id)' \
   --ignore-file pipeline/web-prototype/docker/worker.Dockerfile.dockerignore \
   --config pipeline/web-prototype/infra/cloudbuild-worker.yaml \
-  --substitutions "_IMAGE=${WORKER_IMAGE}"
+  --substitutions "_IMAGE=${WORKER_IMAGE}")"
+echo "Cloud Build: api=${API_BUILD_ID} worker=${WORKER_BUILD_ID}"
+
+wait_for_builds() {
+  local pending=("$@")
+  local failed=0
+  while ((${#pending[@]})); do
+    local still=()
+    for id in "${pending[@]}"; do
+      local status
+      status="$(gcloud builds describe "$id" --format='value(status)')"
+      case "$status" in
+        SUCCESS) echo "Build ${id}: SUCCESS" ;;
+        FAILURE|INTERNAL_ERROR|TIMEOUT|CANCELLED|EXPIRED)
+          echo "Build ${id}: ${status}" >&2
+          echo "  gcloud builds log ${id}" >&2
+          failed=1 ;;
+        *) still+=("$id") ;;
+      esac
+    done
+    pending=("${still[@]+"${still[@]}"}")
+    ((${#pending[@]})) && sleep 15
+  done
+  return "$failed"
+}
+wait_for_builds "$API_BUILD_ID" "$WORKER_BUILD_ID"
 
 gcloud run jobs deploy "$WORKER_JOB" \
   --image "$WORKER_IMAGE" \
