@@ -2397,7 +2397,7 @@ function showLaunchFlow(fighter, { create = false } = {}) {
   if (flowCopy) {
     flowCopy.textContent = create
       ? 'To create a fighter, choose your legally obtained USA-release Super Smash Bros. 64 ROM. It never leaves your device.'
-      : 'To play Smash the Weights, choose your legally obtained USA-release Super Smash Bros. 64 ROM. It never leaves your device.';
+      : 'To play, choose your legally obtained USA-release Super Smash Bros. 64 ROM. It never leaves your device.';
   }
   overlay.dataset.mode = create ? 'create' : 'launch';
   overlay.dataset.step = 'upload';

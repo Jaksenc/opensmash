@@ -78,8 +78,7 @@ export function LaunchFlow() {
       <section className="launch-flow-step launch-flow-upload" role="dialog" aria-modal="true" aria-labelledby="launch-flow-title" aria-describedby="launch-flow-copy rom-filename-hint">
         <h2 id="launch-flow-title" className="visually-hidden">Play Smash the Weights</h2>
         <p id="launch-flow-copy" className="launch-flow-copy">
-          To play Smash the Weights, choose your legally obtained USA-release Super Smash Bros. 64 ROM. It never
-          leaves your device.
+          To play, choose your legally obtained USA-release Super Smash Bros. 64 ROM. It never leaves your device.
         </p>
         <div id="rom-filename-hint" className="launch-flow-rom-hint">
           <span className="launch-flow-rom-hint-label">The file is usually named</span>{" "}
