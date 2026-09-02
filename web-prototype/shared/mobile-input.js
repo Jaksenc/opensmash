@@ -1,13 +1,14 @@
+// Engine keyboard map: WASD stick, J=A, K=B, L=Z, I=L, O=R, Space=Start.
 export const MOBILE_KEY_VALUES = Object.freeze({
   KeyA: "a",
-  KeyC: "c",
   KeyD: "d",
-  KeyE: "e",
-  KeyR: "r",
+  KeyI: "i",
+  KeyJ: "j",
+  KeyK: "k",
+  KeyL: "l",
+  KeyO: "o",
   KeyS: "s",
   KeyW: "w",
-  KeyX: "x",
-  KeyZ: "z",
   Space: " ",
 });
 
