@@ -20,6 +20,11 @@ import consoleModelUrl from './assets/hybrid-four-port-console-fitted.glb?url';
 import controllerPunchUrl from './assets/controller-punch.wav?url';
 import controllerModelUrl from './assets/nintendo-64-controller.glb?url';
 const APP_BRIDGE = window.openSmashReactBridge;
+// The React grid asks this before voicing a pick: when no controls step is
+// coming (completed, skipped this visit, or touch), the click goes straight
+// into the engine, whose VS card announces the matchup itself.
+window.openSmashRequiresControllerTutorial = () => requiresControllerTutorial();
+
 const ROM_SHA256 = '15592e79d3c5295cef4371d4992f0bd25bec2102fc29644c93e682f7ea99ef3d';
 const ROM_SIZE = 16 * 1024 * 1024;
 const ROM_STORAGE_KEY = 'opensmash.rom-verified.v1';
@@ -2621,7 +2626,12 @@ window.addEventListener('pointerup', event => finishCartridgePointer(event));
 grid?.addEventListener('characterselect', event => {
   const fighter = fighterFromSelection(event.detail);
   if (fighter) {
-    APP_BRIDGE?.announceCharacter?.(fighter.slug);
+    // With a verified ROM and no controls step ahead the pick boots straight
+    // into the engine, whose VS card announces the matchup; voicing it here
+    // too would play the name twice.
+    if (!hasVerifiedRom() || requiresControllerTutorial()) {
+      APP_BRIDGE?.announceCharacter?.(fighter.slug);
+    }
     requestLaunch(fighter);
   }
 });

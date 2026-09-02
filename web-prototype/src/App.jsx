@@ -18,7 +18,7 @@ import {
 import { identifyRomFile } from "./rom-validation.js";
 import { handoffCodeFromLocation } from "../shared/rom-handoff.js";
 import { clearRomStore, hasStoredRom, prewarmEngineArchive, storeRom } from "../shared/rom-store.js";
-import { clearControllerTutorialCompletion } from "../visual/control-tutorial.js";
+import { clearControllerTutorialCompletion, readControllerTutorialCompletion } from "../visual/control-tutorial.js";
 import { choiceForEntry, describePort, portOptions } from "../shared/controller-ports.js";
 import { useGamepads } from "./gamepads.js";
 import {
@@ -996,7 +996,20 @@ export default function App() {
   }
 
   function selectCharacter(character) {
-    announceCharacter(character);
+    // Once the ROM is validated and the controls tutorial is behind the
+    // player, a click goes straight into the engine, whose VS card
+    // announces the matchup itself; voicing the pick here too would play
+    // the name twice.
+    let controlsStepComing = true;
+    try {
+      const ask = window.openSmashRequiresControllerTutorial;
+      controlsStepComing = ask ? Boolean(ask()) : Boolean(
+        controlsRoadblockRequired() || !readControllerTutorialCompletion(localStorage),
+      );
+    } catch {
+      controlsStepComing = true;
+    }
+    if (!authorized || controlsStepComing) announceCharacter(character);
     requestLaunch({ type: "character", character });
   }
 
