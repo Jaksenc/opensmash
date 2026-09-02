@@ -3,7 +3,7 @@
 The production React site and Node server. It combines the live character,
 authentication, ROM-validation, launch, and fighter-generation flows with the
 CRT, pixel-grid, 3D logo, hand cursor, cartridge, console, and controller visual
-system under `visual/`. It reads baked character bundles from `play`, portraits
+system under `visual/`. In development it reads baked character bundles from `play`, portraits
 and metadata from `play/ui`, and serves the browser engine from
 `BattleShip/web-dist`.
 

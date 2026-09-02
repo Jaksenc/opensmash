@@ -80,9 +80,10 @@ lacks the Torch module or still contains `files/BattleShip.o2r`. The API
 Dockerfile copies `web-dist/torch`, `rom-extract.js` and `torch-worker.js`
 explicitly, so a package built without them fails the image build too.
 
-From `pipeline/web-prototype`:
+From `pipeline/web-prototype`, with emsdk activated in the shell:
 
 ```bash
+source ../../emsdk/emsdk_env.sh
 PROJECT_ID=your-project \
 REGION=us-central1 \
 PUBLIC_ORIGIN=https://example.com \
@@ -91,12 +92,28 @@ FIREBASE_APP_ID=1:123456789:web:abcdef \
 ./infra/deploy.sh
 ```
 
-Set `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` too when the deploy
-should reconcile the existing Cloudflare DNS, TLS, and Cache Rules.
+The Firebase values are the ones already on the running service:
 
-Run from clean commits in both the `pipeline` and sibling `BattleShip`
-repositories. The first deploy creates `opensmash-cookie-secret-previous` by
-copying the current signing key; subsequent rotations maintain it.
+```bash
+gcloud run services describe opensmash-web --region us-central1 \
+  --format="value(spec.template.spec.containers[0].env)" | tr ';' '\n' | grep FIREBASE
+```
+
+Set `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` too when the deploy
+should reconcile the existing Cloudflare DNS, TLS, and Cache Rules. Export
+`CREATION_ENABLED=0` if fighter creation must stay paused (see below).
+
+The script, in order: refuses uncommitted build inputs in both the `pipeline`
+and sibling `BattleShip` repositories (including untracked files under
+`BattleShip/web`, `scripts`, `port/css_icons`, `torch`); rebuilds Torch wasm
+and the engine package; enables APIs, buckets, service accounts, secrets and
+IAM (idempotent); validates `config/baked-assets.json` against
+`config/characters.json` and refreshes the public bucket's CORS rule; runs
+two Cloud Builds (API, worker); deploys the worker job and the API service;
+then reconciles Cloudflare if credentials were given. The first deploy creates
+`opensmash-cookie-secret-previous` by copying the current signing key;
+subsequent rotations maintain it. A deploy interrupted before
+`gcloud builds submit` has changed nothing that the next run does not redo.
 
 The API runs with 3 to 6 instances (2 vCPU, 2 GiB, 500 concurrent
 requests each, startup CPU boost). Everything that has to agree across
@@ -105,9 +122,9 @@ the insert transaction, and ROM-handoff rooms (`handoffRooms`, with a TTL
 policy on `expireAt` that `deploy.sh` enables). The per-instance in-memory
 quota reservation and the ROM-validation rate limiter are only a first line;
 across replicas they are looser by the instance count, which is acceptable.
-Keep `--min-instances` at 1 or more: a cold start pulls a multi-GB image and
-scans the roster, and with `--min-instances 0` the first visitor after a quiet
-spell pays for it.
+Keep `--min-instances` at 1 or more so the first visitor after a quiet spell
+does not pay for a cold start (the image is small now, but startup still
+initializes Firestore and auth).
 
 The public bucket works immediately at its `storage.googleapis.com` URL. To put
 it behind Cloud CDN, create the backend bucket with one command, then attach it
@@ -120,7 +137,9 @@ gcloud compute backend-buckets create opensmash-assets \
 ```
 
 Set `ASSET_BASE_URL=https://assets.example.com` on the next deploy after DNS,
-certificate, and URL-map routing are in place.
+certificate, and URL-map routing are in place. Every baked-roster and
+generated-fighter URL the API hands out is built from that base, so the switch
+needs no code change.
 
 ## Custom domain
 
@@ -236,8 +255,12 @@ which is what keeps Cloud Build, the registry push and Cloud Run cold starts
 short.
 
 Publish a new baked roster only after reviewing the generated local `play/`
-outputs. Object keys contain the SHA-256 digest, so publishing is additive and
-existing deployments remain reproducible:
+outputs. The publish script hashes every fighter in `config/characters.json`
+from the local `pipeline/play`, uploads objects that are not in the bucket
+yet, repairs the cache header on any that lack it, and rewrites the manifest
+(schema 2; a deploy refuses an older manifest). Object keys contain the
+SHA-256 digest, so publishing is additive and existing deployments remain
+reproducible. Commit the manifest with the deploy:
 
 ```bash
 PUBLIC_BUCKET="${PROJECT_ID}-fighter-assets" pnpm assets:publish
@@ -273,3 +296,8 @@ without rebuilding:
 gcloud run services update opensmash-web --region "$REGION" --image API_IMAGE
 gcloud run jobs update opensmash-fighter-worker --region "$REGION" --image WORKER_IMAGE
 ```
+
+Only API images built after the bucket-served roster (tag `20260902-183...`
+or later) understand `BAKED_ASSET_SOURCE=remote`; an older image ignores the
+variable, finds no fighters on disk, and serves an empty roster. Rolling back
+further means also restoring the previous `deploy.sh` and its image contents.

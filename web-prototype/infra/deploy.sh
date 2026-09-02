@@ -110,11 +110,7 @@ done
 gcloud projects add-iam-policy-binding "$PROJECT_ID" \
   --member "serviceAccount:${API_IDENTITY}" --role roles/firebaseauth.admin >/dev/null
 
-cors_file="$(mktemp)"
-trap 'trash "$cors_file" 2>/dev/null || rm "$cors_file"' EXIT
-printf '[{"origin":["%s"],"method":["GET","HEAD"],"responseHeader":["Content-Type","Content-Length","ETag"],"maxAgeSeconds":3600}]\n' \
-  "$PUBLIC_ORIGIN" > "$cors_file"
-gcloud storage buckets update "gs://${PUBLIC_BUCKET}" --cors-file "$cors_file"
+# Bucket CORS is set further down, once the baked manifest has been checked.
 gcloud storage buckets add-iam-policy-binding "gs://${PUBLIC_BUCKET}" \
   --member allUsers --role roles/storage.objectViewer
 
@@ -192,6 +188,7 @@ console.log(`Baked manifest: ${manifest.characters.length} fighters pinned by di
 # API'"'"'s redirect to the bucket, which makes it a cross-origin request.
 # Origins already on the bucket (older site domains) are kept.
 cors_file="$(mktemp)"
+trap 'rm -f "$cors_file"' EXIT
 gcloud storage buckets describe "gs://${PUBLIC_BUCKET}" --format=json \
   | PUBLIC_ORIGIN="$PUBLIC_ORIGIN" DOMAIN="$DOMAIN" node -e '
 let raw = ""; process.stdin.on("data", (d) => raw += d).on("end", () => {
@@ -202,7 +199,6 @@ let raw = ""; process.stdin.on("data", (d) => raw += d).on("end", () => {
     responseHeader: ["Content-Type", "Content-Length", "Range", "Cache-Control", "ETag"], maxAgeSeconds: 3600 }]));
 });' > "$cors_file"
 gcloud storage buckets update "gs://${PUBLIC_BUCKET}" --cors-file="$cors_file"
-rm -f "$cors_file"
 
 cd "$WORKSPACE_ROOT"
 gcloud builds submit . \
