@@ -102,3 +102,11 @@ The file is grouped by category, so do not run a prefix. Either shuffle, or stra
 Naming is chosen to steer image gen away from trademarked designs: "Thor the Norse God" not "Thor", "Polyphemus the Cyclops" not "Cyclops", "Hercules the Greek Hero", "Alice in Wonderland", "Dorothy Gale".
 - Kept with a trademark note: Tarzan, John Carter of Mars, Zorro (stories are PD; ERB Inc and Zorro Productions still hold marks and litigate). Betty Boop, Popeye, Olive Oyl, Felix the Cat, Oswald (PD designs; Fleischer/King Features/Disney hold marks on modern versions, so stay period-accurate). Tintin is PD in the US only (Hergé's EU copyright runs to 2054). Winnie the Pooh and Tigger must be Shepard-style, not Disney.
 - Excluded: Steamboat Willie Mickey (Disney litigation magnet), Bluto (1932, not PD until 2028), Captain Haddock (1941), The Shadow, Buck Rogers, Nancy Drew, Hardy Boys (low fighter value plus live marks), Puss in Boots and Aladdin (folk tales, but image gen collapses to the DreamWorks/Disney design), Slender Man (real-world stabbing case), any Disney-designed princess, Universal monster designs (the Mummy, the Wolf Man, Bride of Frankenstein), post-1930 artworks like Magritte's Son of Man.
+
+## Tiering (funny / distinctive ranking)
+Wikipedia pageviews rank fame, not fighter value, so every name was hand-tiered:
+- S (277): instantly recognizable silhouette plus built-in comedy or fighter fantasy. Colonel Sanders, Venus de Milo, Andre the Giant, Bob Ross, Kim Jong Un, Salt Bae, Popeye.
+- A (777): strong iconic look or prop. Napoleon, Slash, Anna Wintour, Hitchcock, Gandalf-adjacent actors, most wrestlers and musicians with a look.
+- B (9): leftovers not explicitly tiered.
+- C (924): recognizable only as a headshot, or a suit. Most modern actors, politicians, scientists, writers, models, generic athletes.
+Run order is tier-major, then category round-robin within tier, then pageviews. The C tier is still in the file so nothing is lost; run it last or not at all.
