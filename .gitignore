@@ -18,3 +18,5 @@ batch-state/run.log
 batch-state/*.png
 batch-state/*/
 play/ui/*/*.log
+# pipeline intermediates: rebuilt from play/ui/<slug>/bundle.json (osb_merge/convert_rigged); ship files are play/<slug>.osb6
+play/*.osb
