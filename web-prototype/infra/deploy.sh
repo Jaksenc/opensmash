@@ -52,12 +52,35 @@ assert_clean_source "$WORKSPACE_ROOT/pipeline" pipeline \
   web-prototype pipeline skels \
   play/ui/joeyflynn play/ui/barackobama play/ui/queen play/ui/rohansahai \
   artifacts/experiments/vg7-tpose.png
-assert_clean_source "$BATTLESHIP_ROOT" BattleShip web scripts
+assert_clean_source "$BATTLESHIP_ROOT" BattleShip web scripts port/css_icons torch
+
+# The engine package no longer ships the ROM-derived archive; the browser
+# builds it with Torch compiled to wasm (BattleShip/docs/web_rom_extraction.md).
+# Build that module from the committed torch submodule + port sources so the
+# image never ships a stale one. Needs an activated emsdk (emcmake on PATH),
+# same as the engine's own build-wasm.
+if ! command -v emcmake >/dev/null 2>&1; then
+  echo "emcmake not found: activate emsdk (source emsdk/emsdk_env.sh) before deploying." >&2
+  exit 2
+fi
+"$BATTLESHIP_ROOT/scripts/build_torch_wasm.sh"
 
 # Always regenerate the complete engine package. package_web.sh derives one
 # version from every runtime input and preserves separately built bundles.
+# It exits non-zero if the Torch module is missing, so a deploy can never
+# produce an engine with no way to obtain BattleShip.o2r.
 "$BATTLESHIP_ROOT/scripts/package_web.sh" \
   "$BATTLESHIP_ROOT/build-wasm" "$BATTLESHIP_ROOT/web-dist"
+for required in torch/torch.wasm torch/recipe.json rom-extract.js torch-worker.js; do
+  if [[ ! -f "$BATTLESHIP_ROOT/web-dist/$required" ]]; then
+    echo "web-dist is missing $required; the engine could not build its assets in the browser." >&2
+    exit 2
+  fi
+done
+if [[ -f "$BATTLESHIP_ROOT/web-dist/files/BattleShip.o2r" ]]; then
+  echo "web-dist/files/BattleShip.o2r is present: refusing to deploy a package that ships ROM-derived assets." >&2
+  exit 2
+fi
 
 gcloud config set project "$PROJECT_ID"
 gcloud services enable \

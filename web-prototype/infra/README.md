@@ -31,6 +31,15 @@ public API key and app ID; these are configuration values, not secrets.
 
 ## Build and deploy
 
+The engine package must not contain ROM-derived assets; the browser builds
+`BattleShip.o2r` itself with Torch compiled to wasm (see
+`BattleShip/docs/web_rom_extraction.md`). `deploy.sh` therefore runs
+`BattleShip/scripts/build_torch_wasm.sh` (needs an activated emsdk, like the
+engine build) before `package_web.sh`, and aborts if the resulting `web-dist`
+lacks the Torch module or still contains `files/BattleShip.o2r`. The API
+Dockerfile copies `web-dist/torch`, `rom-extract.js` and `torch-worker.js`
+explicitly, so a package built without them fails the image build too.
+
 From `pipeline/web-prototype`:
 
 ```bash
