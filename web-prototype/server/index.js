@@ -433,6 +433,9 @@ async function scanEngineRoster(entries) {
     characters.push({
       slug,
       display,
+      // the roster entry as requested (e.g. "Wolfgang Amadeus Mozart" when
+      // display is the announcer-length "Mozart"); search matches on it too
+      nameFull: metadata.name_full || null,
       short: entry.short || metadata.short || display.toUpperCase().replace(/[^A-Z]/g, "").slice(0, 10),
       base: entry.base ?? metadata.base ?? null,
       preferredBases: entry.preferredBases || metadata.preferred_bases,
