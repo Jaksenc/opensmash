@@ -135,7 +135,8 @@
     image-rendering: auto;
     transform: translateX(var(--capture-phase-x));
   }
-  .replica-texture-layer,
+  .replica-portrait-layer,
+  .replica-caption-layer,
   .replica-rule-layer,
   .flame-bridge-texture-layer {
     position: absolute;
@@ -146,6 +147,38 @@
     height: 100%;
     pointer-events: none;
     image-rendering: auto;
+  }
+  .replica-cell[data-kind="fighter"],
+  .replica-cell[data-kind="creation"] {
+    background-color: #080504;
+    background-image: var(--retro-fire-texture);
+    background-size: 100% 100%;
+  }
+  .replica-portrait-layer {
+    z-index: 0;
+    object-fit: fill;
+  }
+  .replica-caption-layer { z-index: 2; }
+  .replica-label {
+    position: absolute;
+    left: 8.9%;
+    top: 4.7%;
+    z-index: 2;
+    max-width: 84%;
+    overflow: hidden;
+    color: rgb(146, 139, 114);
+    font: 900 clamp(9px, 1.15vw, 17px) / 1 "Kanit", ui-monospace, sans-serif;
+    letter-spacing: -.055em;
+    text-align: left;
+    text-overflow: clip;
+    text-shadow:
+      -1px 0 rgba(42, 40, 33, .95),
+      1px 0 rgba(42, 40, 33, .95),
+      0 -1px rgba(42, 40, 33, .95),
+      0 1px rgba(42, 40, 33, .95);
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
   }
   .replica-cell::after {
     content: "";
@@ -172,14 +205,23 @@
     background: rgba(255, 128, 44, .08);
   }
   .replica-cell:focus-visible { outline: none; }
+  .replica-cell.is-search,
+  .replica-cell.is-create,
+  .fighter-job-cell {
+    background:
+      radial-gradient(circle at 16% 23%, rgba(255,255,255,.05) 0 1px, transparent 1px),
+      radial-gradient(circle at 72% 67%, rgba(255,255,255,.035) 0 1px, transparent 1px),
+      linear-gradient(135deg, #0d0c0a, #050403 60%, #0b0907);
+    background-size: 9px 11px, 13px 15px, 100% 100%;
+  }
   .replica-cell.is-search { cursor: text; }
   .replica-search-input {
     position: absolute;
-    left: calc(3 * 100% / 45);
-    top: calc(2 * 100% / 43);
+    left: 8.9%;
+    top: 4.7%;
     z-index: 5;
-    width: calc(39 * 100% / 45);
-    height: calc(10 * 100% / 43);
+    width: 84%;
+    height: 24%;
     padding: 0;
     border: 0;
     outline: 0;
@@ -187,13 +229,18 @@
     background: transparent;
     color: transparent;
     caret-color: transparent;
-    font-size: 16px;
+    font: inherit;
     line-height: 1;
     text-align: left;
+    text-transform: uppercase;
+    text-shadow: none;
     cursor: text;
     /* Let the tile's click handler focus after touch-up. A directly hit input
        receives focus on touch-down, which interrupts an attempted scroll. */
     pointer-events: none;
+  }
+  .replica-search-input::placeholder {
+    color: transparent;
   }
   .replica-search-input::-webkit-search-cancel-button { display: none; }
   .replica-search-caret {
@@ -217,9 +264,6 @@
   }
   @media (prefers-reduced-motion: reduce) {
     .replica-cell.is-searching .replica-search-caret { animation: none; }
-  }
-  .fighter-job-cell {
-    background: transparent;
   }
   .fighter-job-spinner {
     position: absolute;
