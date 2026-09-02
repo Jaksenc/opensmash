@@ -1981,6 +1981,7 @@ async function validateRom(file) {
           extracting: 'Opening archive…',
           hashing: 'Checking ROM…',
           validating: 'Checking ROM…',
+          storing: 'Storing ROM…',
         })[status] || 'Checking ROM…';
       });
     } else {
