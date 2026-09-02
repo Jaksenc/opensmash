@@ -28,7 +28,14 @@ except ImportError:  # direct execution: python3 pipeline/announcer_voice.py
     from generate_announcer import generate_announcer
 
 HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-WEBDIST = os.path.join(HERE, "..", "BattleShip", "web-dist", "bundles")
+_WEBDIST_CANDIDATES = [
+    os.path.join(HERE, "BattleShip", "web-dist", "bundles"),
+    os.path.join(HERE, "..", "BattleShip", "web-dist", "bundles"),
+]
+WEBDIST = next(
+    (candidate for candidate in _WEBDIST_CANDIDATES if os.path.isdir(candidate)),
+    _WEBDIST_CANDIDATES[0],
+)
 
 
 def name_slug(name):
