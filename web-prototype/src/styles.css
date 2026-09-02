@@ -1027,6 +1027,34 @@ body.is-advanced-open #glove-canvas { z-index: 1800; }
 .game-surface-shell { width: 100%; }
 .mobile-controls { display: none; }
 
+/* Fullscreen (native) or immersive (CSS fallback for browsers without an
+   element Fullscreen API, i.e. iPhone Safari): the shell pins over the page
+   and the frame fills it; the engine letterboxes its own 4:3 canvas. */
+.game-surface-shell:fullscreen,
+.game-surface-shell:-webkit-full-screen,
+.game-surface-shell.is-immersive {
+  position: fixed;
+  inset: 0;
+  z-index: 2500;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  width: 100vw;
+  height: 100dvh;
+  background: #050404;
+}
+
+.game-surface-shell:fullscreen .intro-video-frame,
+.game-surface-shell:-webkit-full-screen .intro-video-frame,
+.game-surface-shell.is-immersive .intro-video-frame {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  max-height: none;
+  aspect-ratio: auto;
+}
+
+body.is-immersive { overflow: hidden; }
+
 @media (max-width: 960px), (hover: none) and (pointer: coarse) {
   .game-surface-shell.has-mobile-control-deck {
     display: grid;
@@ -1039,12 +1067,23 @@ body.is-advanced-open #glove-canvas { z-index: 1800; }
     margin-inline: auto;
   }
 
+  /* Portrait immersive: keep the 4:3 frame hugging its own box (so the game
+     tools stay on the picture) and centre it in the space above the deck. */
+  .game-surface-shell.has-mobile-control-deck:fullscreen .intro-video-frame,
+  .game-surface-shell.has-mobile-control-deck:-webkit-full-screen .intro-video-frame,
+  .game-surface-shell.has-mobile-control-deck.is-immersive .intro-video-frame {
+    height: auto;
+    max-height: 100%;
+    aspect-ratio: 4 / 3;
+    align-self: center;
+  }
+
   .game-surface-shell .mobile-controls {
     position: relative;
     z-index: 1;
     display: block;
     width: 100%;
-    height: clamp(232px, 62vw, 280px);
+    height: clamp(200px, 53vw, 236px);
     overflow: hidden;
     border-top: 2px solid rgba(126, 74, 47, .72);
     background:
@@ -1085,7 +1124,7 @@ body.is-advanced-open #glove-canvas { z-index: 1800; }
   .mobile-control-button {
     display: grid;
     place-content: center;
-    gap: 3px;
+    gap: 2px;
     border-radius: 999px;
     background: rgba(28, 25, 27, .76);
     box-shadow:
@@ -1095,9 +1134,9 @@ body.is-advanced-open #glove-canvas { z-index: 1800; }
     transition: transform 70ms ease, filter 70ms ease, background 70ms ease;
   }
 
-  .mobile-control-button > span { font-size: clamp(16px, 5vw, 24px); }
+  .mobile-control-button > span { font-size: clamp(15px, 4.6vw, 22px); }
   .mobile-control-button > small {
-    font-size: clamp(7px, 1.9vw, 10px);
+    font-size: clamp(7px, 1.8vw, 9px);
     font-weight: 600;
     letter-spacing: .04em;
     text-transform: uppercase;
@@ -1111,7 +1150,7 @@ body.is-advanced-open #glove-canvas { z-index: 1800; }
 
   .mobile-shoulder-controls {
     position: absolute;
-    top: max(7px, env(safe-area-inset-top));
+    top: max(6px, env(safe-area-inset-top));
     left: max(8px, env(safe-area-inset-left));
     right: max(8px, env(safe-area-inset-right));
     display: flex;
@@ -1121,22 +1160,22 @@ body.is-advanced-open #glove-canvas { z-index: 1800; }
   }
 
   .mobile-control-button.is-shoulder {
-    width: clamp(54px, 16vw, 82px);
+    width: clamp(50px, 14vw, 72px);
     min-height: 44px;
     border-radius: 14px 14px 22px 22px;
     background: rgba(80, 82, 88, .76);
   }
 
-  .mobile-control-button.is-shoulder > span { font-size: clamp(15px, 4vw, 20px); }
+  .mobile-control-button.is-shoulder > span { font-size: clamp(14px, 3.8vw, 18px); }
   .mobile-control-button.is-shoulder > small { display: none; }
 
   .mobile-start-button {
-    width: clamp(64px, 18vw, 92px);
+    width: clamp(60px, 16vw, 84px);
     height: 44px;
     border-radius: 999px;
     background: rgba(106, 28, 23, .8);
     box-shadow: inset 0 2px rgba(255, 255, 255, .15), 0 3px 10px rgba(0, 0, 0, .35);
-    font-size: clamp(10px, 2.8vw, 14px);
+    font-size: clamp(10px, 2.6vw, 13px);
     letter-spacing: .08em;
     text-transform: uppercase;
   }
@@ -1145,10 +1184,10 @@ body.is-advanced-open #glove-canvas { z-index: 1800; }
 
   .mobile-joystick {
     position: absolute;
-    left: max(clamp(12px, 4vw, 28px), env(safe-area-inset-left));
-    bottom: max(clamp(12px, 4vw, 28px), env(safe-area-inset-bottom));
-    width: clamp(106px, 31vw, 148px);
-    height: clamp(106px, 31vw, 148px);
+    left: max(clamp(10px, 3.5vw, 24px), env(safe-area-inset-left));
+    bottom: max(clamp(10px, 3.5vw, 24px), env(safe-area-inset-bottom));
+    width: clamp(96px, 28vw, 130px);
+    height: clamp(96px, 28vw, 130px);
     border-radius: 50%;
     background:
       radial-gradient(circle, rgba(102, 104, 111, .62) 0 24%, transparent 25%),
@@ -1188,10 +1227,10 @@ body.is-advanced-open #glove-canvas { z-index: 1800; }
 
   .mobile-joystick-knob {
     position: absolute;
-    left: calc(50% - clamp(25px, 7vw, 34px));
-    top: calc(50% - clamp(25px, 7vw, 34px));
-    width: clamp(50px, 14vw, 68px);
-    height: clamp(50px, 14vw, 68px);
+    left: calc(50% - clamp(22px, 6.25vw, 29px));
+    top: calc(50% - clamp(22px, 6.25vw, 29px));
+    width: clamp(44px, 12.5vw, 58px);
+    height: clamp(44px, 12.5vw, 58px);
     border: 1px solid rgba(255, 255, 255, .42);
     border-radius: 50%;
     background: radial-gradient(circle at 38% 32%, #8a8d94, #45474d 60%, #292b2f);
@@ -1200,12 +1239,14 @@ body.is-advanced-open #glove-canvas { z-index: 1800; }
     will-change: transform;
   }
 
+  /* Action cluster: Z (shield) bottom-left, B bottom-middle, A bottom-right,
+     Jump (C-up) above A. */
   .mobile-action-controls {
     position: absolute;
-    right: max(clamp(10px, 3vw, 24px), env(safe-area-inset-right));
-    bottom: max(clamp(8px, 3vw, 24px), env(safe-area-inset-bottom));
-    width: clamp(174px, 47vw, 232px);
-    height: clamp(150px, 43vw, 205px);
+    right: max(clamp(8px, 2.5vw, 20px), env(safe-area-inset-right));
+    bottom: max(clamp(8px, 2.5vw, 20px), env(safe-area-inset-bottom));
+    width: clamp(168px, 46vw, 214px);
+    height: clamp(128px, 36vw, 162px);
     pointer-events: none;
   }
 
@@ -1218,32 +1259,44 @@ body.is-advanced-open #glove-canvas { z-index: 1800; }
 
   .mobile-control-button.is-a {
     right: 0;
-    bottom: 16%;
-    width: clamp(62px, 17vw, 82px);
-    height: clamp(62px, 17vw, 82px);
+    bottom: 14%;
+    width: clamp(58px, 16vw, 74px);
+    height: clamp(58px, 16vw, 74px);
     border-color: rgba(179, 210, 255, .8);
     background: rgba(38, 88, 190, .82);
   }
 
   .mobile-control-button.is-b {
-    right: 34%;
-    bottom: 2%;
-    width: clamp(54px, 15vw, 72px);
-    height: clamp(54px, 15vw, 72px);
+    right: 37%;
+    bottom: 0;
+    width: clamp(50px, 14vw, 64px);
+    height: clamp(50px, 14vw, 64px);
     border-color: rgba(177, 241, 194, .78);
     background: rgba(16, 139, 67, .82);
   }
 
+  .mobile-control-button.is-jump {
+    right: 4%;
+    top: 0;
+    width: clamp(46px, 13vw, 58px);
+    height: clamp(46px, 13vw, 58px);
+    border-color: rgba(255, 224, 150, .8);
+    background: rgba(196, 130, 24, .82);
+  }
+
+  .mobile-control-button.is-jump > span { font-size: clamp(16px, 5vw, 24px); }
+  .mobile-control-button.is-jump > small { font-size: clamp(6px, 1.6vw, 8px); }
+
   .mobile-control-button.is-z {
     left: 0;
-    bottom: 1%;
-    width: clamp(54px, 14vw, 72px);
-    height: clamp(46px, 12vw, 58px);
+    bottom: 0;
+    width: clamp(50px, 13vw, 64px);
+    height: clamp(44px, 11vw, 54px);
     border-radius: 16px;
     background: rgba(78, 75, 96, .82);
   }
 
-  .mobile-control-button.is-z > span { font-size: clamp(15px, 4vw, 20px); }
+  .mobile-control-button.is-z > span { font-size: clamp(14px, 3.8vw, 18px); }
   .mobile-control-button.is-z > small { font-size: clamp(6px, 1.6vw, 8px); }
 
   .game-fullscreen-control {
@@ -1252,14 +1305,106 @@ body.is-advanced-open #glove-canvas { z-index: 1800; }
   }
 }
 
-body.is-game-running #crt-viewport-canvas {
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
-}
-
 @media (max-width: 480px) and (orientation: portrait) {
   .mobile-action-controls { right: 6px; }
   .mobile-joystick { left: 8px; }
+}
+
+/* Landscape phone with the game running: no room for a deck under the frame,
+   so the shell pins to the viewport and the controls float over the black
+   side bars left and right of the 4:3 picture. */
+@media (orientation: landscape) and (hover: none) and (pointer: coarse) {
+  body.is-game-running .game-surface-shell.has-mobile-control-deck {
+    position: fixed;
+    inset: 0;
+    z-index: 2500;
+    display: block;
+    width: 100vw;
+    height: 100dvh;
+  }
+
+  body.is-game-running .game-surface-shell.has-mobile-control-deck .intro-video-frame {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    max-height: none;
+    aspect-ratio: auto;
+  }
+
+  body.is-game-running .game-surface-shell.has-mobile-control-deck .mobile-controls {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    height: auto;
+    overflow: visible;
+    border-top: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  body.is-game-running .game-surface-shell.has-mobile-control-deck .mobile-shoulder-controls {
+    top: max(6px, env(safe-area-inset-top));
+  }
+
+  body.is-game-running .game-surface-shell.has-mobile-control-deck .mobile-joystick {
+    left: max(clamp(12px, 3vw, 28px), env(safe-area-inset-left));
+    bottom: max(clamp(12px, 3vh, 24px), env(safe-area-inset-bottom));
+    width: clamp(104px, 30vh, 136px);
+    height: clamp(104px, 30vh, 136px);
+  }
+
+  /* Nothing overlaps the picture unless the screen is too narrow: the
+     right-hand cluster is a 2x2 grid sized to the black side bar
+     (Z Shield | Jump over B | A), Start tucks under L and the game tools
+     under R. */
+  body.is-game-running .game-surface-shell.has-mobile-control-deck .mobile-action-controls {
+    --bar-width: calc((100vw - 100dvh * 4 / 3) / 2);
+    right: max(10px, env(safe-area-inset-right));
+    bottom: max(clamp(10px, 3vh, 20px), env(safe-area-inset-bottom));
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas: "z jump" "b a";
+    gap: clamp(6px, 2vh, 10px);
+    width: clamp(120px, var(--bar-width) - 22px, 164px);
+    height: auto;
+  }
+
+  body.is-game-running .game-surface-shell.has-mobile-control-deck .mobile-action-controls > .mobile-control-button {
+    position: static;
+    width: auto;
+    height: auto;
+    aspect-ratio: 1 / 1;
+  }
+
+  body.is-game-running .game-surface-shell.has-mobile-control-deck .mobile-control-button.is-a { grid-area: a; }
+  body.is-game-running .game-surface-shell.has-mobile-control-deck .mobile-control-button.is-b { grid-area: b; }
+  body.is-game-running .game-surface-shell.has-mobile-control-deck .mobile-control-button.is-jump { grid-area: jump; }
+  body.is-game-running .game-surface-shell.has-mobile-control-deck .mobile-control-button.is-z { grid-area: z; border-radius: 22px; }
+
+  body.is-game-running .game-surface-shell.has-mobile-control-deck .mobile-start-button {
+    position: absolute;
+    left: 0;
+    top: 52px;
+    width: clamp(50px, 14vh, 72px);
+    height: 40px;
+    font-size: 10px;
+  }
+
+  body.is-game-running .game-surface-shell.has-mobile-control-deck .retro-game-tools {
+    top: calc(max(6px, env(safe-area-inset-top)) + 50px);
+    bottom: auto;
+    left: auto;
+    right: max(8px, env(safe-area-inset-right));
+  }
+
+  body.is-game-running .game-surface-shell.has-mobile-control-deck.is-immersive .intro-video-frame,
+  body.is-game-running .game-surface-shell.has-mobile-control-deck:fullscreen .intro-video-frame,
+  body.is-game-running .game-surface-shell.has-mobile-control-deck:-webkit-full-screen .intro-video-frame {
+    height: 100%;
+    max-height: none;
+    aspect-ratio: auto;
+    align-self: auto;
+  }
 }
 
 /* Diagnostic mode: compare the native pointer with the spring-driven glove. */

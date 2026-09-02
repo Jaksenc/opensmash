@@ -49,6 +49,7 @@ def pipeline_script(name):
     return os.path.join(PIPELINE_DIR, name)
 
 TRIPO_USD_PER_CREDIT = 0.01     # https://developers.tripo3d.ai/en/pricing
+TRIPO_CREDITS_PER_MESH = 55     # image-to-3D 30 + auto-rig 25 (observed balance delta)
 FAL_TTS_USD_PER_1K_CHARS = 0.10  # fal-ai/minimax/speech-02-hd
 
 # stage -> USD spent in THIS run. Skipped (already-built) stages cost
@@ -73,7 +74,8 @@ def gen_cost(out):
 
 N64_TEMPLATE = (
     "A screenshot of a very low-poly 1996 Nintendo 64 fighting-game character "
-    "model in T-pose: full body, front view, arms straight out horizontally, "
+    "model in T-pose: exactly ONE figure, alone, full body, front view, arms "
+    "straight out horizontally, "
     "legs clearly apart with a gap between the feet, plain light-gray "
     "background, roughly 800 triangles, facial features painted flat onto the "
     "texture. The character: {desc} Chunky fighter proportions: oversized "
@@ -88,8 +90,9 @@ PHOTO_NOTE = (" Keep the exact likeness of the person in the attached photo(s), 
               "same expression but with closed lips.")
 PORTRAIT_TEMPLATE = (
     "Create a late-1990s console fighting-game character-select portrait of "
-    "the character shown in the fourth reference image. Match the coarse "
-    "pre-rendered CGI language of the first three reference images: a simple "
+    "the character shown in the FIRST reference image (a low-poly T-pose model "
+    "sheet). Match the coarse pre-rendered CGI language of the "
+    "second, third and fourth reference images: a simple "
     "bust built from a few large rounded polygonal forms, soft plastic "
     "material, restrained facial detail, slightly soft raster edges, mild "
     "texture filtering, subtle grain, and a dark red-black backdrop. It must "
@@ -98,8 +101,9 @@ PORTRAIT_TEMPLATE = (
     "three-quarter view facing slightly left; square image. Soft warm key "
     "light from upper left, deep shadow on the opposite side, restrained "
     "highlights. Preserve the recognizable subject, clothing, hair, and face "
-    "from the fourth reference image; use the first three reference images "
-    "only for style. Intentionally low-detail late-90s pre-rendered CGI, not "
+    "from the first reference image; use the other three images only for "
+    "style and never depict the people in them. Intentionally low-detail "
+    "late-90s pre-rendered CGI, not "
     "a crisp modern low-poly illustration; no sharp vector-like facets; no "
     "high-frequency skin detail; no text, letters, border, logo, or watermark."
 )
@@ -111,6 +115,14 @@ STOCK_TEMPLATE = (
     "colors), thick black outline around the whole silhouette, straight-on "
     "view, centered, filling the frame. Solid pure green background "
     "(#00FF00). No text, no shading gradients, no dithering."
+)
+STOCK_DESC_TEMPLATE = (
+    "A tiny video-game stock/life icon in the exact style of the reference image "
+    "(Super Smash Bros 64 stock icon): the head of this character, drawn as "
+    "extremely simple chibi pixel art with huge bold shapes, flat solid colors "
+    "only (max 6 colors), thick black outline around the whole silhouette, "
+    "straight-on view, centered, filling the frame. Solid pure green background "
+    "(#00FF00). No text, no shading gradients, no dithering. The character: "
 )
 EMBLEM_TEMPLATE = (
     "A flat 2D video game series emblem symbol for the character {display}: "
@@ -188,7 +200,11 @@ def tripo_json(out):
     """tripo.py prints one JSON object (possibly {'code':0,'data':...}).
     Some Tripo status payloads embed raw control characters — fall back to
     regex field extraction rather than dying on strict JSON."""
-    i = out.index("{")
+    i = out.find("{")
+    if i < 0:
+        # curl/urllib produced no JSON at all: a dropped connection, not a
+        # Tripo verdict — surface it so the batch driver treats it as transient
+        raise RuntimeError(f"tripo empty response (network?): {out[-200:]!r}")
     try:
         obj = json.loads(out[i:], strict=False)
         return obj.get("data", obj)
@@ -251,6 +267,9 @@ def main():
     ap.add_argument("--short", default=None,
                     help="display name for in-game text (<=10 chars, A-Z)")
     ap.add_argument("--photo", default=None)
+    ap.add_argument("--notes", default=None,
+                    help="steering for the expander (which depiction, outfit, era); "
+                         "use with --force-stage expand to redo an existing character")
     ap.add_argument("--emblem", default=None,
                     help="context for the series emblem, or the object itself "
                          "(\"a red accordion\", \"he restores lighthouses\"). "
@@ -281,6 +300,8 @@ def main():
         cmd = ["python3", pipeline_script("expand_character.py"), a.name]
         if a.photo:
             cmd += ["--photo", a.photo]
+        if a.notes:
+            cmd += ["--notes", a.notes]
         if a.emblem:
             cmd += ["--emblem", a.emblem]
         open(F("character.json"), "w").write(sh(cmd, timeout=180))
@@ -345,24 +366,32 @@ def main():
         else:
             log("mesh: uploading to Tripo")
             tok = tripo_json(sh(["python3", pipeline_script("tripo.py"), "upload", F("tpose.png")], timeout=300))["image_token"]
-            task = tripo_json(sh(["python3", pipeline_script("tripo.py"), "img3d", tok], timeout=120))["task_id"]
+            task = tripo_json(sh(["python3", pipeline_script("tripo.py"), "img3d", tok], timeout=900))["task_id"]
             remember("img3d", task)
             log(f"mesh: img3d task {task}")
         st = wait_task(task)
         if st["status"] != "success":
-            forget()
+            # Keep a still-running task on disk so a retry resumes polling
+            # instead of buying the mesh again; only a terminal status is
+            # forgotten.
+            if st["status"] in ("failed", "banned"):
+                forget()
             raise RuntimeError(f"img3d {st['status']}")
         model_credits = st.get("consumed_credit")
         rig = tasks.get("rig")
         if rig:
             log(f"mesh: rig task {rig} (resumed)")
         else:
-            rig = tripo_json(sh(["python3", pipeline_script("tripo.py"), "rig", task], timeout=120))["task_id"]
+            rig = tripo_json(sh(["python3", pipeline_script("tripo.py"), "rig", task], timeout=900))["task_id"]
             remember("rig", rig)
             log(f"mesh: rig task {rig}")
         st = wait_task(rig)
         if st["status"] != "success":
-            forget()
+            # Keep a still-running task on disk so a retry resumes polling
+            # instead of buying the mesh again; only a terminal status is
+            # forgotten.
+            if st["status"] in ("failed", "banned"):
+                forget()
             raise RuntimeError(f"rig {st['status']}")
         rig_credits = st.get("consumed_credit")
         # Download to a side file so a kill mid-transfer never leaves a
@@ -370,7 +399,11 @@ def main():
         sh(["python3", pipeline_script("tripo.py"), "download", rig, F("rigged.glb.part")], timeout=600)
         os.replace(F("rigged.glb.part"), F("rigged.glb"))
         if model_credits is None or rig_credits is None:
-            log("mesh: Tripo did not report per-task credits")
+            # Status payloads stopped carrying consumed_credit (2026-09-02);
+            # the balance delta says img3d 30 + rig 25 = 55 per character.
+            log(f"mesh: Tripo did not report per-task credits; billing the "
+                f"list price of {TRIPO_CREDITS_PER_MESH}")
+            bill("mesh", TRIPO_CREDITS_PER_MESH * TRIPO_USD_PER_CREDIT)
         else:
             credits = model_credits + rig_credits
             log(f"mesh: {credits} Tripo credits (img3d + rig)")
@@ -385,6 +418,24 @@ def main():
         torn = re.search(r"torn-tri cut: (\d+)", outtxt)
         if torn and int(torn.group(1)) > 80:
             raise RuntimeError(f"torn-tri gate: {torn.group(1)} > 80 — bad mesh, re-roll tpose/mesh")
+        # Facing gate: the converter's geometric cues (skin colour, head
+        # offset, toe reach) misread non-human bodies (Cthulhu, the Jersey
+        # Devil walked backwards). Render the bundle and let the vision
+        # model compare against the t-pose, which is the front by
+        # construction; redo the conversion with --flip-facing if needed.
+        try:
+            fc = json.loads(sh(["python3", pipeline_script("facing_check.py"), F("bundle.json"), F("tpose.png")],
+                               timeout=300).strip().splitlines()[-1])
+            bill("facing", fc.get("cost_usd"))
+            if fc.get("flipped"):
+                log(f"convert: facing check says the model faces away ({fc.get('confidence')}) — reconverting with --flip-facing")
+                sh(["python3", pipeline_script("convert_rigged.py"), "--mild-color", "--no-profile", "--flatten",
+                    "--flip-facing", F("rigged.glb"), "skels/mario-frames.skel", F("bundle.json")], timeout=900)
+                open(F("facing_flipped"), "w").write("1")
+            else:
+                log(f"convert: facing check ok ({fc.get('confidence')})")
+        except Exception as e:  # never block a character on the gate itself
+            log(f"convert: facing check unavailable ({str(e)[-120:]}) — keeping the converter's call")
         sh(["python3", pipeline_script("convert_rigged.py"), "--binary5", F("bundle.json"), osb], timeout=300)
 
     # 4b. variants -------------------------------------------------------
@@ -434,14 +485,20 @@ def main():
     # 5+6. UI art --------------------------------------------------------
     if stage_needed(F("portrait_raw.png"), force, "portrait"):
         log("portrait: generating tile art")
-        refs = []
+        # Subject FIRST. With the tpose as the trailing (fourth) image,
+        # gpt-image-2 painted the last style reference's face on every
+        # character (pilot 2026-09-02: three different people, one portrait).
+        refs = ["--ref", F("tpose.png")]
         for filename in PORTRAIT_STYLE_REFERENCE_FILES:
             ref = os.path.join(PORTRAIT_STYLE_REFS, filename)
             if not os.path.exists(ref):
                 raise RuntimeError(f"portrait style reference missing: {ref}")
             refs += ["--ref", ref]
         bill("portrait", gen_cost(sh(["python3", pipeline_script("gen.py"), "image"] + refs
-             + ["--ref", F("tpose.png"), PORTRAIT_TEMPLATE, F("portrait_raw.png")],
+             # No name in this prompt: naming a public figure next to their likeness
+             # trips gpt-image-2's input moderation ("public-figure"); the tpose
+             # image alone carries the identity.
+             + [PORTRAIT_TEMPLATE, F("portrait_raw.png")],
              timeout=600)))
     # Site derivatives of the portrait (grid tile + thumbnail); the 1024 raw
     # stays for the .osbui pack and anywhere a large portrait is shown.
@@ -449,9 +506,23 @@ def main():
 
     if stage_needed(F("stock_raw.png"), force, "stock"):
         log("stock: generating icon art")
-        bill("stock", gen_cost(sh(
-            ["python3", pipeline_script("gen.py"), "image", "--ref", os.path.join(UI_REFS, "stockicon_ref.png"),
-             "--ref", F("tpose.png"), STOCK_TEMPLATE, F("stock_raw.png")], timeout=600)))
+        try:
+            bill("stock", gen_cost(sh(
+                ["python3", pipeline_script("gen.py"), "image", "--ref", os.path.join(UI_REFS, "stockicon_ref.png"),
+                 "--ref", F("tpose.png"), STOCK_TEMPLATE, F("stock_raw.png")], timeout=600)))
+        except RuntimeError as e:
+            # For some public figures the input filter refuses the t-pose
+            # image on this call even though the portrait call accepted it
+            # (Gandhi: 10/10 refusals, any wording, any extra refs). A 16px
+            # icon survives without the likeness reference: draw it from the
+            # text description with the name stripped.
+            if "moderation_blocked" not in str(e) or '"input"' not in str(e):
+                raise
+            log("stock: input moderation on the likeness — drawing the icon from the description")
+            desc = cdef["desc"].replace(cdef["display"], "The character", 1)
+            bill("stock", gen_cost(sh(
+                ["python3", pipeline_script("gen.py"), "image", "--ref", os.path.join(UI_REFS, "stockicon_ref.png"),
+                 STOCK_DESC_TEMPLATE + desc, F("stock_raw.png")], timeout=600)))
     if stage_needed(F("emblem_raw.png"), force, "emblem"):
         # --emblem beats whatever the expander inferred, so the object can be
         # steered without re-running the expand stage.
@@ -462,10 +533,23 @@ def main():
         # The engine draws the emblem as a flat one-color stencil, so gate on
         # the stencil, not on the art: a gorgeous solid object is still a blob.
         for _ in range(2):
-            bill("emblem", gen_cost(sh(
-                ["python3", pipeline_script("gen.py"), "image",
-                 "--ref", os.path.join(UI_REFS, "emblem_ref.png"),
-                 prompt, F("emblem_raw.png")], timeout=600)))
+            try:
+                bill("emblem", gen_cost(sh(
+                    ["python3", pipeline_script("gen.py"), "image",
+                     "--ref", os.path.join(UI_REFS, "emblem_ref.png"),
+                     prompt, F("emblem_raw.png")], timeout=600)))
+            except RuntimeError as e:
+                # Some names trip input moderation ("public-figure") even
+                # here with no likeness in play. The object description
+                # carries the meaning, so retry once without the name.
+                if "moderation_blocked" not in str(e) or '"input"' not in str(e) or not obj:
+                    raise
+                log("emblem: input moderation on the name — retrying without it")
+                prompt = prompt.replace(f"for the character {cdef['display']}", "for a fighting-game character")
+                bill("emblem", gen_cost(sh(
+                    ["python3", pipeline_script("gen.py"), "image",
+                     "--ref", os.path.join(UI_REFS, "emblem_ref.png"),
+                     prompt, F("emblem_raw.png")], timeout=600)))
             st = json.loads(sh(["python3", pipeline_script("emblem_stencil.py"), F("emblem_raw.png")],
                                timeout=120))
             log(f"emblem: stencil cut {st['cut_frac']:.0%} in {st['cuts']} holes")

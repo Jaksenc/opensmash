@@ -322,6 +322,8 @@ export default function App() {
   const [pageErrorToast, setPageErrorToast] = useState(null);
   const [fighterSearch, setFighterSearch] = useState("");
   const [isFullscreen, setIsFullscreen] = useState(false);
+  // CSS-only fullscreen for browsers without an element Fullscreen API (iPhone Safari).
+  const [immersive, setImmersive] = useState(false);
   const [soundOn, setSoundOn] = useState(() => localStorage.getItem("opensmash-sound") !== "off");
   const [advancedOptions, setAdvancedOptions] = useState(loadAdvancedOptions);
   const gamepads = useGamepads();
@@ -603,9 +605,18 @@ export default function App() {
   }, [engine, advancedOptions, gamepads]);
 
   useEffect(() => {
+    document.body.classList.toggle("is-immersive", immersive);
+    return () => document.body.classList.remove("is-immersive");
+  }, [immersive]);
+
+  useEffect(() => {
+    if (!engine) setImmersive(false);
+  }, [engine]);
+
+  useEffect(() => {
     function syncFullscreenState() {
       const fullscreenElement = document.fullscreenElement || document.webkitFullscreenElement;
-      setIsFullscreen(fullscreenElement === gameFrameRef.current);
+      setIsFullscreen(Boolean(fullscreenElement) && fullscreenElement === fullscreenTarget());
     }
 
     document.addEventListener("fullscreenchange", syncFullscreenState);
@@ -889,9 +900,21 @@ export default function App() {
     setSoundPreference((current) => !current);
   }
 
-  async function toggleFullscreen() {
+  // Fullscreen the surface shell (frame + touch deck) so mobile controls stay
+  // visible; on the desktop layout the shell is just the frame's wrapper.
+  function fullscreenTarget() {
     const frame = gameFrameRef.current;
-    if (!frame) return;
+    return frame?.closest?.(".game-surface-shell") || frame || null;
+  }
+
+  async function toggleFullscreen() {
+    const target = fullscreenTarget();
+    if (!target) return;
+
+    if (immersive) {
+      setImmersive(false);
+      return;
+    }
 
     try {
       const fullscreenElement = document.fullscreenElement || document.webkitFullscreenElement;
@@ -899,12 +922,14 @@ export default function App() {
         const exitFullscreen = document.exitFullscreen || document.webkitExitFullscreen;
         await exitFullscreen.call(document);
       } else {
-        const requestFullscreen = frame.requestFullscreen || frame.webkitRequestFullscreen;
+        const requestFullscreen = target.requestFullscreen || target.webkitRequestFullscreen;
         if (!requestFullscreen) throw new Error("Fullscreen API unavailable");
-        await requestFullscreen.call(frame);
+        await requestFullscreen.call(target);
       }
     } catch {
-      setPageError("Fullscreen is not available in this browser.");
+      // iPhone Safari exposes no element fullscreen: pin the shell over the
+      // page instead. Safari's own toolbars stay, but tabs and page chrome go.
+      setImmersive(true);
     }
   }
 
@@ -965,7 +990,8 @@ export default function App() {
           engineRef={engineRef}
           gameFrameRef={gameFrameRef}
           gamepadCount={gamepads.length}
-          isFullscreen={isFullscreen}
+          immersive={immersive}
+          isFullscreen={isFullscreen || immersive}
           launchFlowOpen={overlayMusicActive}
           onAboutChange={setAboutOpen}
           onAdvanced={() => setAdvancedOpen(true)}
