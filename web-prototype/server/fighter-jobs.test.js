@@ -268,8 +268,8 @@ test("structured pipeline progress is validated", () => {
   assert.equal(parseProgressEvent("@@opensmash not-json"), null);
 });
 
-test("submission visibility defaults public and requires rights attestation", () => {
-  assert.deepEqual(submissionSettings({ rightsAttested: "true" }), { visibility: "public" });
+test("submission visibility defaults private and requires rights attestation", () => {
+  assert.deepEqual(submissionSettings({ rightsAttested: "true" }), { visibility: "private" });
   assert.deepEqual(
     submissionSettings({ rightsAttested: "true", visibility: "private" }),
     { visibility: "private" },

@@ -4,7 +4,7 @@ export const ACTIVE_JOB_STATUSES = new Set(["queued", "running", "retrying"]);
 export const TERMINAL_JOB_STATUSES = new Set(["complete", "failed", "cancelled"]);
 
 export function publicJob(job) {
-  const visibility = job.visibility || "public";
+  const visibility = job.visibility || "private";
   const assetRoot = `/api/fighters/${encodeURIComponent(job.id)}/assets`;
   const result = {
     protocolVersion: JOB_PROTOCOL_VERSION,
