@@ -11,7 +11,7 @@ import { createJobDispatcher } from "./job-dispatcher.js";
 import { createObjectStore } from "./object-store.js";
 import { assignRosterBases, bundleForBase, FIGHTERS } from "./roster.js";
 import { matchesCharacterSearch } from "../shared/character-search.js";
-import { ROMS_BY_SHA1 } from "../shared/rom-catalog.js";
+import { ROMS_BY_SHA1, UNSUPPORTED_ROMS_BY_SHA1 } from "../shared/rom-catalog.js";
 
 const APP_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const REPO_ROOT = path.resolve(APP_ROOT, "..", "..");
@@ -520,7 +520,13 @@ async function handleRequest(req, res, vite) {
       const body = await readJsonBody(req);
       const hash = String(body.hash || "").toLowerCase();
       if (body.algorithm !== "SHA-1" || !/^[a-f0-9]{40}$/.test(hash) || !ROMS.has(hash)) {
-        return json(res, 422, { error: "That file is not a supported Super Smash Bros. 64 ROM." });
+        const known = UNSUPPORTED_ROMS_BY_SHA1.get(hash);
+        if (known) {
+          return json(res, 422, {
+            error: `That is the ${known.region} release, which this port cannot run yet. Only the USA (NALE) ROM is supported.`,
+          });
+        }
+        return json(res, 422, { error: "That file is not a supported Super Smash Bros. 64 ROM. Only the USA (NALE) release works." });
       }
       const rom = ROMS.get(hash);
       if (Number(body.size) !== rom.size) {

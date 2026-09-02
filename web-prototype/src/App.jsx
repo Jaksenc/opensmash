@@ -15,15 +15,6 @@ import {
 } from "../visual/controls-roadblock.js";
 import { identifyRomFile } from "./rom-validation.js";
 import { clearRomStore, hasStoredRom, prewarmEngineArchive, storeRom } from "../shared/rom-store.js";
-
-// Fire-and-forget: build the engine's asset archive while the launch flow
-// animates, so the engine boots straight from the cache.
-function prewarmArchiveInBackground() {
-  prewarmEngineArchive().then(
-    (result) => { if (result) console.info("[rom] engine archive", result.source, result.ms ? `${Math.round(result.ms)}ms` : ""); },
-    (error) => console.warn("[rom] engine archive prewarm failed:", error),
-  );
-}
 import { clearControllerTutorialCompletion } from "../visual/control-tutorial.js";
 import {
   FLOW_MUSIC_MAX_VOLUME,
@@ -43,6 +34,22 @@ import {
 } from "./launch-options.js";
 
 const ADVANCED_OPTIONS_KEY = "opensmash-advanced-options";
+// Posted by BattleShip/web/index.html when the engine cannot obtain its assets.
+const ENGINE_ASSET_ERROR_MESSAGE = "opensmash:engine-asset-error";
+
+// Fire-and-forget: build the engine's asset archive while the launch flow
+// animates, so the engine boots straight from the cache. Failures are
+// reported through `onError` (they would otherwise only surface later, as
+// small status text inside the engine iframe).
+function prewarmArchiveInBackground(onError) {
+  prewarmEngineArchive().then(
+    (result) => { if (result) console.info("[rom] engine archive", result.source, result.ms ? `${Math.round(result.ms)}ms` : ""); },
+    (error) => {
+      console.warn("[rom] engine archive prewarm failed:", error);
+      onError?.(error);
+    },
+  );
+}
 const ACTIVE_FIGHTER_JOB_STATUSES = new Set(["queued", "running", "retrying"]);
 const FLOW_MUSIC_EVENT = "opensmash:launch-flow";
 const FLOW_MUSIC_URL = flowMusicUrl;
@@ -151,7 +158,7 @@ async function getSession() {
   return session;
 }
 
-function RomModal({ action, onCancel, onValidated }) {
+function RomModal({ action, onCancel, onValidated, onPrewarmError }) {
   const [file, setFile] = useState(null);
   const [status, setStatus] = useState("idle");
   const [error, setError] = useState("");
@@ -184,7 +191,7 @@ function RomModal({ action, onCancel, onValidated }) {
       // The engine builds its assets from these bytes inside the browser.
       setStatus("storing");
       await storeRom(rom);
-      prewarmArchiveInBackground();
+      prewarmArchiveInBackground(onPrewarmError);
       onValidated(result.rom);
     } catch (validationError) {
       setStatus("idle");
@@ -215,7 +222,11 @@ function RomModal({ action, onCancel, onValidated }) {
         </button>
         <p className="eyebrow">One-time check</p>
         <h2 id="rom-title">Upload a ROM to continue</h2>
-        <p className="modal-copy">Choose your legally obtained Smash 64 ROM to launch {target}.</p>
+        <p className="modal-copy">Choose your legally obtained Smash 64 ROM (USA release) to launch {target}.</p>
+        <p className="modal-copy modal-copy-secondary">
+          It never leaves your browser: the game builds its assets from it locally. Safari clears that
+          copy after a week without a visit, so you may be asked for it again.
+        </p>
         <form onSubmit={validate}>
           <label className={`file-picker ${file ? "has-file" : ""}`}>
             <input
@@ -815,7 +826,7 @@ export default function App() {
     // The engine builds its assets from these bytes inside the browser.
     onStatus?.("storing");
     await storeRom(rom);
-    prewarmArchiveInBackground();
+    prewarmArchiveInBackground(reportEngineAssetError);
     setAuthorized(true);
     const session = await getSession();
     setUser(session.user || null);
@@ -848,6 +859,27 @@ export default function App() {
       return "about:blank";
     }
   }
+
+  // The engine could not build/find its assets (extraction failed, or the
+  // stored ROM is gone). Close the game, tell the player, and re-prompt for
+  // the ROM so a retry is one click away.
+  function reportEngineAssetError(error) {
+    const message = error?.message || String(error);
+    setEngine(null);
+    setPageError(`Could not prepare the game's assets from your ROM: ${message}`);
+    setAuthorized(false);
+    setPendingAction((current) => current || { type: "start" });
+  }
+
+  useEffect(() => {
+    function onEngineMessage(event) {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type !== ENGINE_ASSET_ERROR_MESSAGE) return;
+      reportEngineAssetError(new Error(String(event.data.message || "unknown error")));
+    }
+    window.addEventListener("message", onEngineMessage);
+    return () => window.removeEventListener("message", onEngineMessage);
+  }, []);
 
   async function clearVerification() {
     setPageError("");
@@ -1186,6 +1218,7 @@ export default function App() {
 
       {pendingAction && pendingAction.type !== "create" && (
         <RomModal
+          onPrewarmError={reportEngineAssetError}
           action={pendingAction}
           onCancel={() => {
             if (pendingAction.type === "create") window.location.assign("/");
