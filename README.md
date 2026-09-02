@@ -6,7 +6,9 @@
   configuration, and canonical browser assets under `visual/`
 - `pipeline/` — directly executable Python generation and evaluation tools
 - `scripts/` — batch sweep drivers
-- `play/` — production character bundles consumed by BattleShip
+- `play/` — git-ignored local fighter-generation workspace; production runtime
+  files are content-addressed in GCS and pinned by
+  `web-prototype/config/baked-assets.json`
 - `skels/` — canonical skeletons, profiles, and extracted part data
 - `eval/` — evaluation code, fixtures, and generated results
 - `artifacts/experiments/` — historical generated models, atlases, bundles, and reports

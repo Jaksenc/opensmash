@@ -18,9 +18,8 @@ COPY pipeline/web-prototype/server ./server
 COPY pipeline/web-prototype/shared ./shared
 COPY pipeline/web-prototype/config ./config
 COPY pipeline/web-prototype/visual ./visual
-# Generated immediately before Cloud Build from config/characters.json and
-# committed pipeline/play outputs. No ignored web-dist character state enters
-# the image.
+# Downloaded and checksum-verified from the content-addressed GCS manifest
+# immediately before Cloud Build. No local generated play/ state enters the image.
 COPY pipeline/web-prototype/.baked-characters/play /workspace/pipeline/play
 COPY BattleShip/web-dist/index.html BattleShip/web-dist/BattleShip.js BattleShip/web-dist/BattleShip.wasm BattleShip/web-dist/manifest.json /workspace/BattleShip/web-dist/
 COPY BattleShip/web-dist/files /workspace/BattleShip/web-dist/files
