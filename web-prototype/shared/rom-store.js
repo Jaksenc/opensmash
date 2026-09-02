@@ -40,11 +40,32 @@ function transact(db, stores, mode, work) {
 }
 
 /**
+ * Ask the browser not to evict our origin's storage under pressure. Safari in
+ * particular clears IndexedDB for sites not visited in seven days unless the
+ * origin is persisted (or installed); Chromium grants this silently for
+ * engaged sites. Best effort: a refusal just leaves eviction policy as it was.
+ * Resolves to true when the origin is (now) persisted.
+ */
+export async function requestPersistentStorage(storageManager = globalThis.navigator?.storage) {
+  try {
+    if (!storageManager?.persist) return false;
+    if (storageManager.persisted && (await storageManager.persisted())) return true;
+    return Boolean(await storageManager.persist());
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Store the identified ROM so the engine can extract its assets locally.
  * `rom` is the result of identifyRomFile: { sha1, size, name, bytes }.
  */
 export async function storeRom(rom, indexedDBImpl) {
   if (!rom?.sha1 || !rom.bytes) throw new Error("ROM bytes are required to store the ROM.");
+  // Ask before writing so the bytes land in a persisted bucket from the start.
+  requestPersistentStorage().then((persisted) => {
+    if (!persisted) console.info("[rom] storage persistence not granted; the browser may evict the ROM when idle.");
+  });
   const bytes = rom.bytes instanceof ArrayBuffer
     ? rom.bytes
     : rom.bytes.buffer.slice(rom.bytes.byteOffset, rom.bytes.byteOffset + rom.bytes.byteLength);
@@ -81,6 +102,23 @@ export async function currentRomSha1(indexedDBImpl) {
     if (!current?.sha1) return null;
     const rom = await idbGet(db, "roms", current.sha1);
     return rom?.bytes ? current.sha1 : null;
+  } finally {
+    db.close();
+  }
+}
+
+/**
+ * The stored ROM ({ sha1, size, name, bytes }) or null. Used by the handoff
+ * host to stream its copy to another device; the bytes never leave the
+ * player's own machines.
+ */
+export async function loadStoredRom(indexedDBImpl) {
+  const db = await openDb(indexedDBImpl);
+  try {
+    const current = await idbGet(db, "meta", "current");
+    if (!current?.sha1) return null;
+    const rom = await idbGet(db, "roms", current.sha1);
+    return rom?.bytes ? rom : null;
   } finally {
     db.close();
   }

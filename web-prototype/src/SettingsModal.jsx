@@ -23,6 +23,8 @@ export default function SettingsModal({
   onRestoreDefaults,
   onResetControllerTutorial,
   onResetRom,
+  onSendRom,
+  onReceiveRom,
   onSound,
 }) {
   const [draft, setDraft] = useState(options);
@@ -116,6 +118,23 @@ export default function SettingsModal({
             <button className="launch-flow-action settings-menu-button" type="button" onClick={() => setPage("controllers")}>
               <span>Keyboard &amp; Controllers</span>
             </button>
+            {authorized ? (
+              <button
+                className="launch-flow-action settings-menu-button advanced-handoff-action"
+                type="button"
+                onClick={() => close(onSendRom)}
+              >
+                <span>Send ROM to another device</span>
+              </button>
+            ) : (
+              <button
+                className="launch-flow-action settings-menu-button advanced-handoff-action"
+                type="button"
+                onClick={() => close(onReceiveRom)}
+              >
+                <span>Receive ROM from another device</span>
+              </button>
+            )}
             <button className="launch-flow-action settings-menu-button" type="button" onClick={restoreDefaults}>
               Restore Defaults
             </button>
