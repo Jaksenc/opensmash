@@ -9,6 +9,7 @@ import { createAuthService } from "./auth.js";
 import { createJobDatabase } from "./job-database.js";
 import { createJobDispatcher } from "./job-dispatcher.js";
 import { createObjectStore } from "./object-store.js";
+import { withInitialState } from "./html-state.js";
 import { assignRosterBases, bundleForBase, FIGHTERS } from "./roster.js";
 import { matchesCharacterSearch } from "../shared/character-search.js";
 import { ROMS_BY_SHA1, UNSUPPORTED_ROMS_BY_SHA1 } from "../shared/rom-catalog.js";
@@ -19,7 +20,7 @@ const DIST_ROOT = path.join(APP_ROOT, "dist");
 const APP_SHELL_PATHS = new Set(["/", "/create", "/create/", "/index.html"]);
 const APP_SHELL_CACHE_CONTROL = "public, max-age=15";
 const APP_SHELL_EDGE_CACHE_CONTROL =
-  "public, max-age=60, stale-while-revalidate=300, stale-if-error=86400";
+  "public, max-age=30, stale-while-revalidate=300, stale-if-error=86400";
 const ENGINE_ROOT = path.join(REPO_ROOT, "BattleShip", "web-dist");
 const PIPELINE_UI_ROOT = path.join(REPO_ROOT, "pipeline", "play", "ui");
 const SITE_ASSETS_ROOT = path.join(APP_ROOT, "visual", "assets");
@@ -343,6 +344,38 @@ async function engineRoster() {
   return assignRosterBases(characters);
 }
 
+async function serveAppShell(req, res) {
+  const shellPath = path.join(DIST_ROOT, "index.html");
+  let html;
+  try {
+    html = await readFile(shellPath, "utf8");
+  } catch {
+    return false;
+  }
+
+  // This response is cached and shared by Cloudflare, so it must never contain
+  // cookie-derived or private fighter data. Public Firestore fighters are
+  // intentionally resolved on each edge cache miss rather than at startup.
+  // If roster discovery fails, omit the seed and let the client fall back to
+  // the no-store API instead of caching an authoritative empty roster.
+  let initialState = {};
+  try {
+    initialState = { characters: await configuredCharacters("", null) };
+  } catch (error) {
+    console.warn(`Could not embed the public character roster: ${error.message}`);
+  }
+  const body = Buffer.from(withInitialState(html, initialState));
+  res.writeHead(200, {
+    "Content-Type": "text/html; charset=utf-8",
+    "Content-Length": body.length,
+    "Cache-Control": APP_SHELL_CACHE_CONTROL,
+    "Cloudflare-CDN-Cache-Control": APP_SHELL_EDGE_CACHE_CONTROL,
+  });
+  if (req.method === "HEAD") res.end();
+  else res.end(body);
+  return true;
+}
+
 async function handleRequest(req, res, vite) {
   const url = new URL(req.url, `http://${req.headers.host || "localhost"}`);
   const { pathname } = url;
@@ -634,13 +667,7 @@ async function handleRequest(req, res, vite) {
   }
 
   if (APP_SHELL_PATHS.has(pathname)) {
-    if (await serveFile(
-      req,
-      res,
-      path.join(DIST_ROOT, "index.html"),
-      APP_SHELL_CACHE_CONTROL,
-      { "Cloudflare-CDN-Cache-Control": APP_SHELL_EDGE_CACHE_CONTROL },
-    )) return;
+    if (await serveAppShell(req, res)) return;
     return json(res, 404, { error: "Frontend build not found. Run pnpm build first." });
   }
 
