@@ -46,6 +46,11 @@
 <p class="note">Same names rendered with the default glyph for every letter and only the kerning table, i.e. what a new fighter name gets. Differences here are the per-name sub-pixel phase variants; exact mode above reproduces them.</p>
 <div id="default" class="row"></div>
 
+<h2>Condensed cut (JIGGLYPUFF style)</h2>
+<p class="note">The JIGGLYPUFF tile uses a narrower cut: 1 px stems, single-column bowls and counters, tighter pairs. Its eight letters are taken from the tile; the others are drawn by hand in the same idiom (<span class="syn">synth</span>). First pair: the JIGGLYPUFF tile vs the condensed font.</p>
+<div id="condensed" class="row"></div>
+<div id="condensed-letters" class="letters"></div>
+
 <h2>Kerning pairs measured from the names</h2>
 <div id="kern"></div>
 
@@ -172,6 +177,31 @@ function renderAll() {
     const sp = spriteIA(name); const rec = recreate(name, { exact: false }); const d = diffIA(sp, rec, sp.art);
     const cols = col(); cols.appendChild(iaToCanvas(sp, ZOOM, sp.imageData)); cols.appendChild(iaToCanvas(rec, ZOOM)); if (d.n) cols.appendChild(diffCanvas(d, ZOOM));
     D.appendChild(wrapCell(cols, `<b>${sp.text}</b> — <span class="${d.n ? 'bad' : 'ok'}">${d.n} px differ</span>`));
+  }
+  const CD = $('#condensed'); CD.innerHTML = '';
+  {
+    const sp = spriteIA('Purin');
+    const lay = FONT.condensed.layout;
+    const r = renderIA(lay.text, { exact: false, condensed: true });
+    const rec = { width: sp.width, height: sp.height, I: new Uint8Array(sp.width * sp.height), A: new Uint8Array(sp.width * sp.height) };
+    const x0 = lay.glyphs[0][1], y0 = FONT.faceRow;
+    for (let y = 0; y < r.height; y++) for (let x = 0; x < r.width; x++) {
+      const dx = x - r.originX + x0, dy = y - r.originY + y0;
+      if (dx < 0 || dy < 0 || dx >= sp.width || dy >= sp.height) continue;
+      const o = dy * sp.width + dx, k = y * r.width + x; rec.I[o] = r.I[k]; rec.A[o] = r.A[k];
+    }
+    const cols = col(); cols.appendChild(iaToCanvas(sp, ZOOM, sp.imageData)); cols.appendChild(iaToCanvas(rec, ZOOM));
+    CD.appendChild(wrapCell(cols, `<b>JIGGLYPUFF</b> tile vs condensed font (default spacing)`));
+    for (const t of ['JIGGLYPUFF', 'CAPTAIN FALCON', 'SCRAPPER', 'THE QUICK BROWN', 'FOX JUMPS OVER', 'LAZY DOG']) {
+      const rr = renderIA(t, { exact: false, condensed: true }); const c2 = col(); c2.appendChild(iaToCanvas(rr, ZOOM));
+      CD.appendChild(wrapCell(c2, `<b>${t}</b> condensed`));
+    }
+  }
+  const CL = $('#condensed-letters'); CL.innerHTML = '';
+  for (const letter of [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ', '.']) {
+    const g = FONT.condensed.glyphs[letter];
+    const cols = col(); cols.appendChild(iaToCanvas(renderIA(letter, { exact: false }), ZOOM)); cols.appendChild(iaToCanvas(renderIA(letter, { exact: false, condensed: true }), ZOOM));
+    CL.appendChild(wrapCell(cols, `<b>${letter}</b> ${g.synth ? '<span class="syn">synth</span>' : 'JIGGLYPUFF'}`));
   }
   const rows = Object.entries(FONT.kern).map(([p, k]) => `<tr><td><b>${p}</b></td><td>${k > 0 ? '+' : ''}${k}</td><td>measured</td></tr>`)
     .concat(Object.entries(FONT.kernSynth).map(([p, k]) => `<tr><td>${p}</td><td>${k}</td><td class="syn">class guess (unseen pair)</td></tr>`));

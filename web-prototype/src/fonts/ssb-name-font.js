@@ -20,11 +20,17 @@ const LAYOUT_BY_TEXT = new Map();
 for (const [name, lay] of Object.entries(FONT.layouts)) LAYOUT_BY_TEXT.set(lay.text, { name, ...lay });
 
 /** Kerning value for a pair of base letters (measured first, then class guesses). */
-export function kernFor(a, b, { synthKern = true } = {}) {
+export function kernFor(a, b, { synthKern = true, condensed = false } = {}) {
+  if (condensed) return FONT.condensed.kern[a + b] || 0;
   const k = FONT.kern[a + b];
   if (k !== undefined) return k;
   if (synthKern && FONT.kernSynth[a + b] !== undefined) return FONT.kernSynth[a + b];
   return 0;
+}
+
+/** Glyph table for a face: the regular cut or the condensed (JIGGLYPUFF-style) cut. */
+export function glyphSet(condensed = false) {
+  return condensed ? FONT.condensed.glyphs : FONT.glyphs;
 }
 
 /**
@@ -34,9 +40,12 @@ export function kernFor(a, b, { synthKern = true } = {}) {
  * opts.tracking: extra pixels added to every advance (negative tightens).
  */
 export function layoutText(text, opts = {}) {
-  const { exact = true, kern = true, synthKern = true, tracking = 0 } = opts;
+  const { exact = true, kern = true, synthKern = true, tracking = 0, condensed = false } = opts;
   const up = text.toUpperCase();
-  if (exact && LAYOUT_BY_TEXT.has(up)) {
+  const glyphTable = glyphSet(condensed);
+  const gap = condensed ? FONT.condensed.defaultGap : FONT.defaultGap;
+  const space = condensed ? FONT.condensed.spaceAdvance : FONT.spaceAdvance;
+  if (exact && !condensed && LAYOUT_BY_TEXT.has(up)) {
     const lay = LAYOUT_BY_TEXT.get(up);
     const x0 = lay.glyphs[0][1];
     return { glyphs: lay.glyphs.map(([id, x]) => ({ id, x: x - x0 })), exactName: lay.name };
@@ -46,18 +55,18 @@ export function layoutText(text, opts = {}) {
   const chars = [...up];
   for (let i = 0; i < chars.length; i++) {
     const ch = chars[i];
-    if (ch === ' ') { pen += FONT.spaceAdvance; continue; }
-    const g = FONT.glyphs[ch];
+    if (ch === ' ') { pen += space; continue; }
+    const g = glyphTable[ch];
     if (!g) continue;
     glyphs.push({ id: ch, x: pen });
     // advance by ink bearings: one empty column between letters by default, plus the pair kern
     const next = chars[i + 1];
-    const nextG = next && next !== ' ' ? FONT.glyphs[next] : null;
+    const nextG = next && next !== ' ' ? glyphTable[next] : null;
     // (bearings are fractional: a half-covered edge column counts as half a pixel)
-    if (nextG) pen = Math.floor(pen + g.inkR + FONT.defaultGap + tracking + (kern ? kernFor(ch, next, { synthKern }) : 0) - nextG.inkL + 0.5);
-    else pen = Math.floor(pen + g.inkR + FONT.defaultGap + 0.5);
+    if (nextG) pen = Math.floor(pen + g.inkR + gap + tracking + (kern ? kernFor(ch, next, { synthKern, condensed }) : 0) - nextG.inkL + 0.5);
+    else pen = Math.floor(pen + g.inkR + gap + 0.5);
   }
-  return { glyphs, exactName: null };
+  return { glyphs, exactName: null, condensed };
 }
 
 /**
@@ -67,17 +76,18 @@ export function layoutText(text, opts = {}) {
  */
 export function renderIA(text, opts = {}) {
   const { glyphs } = layoutText(text, opts);
+  const table = glyphSet(opts.condensed);
   const H = FONT.boxH;
   if (!glyphs.length) return { width: 0, height: H, I: new Uint8Array(0), A: new Uint8Array(0), originX: 0, originY: 0 };
   let xmin = Infinity, xmax = -Infinity;
   for (const { id, x } of glyphs) {
-    const g = FONT.glyphs[id];
+    const g = table[id];
     xmin = Math.min(xmin, x + g.ox); xmax = Math.max(xmax, x + g.ox + g.w);
   }
   const W = xmax - xmin;
   const C = new Float64Array(W * H), S = new Float64Array(W * H);
   for (const { id, x } of glyphs) {
-    const g = FONT.glyphs[id];
+    const g = table[id];
     const gx = x + g.ox - xmin;
     for (let by = 0; by < g.h; by++) {
       for (let bx = 0; bx < g.w; bx++) {

@@ -8,6 +8,8 @@ import { startHomeRuntime } from "./visual-runtime.js";
 import { transitionMediaVolume } from "./audio-envelope.js";
 
 const MOBILE_CONTROLS_MEDIA = "(hover: none) and (pointer: coarse)";
+const ROM_FILENAME = "Super Smash Bros. (USA).z64";
+const COPY_TOAST_DURATION_MS = 2_000;
 
 function mobileControlsRequested() {
   return new URLSearchParams(window.location.search).has("mobileControls");
@@ -44,6 +46,32 @@ function ControllerCallouts() {
 }
 
 export function LaunchFlow() {
+  const [copyToastId, setCopyToastId] = useState(0);
+  const copyToastTimerRef = useRef(0);
+
+  useEffect(() => () => window.clearTimeout(copyToastTimerRef.current), []);
+
+  async function copyRomFilename() {
+    try {
+      await navigator.clipboard.writeText(ROM_FILENAME);
+    } catch {
+      const fallback = document.createElement("textarea");
+      fallback.value = ROM_FILENAME;
+      fallback.setAttribute("readonly", "");
+      fallback.style.position = "fixed";
+      fallback.style.opacity = "0";
+      document.body.append(fallback);
+      fallback.select();
+      const copied = document.execCommand("copy");
+      fallback.remove();
+      if (!copied) return;
+    }
+
+    window.clearTimeout(copyToastTimerRef.current);
+    setCopyToastId((current) => current + 1);
+    copyToastTimerRef.current = window.setTimeout(() => setCopyToastId(0), COPY_TOAST_DURATION_MS);
+  }
+
   return (
     <div id="launch-flow-overlay" className="launch-flow-overlay" data-step="upload" data-mode="launch" hidden>
       <canvas id="launch-flow-canvas" className="launch-flow-canvas" aria-hidden="true" />
@@ -54,10 +82,15 @@ export function LaunchFlow() {
           leaves your device.
         </p>
         <div id="rom-filename-hint" className="launch-flow-rom-hint">
-          <span className="launch-flow-rom-hint-label">The file is normally named</span>
-          <span className="launch-flow-rom-filenames">
-            <code>Super Smash Bros. (USA).z64</code>
-          </span>
+          <span className="launch-flow-rom-hint-label">The file is usually named</span>{" "}
+          <button
+            className="launch-flow-rom-copy"
+            type="button"
+            aria-label={`Copy ${ROM_FILENAME} to clipboard`}
+            onClick={copyRomFilename}
+          >
+            <code>{ROM_FILENAME}</code>
+          </button>
         </div>
         <input id="rom-file-input" className="launch-flow-file-input" type="file" hidden accept=".z64,.n64,.v64,.rom,.zip" />
         <FlameAction id="rom-upload-button" type="button">Choose ROM</FlameAction>
@@ -101,6 +134,11 @@ export function LaunchFlow() {
         <FlameAction cellClassName="launch-flow-controls-skip launch-flow-controls-bottom" className="launch-flow-skip" id="launch-control-skip" type="button" hidden>Skip</FlameAction>
         <FlameAction cellClassName="launch-flow-controls-close launch-flow-controls-bottom" id="controls-close-button" type="button">Close</FlameAction>
       </section>
+      {copyToastId > 0 && (
+        <p key={copyToastId} className="launch-flow-copy-toast" role="status" aria-live="polite">
+          Copied to Clipboard
+        </p>
+      )}
     </div>
   );
 }

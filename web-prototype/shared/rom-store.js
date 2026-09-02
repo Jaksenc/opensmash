@@ -146,6 +146,12 @@ export async function hasStoredRom(indexedDBImpl) {
  */
 export async function prewarmEngineArchive({ engineBase = "/engine/", onStatus } = {}) {
   const manifest = await (await fetch(`${engineBase}manifest.json`, { cache: "no-cache" })).json();
+  // Development packages can still include a prebuilt archive. In that case
+  // the engine stages it directly from the manifest and deliberately does not
+  // ship the optional browser extractor. Treating that missing module as an
+  // extraction failure invalidates an otherwise playable ROM session and
+  // prompts the player to choose the same ROM again.
+  if (manifest.files?.some((file) => file.path === "/BattleShip.o2r")) return null;
   const sample = manifest.files?.[0]?.url || "";
   const version = new URL(sample, `${location.origin}${engineBase}`).searchParams.get("v");
   const moduleUrl = `${engineBase}rom-extract.js${version ? `?v=${encodeURIComponent(version)}` : ""}`;

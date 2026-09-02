@@ -37,6 +37,8 @@ const GRID_COLUMN_BREAKPOINTS = Object.freeze([
   { minWidth: 0, columns: 4 }
 ]);
 const RASTER_SCALE = 2;
+const STONE_BACKGROUND_SEED = 3075641479;
+const STATIC_BLEND = 0x30 / 255;
 const CAPTION_CHARS = /[^A-Z. ]/g;
 const RANDOM_NAME_POOL = Object.freeze([
   'ALEX', 'AMIR', 'ANNA', 'ARIA', 'ASH', 'AVA', 'BEAU', 'BEN',
@@ -117,59 +119,131 @@ function put(dst, width, x, y, r, g, b, a = 255) {
   dst[i + 3] = Math.round(outputAlpha * 255);
 }
 
+function seededRandom(seed) {
+  let state = seed >>> 0;
+  return () => {
+    state += 0x6D2B79F5;
+    let value = state;
+    value = Math.imul(value ^ value >>> 15, value | 1);
+    value ^= value + Math.imul(value ^ value >>> 7, value | 61);
+    return ((value ^ value >>> 14) >>> 0) / 4294967296;
+  };
+}
 
-function layoutCaption(text, tracking = 0) {
+function renderActionCellBackground(seed) {
+  const random = seededRandom(seed);
+  const pixels = new Uint8ClampedArray(CELL_W * CELL_H * 4);
+  for (let index = 0; index < pixels.length; index += 4) {
+    const grain = random();
+    const tone = grain < 0.08
+      ? 3 + Math.floor(random() * 2)
+      : grain > 0.92
+        ? 14 + Math.floor(random() * 10)
+        : 6 + Math.floor(random() * 5);
+    pixels[index] = tone;
+    pixels[index + 1] = Math.max(0, tone - 1);
+    pixels[index + 2] = Math.max(0, tone - 2);
+    pixels[index + 3] = 255;
+  }
+  return pixels;
+}
+
+const ACTION_CELL_BACKGROUND_PIXELS = Object.freeze({
+  search: renderActionCellBackground(STONE_BACKGROUND_SEED),
+  create: renderActionCellBackground(STONE_BACKGROUND_SEED ^ 0x9E3779B9),
+});
+
+function drawActionStatic(pixels) {
+  const baseTone = 22;
+  const baseAlpha = 0.48;
+  for (let y = 1; y < CELL_H - 1; y++) for (let x = 1; x < CELL_W - 1; x++) {
+    const noise = Math.random() * 255;
+    const tone = Math.round(baseTone + (noise - baseTone) * STATIC_BLEND * 1.6);
+    const alpha = Math.round(255 * (baseAlpha + (baseAlpha - noise / 255) * STATIC_BLEND));
+    put(pixels, CELL_W, x, y, tone, tone, tone, Math.max(0, Math.min(255, alpha)));
+  }
+}
+
+
+// Names with at least this many letters use the condensed cut of the font (the
+// game sets JIGGLYPUFF that way); shorter names fall back to it only when the
+// regular cut does not fit the tile. Letters always keep their natural gap:
+// a name that still doesn't fit is truncated rather than squeezed.
+const CONDENSE_FROM_LENGTH = 8;
+// First face column: the tiles start regular names at x=4 and JIGGLYPUFF at x=3.
+const CAPTION_ORIGIN = Object.freeze({ regular: 4, condensed: 3 });
+// Rightmost column the 1 px outline may reach (the tile's frame is column CELL_W-1).
+const CAPTION_RIGHT_LIMIT = CELL_W - 2;
+
+function layoutCaption(text, tracking = 0, condensed = false) {
   if (!captionFont) return { width: text.length * 5 };
-  const layout = captionFont.layoutText(text, { exact: false, tracking });
+  const layout = captionFont.layoutText(text, { exact: false, tracking, condensed });
   if (!layout.glyphs.length) return { width: 0 };
+  const table = condensed
+    ? captionFont.SSB_NAME_FONT.condensed.glyphs
+    : captionFont.SSB_NAME_FONT.glyphs;
   let right = -Infinity;
   for (const { id, x } of layout.glyphs) {
-    const glyph = captionFont.SSB_NAME_FONT.glyphs[id];
+    const glyph = table[id];
     right = Math.max(right, x + glyph.ox + glyph.w);
   }
-  return { width: right };
+  // face origin -> last outline column inclusive (the glyph box carries one
+  // spare margin column past the outline)
+  return { width: right - 2 };
 }
 
 function normalizeCaption(value) {
   return String(value).toUpperCase().replace(CAPTION_CHARS, '').trim();
 }
 
-function fitCaption(value, maxWidth = CELL_W - 5) {
+function fitCaption(value, rightLimit = CAPTION_RIGHT_LIMIT) {
   let text = normalizeCaption(value);
-  for (const tracking of [0, -1]) {
-    const width = layoutCaption(text, tracking).width;
-    if (width <= maxWidth) return Object.freeze({ text, tracking, width: Math.max(1, width) });
+  const letters = text.replace(/[^A-Z]/g, '').length;
+  const fits = (condensed) => {
+    const width = layoutCaption(text, 0, condensed).width;
+    const originX = condensed ? CAPTION_ORIGIN.condensed : CAPTION_ORIGIN.regular;
+    return originX + width <= rightLimit ? width : null;
+  };
+  for (const condensed of letters >= CONDENSE_FROM_LENGTH ? [true] : [false, true]) {
+    const width = fits(condensed);
+    if (width !== null) return Object.freeze({ text, tracking: 0, condensed, width: Math.max(1, width) });
   }
-  while (text && layoutCaption(text, -1).width > maxWidth) text = text.slice(0, -1).trim();
+  while (text && fits(true) === null) text = text.slice(0, -1).trim();
   return Object.freeze({
     text,
-    tracking: -1,
-    width: Math.max(1, layoutCaption(text, -1).width),
+    tracking: 0,
+    condensed: true,
+    width: Math.max(1, layoutCaption(text, 0, true).width),
   });
 }
 
-function renderCaption(value, maxWidth = CELL_W - 5) {
+function renderCaption(value, rightLimit = CAPTION_RIGHT_LIMIT) {
   if (!captionFont) throw new Error('Caption font is not ready');
-  const layout = fitCaption(value, maxWidth);
+  const layout = fitCaption(value, rightLimit);
   const rendered = captionFont.renderIA(layout.text, {
     exact: false,
     tracking: layout.tracking,
+    condensed: layout.condensed,
   });
   const top = captionFont.SSB_NAME_FONT.faceRow - rendered.originY;
   const height = Math.max(10, top + rendered.height);
-  const pixels = new Uint8ClampedArray(Math.max(1, layout.width) * height * 4);
+  const bitmapWidth = Math.max(1, layout.width + 2);
+  const pixels = new Uint8ClampedArray(bitmapWidth * height * 4);
   if (rendered.width) {
     const image = captionFont.toImageData(rendered);
     for (let y = 0; y < rendered.height; y++) for (let x = 0; x < rendered.width; x++) {
       const source = (y * rendered.width + x) * 4;
       put(
-        pixels, Math.max(1, layout.width), x - rendered.originX, y + top,
+        pixels, bitmapWidth, x - rendered.originX, y + top,
         image.data[source], image.data[source + 1],
         image.data[source + 2], image.data[source + 3]
       );
     }
   }
-  return Object.freeze({ ...layout, height, pixels });
+  return Object.freeze({
+    ...layout, height, pixels, width: bitmapWidth,
+    originX: layout.condensed ? CAPTION_ORIGIN.condensed : CAPTION_ORIGIN.regular,
+  });
 }
 
 function drawLabel(dst, value) {
@@ -178,7 +252,7 @@ function drawLabel(dst, value) {
   for (let y = 0; y < caption.height; y++) for (let x = 0; x < caption.width; x++) {
     const source = (y * caption.width + x) * 4;
     put(
-      dst, CELL_W, 4 + x, y,
+      dst, CELL_W, caption.originX + x, y,
       caption.pixels[source], caption.pixels[source + 1],
       caption.pixels[source + 2], caption.pixels[source + 3]
     );
@@ -411,6 +485,30 @@ function setActionIcon(button, fileName, kind) {
   button.prepend(image);
 }
 
+function paintActionStatic(button, kind) {
+  let canvas = button.querySelector('.replica-action-static-layer');
+  if (!canvas) {
+    canvas = document.createElement('canvas');
+    canvas.className = 'replica-action-static-layer';
+    canvas.setAttribute('aria-hidden', 'true');
+    Object.assign(canvas.style, {
+      position: 'absolute',
+      inset: '0',
+      zIndex: '0',
+      display: 'block',
+      width: '100%',
+      height: '100%',
+      pointerEvents: 'none',
+      imageRendering: 'auto',
+    });
+    button.prepend(canvas);
+  }
+  const native = new Uint8ClampedArray(ACTION_CELL_BACKGROUND_PIXELS[kind]);
+  drawActionStatic(native);
+  const framebuffer = scalePixels2x(native, CELL_W, CELL_H, false);
+  paintPixels(canvas, framebuffer.pixels, framebuffer.width, framebuffer.height);
+}
+
 function ensureLabel(button) {
   let label = button.querySelector('.replica-label');
   if (!label) {
@@ -572,6 +670,7 @@ CELL_IDS.forEach((id, index) => {
     button.append(input);
   }
   if (isSearch || isCreate) {
+    paintActionStatic(button, isSearch ? 'search' : 'create');
     setActionIcon(button, isSearch ? 'SearchGlass.png' : 'Plus.png', isSearch ? 'search' : 'create');
     setCellLabel(button, label);
   }
@@ -581,6 +680,15 @@ CELL_IDS.forEach((id, index) => {
   grid.append(button);
   cells.set(id, button);
 });
+
+setInterval(() => {
+  if (document.hidden) return;
+  cells.forEach(button => {
+    if (button.dataset.kind === 'search' || button.dataset.kind === 'create') {
+      paintActionStatic(button, button.dataset.kind);
+    }
+  });
+}, 1000 / 12);
 
 const ruleCanvas = document.createElement('canvas');
 ruleCanvas.className = 'replica-rule-layer';
@@ -785,7 +893,7 @@ function updateSearchTile(query = '') {
   const value = String(query).toUpperCase();
   const active = document.activeElement === fighterSearch;
   const caption = fitCaption(value || 'SEARCH');
-  const caretX = value ? Math.min(CELL_W - 2, 4 + caption.width + 1) : 3;
+  const caretX = value ? Math.min(CELL_W - 2, (caption.condensed ? CAPTION_ORIGIN.condensed : CAPTION_ORIGIN.regular) + caption.width + 1) : 3;
   searchCell.classList.toggle('is-searching', active);
   searchCell.style.setProperty('--search-caret-left', `${100 * caretX / CELL_W}%`);
   if (fighterSearch && fighterSearch.value !== value) fighterSearch.value = value;
@@ -1226,6 +1334,9 @@ window.characterGrid = Object.freeze({
 syncJobs(INITIAL_FIGHTER_JOBS).catch(error => {
   console.warn('Could not reconcile fighter jobs:', error);
 });
+
+// Debug hook: inspect how a name is fitted (regular vs condensed cut, tracking).
+window.__replicaCaption = Object.freeze({ fitCaption, renderCaption });
 
 window.__replicaMetrics = Object.freeze({
   get nativeGrid() { return currentGridLayout.width + 'x' + currentGridLayout.height; },
