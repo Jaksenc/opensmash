@@ -192,7 +192,7 @@ gcloud run deploy "$SERVICE_NAME" \
   --service-account "$API_IDENTITY" \
   --allow-unauthenticated \
   --ingress internal-and-cloud-load-balancing \
-  --port 8080 --cpu 1 --memory 1Gi --concurrency 40 \
+  --port 8080 --cpu 1 --memory 1Gi --concurrency 200 \
   --min-instances 0 --max-instances 1 --timeout 3600 \
   --set-env-vars "JOB_DATABASE=firestore,OBJECT_STORE=gcs,FIGHTER_JOBS_ROOT=/tmp/fighter-jobs,FIGHTER_EXECUTION_MODE=cloud-run,GOOGLE_CLOUD_PROJECT=${PROJECT_ID},CLOUD_RUN_REGION=${REGION},CLOUD_RUN_WORKER_JOB=${WORKER_JOB},GCS_PRIVATE_BUCKET=${PRIVATE_BUCKET},GCS_PUBLIC_BUCKET=${PUBLIC_BUCKET},ASSET_BASE_URL=${ASSET_BASE_URL},ALLOWED_ORIGINS=${PUBLIC_ORIGIN},FIREBASE_AUTH_ENABLED=1,FIREBASE_PROJECT_ID=${PROJECT_ID},FIREBASE_API_KEY=${FIREBASE_API_KEY},FIREBASE_AUTH_DOMAIN=${FIREBASE_AUTH_DOMAIN},FIREBASE_APP_ID=${FIREBASE_APP_ID},FIREBASE_AUTH_PROVIDERS=google|apple|email,FIGHTER_MODERATION_ENABLED=1" \
   --set-secrets "COOKIE_SECRET=${COOKIE_SECRET_NAME}:latest,COOKIE_SECRET_PREVIOUS=${COOKIE_SECRET_PREVIOUS_NAME}:latest,OPENAI_API_KEY=opensmash-openai-api-key:latest"

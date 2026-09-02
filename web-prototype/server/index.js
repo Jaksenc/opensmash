@@ -27,6 +27,30 @@ const APP_SHELL_PATHS = new Set(["/", "/create", "/create/", "/index.html"]);
 const APP_SHELL_CACHE_CONTROL = "public, max-age=15";
 const APP_SHELL_EDGE_CACHE_CONTROL =
   "public, max-age=30, stale-while-revalidate=300, stale-if-error=86400";
+// Only "/" and "/create" are client-side routes; everything else under the
+// outer app is a real file or a 404, so the shell is never served for
+// /favicon.ico, /robots.txt, or typos.
+const BASE_SECURITY_HEADERS = Object.freeze({
+  "X-Content-Type-Options": "nosniff",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=()",
+});
+// The outer app must never be framed (a framed /create could be clickjacked
+// into a public submission). The engine is framed by the outer app itself.
+const APP_SECURITY_HEADERS = Object.freeze({
+  ...BASE_SECURITY_HEADERS,
+  "Content-Security-Policy": "frame-ancestors 'none'",
+  "X-Frame-Options": "DENY",
+});
+const ENGINE_SECURITY_HEADERS = Object.freeze({
+  ...BASE_SECURITY_HEADERS,
+  "Content-Security-Policy": "frame-ancestors 'self'",
+  "X-Frame-Options": "SAMEORIGIN",
+});
+
+function securityHeaders(pathname) {
+  return pathname.startsWith("/engine/") ? ENGINE_SECURITY_HEADERS : APP_SECURITY_HEADERS;
+}
 const PIPELINE_PLAY_ROOT = path.join(PIPELINE_PROJECT_ROOT, "play");
 const SITE_ASSETS_ROOT = path.join(APP_ROOT, "visual", "assets");
 const CHARACTERS_CONFIG = path.join(APP_ROOT, "config", "characters.json");
@@ -72,6 +96,8 @@ const MIME_TYPES = {
   ".js": "text/javascript; charset=utf-8",
   ".json": "application/json; charset=utf-8",
   ".glb": "model/gltf-binary",
+  ".ico": "image/x-icon",
+  ".txt": "text/plain; charset=utf-8",
   ".mp3": "audio/mpeg",
   ".mp4": "video/mp4",
   ".png": "image/png",
@@ -88,6 +114,7 @@ function json(res, status, data, headers = {}) {
     "Content-Type": "application/json; charset=utf-8",
     "Content-Length": body.length,
     "Cache-Control": "no-store",
+    ...BASE_SECURITY_HEADERS,
     ...headers,
   });
   res.end(body);
@@ -222,10 +249,12 @@ async function serveFile(req, res, filePath, cacheControl = "no-store", extraHea
   try {
     const info = await stat(filePath);
     if (!info.isFile()) return false;
+    const pathname = new URL(req.url, "http://localhost").pathname;
     res.writeHead(200, {
       "Content-Type": MIME_TYPES[path.extname(filePath).toLowerCase()] || "application/octet-stream",
       "Content-Length": info.size,
       "Cache-Control": cacheControl,
+      ...securityHeaders(pathname),
       ...extraHeaders,
     });
     if (req.method === "HEAD") {
@@ -394,6 +423,7 @@ async function serveAppShell(req, res) {
     "Content-Length": body.length,
     "Cache-Control": APP_SHELL_CACHE_CONTROL,
     "Cloudflare-CDN-Cache-Control": APP_SHELL_EDGE_CACHE_CONTROL,
+    ...APP_SECURITY_HEADERS,
   });
   if (req.method === "HEAD") res.end();
   else res.end(body);
@@ -715,8 +745,7 @@ async function handleRequest(req, res, vite) {
     ? "public, max-age=31536000, immutable"
     : "public, max-age=300";
   if (filePath && (await serveFile(req, res, filePath, cacheControl))) return;
-  if (await serveFile(req, res, path.join(DIST_ROOT, "index.html"), "no-store")) return;
-  return json(res, 404, { error: "Frontend build not found. Run pnpm build first." });
+  return json(res, 404, { error: "Not found" });
 }
 
 let vite = null;
@@ -732,6 +761,12 @@ if (!IS_PRODUCTION) {
 if (IS_PRODUCTION && process.env.COOKIE_SECRET === undefined) {
   throw new Error("COOKIE_SECRET must be set in production.");
 }
+
+// Cloud Run runs a single instance; an unhandled rejection anywhere would
+// otherwise exit the process and take the whole site down with it.
+process.on("unhandledRejection", (reason) => {
+  console.error("Unhandled promise rejection:", reason);
+});
 
 const server = http.createServer((req, res) => {
   handleRequest(req, res, vite).catch((error) => {
