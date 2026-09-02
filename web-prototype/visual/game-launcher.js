@@ -38,6 +38,7 @@ const FLOW_ROTATION_SPRING = 64;
 const FLOW_ROTATION_DAMPING = 12;
 const FLOW_SCALE_SPRING = 70;
 const FLOW_SCALE_DAMPING = 13;
+const CARTRIDGE_UPLOAD_REVEAL_PROGRESS = 0.96;
 const CONTROLLER_PRESS_SPRING = 92;
 const CONTROLLER_PRESS_DAMPING = 14.5;
 const CONTROLLER_DROP_SPRING = 118;
@@ -51,12 +52,14 @@ const CONTROLLER_IDLE_BOB = 0.04;
 const CONTROLLER_IDLE_PITCH = 0.014;
 const CONTROLLER_IDLE_YAW = 0.014;
 const CONTROLLER_IDLE_ENTRY_DECAY = 9;
-const CONTROLLER_ENTRANCE_POSITION_SPRING = 92;
-const CONTROLLER_ENTRANCE_POSITION_DAMPING = 19;
-const CONTROLLER_ENTRANCE_ROTATION_SPRING = 92;
-const CONTROLLER_ENTRANCE_ROTATION_DAMPING = 19;
-const CONTROLLER_ENTRANCE_SCALE_SPRING = 105;
-const CONTROLLER_ENTRANCE_SCALE_DAMPING = 20.5;
+// Time-scale the critically damped controller entrance without changing its
+// shape, so it reaches the idle handoff sooner while retaining smooth motion.
+const CONTROLLER_ENTRANCE_POSITION_SPRING = 207;
+const CONTROLLER_ENTRANCE_POSITION_DAMPING = 28.5;
+const CONTROLLER_ENTRANCE_ROTATION_SPRING = 207;
+const CONTROLLER_ENTRANCE_ROTATION_DAMPING = 28.5;
+const CONTROLLER_ENTRANCE_SCALE_SPRING = 236.25;
+const CONTROLLER_ENTRANCE_SCALE_DAMPING = 30.75;
 const CONSOLE_DOCK_MS = 3710;
 const CONSOLE_APPROACH_MS = 1220;
 const CONSOLE_IDLE_MS = 720;
@@ -1871,7 +1874,7 @@ function beginModelReverse(completion) {
 async function showFlowModel(kind, phase = 'enter') {
   ensureFlowRenderer();
   requestedModelKind = kind;
-  overlay?.classList.remove('is-model-settled');
+  overlay?.classList.remove('is-model-settled', 'is-upload-revealed');
   const model = await (kind === 'cartridge' ? cartridgePromise : controllerPromise);
   if (requestedModelKind !== kind || !scene) return;
   if (activeModel) scene.remove(activeModel);
@@ -1918,6 +1921,21 @@ function renderFlow(now) {
 
     if (visualPhase === 'enter') {
       updatePhysicsEntrance(now, dt, homeY, homeScale, reducedMotion);
+      if (activeModelKind === 'cartridge' && overlay?.dataset.step === 'upload' &&
+          !overlay.classList.contains('is-upload-revealed')) {
+        const entranceDistance = Math.max(
+          0.001,
+          flowMotionStartPosition.distanceTo(flowMotionTargetPosition)
+        );
+        const entranceProgress = 1 - THREE.MathUtils.clamp(
+          activeModel.position.distanceTo(flowMotionTargetPosition) / entranceDistance,
+          0,
+          1
+        );
+        if (reducedMotion || entranceProgress >= CARTRIDGE_UPLOAD_REVEAL_PROGRESS) {
+          overlay.classList.add('is-upload-revealed');
+        }
+      }
     } else if (visualPhase === 'console-dock') {
       opacity = updateConsoleDockTransition(now, reducedMotion);
     } else if (visualPhase === 'exit' || visualPhase === 'reverse') {
@@ -2139,7 +2157,7 @@ function showControlsPreview() {
   overlay.dataset.mode = 'controls-preview';
   overlay.dataset.step = 'controller';
   modelRestedAt = 0;
-  overlay.classList.remove('is-leaving', 'is-model-settled');
+  overlay.classList.remove('is-leaving', 'is-model-settled', 'is-upload-revealed');
   overlay.hidden = false;
   document.body.classList.add('is-launch-flow-open');
   ensureFlowRenderer();
@@ -2164,7 +2182,7 @@ function showRequiredControls(fighter) {
   overlay.dataset.mode = 'launch';
   overlay.dataset.step = 'controller';
   modelRestedAt = 0;
-  overlay.classList.remove('is-leaving', 'is-model-settled');
+  overlay.classList.remove('is-leaving', 'is-model-settled', 'is-upload-revealed');
   overlay.hidden = false;
   document.body.classList.add('is-launch-flow-open');
   ensureFlowRenderer();
@@ -2198,7 +2216,7 @@ function showLaunchFlow(fighter, { create = false } = {}) {
   overlay.dataset.mode = create ? 'create' : 'launch';
   overlay.dataset.step = 'upload';
   modelRestedAt = 0;
-  overlay.classList.remove('is-leaving', 'is-model-settled');
+  overlay.classList.remove('is-leaving', 'is-model-settled', 'is-upload-revealed');
   overlay.hidden = false;
   document.body.classList.add('is-launch-flow-open');
   ensureFlowRenderer();
@@ -2215,7 +2233,9 @@ function finishClosingFlow(sequence, restoreFocus) {
   clearConsoleDockTransition();
   overlay.hidden = true;
   modelRestedAt = 0;
-  overlay.classList.remove('is-visible', 'is-leaving', 'is-model-settled');
+  overlay.classList.remove(
+    'is-visible', 'is-leaving', 'is-model-settled', 'is-upload-revealed'
+  );
   overlay.dataset.mode = 'launch';
   overlay.dataset.step = 'upload';
   document.body.classList.remove('is-launch-flow-open');
@@ -2277,7 +2297,7 @@ function transitionToController() {
   overlay.dataset.mode = 'launch';
   resetControlCheck();
   modelRestedAt = 0;
-  overlay.classList.remove('is-model-settled');
+  overlay.classList.remove('is-model-settled', 'is-upload-revealed');
   overlay.dataset.step = 'transition';
   beginConsoleDockTransition(() => {
     if (sequence !== flowSequence || overlay.hidden) return;
