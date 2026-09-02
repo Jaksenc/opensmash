@@ -9,9 +9,10 @@ import { createAuthService } from "./auth.js";
 import { createJobDatabase } from "./job-database.js";
 import { createJobDispatcher } from "./job-dispatcher.js";
 import { createObjectStore } from "./object-store.js";
+import { cacheControlForEnvironment, edgeCacheHeaders } from "./cache-policy.js";
 import { withInitialState } from "./html-state.js";
 import { resolveProjectPaths } from "./project-paths.js";
-import { assignRosterBases, bundleForBase, FIGHTERS } from "./roster.js";
+import { assignRosterBases, bundleForBase, FIGHTERS, readOsb6Targets } from "./roster.js";
 import { matchesCharacterSearch } from "../shared/character-search.js";
 import { bakedRosterEntries } from "../shared/baked-roster.js";
 import { ROMS_BY_SHA1, UNSUPPORTED_ROMS_BY_SHA1 } from "../shared/rom-catalog.js";
@@ -253,7 +254,7 @@ async function serveFile(req, res, filePath, cacheControl = "no-store", extraHea
     res.writeHead(200, {
       "Content-Type": MIME_TYPES[path.extname(filePath).toLowerCase()] || "application/octet-stream",
       "Content-Length": info.size,
-      "Cache-Control": cacheControl,
+      "Cache-Control": cacheControlForEnvironment(cacheControl, IS_PRODUCTION),
       ...securityHeaders(pathname),
       ...extraHeaders,
     });
@@ -292,38 +293,7 @@ async function readJsonBody(req) {
 }
 
 async function configuredCharacters(query = "", user = null) {
-  const config = await bakedCharacterConfig();
-  const result = [];
-
-  for (const character of await engineRoster(config)) {
-    const { slug } = character;
-
-    const fighterName = character.base || "mario";
-    const fkind = FIGHTERS.indexOf(fighterName);
-    if (fkind === -1) continue;
-
-    const characterRoot = path.join(PIPELINE_UI_ROOT, slug);
-    try {
-      await access(path.join(characterRoot, "portrait_raw.png"));
-      const bundle = bundleForBase(slug, fighterName);
-      await access(path.join(PIPELINE_PLAY_ROOT, bundle));
-      result.push({
-        slug,
-        name: character.display,
-        short: character.short,
-        portrait: `/character-assets/${slug}/portrait.png`,
-        announcer: character.voice ? `/character-assets/${slug}/announcer.wav` : null,
-        base: fighterName,
-        fkind,
-        bundle,
-        ui: character.ui,
-        voice: character.voice,
-      });
-    } catch (error) {
-      console.warn(`Skipping staged character '${slug}': ${error.message}`);
-    }
-  }
-
+  const result = [...(await bakedRoster()).characters];
   const configuredSlugs = new Set(result.map((character) => character.slug));
   for (const job of fighterJobs.listVisible(user?.uid)) {
     if (job.status !== "complete" || !job.character || configuredSlugs.has(job.slug)) continue;
@@ -334,24 +304,109 @@ async function configuredCharacters(query = "", user = null) {
 }
 
 async function bakedCharacterConfig() {
-  return bakedRosterEntries(JSON.parse(await readFile(CHARACTERS_CONFIG, "utf8")));
+  return (await bakedRoster()).entries;
 }
 
-async function engineRoster(config = null) {
-  const entries = config || await bakedCharacterConfig();
+// The baked roster is computed once and reused by every request. It walks
+// play/ and play/ui/<slug> (readdir, OSB6 header, character.json, access
+// checks per character), which at 1000 fighters is thousands of fs ops, so
+// it must never run per request. The cache is rebuilt when
+// config/characters.json changes (one stat per request to notice that).
+let bakedRosterCache = null;
+let bakedRosterBuild = null;
+
+async function bakedRoster() {
+  let mtime = 0;
+  try {
+    mtime = (await stat(CHARACTERS_CONFIG)).mtimeMs;
+  } catch {
+    // A missing manifest means an empty baked roster; keep any prior cache.
+  }
+  if (bakedRosterCache && bakedRosterCache.mtime === mtime) return bakedRosterCache;
+  bakedRosterBuild ||= buildBakedRoster(mtime).finally(() => { bakedRosterBuild = null; });
+  return bakedRosterBuild;
+}
+
+async function buildBakedRoster(mtime) {
+  const started = Date.now();
+  const entries = bakedRosterEntries(JSON.parse(await readFile(CHARACTERS_CONFIG, "utf8")));
+  const roster = await scanEngineRoster(entries);
+  const characters = [];
+  for (const character of roster) {
+    const { slug } = character;
+    const fighterName = character.base || "mario";
+    const fkind = FIGHTERS.indexOf(fighterName);
+    if (fkind === -1) continue;
+    const characterRoot = path.join(PIPELINE_UI_ROOT, slug);
+    try {
+      await access(path.join(characterRoot, "portrait_raw.png"));
+      const bundle = bundleForBase(slug);
+      await access(path.join(PIPELINE_PLAY_ROOT, bundle));
+      // Small derivatives (pipeline/portrait_tiles.py); the grid draws the
+      // 90x86 tile and thumbnails use the 256, so a 1000-fighter home page
+      // is a few MB, not a gigabyte. Fall back to the raw portrait for a
+      // character published before the derivatives existed.
+      const derivative = async (name) => {
+        try {
+          await access(path.join(characterRoot, name));
+          return `/character-assets/${slug}/${name}`;
+        } catch {
+          return `/character-assets/${slug}/portrait.png`;
+        }
+      };
+      characters.push({
+        slug,
+        name: character.display,
+        short: character.short,
+        portrait: await derivative("portrait_tile.png"),
+        portraitMedium: await derivative("portrait_medium.png"),
+        portraitFull: `/character-assets/${slug}/portrait.png`,
+        announcer: character.voice ? `/character-assets/${slug}/announcer.wav` : null,
+        base: fighterName,
+        fkind,
+        bundle,
+        variants: character.variants,
+        ui: character.ui,
+        voice: character.voice,
+      });
+    } catch (error) {
+      console.warn(`Skipping staged character '${slug}': ${error.message}`);
+    }
+  }
+  bakedRosterCache = {
+    mtime,
+    entries,
+    roster,
+    characters,
+    slugs: new Set(roster.map((character) => character.slug)),
+  };
+  console.log(`Baked roster: ${characters.length} characters in ${Date.now() - started} ms`);
+  return bakedRosterCache;
+}
+
+async function engineRoster() {
+  return (await bakedRoster()).roster;
+}
+
+async function scanEngineRoster(entries) {
   const files = new Set(await readdir(PIPELINE_PLAY_ROOT));
   const characters = [];
 
   for (const entry of entries) {
     const { slug } = entry;
-    if (!files.has(`${slug}.osb`)) {
-      console.warn(`Skipping baked character '${slug}': play/${slug}.osb is missing`);
+    if (!files.has(`${slug}.osb6`)) {
+      console.warn(`Skipping baked character '${slug}': play/${slug}.osb6 is missing`);
       continue;
     }
-    const variants = [...files]
-      .filter((candidate) => candidate.startsWith(`${slug}-`) && candidate.endsWith(".osb"))
-      .map((candidate) => candidate.slice(slug.length + 1, -4))
-      .sort();
+    let variants;
+    try {
+      variants = (await readOsb6Targets(path.join(PIPELINE_PLAY_ROOT, `${slug}.osb6`)))
+        .filter((target) => target !== "mario")
+        .sort();
+    } catch (error) {
+      console.warn(`Skipping baked character '${slug}': ${error.message}`);
+      continue;
+    }
     let metadata = {};
     try {
       metadata = JSON.parse(await readFile(path.join(PIPELINE_UI_ROOT, slug, "character.json"), "utf8"));
@@ -381,14 +436,13 @@ async function engineRoster(config = null) {
 }
 
 async function bakedEngineFile(relative) {
-  const match = relative.match(/^bundles\/([a-z0-9]+)(?:-([a-z0-9]+))?\.(osb|osbui|wav)$/);
+  const match = relative.match(/^bundles\/([a-z0-9]+)\.(osb6|osbui|wav)$/);
   if (!match) return null;
-  const [, slug, variant, extension] = match;
-  const configured = new Set((await bakedCharacterConfig()).map((entry) => entry.slug));
-  if (!configured.has(slug) || (variant && extension !== "osb")) return null;
+  const [, slug, extension] = match;
+  if (!(await bakedRoster()).slugs.has(slug)) return null;
 
-  if (extension === "osb") {
-    return path.join(PIPELINE_PLAY_ROOT, `${slug}${variant ? `-${variant}` : ""}.osb`);
+  if (extension === "osb6") {
+    return path.join(PIPELINE_PLAY_ROOT, `${slug}.osb6`);
   }
   return path.join(
     PIPELINE_UI_ROOT,
@@ -421,8 +475,8 @@ async function serveAppShell(req, res) {
   res.writeHead(200, {
     "Content-Type": "text/html; charset=utf-8",
     "Content-Length": body.length,
-    "Cache-Control": APP_SHELL_CACHE_CONTROL,
-    "Cloudflare-CDN-Cache-Control": APP_SHELL_EDGE_CACHE_CONTROL,
+    "Cache-Control": cacheControlForEnvironment(APP_SHELL_CACHE_CONTROL, IS_PRODUCTION),
+    ...edgeCacheHeaders(APP_SHELL_EDGE_CACHE_CONTROL, IS_PRODUCTION),
     ...APP_SECURITY_HEADERS,
   });
   if (req.method === "HEAD") res.end();
@@ -567,7 +621,7 @@ async function handleRequest(req, res, vite) {
   }
 
   const fighterArtifactMatch = pathname.match(
-    /^\/api\/fighters\/([a-f0-9-]+)\/assets\/(portrait|announcer|bundle|ui|manifest|stock|emblem)\/?$/,
+    /^\/api\/fighters\/([a-f0-9-]+)\/assets\/(portrait|portraitTile|portraitMedium|announcer|bundle|ui|manifest|stock|emblem)\/?$/,
   );
   const fighterVariantMatch = pathname.match(
     /^\/api\/fighters\/([a-f0-9-]+)\/assets\/variants\/([a-z0-9]+)\/?$/,
@@ -583,9 +637,12 @@ async function handleRequest(req, res, vite) {
       res.writeHead(200, {
         "Content-Type": artifact.contentType || "application/octet-stream",
         "Content-Length": contents.length,
-        "Cache-Control": artifact.public
-          ? "public, max-age=31536000, immutable"
-          : "private, no-store",
+        "Cache-Control": cacheControlForEnvironment(
+          artifact.public
+            ? "public, max-age=31536000, immutable"
+            : "private, no-store",
+          IS_PRODUCTION,
+        ),
         Vary: "Cookie",
       });
       return req.method === "HEAD" ? res.end() : res.end(contents);
@@ -674,8 +731,7 @@ async function handleRequest(req, res, vite) {
     if (!validSession(req)) return json(res, 401, { error: "ROM validation required" });
     if (pathname === "/bundles.json") {
       const names = (await engineRoster()).flatMap((character) => [
-        `${character.slug}.osb`,
-        ...character.variants.map((variant) => `${character.slug}-${variant}.osb`),
+        `${character.slug}.osb6`,
         ...(character.ui ? [`${character.slug}.osbui`] : []),
         ...(character.voice ? [`${character.slug}.wav`] : []),
       ]).sort();
@@ -686,14 +742,15 @@ async function handleRequest(req, res, vite) {
 
   if (pathname.startsWith("/character-assets/")) {
     const match = pathname.match(
-      /^\/character-assets\/([a-z0-9]+)\/(portrait\.png|announcer\.wav)$/,
+      /^\/character-assets\/([a-z0-9]+)\/(portrait\.png|portrait_tile\.png|portrait_medium\.png|announcer\.wav)$/,
     );
     if (!match) return json(res, 404, { error: "Character asset not found" });
-    const allowed = (await engineRoster()).some((character) => character.slug === match[1]);
-    if (!allowed) return json(res, 404, { error: "Character asset not found" });
-    const fileName = match[2] === "portrait.png" ? "portrait_raw.png" : "announcer.wav";
+    if (!(await bakedRoster()).slugs.has(match[1])) {
+      return json(res, 404, { error: "Character asset not found" });
+    }
+    const fileName = match[2] === "portrait.png" ? "portrait_raw.png" : match[2];
     const filePath = path.join(PIPELINE_UI_ROOT, match[1], fileName);
-    if (await serveFile(req, res, filePath, "public, max-age=300")) return;
+    if (await serveFile(req, res, filePath, "public, max-age=3600")) return;
     return json(res, 404, { error: "Character asset not found" });
   }
 
@@ -783,6 +840,7 @@ await jobDatabase.init();
 await dispatcher.init();
 await authService.init();
 await fighterJobs.init();
+await bakedRoster().catch((error) => console.warn(`Baked roster unavailable at boot: ${error.message}`));
 server.listen(PORT, HOST, () => {
   console.log(`OpenSmash web: http://${HOST}:${PORT}`);
 });
