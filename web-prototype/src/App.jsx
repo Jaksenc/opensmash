@@ -14,6 +14,16 @@ import {
   requireControlsRoadblock,
 } from "../visual/controls-roadblock.js";
 import { identifyRomFile } from "./rom-validation.js";
+import { clearRomStore, hasStoredRom, prewarmEngineArchive, storeRom } from "../shared/rom-store.js";
+
+// Fire-and-forget: build the engine's asset archive while the launch flow
+// animates, so the engine boots straight from the cache.
+function prewarmArchiveInBackground() {
+  prewarmEngineArchive().then(
+    (result) => { if (result) console.info("[rom] engine archive", result.source, result.ms ? `${Math.round(result.ms)}ms` : ""); },
+    (error) => console.warn("[rom] engine archive prewarm failed:", error),
+  );
+}
 import { clearControllerTutorialCompletion } from "../visual/control-tutorial.js";
 import {
   FLOW_MUSIC_MAX_VOLUME,
@@ -30,6 +40,7 @@ import {
   hasAdvancedOverrides,
   normalizeAdvancedOptions,
   selectDirectBattleOpponents,
+  createFullBootIntroConfig,
 } from "./launch-options.js";
 
 const ADVANCED_OPTIONS_KEY = "opensmash-advanced-options";
@@ -90,15 +101,14 @@ function useFlowMusic(flowActive, soundOn) {
       };
       play();
     } else if (!flowMusic.paused && flowMusic.volume > 0) {
+      // Pause in place so the next overlay resumes where the music left off.
       cancelTransition = transitionMediaVolume(flowMusic, 0, {
         onComplete() {
           flowMusic.pause();
-          flowMusic.currentTime = 0;
         },
       });
     } else {
       flowMusic.pause();
-      flowMusic.currentTime = 0;
       flowMusic.volume = 0;
     }
 
@@ -116,10 +126,7 @@ function useFlowMusic(flowActive, soundOn) {
     const flowMusic = flowMusicRef.current;
     if (!flowMusic) return;
     flowMusic.muted = !soundOn;
-    if (flowMusic.paused) {
-      flowMusic.currentTime = 0;
-      flowMusic.volume = 0;
-    }
+    if (flowMusic.paused) flowMusic.volume = 0;
     flowMusic.play().catch(() => {});
   }, [soundOn]);
 }
@@ -135,7 +142,14 @@ function loadAdvancedOptions() {
 async function getSession() {
   const response = await fetch("/api/session", { cache: "no-store" });
   if (!response.ok) return { authorized: false, authenticated: false, user: null };
-  return response.json();
+  const session = await response.json();
+  // The engine builds its assets from the ROM stored in this browser, so a
+  // valid ROM cookie alone does not make the session playable. Re-prompt for
+  // the ROM when the stored bytes are gone (cleared site data, private window).
+  if (session.authorized && !(await hasStoredRom())) {
+    return { ...session, authorized: false, romMissing: true };
+  }
+  return session;
 }
 
 function RomModal({ action, onCancel, onValidated }) {
@@ -168,6 +182,10 @@ function RomModal({ action, onCancel, onValidated }) {
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "ROM validation failed");
+      // The engine builds its assets from these bytes inside the browser.
+      setStatus("storing");
+      await storeRom(rom);
+      prewarmArchiveInBackground();
       onValidated(result.rom);
     } catch (validationError) {
       setStatus("idle");
@@ -220,6 +238,7 @@ function RomModal({ action, onCancel, onValidated }) {
             {status === "extracting" && "Opening archive…"}
             {status === "hashing" && "Checking ROM…"}
             {status === "validating" && "Checking ROM…"}
+            {status === "storing" && "Storing ROM in this browser…"}
             {status === "idle" && (action?.type === "create" ? "Validate & create" : "Validate & play")}
           </button>
         </form>
@@ -432,6 +451,7 @@ export default function App() {
   const [soundOn, setSoundOn] = useState(() => localStorage.getItem("opensmash-sound") !== "off");
   const [advancedOptions, setAdvancedOptions] = useState(loadAdvancedOptions);
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [aboutOpen, setAboutOpen] = useState(false);
   const [createStage, setCreateStage] = useState(null);
   const [flowMusicActive, setFlowMusicActive] = useState(false);
   const gameRef = useRef(null);
@@ -441,7 +461,9 @@ export default function App() {
   const announcerRef = useRef(null);
   const visualBridgeRef = useRef({});
   useUiSounds(soundOn);
-  const startFlowMusic = useFlowMusic(flowMusicActive && !engine, soundOn);
+  // The launch flow, About, and Advanced overlays share one music bed.
+  const overlayMusicActive = flowMusicActive || advancedOpen || aboutOpen;
+  const startFlowMusic = useFlowMusic(overlayMusicActive && !engine, soundOn);
   useEffect(() => {
     const syncFlowMusic = (event) => {
       const open = Boolean(event.detail?.open);
@@ -647,6 +669,17 @@ export default function App() {
   }
 
   function prepareLaunchAction(action) {
+    if (advancedOptions.bootMode === "full-boot") {
+      return {
+        ...action,
+        introConfig: createFullBootIntroConfig(
+          characters,
+          Math.random,
+          action.type === "character" ? action.character : null,
+          advancedOptions.characterMesh,
+        ),
+      };
+    }
     if (action.type !== "character" || action.opponents) return action;
     const ownedCharacters = fighterJobs
       .filter((job) => job.status === "complete" && job.character)
@@ -781,6 +814,10 @@ export default function App() {
     });
     const result = await response.json();
     if (!response.ok) throw new Error(result.error || "ROM validation failed");
+    // The engine builds its assets from these bytes inside the browser.
+    onStatus?.("storing");
+    await storeRom(rom);
+    prewarmArchiveInBackground();
     setAuthorized(true);
     const session = await getSession();
     setUser(session.user || null);
@@ -820,6 +857,11 @@ export default function App() {
     if (!response.ok) {
       setPageError("Could not clear ROM verification");
       return;
+    }
+    try {
+      await clearRomStore();
+    } catch (error) {
+      console.warn("Could not clear the stored ROM:", error);
     }
     setAuthorized(false);
     setPendingAction(null);
@@ -916,6 +958,7 @@ export default function App() {
     return (
       <>
         <RetroHome
+          aboutOpen={aboutOpen}
           advancedActive={hasAdvancedOverrides(advancedOptions)}
           authorized={authorized}
           developmentMode={import.meta.env.DEV}
@@ -923,7 +966,8 @@ export default function App() {
           engineRef={engineRef}
           gameFrameRef={gameFrameRef}
           isFullscreen={isFullscreen}
-          launchFlowOpen={flowMusicActive}
+          launchFlowOpen={overlayMusicActive}
+          onAboutChange={setAboutOpen}
           onAdvanced={() => setAdvancedOpen(true)}
           onCloseGame={() => setEngine(null)}
           onCreate={openCreateExperience}

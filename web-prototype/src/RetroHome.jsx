@@ -61,6 +61,7 @@ export function LaunchFlow() {
         <div className="launch-flow-controller-instructions">
           <h2 id="how-to-play-title" className="launch-flow-title launch-flow-how-title">How to play</h2>
           <p id="launch-control-prompt" className="launch-flow-control-prompt" aria-live="polite">Press each key on your keyboard to continue</p>
+          <button id="launch-control-skip" className="launch-flow-action launch-flow-skip" type="button" hidden>Skip</button>
         </div>
         <ControllerCallouts />
         <FlameAction cellClassName="launch-flow-controls-close" id="controls-close-button" type="button">Close</FlameAction>
@@ -111,6 +112,7 @@ function RuntimeControls() {
 }
 
 export default function RetroHome({
+  aboutOpen,
   advancedActive,
   authorized,
   developmentMode,
@@ -119,6 +121,7 @@ export default function RetroHome({
   gameFrameRef,
   isFullscreen,
   launchFlowOpen,
+  onAboutChange,
   onAdvanced,
   onCloseGame,
   onCreate,
@@ -131,7 +134,6 @@ export default function RetroHome({
   soundOn,
   user,
 }) {
-  const [menuOpen, setMenuOpen] = useState(false);
   const aboutCancelRef = useRef(null);
   const introVideoRef = useRef(null);
   const moreMenuRef = useRef(null);
@@ -249,8 +251,8 @@ export default function RetroHome({
               type="button"
               aria-haspopup="dialog"
               aria-controls="about-overlay"
-              aria-expanded={menuOpen}
-              onClick={() => setMenuOpen(true)}
+              aria-expanded={aboutOpen}
+              onClick={() => onAboutChange(true)}
             >
               About
             </button>
@@ -287,6 +289,18 @@ export default function RetroHome({
                 Reset ROM
               </button>
             )}
+            <a
+              className="retro-site-link retro-discord-link"
+              href="https://discord.gg/qYBbGmwBhr"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Join the OpenSmash community on Discord"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M19.6 5.3A18 18 0 0 0 15.3 4l-.5 1a14.7 14.7 0 0 0-5.6 0l-.5-1a18 18 0 0 0-4.3 1.3C1.7 9.4 1 13.4 1.4 17.4a17.3 17.3 0 0 0 5.3 2.7l1.3-1.8a10.8 10.8 0 0 1-2-1l.5-.4a12.6 12.6 0 0 0 11 0l.5.4a11 11 0 0 1-2 1l1.3 1.8a17.3 17.3 0 0 0 5.3-2.7c.5-4.6-.8-8.5-3-12.1ZM8.5 15.2c-1.3 0-2.3-1.2-2.3-2.7s1-2.7 2.3-2.7 2.3 1.2 2.3 2.7-1 2.7-2.3 2.7Zm7 0c-1.3 0-2.3-1.2-2.3-2.7s1-2.7 2.3-2.7 2.3 1.2 2.3 2.7-1 2.7-2.3 2.7Z" />
+              </svg>
+              <span>Join Discord</span>
+            </a>
           </nav>
         </header>
         <section className="intro-video-stage" aria-label="Intro video">
@@ -390,8 +404,8 @@ export default function RetroHome({
         className="about-overlay"
         bodyClass="is-about-open"
         initialFocusRef={aboutCancelRef}
-        onRequestClose={() => setMenuOpen(false)}
-        open={menuOpen}
+        onRequestClose={() => onAboutChange(false)}
+        open={aboutOpen}
         role="presentation"
       >
         {(close) => (
@@ -404,7 +418,18 @@ export default function RetroHome({
           >
             <div className="about-content">
               <h2 id="about-title" className="launch-flow-title about-title">About</h2>
-              <p id="about-copy" className="launch-flow-copy about-copy">I'll find something to put here.</p>
+              <div id="about-copy" className="about-copy">
+                <p className="launch-flow-copy">
+                  OpenSmash is a fan-made browser port of Super Smash Bros. for the Nintendo 64 which allows you to
+                  create custom fighters and play them inside the original game.
+                </p>
+                <p className="launch-flow-copy">You must supply a legally obtained copy of the game ROM to play.</p>
+                <p className="launch-flow-copy about-legal">
+                  OpenSmash is not affiliated with, endorsed by, or sponsored by Nintendo. Super Smash Bros., Nintendo
+                  64, and all related characters, names, and marks are trademarks of Nintendo and their respective
+                  owners.
+                </p>
+              </div>
               <button
                 ref={aboutCancelRef}
                 className="launch-flow-action launch-flow-cancel about-cancel"

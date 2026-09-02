@@ -125,6 +125,84 @@ function uniqueCharacters(characters) {
   });
 }
 
+// Opening-card order in the original movie. Donkey Kong and Yoshi are
+// intentional vanilla beats for the current trailer because those retarget
+// profiles are not production-ready. This is launch policy only: switching
+// either mode to "inject" uses the same generic staging/spawn path as every
+// other native skeleton.
+export const FULL_BOOT_INTRO_CARDS = Object.freeze([
+  Object.freeze({ fkind: 0, mesh: "mario", mode: "inject" }),
+  Object.freeze({ fkind: 2, mesh: "donkey", mode: "vanilla" }),
+  Object.freeze({ fkind: 3, mesh: "samus", mode: "inject" }),
+  Object.freeze({ fkind: 1, mesh: "fox", mode: "inject" }),
+  Object.freeze({ fkind: 5, mesh: "link", mode: "inject" }),
+  Object.freeze({ fkind: 6, mesh: "yoshi", mode: "vanilla" }),
+  Object.freeze({ fkind: 9, mesh: "pikachu", mode: "inject" }),
+  Object.freeze({ fkind: 8, mesh: "kirby", mode: "inject" }),
+]);
+
+export function createFullBootIntroConfig(
+  characters,
+  random = Math.random,
+  featuredCharacter = null,
+  featuredMesh = "auto",
+) {
+  const pool = uniqueCharacters(characters);
+  for (let index = pool.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(random() * (index + 1));
+    [pool[index], pool[swapIndex]] = [pool[swapIndex], pool[index]];
+  }
+
+  const usedSlugs = new Set();
+  let featuredCardIndex = -1;
+  let featuredResolved = null;
+
+  if (featuredCharacter?.slug) {
+    const clickedTarget = resolvedCharacter(featuredCharacter, featuredMesh);
+    const injectable = FULL_BOOT_INTRO_CARDS
+      .map((card, index) => ({ card, index }))
+      .filter(({ card }) => card.mode === "inject");
+    const exact = injectable.find(({ card }) => card.fkind === clickedTarget.fkind);
+    const attempts = exact
+      ? [exact, ...injectable.filter(({ index }) => index !== exact.index)]
+      : injectable;
+
+    for (const { card, index } of attempts) {
+      try {
+        featuredResolved = card.fkind === clickedTarget.fkind
+          ? clickedTarget
+          : resolvedCharacter(featuredCharacter, card.mesh);
+        featuredCardIndex = index;
+        usedSlugs.add(featuredCharacter.slug);
+        break;
+      } catch {
+        // The clicked fighter may not have this skeleton variant. Prefer its
+        // native target, then use the first compatible opening card.
+      }
+    }
+  }
+
+  return FULL_BOOT_INTRO_CARDS.map((card, cardIndex) => {
+    if (cardIndex === featuredCardIndex) {
+      return { ...card, type: "character", character: featuredResolved, featured: true };
+    }
+    if (card.mode === "vanilla") return { ...card, type: "vanilla" };
+
+    for (const candidate of pool) {
+      if (usedSlugs.has(candidate.slug)) continue;
+      try {
+        const character = resolvedCharacter(candidate, card.mesh);
+        usedSlugs.add(candidate.slug);
+        return { ...card, type: "character", character };
+      } catch {
+        // A generated fighter may not have every skeleton variant. Keep
+        // searching; if none work, this card safely falls back to vanilla.
+      }
+    }
+    return { ...card, type: "vanilla" };
+  });
+}
+
 export function selectDirectBattleOpponents(
   selectedCharacter,
   gridCharacters,
@@ -158,9 +236,8 @@ export function selectDirectBattleOpponents(
   ];
 }
 
-function characterInjection(character, player) {
+function characterAssets(character) {
   return {
-    player,
     slug: character.slug,
     fkind: character.fkind,
     short: character.short || character.name,
@@ -168,6 +245,10 @@ function characterInjection(character, player) {
     uiUrl: character.uiUrl || (character.ui ? `bundles/${character.slug}.osbui` : null),
     voiceUrl: character.voiceUrl || (character.voice ? `bundles/${character.slug}.wav` : null),
   };
+}
+
+function characterInjection(character, player) {
+  return { player, ...characterAssets(character) };
 }
 
 function directBattle(params, character, stage, opponents) {
@@ -193,11 +274,11 @@ function directBattle(params, character, stage, opponents) {
   });
 }
 
-export function engineUrl(action, advancedOptions, now = Date.now()) {
+export function engineUrl(action, advancedOptions) {
   const options = normalizeAdvancedOptions(advancedOptions);
   const character = resolvedCharacter(action.character, options.characterMesh);
   const stage = options.stage === "random" ? Math.floor(Math.random() * 9) : Number(options.stage);
-  const params = new URLSearchParams({ cb: String(now) });
+  const params = new URLSearchParams();
 
   if (character) {
     params.set("inject", character.bundleUrl || `bundles/${character.bundle}`);
@@ -211,6 +292,25 @@ export function engineUrl(action, advancedOptions, now = Date.now()) {
     params.set("player", "0");
     if (options.characterMesh !== "auto") {
       params.set("base", `${character.slug}:${options.characterMesh}`);
+    }
+  }
+
+  // The Full Boot destination carries an explicit opening-card launch config.
+  // Vanilla entries are intentionally omitted from the URL; missing injected
+  // assets are also omitted by the shell, making vanilla the per-card fallback.
+  if (options.bootMode === "full-boot") {
+    action.introConfig?.forEach((card) => {
+      if (card.type !== "character") return;
+      params.append("intro_character", JSON.stringify({
+        ...characterAssets(card.character),
+        fkind: card.fkind,
+      }));
+    });
+    const featuredCard = action.introConfig?.find(
+      (card) => card.type === "character" && card.featured,
+    );
+    if (featuredCard) {
+      params.set("SSB64_OPENING_FIRST_FKIND", String(featuredCard.fkind));
     }
   }
 

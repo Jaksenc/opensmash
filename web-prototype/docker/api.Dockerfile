@@ -24,6 +24,12 @@ COPY pipeline/play/ui/queen /workspace/pipeline/play/ui/queen
 COPY pipeline/play/ui/rohansahai /workspace/pipeline/play/ui/rohansahai
 COPY BattleShip/web-dist/index.html BattleShip/web-dist/BattleShip.js BattleShip/web-dist/BattleShip.wasm BattleShip/web-dist/manifest.json /workspace/BattleShip/web-dist/
 COPY BattleShip/web-dist/files /workspace/BattleShip/web-dist/files
+# In-browser asset extraction (BattleShip/docs/web_rom_extraction.md): Torch
+# compiled to wasm + the recipe tree, and the worker/stager scripts. Without
+# these the engine has no way to obtain BattleShip.o2r, which is deliberately
+# absent from files/. A missing source path fails the build here, on purpose.
+COPY BattleShip/web-dist/torch /workspace/BattleShip/web-dist/torch
+COPY BattleShip/web-dist/rom-extract.js BattleShip/web-dist/torch-worker.js /workspace/BattleShip/web-dist/
 COPY BattleShip/web-dist/bundles/joeyflynn* /workspace/BattleShip/web-dist/bundles/
 COPY BattleShip/web-dist/bundles/barackobama* /workspace/BattleShip/web-dist/bundles/
 COPY BattleShip/web-dist/bundles/queen* /workspace/BattleShip/web-dist/bundles/

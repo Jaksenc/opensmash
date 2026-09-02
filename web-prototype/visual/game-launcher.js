@@ -12,9 +12,11 @@ import {
   postRomUploadGate,
 } from './controls-roadblock.js?v=20260901-upload-flow1';
 
+import cartridgeChunkUrl from './assets/cartridge-chunk.wav?url';
 import cartridgeLabelUrl from './assets/cartridge-label-art.png?url';
 import cartridgeModelUrl from './assets/n64-cartridge-tripo.glb?url';
 import consoleModelUrl from './assets/hybrid-four-port-console-fitted.glb?url';
+import controllerPunchUrl from './assets/controller-punch.wav?url';
 import controllerModelUrl from './assets/nintendo-64-controller.glb?url';
 const APP_BRIDGE = window.openSmashReactBridge;
 const ROM_SHA256 = '15592e79d3c5295cef4371d4992f0bd25bec2102fc29644c93e682f7ea99ef3d';
@@ -66,6 +68,11 @@ const CONSOLE_CARTRIDGE_READY_CLEARANCE = 0.34;
 const CONSOLE_DOCK_FRONT_YAW = Math.PI * 1.5;
 const CONSOLE_DOCK_FRONT_PITCH = 0.18;
 const REQUIRED_CONTROL_KEYS = Object.freeze(['w', 'a', 's', 'd', 'j', 'k', 'l', 'i', 'o']);
+const SOUND_STORAGE_KEY = 'opensmash-sound';
+const LAUNCH_SOUNDS = Object.freeze({
+  cartridgeChunk: Object.freeze({ url: cartridgeChunkUrl, volume: 0.46 }),
+  controllerPunch: Object.freeze({ url: controllerPunchUrl, volume: 0.7 }),
+});
 const CONTROLLER_KEY_TORQUE = Object.freeze({
   w: Object.freeze([0.035, 0, 0]),
   a: Object.freeze([0.038, 0, 0.025]),
@@ -95,6 +102,9 @@ const controllerStep = document.getElementById('launch-flow-controller-step');
 const controlsMenuButton = document.getElementById('controls-menu-button');
 const controlsCloseButton = document.getElementById('controls-close-button');
 const controlPrompt = document.getElementById('launch-control-prompt');
+const controlSkipButton = document.getElementById('launch-control-skip');
+const CONTROL_SKIP_DELAY_MS = 2000;
+let controlSkipTimer = 0;
 const controlKeycaps = [...document.querySelectorAll('[data-control-key]')];
 const controllerCallouts = document.getElementById('controller-callouts');
 const controllerCalloutLines = document.getElementById('controller-callout-lines');
@@ -115,8 +125,32 @@ let controlCheckComplete = false;
 let controlExitPending = false;
 let controlsPreviewMode = false;
 let createUploadMode = false;
+let consoleDockImpactSoundPlayed = false;
 const completedControlKeys = new Set();
 const heldControlKeys = new Set();
+const launchSoundTemplates = new Map();
+
+function soundEnabled() {
+  try { return localStorage.getItem(SOUND_STORAGE_KEY) !== 'off'; }
+  catch { return true; }
+}
+
+function preloadLaunchSounds() {
+  for (const sound of Object.values(LAUNCH_SOUNDS)) {
+    if (launchSoundTemplates.has(sound.url)) continue;
+    const audio = new Audio(sound.url);
+    audio.preload = 'auto';
+    launchSoundTemplates.set(sound.url, audio);
+  }
+}
+
+function playLaunchSound(sound) {
+  if (!soundEnabled()) return;
+  preloadLaunchSounds();
+  const audio = launchSoundTemplates.get(sound.url).cloneNode();
+  audio.volume = sound.volume;
+  audio.play().catch(() => {});
+}
 
 function randomInt(max) {
   return Math.floor(Math.random() * max);
@@ -196,7 +230,6 @@ function fighterFromSelection(detail) {
 function engineUrl(fighter) {
   const url = new URL('./engine/', location.href);
   const params = url.searchParams;
-  params.set('cb', String(Date.now()));
   if (fighter.bundle) {
     params.set('inject', `bundles/${fighter.bundle}`);
     params.set('fkind', String(fighter.fkind));
@@ -259,7 +292,10 @@ function launch(fighter) {
     window.characterGrid?.select(null);
     return;
   }
-  gameFrame.src = source;
+  // React owns the iframe URL when the bridge is present. Assigning the same
+  // source here as well can start a second navigation and download the engine
+  // twice before React commits its state update.
+  if (!APP_BRIDGE) gameFrame.src = source;
   videoFrame.classList.add('is-game-running');
   window.characterGrid?.select(fighter.selectionName || fighter.slug || null);
   scrollToPageTop();
@@ -1509,6 +1545,7 @@ async function beginConsoleDockTransition(completion) {
   consoleDockModel.scale.setScalar(consoleDockConsoleScale);
 
   flowMotionCompletion = completion;
+  consoleDockImpactSoundPlayed = false;
   visualPhase = 'console-dock';
   visualStartedAt = performance.now();
   lastFlowFrameAt = 0;
@@ -1634,6 +1671,10 @@ function updateConsoleDockTransition(now, reducedMotion) {
   consoleDockAssembly.scale.setScalar(THREE.MathUtils.lerp(1, 0.54, retreat));
 
   const impactAt = slamStartedAt + CONSOLE_SLAM_MS * impactPoint;
+  if (!consoleDockImpactSoundPlayed && elapsed >= impactAt) {
+    consoleDockImpactSoundPlayed = true;
+    playLaunchSound(LAUNCH_SOUNDS.cartridgeChunk);
+  }
   const shakeElapsed = elapsed - impactAt;
   if (shakeElapsed >= 0 && shakeElapsed < 360) {
     const shakeEnvelope = Math.exp(-shakeElapsed / 105) * (1 - shakeElapsed / 360);
@@ -1840,7 +1881,35 @@ function resetRomPrompt() {
   }
 }
 
+function hideControlSkip() {
+  clearTimeout(controlSkipTimer);
+  controlSkipTimer = 0;
+  if (controlSkipButton) controlSkipButton.hidden = true;
+}
+
+// Offer "Skip" shortly after the controller step appears (launch mode only —
+// the controls preview has its own Close button).
+function scheduleControlSkip() {
+  hideControlSkip();
+  if (!controlSkipButton || controlsPreviewMode) return;
+  controlSkipTimer = window.setTimeout(() => {
+    if (!overlay || overlay.hidden || overlay.dataset.step !== 'controller' ||
+        controlCheckComplete || controlsPreviewMode) return;
+    controlSkipButton.hidden = false;
+  }, CONTROL_SKIP_DELAY_MS);
+}
+
+function skipControlCheck() {
+  if (!overlay || overlay.hidden || overlay.dataset.step !== 'controller' || controlsPreviewMode) return;
+  hideControlSkip();
+  controlCheckComplete = true;
+  controlExitPending = false;
+  clearTimeout(flowTimer);
+  continueToGame();
+}
+
 function resetControlCheck() {
+  hideControlSkip();
   controlCheckComplete = false;
   controlExitPending = false;
   completedControlKeys.clear();
@@ -1861,7 +1930,9 @@ function registerControlKey(event) {
   if (!REQUIRED_CONTROL_KEYS.includes(key)) return false;
   event.preventDefault();
   pressControllerControl(key, event.repeat);
+  const firstPress = !completedControlKeys.has(key);
   completedControlKeys.add(key);
+  if (firstPress) playLaunchSound(LAUNCH_SOUNDS.controllerPunch);
   const keycap = controlKeycaps.find(item => item.dataset.controlKey === key);
   keycap?.classList.add('is-complete', 'is-pressed');
   if (completedControlKeys.size === REQUIRED_CONTROL_KEYS.length) {
@@ -1874,6 +1945,7 @@ function registerControlKey(event) {
     }
     controlCheckComplete = true;
     rememberCompletedControllerTutorial();
+    hideControlSkip();
     controlPrompt?.classList.add('is-complete');
     clearTimeout(flowTimer);
     const flipInProgress = controllerZRevealUntil > performance.now() ||
@@ -1886,6 +1958,7 @@ function registerControlKey(event) {
 
 function showControlsPreview() {
   if (!overlay || !overlay.hidden) return;
+  preloadLaunchSounds();
   setLaunchFlowOpen(true);
   flowSequence += 1;
   clearTimeout(flowTimer);
@@ -1910,6 +1983,7 @@ function showControlsPreview() {
 
 function showRequiredControls(fighter) {
   if (!overlay || !overlay.hidden) return;
+  preloadLaunchSounds();
   flowSequence += 1;
   clearTimeout(flowTimer);
   pendingFighter = fighter;
@@ -1925,6 +1999,7 @@ function showRequiredControls(fighter) {
   document.body.classList.add('is-launch-flow-open');
   ensureFlowRenderer();
   showFlowModel('controller');
+  scheduleControlSkip();
   requestAnimationFrame(() => {
     overlay.classList.add('is-visible');
     flowTimer = window.setTimeout(() => controllerStep?.focus(), 1150);
@@ -1933,6 +2008,7 @@ function showRequiredControls(fighter) {
 
 function showLaunchFlow(fighter, { create = false } = {}) {
   if (!overlay || !overlay.hidden) return;
+  preloadLaunchSounds();
   setLaunchFlowOpen(true);
   flowSequence += 1;
   clearTimeout(flowTimer);
@@ -2035,6 +2111,7 @@ function transitionToController() {
     if (sequence !== flowSequence || overlay.hidden) return;
     overlay.dataset.step = 'controller';
     showFlowModel('controller');
+    scheduleControlSkip();
     flowTimer = window.setTimeout(() => controllerStep?.focus(), 1150);
   });
 }
@@ -2065,6 +2142,7 @@ async function validateRom(file) {
           extracting: 'Opening archive…',
           hashing: 'Checking ROM…',
           validating: 'Checking ROM…',
+          storing: 'Storing ROM…',
         })[status] || 'Checking ROM…';
       });
     } else {
@@ -2207,6 +2285,7 @@ grid?.addEventListener('characterselect', event => {
 });
 
 resetRomButton?.addEventListener('click', resetRom);
+controlSkipButton?.addEventListener('click', skipControlCheck);
 window.addEventListener('resize', resizeFlowRenderer);
 window.addEventListener('keydown', event => {
   if (registerControlKey(event)) return;

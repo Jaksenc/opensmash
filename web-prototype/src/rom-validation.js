@@ -93,7 +93,10 @@ export async function identifyRomBytes(input, options = {}) {
   for (const size of sizes) {
     const sha1 = await digestHex("SHA-1", normalized.subarray(0, size), subtle);
     const rom = bySize.get(size).find((candidate) => candidate.sha1 === sha1);
-    if (rom) return { ...rom, sha1, size };
+    // `bytes` is the canonical big-endian image (padding trimmed): the engine
+    // builds its asset archive from it locally, so it must travel with the
+    // identification result.
+    if (rom) return { ...rom, sha1, size, bytes: normalized.slice(0, size) };
   }
   return null;
 }
