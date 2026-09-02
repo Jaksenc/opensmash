@@ -17,6 +17,7 @@ export default function RomHandoffModal({ backButtonRef, embedded = false, open,
   const [state, setState] = useState("idle");
   const [detail, setDetail] = useState({});
   const [qr, setQr] = useState("");
+  const [attempt, setAttempt] = useState(0);
   const closeButtonRef = useRef(null);
   const runRef = useRef(0);
 
@@ -51,7 +52,7 @@ export default function RomHandoffModal({ backButtonRef, embedded = false, open,
       session.cancel();
       releaseWakeLock();
     };
-  }, [open]);
+  }, [open, attempt]);
 
   const busy = state === "connecting" || state === "sending";
   const percent = detail.total ? Math.round(((detail.sent ?? 0) / detail.total) * 100) : 0;
@@ -111,6 +112,11 @@ export default function RomHandoffModal({ backButtonRef, embedded = false, open,
         )}
 
         <div className="advanced-actions">
+          {(state === "error" || state === "done") && (
+            <button className="launch-flow-action" type="button" onClick={() => setAttempt((count) => count + 1)}>
+              {state === "done" ? "Send to another device" : "Try again"}
+            </button>
+          )}
           <button
             ref={(node) => {
               closeButtonRef.current = node;

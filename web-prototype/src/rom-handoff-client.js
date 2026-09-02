@@ -8,9 +8,10 @@
 // session cookie a manual upload would produce.
 //
 // Signalling is HTTP polling against /api/handoff/rooms (server/handoff-rooms.js);
-// the ROM itself never touches the server. STUN only, no TURN: two devices on
-// the same Wi-Fi connect directly, and most home NATs hairpin fine. If a pair
-// cannot connect the error tells the player to put both on the same network.
+// the ROM itself never touches the server. ICE servers come from
+// /api/handoff/ice: STUN always, plus a TURN relay when the deploy configures
+// one (server/handoff-ice.js). A relay only forwards DTLS ciphertext, so the
+// ROM stays unreadable to every server involved.
 
 import {
   HANDOFF_CHUNK_SIZE,
@@ -23,7 +24,38 @@ import {
   normalizeHandoffCode,
 } from "../shared/rom-handoff.js";
 
-const ICE_SERVERS = [{ urls: ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302"] }];
+const FALLBACK_ICE_SERVERS = [{ urls: ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302"] }];
+
+/**
+ * ICE servers from the API: STUN plus a TURN relay when the deploy has one
+ * configured (server/handoff-ice.js). Falls back to public STUN so a failed
+ * fetch never blocks a same-network handoff.
+ */
+async function fetchIceConfig() {
+  try {
+    const config = await api("/api/handoff/ice");
+    if (Array.isArray(config?.iceServers) && config.iceServers.length) return { iceServers: config.iceServers, relay: Boolean(config.relay) };
+  } catch (error) {
+    console.warn("[handoff] ICE config unavailable, using STUN only:", error);
+  }
+  return { iceServers: FALLBACK_ICE_SERVERS, relay: false };
+}
+
+function connectionFailedMessage(relay) {
+  return relay
+    ? "The connection between the devices failed. Check that both are online and try again."
+    : "The connection between the devices failed. Put both on the same Wi-Fi and try again.";
+}
+
+/** Log which candidate types each side gathered — the first thing to check when a pair cannot connect. */
+function logCandidateTypes(pc, label) {
+  const types = new Set();
+  pc.addEventListener("icecandidate", (event) => {
+    if (event.candidate?.type) types.add(event.candidate.type);
+    else if (!event.candidate) console.info(`[handoff] ${label} gathered candidate types:`, [...types].join(", ") || "none");
+  });
+  pc.addEventListener("connectionstatechange", () => console.info(`[handoff] ${label} connection state:`, pc.connectionState));
+}
 const POLL_INTERVAL_MS = 500;
 const WAIT_FOR_PEER_MS = 10 * 60 * 1000;
 const CONNECT_TIMEOUT_MS = 45 * 1000;
@@ -69,7 +101,7 @@ function sleep(ms, signal) {
  * data channel opens. Returns when `until()` becomes true or throws on abort,
  * timeout, or a failed ICE state.
  */
-async function runSignalling({ pc, room, role, key, onRemote, until, signal, deadlineMs }) {
+async function runSignalling({ pc, room, role, key, onRemote, until, signal, deadlineMs, relay = false }) {
   let cursor = 0;
   const pendingCandidates = [];
   let remoteDescriptionSet = false;
@@ -89,7 +121,7 @@ async function runSignalling({ pc, room, role, key, onRemote, until, signal, dea
       throw new Error("The devices could not connect. Make sure both are on the same Wi-Fi and try again.");
     }
     if (pc.connectionState === "failed" || pc.iceConnectionState === "failed") {
-      throw new Error("The connection between the devices failed. Put both on the same Wi-Fi and try again.");
+      throw new Error(connectionFailedMessage(relay));
     }
     const view = await api(`/api/handoff/rooms/${room}/messages?role=${role}&key=${encodeURIComponent(key)}&after=${cursor}`);
     cursor = view.cursor;
@@ -143,7 +175,9 @@ export function startRomHandoffHost({ loadRom, onState = () => {} }) {
     const url = handoffUrl(location.origin, roomCode);
     onState("waiting", { code: roomCode, url, expiresAt: created.expiresAt });
 
-    pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+    const ice = await fetchIceConfig();
+    pc = new RTCPeerConnection({ iceServers: ice.iceServers });
+    logCandidateTypes(pc, "host");
     const channel = pc.createDataChannel("rom", { ordered: true });
     channel.binaryType = "arraybuffer";
     channel.bufferedAmountLowThreshold = BUFFER_LOW_WATER;
@@ -162,6 +196,7 @@ export function startRomHandoffHost({ loadRom, onState = () => {} }) {
       role: "host",
       key: hostKey,
       signal,
+      relay: ice.relay,
       deadlineMs: WAIT_FOR_PEER_MS,
       onRemote: async (message) => {
         if (message.type === "answer") {
@@ -243,7 +278,9 @@ export function receiveRomHandoff({ code, onState = () => {}, signal } = {}) {
     guestKey = joined.guestKey;
     onState("waiting");
 
-    pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+    const ice = await fetchIceConfig();
+    pc = new RTCPeerConnection({ iceServers: ice.iceServers });
+    logCandidateTypes(pc, "guest");
     let channel = null;
     // The host starts sending the moment its side of the channel opens, which
     // can be up to a poll interval before this side leaves the signalling loop.
@@ -266,6 +303,7 @@ export function receiveRomHandoff({ code, onState = () => {}, signal } = {}) {
       role: "guest",
       key: guestKey,
       signal: abortSignal,
+      relay: ice.relay,
       deadlineMs: CONNECT_TIMEOUT_MS,
       onRemote: async (message) => {
         if (message.type !== "offer") return;

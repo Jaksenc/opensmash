@@ -29,6 +29,38 @@ Apple, create the Apple Service ID and private key, register
 Firebase Authentication provider settings. The deploy uses the Web App's
 public API key and app ID; these are configuration values, not secrets.
 
+## TURN relay for the ROM handoff (recommended)
+
+"Send ROM to another device" streams the ROM browser-to-browser over WebRTC.
+STUN alone only connects devices that can reach each other directly; guest
+Wi-Fi with client isolation, cellular, and some home routers block that and the
+player sees "The connection between the devices failed". A TURN relay fixes
+this. The relay forwards DTLS-encrypted packets it cannot read, so the ROM is
+still never readable by any server.
+
+Cloudflare Realtime TURN is the supported option (pay per GB; a relayed 16 MB
+handoff costs well under a cent). In the Cloudflare dashboard open
+**Realtime → TURN**, create a TURN key, then store its two values:
+
+```bash
+printf '%s' "$TURN_KEY_ID" | gcloud secrets create opensmash-cloudflare-turn-key-id --data-file=-
+printf '%s' "$TURN_KEY_API_TOKEN" | gcloud secrets create opensmash-cloudflare-turn-key-token --data-file=-
+```
+
+`deploy.sh` detects both secrets and mounts them as `CLOUDFLARE_TURN_KEY_ID`
+and `CLOUDFLARE_TURN_KEY_API_TOKEN`; the API then mints 15-minute TURN
+credentials for each handoff via `GET /api/handoff/ice`. `/healthz` reports
+`"handoffIce": "cloudflare"` once active (`"stun"` means unconfigured). To
+enable without a full deploy:
+
+```bash
+gcloud run services update "$SERVICE_NAME" --region "$REGION" \
+  --update-secrets CLOUDFLARE_TURN_KEY_ID=opensmash-cloudflare-turn-key-id:latest,CLOUDFLARE_TURN_KEY_API_TOKEN=opensmash-cloudflare-turn-key-token:latest
+```
+
+A self-hosted coturn works too: set `TURN_URLS`, `TURN_USERNAME`, and
+`TURN_CREDENTIAL` on the API instead.
+
 ## Build and deploy
 
 The engine package must not contain ROM-derived assets; the browser builds

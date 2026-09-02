@@ -90,7 +90,11 @@ cookie cannot tell them apart.
   10-minute rooms). Rooms live in memory locally and in the Firestore
   `handoffRooms` collection whenever `JOB_DATABASE=firestore` (override with
   `HANDOFF_ROOMS`), so the API can run on any number of replicas; the deploy
-  enables a TTL policy on `expireAt`. STUN only; devices should share a Wi-Fi network. On the phone
+  enables a TTL policy on `expireAt`. ICE servers come from
+  `GET /api/handoff/ice`: STUN always, plus a TURN relay when the deploy has
+  Cloudflare TURN (or static `TURN_*`) credentials — see
+  `infra/README.md`, "TURN relay". Without one, handoffs only succeed when
+  the devices can reach each other directly. STUN only; devices should share a Wi-Fi network. On the phone
   the play flow's **Can't find your ROM?** panel (worded "Have it on your
   computer? Send it to this phone" on touch devices) or opening
   `/?handoff=CODE` receives it. Both ends hold a screen wake lock while a

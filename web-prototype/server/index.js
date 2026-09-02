@@ -6,6 +6,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createFighterJobs } from "./fighter-jobs.js";
 import { HandoffError, createHandoffRoomsFromEnv } from "./handoff-rooms.js";
+import { createIceServerProvider } from "./handoff-ice.js";
 import { createAuthService } from "./auth.js";
 import { createJobDatabase } from "./job-database.js";
 import { createJobDispatcher } from "./job-dispatcher.js";
@@ -90,6 +91,8 @@ const MAX_HANDOFF_BODY = 32 * 1024;
 // Memory locally, Firestore in production (follows JOB_DATABASE) so every API
 // replica sees every room.
 const handoffRooms = await createHandoffRoomsFromEnv();
+// TURN relay credentials for the handoff (STUN-only when unconfigured).
+const handoffIce = createIceServerProvider();
 const ROM_VALIDATION_WINDOW_MS = 15 * 60 * 1000;
 const ROM_VALIDATION_LIMIT = Number(process.env.ROM_VALIDATION_LIMIT || 10);
 const romValidationAttempts = new Map();
@@ -590,6 +593,7 @@ async function handleRequest(req, res, vite) {
       objectStore: objectStore.driver,
       dispatcher: dispatcher.driver,
       handoffRooms: handoffRooms.driver,
+      handoffIce: handoffIce.driver,
     });
   }
 
@@ -772,6 +776,10 @@ async function handleRequest(req, res, vite) {
   // ROM handoff signalling (shared/rom-handoff.js, server/handoff-rooms.js).
   // Only SDP and ICE candidates pass through here; the ROM streams
   // peer-to-peer between the player's own devices.
+  if (req.method === "GET" && pathname === "/api/handoff/ice") {
+    return json(res, 200, await handoffIce.iceServers(), { "Cache-Control": "no-store" });
+  }
+
   const handoffMatch = pathname.match(/^\/api\/handoff\/rooms(?:\/([A-Za-z0-9]{1,12})\/(join|messages|close))?$/);
   if (handoffMatch) {
     const [, code, verb] = handoffMatch;

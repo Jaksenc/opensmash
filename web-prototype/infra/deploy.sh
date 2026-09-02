@@ -153,6 +153,21 @@ gcloud secrets add-iam-policy-binding "$COOKIE_SECRET_NAME" \
   --member "serviceAccount:${API_IDENTITY}" --role roles/secretmanager.secretAccessor >/dev/null
 gcloud secrets add-iam-policy-binding "$COOKIE_SECRET_PREVIOUS_NAME" \
   --member "serviceAccount:${API_IDENTITY}" --role roles/secretmanager.secretAccessor >/dev/null
+# Optional TURN relay for the ROM handoff (see infra/README.md "TURN relay").
+# When both Cloudflare TURN secrets exist they are mounted into the API; without
+# them the handoff is STUN-only and works on shared networks only.
+API_TURN_SECRETS=""
+if gcloud secrets describe opensmash-cloudflare-turn-key-id >/dev/null 2>&1 && \
+   gcloud secrets describe opensmash-cloudflare-turn-key-token >/dev/null 2>&1; then
+  for secret in opensmash-cloudflare-turn-key-id opensmash-cloudflare-turn-key-token; do
+    gcloud secrets add-iam-policy-binding "$secret" \
+      --member "serviceAccount:${API_IDENTITY}" --role roles/secretmanager.secretAccessor >/dev/null
+  done
+  API_TURN_SECRETS=",CLOUDFLARE_TURN_KEY_ID=opensmash-cloudflare-turn-key-id:latest,CLOUDFLARE_TURN_KEY_API_TOKEN=opensmash-cloudflare-turn-key-token:latest"
+  echo "TURN relay: Cloudflare credentials found; mounting into the API."
+else
+  echo "TURN relay: no Cloudflare TURN secrets; handoff will be STUN-only."
+fi
 gcloud secrets add-iam-policy-binding opensmash-openai-api-key \
   --member "serviceAccount:${API_IDENTITY}" --role roles/secretmanager.secretAccessor >/dev/null
 for secret in opensmash-openai-api-key opensmash-tripo-api-key opensmash-fal-key opensmash-minimax-voice-id; do
@@ -202,7 +217,7 @@ gcloud run deploy "$SERVICE_NAME" \
   --port 8080 --cpu 2 --memory 2Gi --concurrency 500 --cpu-boost \
   --min-instances 3 --max-instances 6 --timeout 3600 \
   --set-env-vars "JOB_DATABASE=firestore,OBJECT_STORE=gcs,FIGHTER_JOBS_ROOT=/tmp/fighter-jobs,FIGHTER_EXECUTION_MODE=cloud-run,GOOGLE_CLOUD_PROJECT=${PROJECT_ID},CLOUD_RUN_REGION=${REGION},CLOUD_RUN_WORKER_JOB=${WORKER_JOB},GCS_PRIVATE_BUCKET=${PRIVATE_BUCKET},GCS_PUBLIC_BUCKET=${PUBLIC_BUCKET},ASSET_BASE_URL=${ASSET_BASE_URL},ALLOWED_ORIGINS=${PUBLIC_ORIGIN},FIREBASE_AUTH_ENABLED=1,FIREBASE_PROJECT_ID=${PROJECT_ID},FIREBASE_API_KEY=${FIREBASE_API_KEY},FIREBASE_AUTH_DOMAIN=${FIREBASE_AUTH_DOMAIN},FIREBASE_APP_ID=${FIREBASE_APP_ID},FIREBASE_AUTH_PROVIDERS=google|apple|email,FIGHTER_MODERATION_ENABLED=1,CREATION_ENABLED=${CREATION_ENABLED:-1}" \
-  --set-secrets "COOKIE_SECRET=${COOKIE_SECRET_NAME}:latest,COOKIE_SECRET_PREVIOUS=${COOKIE_SECRET_PREVIOUS_NAME}:latest,OPENAI_API_KEY=opensmash-openai-api-key:latest"
+  --set-secrets "COOKIE_SECRET=${COOKIE_SECRET_NAME}:latest,COOKIE_SECRET_PREVIOUS=${COOKIE_SECRET_PREVIOUS_NAME}:latest,OPENAI_API_KEY=opensmash-openai-api-key:latest${API_TURN_SECRETS}"
 
 cookie_secret="$(gcloud secrets versions access latest --secret "$COOKIE_SECRET_NAME")"
 cookie_secret_previous="$(gcloud secrets versions access latest --secret "$COOKIE_SECRET_PREVIOUS_NAME")"
