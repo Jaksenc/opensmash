@@ -224,13 +224,13 @@ def montage(clips, gap_ms=120):
     return out
 
 
-def main():
+def main(argv=None):
     parser = argparse.ArgumentParser()
     parser.add_argument("outdir")
     parser.add_argument("--rom", default=os.path.join(
         os.path.dirname(os.path.abspath(__file__)), "..", "..", "BattleShip",
         "baserom.us.z64"))
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     with open(args.rom, "rb") as src:
         rom = src.read()

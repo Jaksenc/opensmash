@@ -20,8 +20,8 @@ REFS = os.path.join(HERE, "web-prototype", "visual", "assets", "ui_refs")
 
 # ---------------- bold panel font (IA8 dumps: white face, dark shadow) ---
 
-def bold_src(name):
-    return Image.open(os.path.join(REFS, f"name_{name}.png"))
+def bold_src(name, refs=None):
+    return Image.open(os.path.join(refs or REFS, f"name_{name}.png"))
 
 BOLD_CUTS = {  # letter -> (source sprite, x0, x1); cuts at top-gap midpoints
  "M": ("mario", 4,15), "A": ("mario",15,23), "R": ("mario",23,32),
@@ -121,6 +121,8 @@ TILE_STRINGS = {"mario": "MARIO", "fox": "FOX", "dk": "DK", "samus": "SAMUS",
                 "captain": "C.FALCON", "kirby": "KIRBY", "pikachu": "PIKACHU",
                 "purin": "JIGGLYPUFF", "ness": "NESS"}
 TILE_GH = 10
+# letters cut by the original (no despeckle, roster-order sources) pass; see main()
+TILE_LEGACY_LETTERS = "CGJOQSTV"
 
 
 def tan(r, g, b):
@@ -150,7 +152,7 @@ def tile_segment(cols, n):
     return [(cuts[i], cuts[i + 1]) for i in range(n)]
 
 
-def tile_cut(im, a, b):
+def tile_cut(im, a, b, despeckle=True):
     g = Image.new("RGBA", (max(1, b - a), TILE_GH), (0, 0, 0, 0))
     px, gp = im.load(), g.load()
     for x in range(a, b):
@@ -161,6 +163,8 @@ def tile_cut(im, a, b):
                 gp[x - a, y] = (r, gr, bl, 255)
             elif lum > 80 and tan(r, gr, bl):
                 gp[x - a, y] = (r, gr, bl, 110)
+    if not despeckle:
+        return g
     # despeckle: drop pixels with no orthogonal neighbor
     for x in range(g.width):
         for y in range(TILE_GH):
@@ -210,40 +214,59 @@ def synth_tile(atlas):
     return atlas
 
 
-def main():
+def main(refs=REFS, out=None):
+    """Cut both atlases from the name_*/tile_* dumps in `refs`; write the
+    glyph_*/tileglyph_* PNGs to `out` (default: alongside the dumps)."""
+    out = out or refs
     bold = {}
     for ch, (src, x0, x1) in BOLD_CUTS.items():
-        bold[ch] = clean_lead(bold_src(src).crop((x0, 0, x1, 16)).copy())
+        bold[ch] = clean_lead(bold_src(src, refs).crop((x0, 0, x1, 16)).copy())
     bold = synth_bold(bold)
 
-    tile = {}
-    order = ["purin", "captain", "luigi", "yoshi", "kirby", "samus", "link",
-             "ness", "dk", "pikachu", "mario", "fox"]  # later wins
-    for name in order:
-        txt = TILE_STRINGS[name]
-        im = Image.open(os.path.join(REFS, f"tile_{name}.png"))
-        segs = tile_segment(tile_mask_cols(im), len(txt))
-        if len(segs) != len(txt):
-            continue
-        for (a, b), ch in zip(segs, txt):
-            tile[ch] = tile_cut(im, a, b)
-    # fox overrides give the widest F/O/X (3-letter tile)
-    fox = Image.open(os.path.join(REFS, "tile_fox.png"))
-    tile["F"], tile["O"], tile["X"] = tile_cut(fox, 4, 10), tile_cut(fox, 10, 17), tile_cut(fox, 17, 25)
-    # yoshi gives clean Y/H; link gives clean L/I (JIGGLYPUFF is too dense)
-    yo = Image.open(os.path.join(REFS, "tile_yoshi.png"))
-    tile["Y"], tile["H"] = tile_cut(yo, 4, 10), tile_cut(yo, 25, 31)
-    lk = Image.open(os.path.join(REFS, "tile_link.png"))
-    tile["L"], tile["I"] = tile_cut(lk, 4, 10), tile_cut(lk, 11, 15)
-    tile = synth_tile(tile)
+    def cut_tiles(refs, despeckle, clean_overrides):
+        tile = {}
+        order = ["purin", "captain", "luigi", "yoshi", "kirby", "samus", "link",
+                 "ness", "dk", "pikachu", "mario", "fox"]  # later wins
+        for name in order:
+            txt = TILE_STRINGS[name]
+            im = Image.open(os.path.join(refs, f"tile_{name}.png"))
+            segs = tile_segment(tile_mask_cols(im), len(txt))
+            if len(segs) != len(txt):
+                continue
+            for (a, b), ch in zip(segs, txt):
+                tile[ch] = tile_cut(im, a, b, despeckle)
+        # fox overrides give the widest F/O/X (3-letter tile)
+        fox = Image.open(os.path.join(refs, "tile_fox.png"))
+        tile["F"], tile["O"], tile["X"] = (tile_cut(fox, 4, 10, despeckle),
+                                           tile_cut(fox, 10, 17, despeckle),
+                                           tile_cut(fox, 17, 25, despeckle))
+        if clean_overrides:
+            # yoshi gives clean Y/H; link gives clean L/I (JIGGLYPUFF is too dense)
+            yo = Image.open(os.path.join(refs, "tile_yoshi.png"))
+            tile["Y"], tile["H"] = tile_cut(yo, 4, 10), tile_cut(yo, 25, 31)
+            lk = Image.open(os.path.join(refs, "tile_link.png"))
+            tile["L"], tile["I"] = tile_cut(lk, 4, 10), tile_cut(lk, 11, 15)
+        return synth_tile(tile)
 
+    # The shipped tile atlas is a per-letter mix of two passes. The 2026-08-24
+    # tile-cleanup pass (despeckle + yoshi/link source overrides for Y/H/L/I)
+    # was only ever re-committed for the letters it improved; for C/G/J/O/Q/S
+    # it strips a genuine 1-3 px of stroke, and the T/V it synthesizes (T from
+    # the link I, V from the yoshi Y) look wrong next to the rest of the font.
+    # So those eight keep the original pass, explicitly, letter by letter.
+    tile = cut_tiles(refs, despeckle=True, clean_overrides=True)
+    legacy = cut_tiles(refs, despeckle=False, clean_overrides=False)
+    for ch in TILE_LEGACY_LETTERS:
+        tile[ch] = legacy[ch]
+
+    os.makedirs(out, exist_ok=True)
     for pref in ("glyph", "tileglyph"):
-        for f in glob.glob(os.path.join(REFS, f"{pref}_*.png")):
+        for f in glob.glob(os.path.join(out, f"{pref}_*.png")):
             os.remove(f)
     for ch, im in bold.items():
-        im.save(os.path.join(REFS, f"glyph_{ord(ch)}.png"))
+        im.save(os.path.join(out, f"glyph_{ord(ch)}.png"))
     for ch, im in tile.items():
-        im.save(os.path.join(REFS, f"tileglyph_{ord(ch)}.png"))
+        im.save(os.path.join(out, f"tileglyph_{ord(ch)}.png"))
     print("bold:", "".join(sorted(bold)), "| tile:", "".join(sorted(tile)))
 
 

@@ -73,18 +73,33 @@ def scaled(f):
     return lambda x, y: f(ICX + (x - ICX) / SCALE, ICY + (y - ICY) / SCALE) * SCALE
 glass, plus = scaled(glass), scaled(plus)
 
-os.makedirs(OUT, exist_ok=True)
-icons = {'SearchGlass': frame(coverage(glass)), 'Plus': frame(coverage(plus))}
-for name, im in icons.items(): im.save(os.path.join(OUT, f'{name}.png'))
-q = Image.open(os.path.join(OUT, 'QuestionMark.png')).convert('RGBA')
-bg = Image.open(os.path.join(ROOT, 'assets', 'css-font', 'portraits', 'FireBg.png'))
-black = Image.new('RGBA', (W, H), (0, 0, 0, 255))
-cells = [q, icons['SearchGlass'], icons['Plus']]
-Z = 6
-sheet = Image.new('RGB', ((W + 3) * 3 * Z, (H + 3) * 2 * Z), (20, 20, 22))
-for i, im in enumerate(cells):
-    for row, back in enumerate([bg, black]):
-        t = tinted(im, back).resize((W * Z, H * Z), Image.NEAREST)
-        sheet.paste(t, (i * (W + 3) * Z, row * (H + 3) * Z))
-out = sys.argv[1] if len(sys.argv) > 1 else os.path.join(OUT, 'preview.png')
-sheet.save(out); print('wrote', out)
+def build_icons():
+    """{'SearchGlass': RGBA image, 'Plus': RGBA image} (45x43, white + alpha)."""
+    return {'SearchGlass': frame(coverage(glass)), 'Plus': frame(coverage(plus))}
+
+
+def main(out=OUT, preview=None, portraits=None):
+    """Write SearchGlass.png + Plus.png into `out` and a tinted preview sheet
+    to `preview` (default: <out>/preview.png). The sheet reads
+    QuestionMark.png from `out` and FireBg.png from `portraits` (default:
+    assets/css-font/portraits)."""
+    portraits = portraits or os.path.join(ROOT, 'assets', 'css-font', 'portraits')
+    os.makedirs(out, exist_ok=True)
+    icons = build_icons()
+    for name, im in icons.items(): im.save(os.path.join(out, f'{name}.png'))
+    q = Image.open(os.path.join(out, 'QuestionMark.png')).convert('RGBA')
+    bg = Image.open(os.path.join(portraits, 'FireBg.png'))
+    black = Image.new('RGBA', (W, H), (0, 0, 0, 255))
+    cells = [q, icons['SearchGlass'], icons['Plus']]
+    Z = 6
+    sheet = Image.new('RGB', ((W + 3) * 3 * Z, (H + 3) * 2 * Z), (20, 20, 22))
+    for i, im in enumerate(cells):
+        for row, back in enumerate([bg, black]):
+            t = tinted(im, back).resize((W * Z, H * Z), Image.NEAREST)
+            sheet.paste(t, (i * (W + 3) * Z, row * (H + 3) * Z))
+    preview = preview or os.path.join(out, 'preview.png')
+    sheet.save(preview); print('wrote', preview)
+
+
+if __name__ == '__main__':
+    main(preview=sys.argv[1] if len(sys.argv) > 1 else None)

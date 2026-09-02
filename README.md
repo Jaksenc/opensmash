@@ -191,17 +191,25 @@ Cloudflare edge cache) is one script; see
 ## Game-derived inputs
 
 A few generator inputs are captured from the game itself rather than
-authored, and `tools/` holds what produced them:
+authored: the twelve skeletons' rest poses and part geometry (`skels/`), the
+character-select sprites the UI packer and portrait tooling use
+(`assets/css-font/`, `web-prototype/visual/assets/ui_refs/`), the announcer
+lines the voice clone is conditioned on, and one stage texture. Two scripts
+rebuild all of them from your own ROM and prove the result byte-identical to
+the committed copies:
 
-- `skels/*.skel` and `skels/parts/vanilla-*-parts*.json`: skeleton rest poses
-  and the original fighters' part geometry, dumped from a running BattleShip
-  build. The converter fits generated meshes onto these.
-- `assets/css-font/` and `web-prototype/visual/assets/ui_refs/`: the
-  character-select sprites (name font, tiles, stock icon, emblem references)
-  extracted from the asset archive with `tools/extract_sprites.py`;
-  `tools/cssfont/` turns the name strips into the site's pixel font.
-- The announcer voice clone is conditioned on the game's announcer lines
-  (`ANNOUNCER.md`).
+```bash
+python3 tools/derive_from_rom.py --verify --skeletons
+```
+
+`derive_from_rom.py` reads the ROM and the `BattleShip.o2r` archive a native
+engine build extracted from it (sprites, emblems, stone tile, announcer
+audio). `--skeletons` also runs `tools/derive_skeletons.py`, which boots the
+native `BattleShip/build-us` binary once per fighter with the engine's
+skeleton-dump hook enabled and once on the character-select screen for its
+sprite dump. Drop `--verify` to write the files in place. The only file
+neither script reproduces is `skels/reference/mario.skel`, a legacy capture
+that `texture_check.py` still reads.
 
 ## More documentation
 

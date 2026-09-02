@@ -47,13 +47,13 @@ def emblem(blob, i):
     return n.reshape(H, W) > 0
 
 
-def main():
+def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--o2r", default=O2R)
     ap.add_argument("--out", default=os.path.join(
         HERE, "web-prototype", "visual", "assets", "ui_refs", "emblem_ref.png"))
     ap.add_argument("--scale", type=int, default=4)
-    a = ap.parse_args()
+    a = ap.parse_args(argv)
     blob = zipfile.ZipFile(a.o2r).read(ENTRY) + b"\0" * (STRIDE * len(NAMES))
 
     pad, cols = 8, 5

@@ -22,8 +22,41 @@ def rgba5551(px):
 def deswizzle_addr(addr, row, bpp):
     return addr ^ 4 if (row % 2 == 1 and bpp in (4, 8, 16)) else addr
 
-def extract(data, off, name, outdir):
-    off += HDR
+def load_reloc(reloc, o2r=O2R):
+    """Raw bytes of one reloc entry (e.g. 'reloc_menus/MNPlayersPortraits')."""
+    with zipfile.ZipFile(o2r) as z:
+        return z.read(reloc)
+
+
+def header_size(data):
+    """Byte offset of the reloc payload inside an o2r reloc entry.
+
+    Layout: 0x40 LUS header, u32 file id, u16 intern/extern reloc words,
+    u32 extern count, extern_count u16s, u32 data size. Files with no
+    externs (all the menu files) come out at HDR=0x50; fighter model files
+    carry a few externs and their ll*Sprite offsets shift accordingly.
+    """
+    extern_count = struct.unpack_from("<I", data, 0x48)[0]
+    return 0x4C + extern_count * 2 + 4
+
+
+def decode_sprite(data, off, name="sprite", storage=False, hdr=None):
+    """Decode the Sprite at reloc offset `off` -> PIL RGBA image (or None).
+
+    `off` is the ll*Sprite value from reloc_data.us.h (the 0x50-byte o2r
+    header is added here). Prints a diagnostic and returns None when the
+    bytes at `off` do not look like a Sprite or use an unhandled format.
+
+    storage=False lays the Bitmap strips out the way libultra draws them
+    (logical w x h). storage=True instead returns the texel storage view
+    that sprite_codec.decode gives for engine dumps: every strip at its
+    full width_img, strips stacked top-to-bottom without overlap.
+    hdr=None parses the entry header (see header_size); pass HDR to force
+    the plain 0x50 layout.
+    """
+    if hdr is None:
+        hdr = header_size(data)
+    off += hdr
     raw = data[off:off + 68]
     x, y, w, h = struct.unpack_from(">4h", raw, 0)
     sx, sy = struct.unpack_from(">2f", raw, 8)
@@ -31,12 +64,18 @@ def extract(data, off, name, outdir):
     bmheight, bmHreal = struct.unpack_from(">2h", raw, 44)
     bmfmt, bmsiz = raw[48], raw[49]
     if not (x == 0 and y == 0 and sx == 1.0 and 0 < w <= 2048 and 0 < h <= 2048):
-        print(f"  !! {name}: not a sprite at {off - HDR:#x}")
-        return
+        print(f"  !! {name}: not a sprite at {off - hdr:#x}")
+        return None
     def ptr(o):
-        return (struct.unpack_from(">I", data, o)[0] & 0xFFFF) * 4 + HDR
+        return (struct.unpack_from(">I", data, o)[0] & 0xFFFF) * 4 + hdr
     bitmap_off = ptr(off + 0x34)
     palette_off = ptr(off + 0x20) if bmfmt == 2 else None
+    if storage:
+        strips = [struct.unpack_from(">4h", data, bitmap_off + i * 16)[1]
+                  for i in range(nbitmaps)]
+        heights = [struct.unpack_from(">h", data, bitmap_off + i * 16 + 12)[0] or bmHreal
+                   for i in range(nbitmaps)]
+        w, h = max(strips), sum(heights)
     img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
     draw_x = 0
     draw_y = 0
@@ -46,6 +85,9 @@ def extract(data, off, name, outdir):
         actual_h, lut_off = struct.unpack_from(">2h", data, bo + 12)
         buf = ptr(bo + 8)
         strip_h = actual_h if actual_h > 0 else bmHreal
+        if storage:
+            bw, s, t = bw_img, 0, 0
+            draw_x, draw_y = 0, sum(heights[:i])
         # libultra's sprite renderer lays Bitmap entries left-to-right, then
         # wraps them onto the next bmheight row. `s` and `t` are texture
         # offsets inside each bitmap, not destination coordinates. Portraits
@@ -102,22 +144,35 @@ def extract(data, off, name, outdir):
                     rgba = (v, v, v, v)
                 else:
                     print(f"  !! {name}: unhandled fmt {bmfmt}/{bmsiz}")
-                    return
+                    return None
                 px, py = draw_x + col, draw_y + row
                 if 0 <= px < w and 0 <= py < h:
                     img.putpixel((px, py), rgba)
-        draw_x += bw
+        if not storage:
+            draw_x += bw
+    img.info["fmt"] = (bmfmt, bmsiz)
+    return img
+
+
+def extract(data, off, name, outdir):
+    img = decode_sprite(data, off, name)
+    if img is None:
+        return None
     out = os.path.join(outdir, f"{name}.png")
     img.save(out)
-    print(f"  {name}: {w}x{h} fmt={bmfmt}/{bmsiz} -> {out}")
+    print(f"  {name}: {img.width}x{img.height} fmt={img.info['fmt'][0]}/{img.info['fmt'][1]} -> {out}")
+    return out
 
-def main():
-    reloc, outdir = sys.argv[1], sys.argv[2]
+
+def main(argv=None):
+    argv = sys.argv[1:] if argv is None else argv
+    reloc, outdir = argv[0], argv[1]
     os.makedirs(outdir, exist_ok=True)
-    with zipfile.ZipFile(O2R) as z:
-        data = z.read(reloc)
-    for spec in sys.argv[3:]:
+    data = load_reloc(reloc)
+    for spec in argv[2:]:
         name, off = spec.split("=")
         extract(data, int(off, 16), name, outdir)
 
-main()
+
+if __name__ == "__main__":
+    main()
