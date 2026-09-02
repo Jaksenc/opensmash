@@ -1894,8 +1894,8 @@ function showLaunchFlow(fighter, { create = false } = {}) {
   if (flowTitle) flowTitle.textContent = create ? 'Create a fighter' : 'Play Smash the Weights';
   if (flowCopy) {
     flowCopy.textContent = create
-      ? 'To create a fighter, upload your legally obtained Super Smash Bros. 64 ROM.'
-      : 'To play Smash the Weights, upload your legally obtained Super Smash Bros. 64 ROM.';
+      ? 'To create a fighter, upload your legally obtained Super Smash Bros. 64 ROM. It stays on your device: the game\'s assets are built from it locally and never uploaded.'
+      : 'To play Smash the Weights, upload your legally obtained Super Smash Bros. 64 ROM. It stays on your device: the game\'s assets are built from it locally and never uploaded.';
   }
   overlay.dataset.mode = create ? 'create' : 'launch';
   overlay.dataset.step = 'upload';
