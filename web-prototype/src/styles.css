@@ -600,6 +600,75 @@ body:has(.advanced-overlay:not([hidden])) { overflow: hidden; }
   letter-spacing: .025em;
 }
 .boot-mode-grid .is-selected .boot-mode-copy small { color: #ad947a; }
+.advanced-controllers-heading { display: grid; gap: 5px; }
+.advanced-controllers-heading small,
+.advanced-controllers-note {
+  color: #806e5d;
+  font: 500 clamp(11px, 1vw, 13px)/1.4 "Kanit", sans-serif;
+  letter-spacing: .025em;
+}
+.advanced-controllers-note { color: #ad947a; }
+.advanced-input { display: grid; gap: 14px; }
+.advanced-inputs { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.advanced-selects select:disabled { color: #806e5d; cursor: not-allowed; text-shadow: none; }
+.advanced-select-shell.is-disabled::after { border-color: #5a4d40; }
+/* Double select: port stamps on picked tiles and the "P2, pick" prompt. */
+.replica-cell[data-pick]::before {
+  content: attr(data-pick);
+  position: absolute;
+  top: 6%;
+  left: 6%;
+  z-index: 4;
+  padding: 2px 6px 1px;
+  background: #fff0b5;
+  color: #160b08;
+  font: 800 clamp(9px, 1.1vw, 13px)/1.1 "Kanit", sans-serif;
+  letter-spacing: .08em;
+  box-shadow: 0 2px 0 #260500;
+  pointer-events: none;
+}
+.replica-cell[data-pick]::after {
+  box-shadow:
+    inset 0 0 0 clamp(2px, .55vw, 5px) #fff0b5,
+    inset 0 0 clamp(8px, 1.6vw, 18px) rgba(255, 183, 73, .7);
+}
+.fighter-pick-prompt {
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  z-index: 5;
+  margin: 0 0 8px;
+  padding: 6px 14px;
+  transform: translateX(-50%);
+  background: rgba(8, 4, 2, .82);
+  border: 1px solid rgba(255, 240, 181, .55);
+  color: #fff2d6;
+  font: 600 clamp(12px, 1.3vw, 16px)/1.2 "Kanit", sans-serif;
+  letter-spacing: .05em;
+  text-shadow: 0 2px 0 #260500;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.retro-site-pads {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px 3px 7px;
+  border: 1px solid rgba(255, 242, 214, .22);
+  border-radius: 999px;
+  color: #fff2d6;
+}
+.retro-site-pads:hover,
+.retro-site-pads:focus-visible { border-color: rgba(255, 148, 47, .6); text-decoration: none; }
+.retro-site-pads svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
 .retro-discord-link {
   display: inline-flex;
   align-items: center;
@@ -782,6 +851,7 @@ body:has(.advanced-overlay:not([hidden])) { overflow: hidden; }
   .advanced-screen { justify-content: flex-start; padding: 64px 16px 32px; }
   .advanced-heading { margin-bottom: 24px; }
   .advanced-selects, .boot-mode-grid { grid-template-columns: 1fr; }
+  .advanced-inputs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .advanced-actions { align-items: center; }
   footer { gap: 15px; flex-direction: column; }
 }

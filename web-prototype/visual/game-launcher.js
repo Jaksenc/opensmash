@@ -187,6 +187,9 @@ function resetControllerTutorial() {
 }
 
 function requiresControllerTutorial() {
+  // The tutorial teaches the keyboard layout; a player holding a gamepad
+  // (see useGamepads in the React app) can go straight in.
+  if (APP_BRIDGE?.hasGamepad?.()) return false;
   return controlsRoadblockRequired() || shouldRequireControllerTutorial({
     completed: hasCompletedControllerTutorial(),
     mobileControls: usesMobileControls(),
@@ -269,13 +272,58 @@ function keepPageScrollableFromGame() {
   }, { capture: true, passive: false });
 }
 
+// Double select: with two or more human ports, each player clicks a tile in
+// turn (P1 first). Picks are stamped on the grid and the match launches once
+// every port has a fighter. Clicking a stamped tile takes the pick back.
+const pickPrompt = document.getElementById('fighter-pick-prompt');
+let pendingPicks = [];
+
+function showPickPrompt(text) {
+  if (!pickPrompt) return;
+  pickPrompt.textContent = text || '';
+  pickPrompt.hidden = !text;
+}
+
+function clearPicks() {
+  pendingPicks = [];
+  window.characterGrid?.clearPicks?.();
+  showPickPrompt('');
+}
+
+function collectPick(fighter, humans) {
+  const index = pendingPicks.findIndex(pick => pick.slug === fighter.slug);
+  if (index >= 0) {
+    pendingPicks.splice(index, 1);
+  } else {
+    pendingPicks.push(fighter);
+  }
+  window.characterGrid?.clearPicks?.();
+  pendingPicks.forEach((pick, i) => window.characterGrid?.markPick?.(pick.selectionName || pick.slug, `${i + 1}P`));
+  if (pendingPicks.length >= humans) {
+    const picks = pendingPicks;
+    clearPicks();
+    return picks;
+  }
+  showPickPrompt(`P${pendingPicks.length + 1}, pick your fighter`);
+  return null;
+}
+
 function launch(fighter) {
   if (!gameFrame || !videoFrame) return;
   pendingFighter = null;
+  let picks = [];
+  const humans = APP_BRIDGE?.humanPortCount?.() ?? 1;
+  if (humans >= 2 && (fighter.actionType || 'character') === 'character') {
+    const ready = collectPick(fighter, humans);
+    if (!ready) return;
+    [fighter, ...picks] = ready;
+  } else {
+    clearPicks();
+  }
   introVideo?.pause();
   gameFrame.title = `${fighter.displayName} — Super Weights Bros`;
   const source = APP_BRIDGE?.launch
-    ? APP_BRIDGE.launch({ type: fighter.actionType || 'character', slug: fighter.slug })
+    ? APP_BRIDGE.launch({ type: fighter.actionType || 'character', slug: fighter.slug, picks: picks.map(pick => pick.slug) })
     : engineUrl(fighter);
   if (!source || source === 'about:blank') {
     window.characterGrid?.select(null);
@@ -291,6 +339,7 @@ function launch(fighter) {
 }
 
 function closeGame() {
+  clearPicks();
   window.characterGrid?.select(null);
   if (!gameFrame || !videoFrame) return;
   APP_BRIDGE?.closeGame?.();

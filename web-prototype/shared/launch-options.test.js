@@ -301,6 +301,7 @@ test("stored settings are allow-listed and report active overrides", () => {
     stage: "4",
     opponentLevel: "3",
     bootMode: "free-for-all",
+    ports: ["auto", "auto", "auto", "auto"],
   });
   assert.equal(hasAdvancedOverrides(DEFAULT_ADVANCED_OPTIONS), false);
   assert.equal(hasAdvancedOverrides({ ...DEFAULT_ADVANCED_OPTIONS, stage: "4" }), true);
@@ -314,4 +315,74 @@ test("a missing forced mesh variant produces a useful error", () => {
     ),
     /does not have a Fox mesh variant/,
   );
+});
+
+const XBOX_PAD = { index: 0, id: "Xbox Wireless Controller (STANDARD GAMEPAD Vendor: 045e Product: 0b13)" };
+const PS5_PAD = { index: 1, id: "DualSense Wireless Controller (STANDARD GAMEPAD Vendor: 054c Product: 0ce6)" };
+
+function queryWithPads(action, gamepads, options = DEFAULT_ADVANCED_OPTIONS) {
+  return new URL(engineUrl(action, options, gamepads), "https://example.test").searchParams;
+}
+
+test("launches always tell the engine which device drives each port", () => {
+  const keyboardOnly = queryWithPads({ type: "character", character: CHARACTER }, []);
+  assert.deepEqual(JSON.parse(keyboardOnly.get("ports")), [{ kind: "keyboard" }, null, null, null]);
+  assert.equal(keyboardOnly.has("SSB64_BOOT_HUMANS"), false);
+  assert.match(keyboardOnly.get("SSB64_BOOT_BATTLE"), /^0,\d+,\d+,1,\d+,\d+$/);
+
+  const onePad = queryWithPads({ type: "character", character: CHARACTER }, [XBOX_PAD]);
+  assert.equal(JSON.parse(onePad.get("ports"))[0].kind, "gamepad");
+  assert.equal(JSON.parse(onePad.get("ports"))[1], null);
+  assert.match(onePad.get("SSB64_BOOT_BATTLE"), /^0,\d+,\d+,1,\d+,\d+$/);
+});
+
+const SECOND = { slug: "secondfighter", name: "Second Fighter", fkind: 5, base: "link", bundle: "secondfighter-link.osb", ui: true };
+
+test("double select boots a direct battle with two human ports", () => {
+  const query = queryWithPads(
+    { type: "character", character: CHARACTER, picks: [SECOND], opponents: [
+      { type: "vanilla", fkind: 8 },
+      { type: "character", character: SECOND },
+      { type: "character", character: { slug: "third", name: "Third", fkind: 2, bundle: "third-donkey.osb" } },
+    ] },
+    [XBOX_PAD, PS5_PAD],
+  );
+  assert.equal(query.has("SSB64_START_SCENE"), false);
+  assert.equal(query.get("SSB64_BOOT_HUMANS"), "2");
+  assert.match(query.get("SSB64_BOOT_BATTLE"), /^0,5,\d+,0,8,2$/);
+  const rows = query.getAll("inject_player").map((row) => JSON.parse(row));
+  assert.deepEqual(rows.map((row) => [row.player, row.slug]), [[1, "secondfighter"], [3, "third"]]);
+  assert.equal(rows[0].bundleUrl, "bundles/secondfighter-link.osb");
+  assert.equal(rows[0].uiUrl, "bundles/secondfighter.osbui");
+});
+
+test("two human ports without picks open the character select", () => {
+  const query = queryWithPads({ type: "character", character: CHARACTER }, [XBOX_PAD, PS5_PAD]);
+  assert.equal(query.get("SSB64_START_SCENE"), "16");
+  assert.equal(query.get("roster"), "1");
+  assert.equal(query.get("SSB64_BOOT_HUMANS"), "2");
+  assert.match(query.get("SSB64_BOOT_BATTLE"), /^0,-1,\d+,0,-1,-1$/);
+  assert.equal(query.has("inject_player"), false);
+  assert.equal(query.get("inject"), "bundles/testfighter.osb");
+});
+
+test("explicit port choices shape the plan and count as overrides", () => {
+  const options = { ...DEFAULT_ADVANCED_OPTIONS, ports: ["gamepad:0", "keyboard", "none", "gamepad:1"] };
+  const query = queryWithPads({ type: "character", character: CHARACTER }, [XBOX_PAD, PS5_PAD], options);
+  const plan = JSON.parse(query.get("ports"));
+  assert.equal(plan[0].id, XBOX_PAD.id);
+  assert.deepEqual(plan[1], { kind: "keyboard" });
+  assert.deepEqual(plan[2], { kind: "none" });
+  assert.equal(plan[3].id, PS5_PAD.id);
+  assert.equal(query.get("SSB64_BOOT_HUMANS"), "3");
+  assert.equal(hasAdvancedOverrides(normalizeAdvancedOptions(options)), true);
+  assert.equal(hasAdvancedOverrides(normalizeAdvancedOptions(DEFAULT_ADVANCED_OPTIONS)), false);
+});
+
+test("multiplayer also applies to preselected VS launches", () => {
+  const options = { ...DEFAULT_ADVANCED_OPTIONS, bootMode: "vs-character-select" };
+  const query = queryWithPads({ type: "character", character: CHARACTER }, [XBOX_PAD, PS5_PAD], options);
+  assert.equal(query.get("SSB64_START_SCENE"), "16");
+  assert.equal(query.get("SSB64_BOOT_HUMANS"), "2");
+  assert.match(query.get("SSB64_BOOT_BATTLE"), /^0,-1,\d+,0,-1,-1$/);
 });
