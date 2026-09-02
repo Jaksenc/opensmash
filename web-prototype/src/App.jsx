@@ -4,20 +4,23 @@ import viewportLogoUrl from "../visual/assets/branding/super-weights-bros-stacke
 import AuthGate from "./AuthGate.jsx";
 import CreateVisualShell from "./CreateVisualShell.jsx";
 import FighterCreator from "./FighterCreator.jsx";
-import FlameAction from "./FlameAction.jsx";
 import ModalPage from "./ModalPage.jsx";
 import RetroHome from "./RetroHome.jsx";
-import RetroChoiceGrid from "./RetroChoiceGrid.jsx";
+import SettingsModal from "./SettingsModal.jsx";
 import { matchesCharacterSearch } from "../shared/character-search.js";
 import { mergeCharactersBySlug } from "../shared/character-roster.js";
+import {
+  formatFighterJobError,
+  reconcileVisibleFighterJobs,
+} from "../shared/fighter-job-ui.js";
 import {
   controlsRoadblockRequired,
   requireControlsRoadblock,
 } from "../visual/controls-roadblock.js";
 import { identifyRomFile } from "./rom-validation.js";
 import { clearRomStore, hasStoredRom, prewarmEngineArchive, storeRom } from "../shared/rom-store.js";
+import { lockPageScroll } from "../shared/page-scroll-lock.js";
 import { clearControllerTutorialCompletion } from "../visual/control-tutorial.js";
-import { choiceForEntry, describePort, portOptions } from "../shared/controller-ports.js";
 import { useGamepads } from "./gamepads.js";
 import {
   FLOW_MUSIC_MAX_VOLUME,
@@ -25,11 +28,7 @@ import {
 } from "./audio-envelope.js";
 import { useUiSounds } from "./ui-sounds.js";
 import {
-  BOOT_MODES,
-  CHARACTER_MESHES,
   DEFAULT_ADVANCED_OPTIONS,
-  OPPONENT_LEVELS,
-  STAGES,
   controllerPlan,
   engineUrl,
   hasAdvancedOverrides,
@@ -63,6 +62,7 @@ function prewarmArchiveInBackground(onError) {
   );
 }
 const ACTIVE_FIGHTER_JOB_STATUSES = new Set(["queued", "running", "retrying"]);
+const TOAST_DURATION_MS = 5_000;
 const FLOW_MUSIC_EVENT = "opensmash:launch-flow";
 const FLOW_MUSIC_URL = flowMusicUrl;
 
@@ -176,6 +176,8 @@ function RomModal({ action, onCancel, onValidated, onPrewarmError }) {
   const [error, setError] = useState("");
   const inputRef = useRef(null);
 
+  useEffect(() => lockPageScroll(), []);
+
   useEffect(() => {
     inputRef.current?.focus();
     const closeOnEscape = (event) => {
@@ -266,219 +268,6 @@ function RomModal({ action, onCancel, onValidated, onPrewarmError }) {
   );
 }
 
-function AdvancedModal({
-  authorized,
-  debugMode,
-  gamepads,
-  open,
-  options,
-  onCancel,
-  onResetControllerTutorial,
-  onResetRom,
-  onSave,
-}) {
-  const [draft, setDraft] = useState(options);
-  const firstFieldRef = useRef(null);
-  const portPlan = controllerPlan(draft, gamepads);
-  const humanPorts = portPlan.filter((entry) => entry && entry.kind !== "none").length;
-
-  useEffect(() => {
-    if (open) setDraft(options);
-  }, [open, options]);
-
-  function update(key, value) {
-    setDraft((current) => ({ ...current, [key]: value }));
-  }
-
-  function updatePort(port, value) {
-    setDraft((current) => {
-      const ports = [...(current.ports ?? DEFAULT_ADVANCED_OPTIONS.ports)];
-      ports[port] = value;
-      return { ...current, ports };
-    });
-  }
-
-  return (
-    <ModalPage
-      bodyClass="is-advanced-open"
-      className="advanced-overlay"
-      dismissOnBackdrop
-      initialFocusRef={firstFieldRef}
-      onRequestClose={onCancel}
-      open={open}
-      role="presentation"
-    >
-      {(close) => (
-        <section
-          className="modal-page-surface advanced-screen"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="advanced-title"
-          aria-describedby="advanced-copy"
-        >
-          <header className="advanced-heading">
-            <h2 id="advanced-title">Advanced Options</h2>
-            <p id="advanced-copy">Settings apply to every launch in this tab.</p>
-          </header>
-
-          <form
-            className="advanced-form"
-            onSubmit={(event) => {
-              event.preventDefault();
-              close(() => onSave(draft));
-            }}
-          >
-          <section className="advanced-input" aria-labelledby="advanced-input-title">
-            <div className="advanced-controllers-heading">
-              <strong id="advanced-input-title" className="advanced-field-label">Input</strong>
-              <small>
-                {gamepads.length
-                  ? "Controllers take ports in the order they connected. Pick who plays where."
-                  : "No controllers detected. Press any button on a controller to wake it up."}
-              </small>
-            </div>
-            <div className="advanced-selects advanced-inputs">
-              {portPlan.map((entry, port) => {
-                const options = portOptions(portPlan, gamepads, port);
-                const current = choiceForEntry(entry);
-                const disabled = options.length === 0 && current === "none";
-                return (
-                  <label className="advanced-field" key={port}>
-                    <span className="advanced-field-label">{`P${port + 1}`}</span>
-                    <span className={`advanced-select-shell advanced-cell-frame flame-bridge-cell ${disabled ? "is-disabled" : ""}`}>
-                      <select
-                        ref={port === 0 ? firstFieldRef : undefined}
-                        value={current}
-                        disabled={disabled}
-                        onChange={(event) => updatePort(port, event.target.value)}
-                      >
-                        <option value="none">{disabled ? "Empty" : "None"}</option>
-                        {options.map((option) => (
-                          <option value={option.value} key={option.value}>{option.label}</option>
-                        ))}
-                      </select>
-                    </span>
-                    <small>
-                      {disabled
-                        ? "Connect a controller to enable."
-                        : entry && entry.kind !== "none" ? describePort(entry, gamepads) : "Nobody"}
-                    </small>
-                  </label>
-                );
-              })}
-            </div>
-            <small className="advanced-controllers-note">
-              {humanPorts >= 2
-                ? "Two or more players: launches open the VS character select so everyone picks a fighter."
-                : "Controller buttons follow the standard layout: A / B, bumpers L / R, triggers Z / R, right stick or X / Y to jump."}
-            </small>
-          </section>
-
-          <div className="advanced-selects">
-            <label className="advanced-field">
-              <span className="advanced-field-label">Character Mesh</span>
-              <span className="advanced-select-shell advanced-cell-frame flame-bridge-cell">
-                <select
-                  value={draft.characterMesh}
-                  onChange={(event) => update("characterMesh", event.target.value)}
-                >
-                  {CHARACTER_MESHES.map((mesh) => (
-                    <option value={mesh.value} key={mesh.value}>{mesh.label}</option>
-                  ))}
-                </select>
-              </span>
-              <small>Force the skeleton and moveset used by a chosen fighter.</small>
-            </label>
-            <label className="advanced-field">
-              <span className="advanced-field-label">Stage</span>
-              <span className="advanced-select-shell advanced-cell-frame flame-bridge-cell">
-                <select value={draft.stage} onChange={(event) => update("stage", event.target.value)}>
-                  {STAGES.map((stage) => (
-                    <option value={stage.value} key={stage.value}>{stage.label}</option>
-                  ))}
-                </select>
-              </span>
-              <small>Used for direct matches and preselected VS launches.</small>
-            </label>
-            <label className="advanced-field">
-              <span className="advanced-field-label">Opponent Difficulty</span>
-              <span className="advanced-select-shell advanced-cell-frame flame-bridge-cell">
-                <select
-                  value={draft.opponentLevel}
-                  onChange={(event) => update("opponentLevel", event.target.value)}
-                >
-                  {OPPONENT_LEVELS.map((level) => (
-                    <option value={level.value} key={level.value}>{level.label}</option>
-                  ))}
-                </select>
-              </span>
-              <small>CPU level for every computer-controlled opponent.</small>
-            </label>
-          </div>
-
-          <fieldset className="boot-mode-fieldset">
-            <legend>Boot Destination</legend>
-            <RetroChoiceGrid
-              name="boot-mode"
-              value={draft.bootMode}
-              options={BOOT_MODES}
-              onChange={(value) => update("bootMode", value)}
-            />
-          </fieldset>
-
-          {debugMode && (
-            <section className="advanced-debug-tools" aria-labelledby="advanced-debug-title">
-              <div>
-                <strong id="advanced-debug-title">Debug</strong>
-                <small>Restore first-run checks for this browser.</small>
-              </div>
-              <div className="advanced-debug-actions">
-                {authorized && (
-                  <button
-                    className="launch-flow-action reset-rom-button"
-                    type="button"
-                    onClick={() => close(onResetRom)}
-                  >
-                    Reset ROM
-                  </button>
-                )}
-                <button
-                  className="launch-flow-action reset-controller-button"
-                  type="button"
-                  onClick={() => close(onResetControllerTutorial)}
-                >
-                  Reset Controller Tutorial
-                </button>
-              </div>
-            </section>
-          )}
-
-          <div className="advanced-actions">
-            <FlameAction cellClassName="advanced-save-cell" className="save-options-button" type="submit">
-              Save Settings
-            </FlameAction>
-            <button
-              className="launch-flow-action reset-options-button"
-              type="button"
-              onClick={() => setDraft({ ...DEFAULT_ADVANCED_OPTIONS })}
-            >
-              Reset Settings
-            </button>
-            <button
-              className="launch-flow-action cancel-options-button"
-              type="button"
-              onClick={() => close()}
-            >
-              Cancel
-            </button>
-          </div>
-          </form>
-        </section>
-      )}
-    </ModalPage>
-  );
-}
-
 function CreateExperienceOverlay({ onAuthenticated, onClose, onCreated, onPlay, stage, user }) {
   const surfaceRef = useRef(null);
   const open = stage === "auth" || stage === "creator";
@@ -530,7 +319,7 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [pendingAction, setPendingAction] = useState(null);
   const [engine, setEngine] = useState(null);
-  const [pageError, setPageError] = useState("");
+  const [pageErrorToast, setPageErrorToast] = useState(null);
   const [fighterSearch, setFighterSearch] = useState("");
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [soundOn, setSoundOn] = useState(() => localStorage.getItem("opensmash-sound") !== "off");
@@ -546,8 +335,25 @@ export default function App() {
   const devMenuRef = useRef(null);
   const announcerRef = useRef(null);
   const visualBridgeRef = useRef({});
+  const previousFighterJobStatusesRef = useRef(new Map());
+  const setPageError = useCallback((value) => {
+    setPageErrorToast((current) => {
+      const currentMessage = current?.message || "";
+      const message = typeof value === "function" ? value(currentMessage) : value;
+      return message
+        ? { message: String(message), id: (current?.id || 0) + 1 }
+        : null;
+    });
+  }, []);
+  const pageError = pageErrorToast?.message || "";
+
+  useEffect(() => {
+    if (!pageErrorToast) return undefined;
+    const timer = window.setTimeout(() => setPageErrorToast(null), TOAST_DURATION_MS);
+    return () => window.clearTimeout(timer);
+  }, [pageErrorToast]);
   useUiSounds(soundOn);
-  // The launch flow, About, and Advanced overlays share one music bed.
+  // The launch flow, About, and Settings overlays share one music bed.
   const overlayMusicActive = flowMusicActive || advancedOpen || aboutOpen;
   const startFlowMusic = useFlowMusic(overlayMusicActive && !engine, soundOn);
   useEffect(() => {
@@ -672,15 +478,7 @@ export default function App() {
       if (!response.ok) return;
       const result = await response.json();
       if (cancelled) return;
-      setFighterJobs((current) => {
-        const tracked = new Map(current.map((job) => [job.id, job]));
-        return result.jobs
-          .map((job) => {
-            const existing = tracked.get(job.id);
-            return existing && (existing.revision || 0) > (job.revision || 0) ? existing : job;
-          })
-          .sort((left, right) => right.createdAt.localeCompare(left.createdAt));
-      });
+      setFighterJobs((current) => reconcileVisibleFighterJobs(current, result.jobs));
     }
 
     refreshFighterJobs().catch(() => {});
@@ -690,6 +488,18 @@ export default function App() {
       window.clearInterval(timer);
     };
   }, [authorized, user?.uid]);
+
+  useEffect(() => {
+    const previousStatuses = previousFighterJobStatusesRef.current;
+    const nextStatuses = new Map();
+    for (const job of fighterJobs) {
+      nextStatuses.set(job.id, job.status);
+      if (job.status === "failed" && previousStatuses.get(job.id) !== "failed") {
+        setPageError(formatFighterJobError(job));
+      }
+    }
+    previousFighterJobStatusesRef.current = nextStatuses;
+  }, [fighterJobs, setPageError]);
 
   const activeFighterJobKey = fighterJobs
     .filter((job) => ACTIVE_FIGHTER_JOB_STATUSES.has(job.status))
@@ -843,7 +653,7 @@ export default function App() {
     };
   }
 
-  function saveAdvancedOptions(nextOptions) {
+  function updateAdvancedOptions(nextOptions) {
     const normalized = normalizeAdvancedOptions(nextOptions);
     setAdvancedOptions(normalized);
     try {
@@ -851,7 +661,11 @@ export default function App() {
     } catch {
       // The in-memory choice still applies when session storage is unavailable.
     }
-    setAdvancedOpen(false);
+  }
+
+  function restoreDefaultSettings(nextOptions) {
+    updateAdvancedOptions(nextOptions);
+    setSoundPreference(true);
   }
 
   async function requestLaunch(action) {
@@ -1057,10 +871,11 @@ export default function App() {
     setAdvancedOpen(false);
   }
 
-  function toggleSound() {
+  function setSoundPreference(nextValue) {
     setSoundOn((current) => {
-      const next = !current;
-      localStorage.setItem("opensmash-sound", next ? "on" : "off");
+      const next = typeof nextValue === "function" ? nextValue(current) : Boolean(nextValue);
+      try { localStorage.setItem("opensmash-sound", next ? "on" : "off"); }
+      catch { /* The in-memory preference still applies when storage is unavailable. */ }
       if (!next && announcerRef.current) {
         announcerRef.current.pause();
         announcerRef.current.currentTime = 0;
@@ -1068,6 +883,10 @@ export default function App() {
       }
       return next;
     });
+  }
+
+  function toggleSound() {
+    setSoundPreference((current) => !current);
   }
 
   async function toggleFullscreen() {
@@ -1129,6 +948,7 @@ export default function App() {
         else window.location.assign(pathname);
       },
       reportError(error) { setPageError(error.message || "Could not load the visual experience."); },
+      reportGenerationError(job) { setPageError(formatFighterJobError(job)); },
       validateCreateRom: validateCreateVisualRom,
       validateRom: validateVisualRom,
     });
@@ -1149,12 +969,10 @@ export default function App() {
           launchFlowOpen={overlayMusicActive}
           onAboutChange={setAboutOpen}
           onAdvanced={() => setAdvancedOpen(true)}
-          onCloseGame={() => setEngine(null)}
           onCreate={openCreateExperience}
           onFullscreen={toggleFullscreen}
           onResetRom={clearVerification}
           onSignOut={signOutUser}
-          onSound={toggleSound}
           pageError={pageError}
           ready={!loadingCharacters}
           soundOn={soundOn}
@@ -1168,16 +986,19 @@ export default function App() {
           stage={createStage}
           user={user}
         />
-        <AdvancedModal
+        <SettingsModal
           authorized={authorized}
           debugMode={new URLSearchParams(window.location.search).get("debug") === "1"}
           gamepads={gamepads}
           open={advancedOpen}
           options={advancedOptions}
+          soundOn={soundOn}
           onCancel={() => setAdvancedOpen(false)}
+          onOptionsChange={updateAdvancedOptions}
+          onRestoreDefaults={restoreDefaultSettings}
           onResetControllerTutorial={resetControllerTutorialFromAdvanced}
           onResetRom={resetRomFromAdvanced}
-          onSave={saveAdvancedOptions}
+          onSound={toggleSound}
         />
       </>
     );
@@ -1219,7 +1040,7 @@ export default function App() {
             aria-haspopup="dialog"
             onClick={() => setAdvancedOpen(true)}
           >
-            <i /> Advanced
+            <i /> Settings
           </button>
           <span className={`rom-status ${authorized ? "is-ready" : ""}`}>
             <i /> {authorized ? "ROM verified" : "Browser build"}
@@ -1357,15 +1178,19 @@ export default function App() {
         <span>React · Node · WASM on demand</span>
       </footer>
 
-      <AdvancedModal
+      <SettingsModal
         authorized={authorized}
         debugMode={new URLSearchParams(window.location.search).get("debug") === "1"}
+        gamepads={gamepads}
         open={advancedOpen}
         options={advancedOptions}
+        soundOn={soundOn}
         onCancel={() => setAdvancedOpen(false)}
+        onOptionsChange={updateAdvancedOptions}
+        onRestoreDefaults={restoreDefaultSettings}
         onResetControllerTutorial={resetControllerTutorialFromAdvanced}
         onResetRom={resetRomFromAdvanced}
-        onSave={saveAdvancedOptions}
+        onSound={toggleSound}
       />
 
       {pendingAction && pendingAction.type !== "create" && (

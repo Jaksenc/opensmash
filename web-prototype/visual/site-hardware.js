@@ -2246,7 +2246,7 @@ window.addEventListener('message', updateTargetFromEmbeddedGame);
 // by the parent window losing focus mid-gesture.
 embeddedGameFrame?.closest('.intro-video-frame')?.addEventListener('click', event => {
   if (!event.currentTarget.classList.contains('is-game-running')) return;
-  if (event.target instanceof Element && event.target.closest('.retro-game-tools')) return;
+  if (event.target instanceof Element && event.target.closest('.game-fullscreen-control')) return;
   embeddedGameFrame.contentWindow?.focus();
 });
 

@@ -11,6 +11,7 @@ import {
   controlsRoadblockRequired,
   postRomUploadGate,
 } from './controls-roadblock.js?v=20260901-upload-flow1';
+import { lockPageScroll } from '../shared/page-scroll-lock.js';
 
 import cartridgeChunkUrl from './assets/cartridge-chunk.wav?url';
 import cartridgeLabelUrl from './assets/cartridge-label-art.png?url';
@@ -131,6 +132,7 @@ let validationBusy = false;
 let previousFocus = null;
 let flowSequence = 0;
 let flowTimer = 0;
+let releaseLaunchFlowScrollLock = null;
 let controllerTutorialCompletedThisSession = false;
 let controlCheckComplete = false;
 let controlExitPending = false;
@@ -140,6 +142,15 @@ let consoleDockImpactSoundPlayed = false;
 const completedControlKeys = new Set();
 const heldControlKeys = new Set();
 const launchSoundTemplates = new Map();
+
+function lockLaunchFlowScroll() {
+  releaseLaunchFlowScrollLock ||= lockPageScroll();
+}
+
+function unlockLaunchFlowScroll() {
+  releaseLaunchFlowScrollLock?.();
+  releaseLaunchFlowScrollLock = null;
+}
 
 function soundEnabled() {
   try { return localStorage.getItem(SOUND_STORAGE_KEY) !== 'off'; }
@@ -2109,6 +2120,7 @@ function registerControlInput(key, repeated) {
 
 function showControlsPreview() {
   if (!overlay || !overlay.hidden) return;
+  lockLaunchFlowScroll();
   preloadLaunchSounds();
   setLaunchFlowOpen(true);
   flowSequence += 1;
@@ -2134,6 +2146,7 @@ function showControlsPreview() {
 
 function showRequiredControls(fighter) {
   if (!overlay || !overlay.hidden) return;
+  lockLaunchFlowScroll();
   preloadLaunchSounds();
   flowSequence += 1;
   clearTimeout(flowTimer);
@@ -2159,6 +2172,7 @@ function showRequiredControls(fighter) {
 
 function showLaunchFlow(fighter, { create = false } = {}) {
   if (!overlay || !overlay.hidden) return;
+  lockLaunchFlowScroll();
   preloadLaunchSounds();
   setLaunchFlowOpen(true);
   flowSequence += 1;
@@ -2199,6 +2213,7 @@ function finishClosingFlow(sequence, restoreFocus) {
   overlay.dataset.mode = 'launch';
   overlay.dataset.step = 'upload';
   document.body.classList.remove('is-launch-flow-open');
+  unlockLaunchFlowScroll();
   setLaunchFlowOpen(false);
   requestedModelKind = 'none';
   if (activeModel) activeModel.visible = false;
