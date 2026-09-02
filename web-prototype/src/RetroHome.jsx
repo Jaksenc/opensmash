@@ -127,6 +127,7 @@ export default function RetroHome({
   engineRef,
   gameFrameRef,
   gamepadCount = 0,
+  immersive = false,
   isFullscreen,
   launchFlowOpen,
   onAboutChange,
@@ -373,7 +374,7 @@ export default function RetroHome({
           </nav>
         </header>
         <section className="intro-video-stage" aria-label="Intro video">
-          <div className={`game-surface-shell ${mobileControlsVisible ? "has-mobile-control-deck" : ""}`}>
+          <div className={`game-surface-shell ${mobileControlsVisible ? "has-mobile-control-deck" : ""} ${immersive ? "is-immersive" : ""}`}>
             <div className={`intro-video-frame ${engine ? "is-game-running" : ""}`} ref={gameFrameRef}>
               <video
                 ref={introVideoRef}
