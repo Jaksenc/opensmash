@@ -108,3 +108,31 @@ test("rejects data with an N64 header but an unknown canonical hash", async () =
   });
   assert.equal(rom, null);
 });
+
+test("names the region when a real but unsupported dump is uploaded", async () => {
+  const canonical = canonicalFixture();
+  const foreign = new Uint8Array(canonical.length);
+  foreign.set(canonical);
+  foreign[canonical.length - 1] ^= 0x5a;
+  const unsupported = [{
+    sha1: createHash("sha1").update(foreign).digest("hex"),
+    name: "Synthetic Europe fixture",
+    region: "Europe",
+    size: foreign.length,
+  }];
+  await assert.rejects(
+    identifyRomBytes(withHeaderAndPadding(foreign), {
+      catalog: fixtureCatalog(canonical),
+      unsupported,
+      subtle: webcrypto.subtle,
+    }),
+    /Europe release/,
+  );
+  // The supported image is unaffected by the unsupported list.
+  const rom = await identifyRomBytes(withHeaderAndPadding(canonical), {
+    catalog: fixtureCatalog(canonical),
+    unsupported,
+    subtle: webcrypto.subtle,
+  });
+  assert.equal(rom?.region, "Test");
+});
