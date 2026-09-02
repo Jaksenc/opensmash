@@ -45,6 +45,44 @@ KERN = {'PU': -1, 'FF': -1, 'LY': -2, 'LT': -1, 'LV': -1, 'AV': -1, 'VA': -1, 'A
         'AT': -1, 'TA': -1, 'AW': -1, 'WA': -1, 'TJ': -1, 'LJ': -1, 'FA': -1, 'PA': -1}
 
 
+# Extra-narrow cut: 3 px letters (M/W 5, N 4, I 1) for names even the condensed
+# cut cannot hold. Same 7 px height and 1 px outline; drawn by hand.
+NARROW = {
+    'A': ['.f.', 'f.f', 'f.f', 'fff', 'f.f', 'f.f', 'f.f'],
+    'B': ['ff.', 'f.f', 'f.f', 'ff.', 'f.f', 'f.f', 'ff.'],
+    'C': ['.ff', 'f..', 'f..', 'f..', 'f..', 'f..', '.ff'],
+    'D': ['ff.', 'f.f', 'f.f', 'f.f', 'f.f', 'f.f', 'ff.'],
+    'E': ['fff', 'f..', 'f..', 'ff.', 'f..', 'f..', 'fff'],
+    'F': ['fff', 'f..', 'f..', 'ff.', 'f..', 'f..', 'f..'],
+    'G': ['.ff', 'f..', 'f..', 'f.f', 'f.f', 'f.f', '.ff'],
+    'H': ['f.f', 'f.f', 'f.f', 'fff', 'f.f', 'f.f', 'f.f'],
+    'I': ['f', 'f', 'f', 'f', 'f', 'f', 'f'],
+    'J': ['..f', '..f', '..f', '..f', '..f', 'f.f', '.f.'],
+    'K': ['f.f', 'f.f', 'ff.', 'ff.', 'ff.', 'f.f', 'f.f'],
+    'L': ['f..', 'f..', 'f..', 'f..', 'f..', 'f..', 'fff'],
+    'M': ['f...f', 'ff.ff', 'f.f.f', 'f.f.f', 'f...f', 'f...f', 'f...f'],
+    'N': ['f..f', 'fc.f', 'f9af', 'f.9f', 'f.cf', 'f..f', 'f..f'],
+    'O': ['.f.', 'f.f', 'f.f', 'f.f', 'f.f', 'f.f', '.f.'],
+    'P': ['ff.', 'f.f', 'f.f', 'ff.', 'f..', 'f..', 'f..'],
+    'Q': ['.f.', 'f.f', 'f.f', 'f.f', 'f.f', 'fbf', '.f9'],
+    'R': ['ff.', 'f.f', 'f.f', 'ff.', 'f.f', 'f.f', 'f.f'],
+    'S': ['.ff', 'f..', 'f..', '.f.', '..f', '..f', 'ff.'],
+    'T': ['fff', '.f.', '.f.', '.f.', '.f.', '.f.', '.f.'],
+    'U': ['f.f', 'f.f', 'f.f', 'f.f', 'f.f', 'f.f', '.f.'],
+    'V': ['f.f', 'f.f', 'f.f', 'f.f', '.f.', '.f.', '.f.'],
+    'W': ['f...f', 'f...f', 'f...f', 'f.f.f', 'f.f.f', 'f.f.f', '.f.f.'],
+    'X': ['f.f', 'f.f', '.f.', '.f.', '.f.', 'f.f', 'f.f'],
+    'Y': ['f.f', 'f.f', 'f.f', '.f.', '.f.', '.f.', '.f.'],
+    'Z': ['fff', '..f', '..f', '.f.', 'f..', 'f..', 'fff'],
+    '.': ['.', '.', '.', '.', '.', 'f', 'f'],
+}
+
+
+def build_narrow(make_glyph, hexrows):
+    return dict(glyphs={L: make_glyph(hexrows(rows), ['hand'], synth=True) for L, rows in NARROW.items()},
+                kern={}, defaultGap=1, spaceAdvance=2)
+
+
 def build(make_glyph, hexrows):
     out = {}
     pj = P.load('Purin'); c = pj['c']

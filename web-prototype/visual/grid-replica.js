@@ -64,6 +64,17 @@ const VANILLA_ROSTER = Object.freeze([
   { asset: 'ness', portrait: 'ness', label: 'NESS', name: 'Ness' }
 ]);
 const APP_BRIDGE = window.openSmashReactBridge;
+// Older fighter metadata stored captions pre-cut to 7-10 letters ("EINSTEI",
+// "SHAKESPEAR"). When such a short is just the start of a word in the full
+// name, use the whole word; the caption fitter now picks a cut that holds it.
+function expandShortLabel(short, name) {
+  const s = String(short || '').toUpperCase().replace(/[^A-Z]/g, '');
+  if (!s) return name || '';
+  const words = String(name || '').toUpperCase().split(/[^A-Z]+/).filter(Boolean);
+  const word = words.find(w => w.length > s.length && w.startsWith(s));
+  return word || short;
+}
+
 function liveRosterCharacter(character) {
   return {
     asset: character.slug,
@@ -71,7 +82,7 @@ function liveRosterCharacter(character) {
     // The server points `portrait` at the 90x86 tile derivative; a job that
     // predates the derivatives still resolves to a usable portrait.
     portraitUrl: character.portraitTile || character.portrait,
-    label: character.short || character.name,
+    label: expandShortLabel(character.short, character.name) || character.name,
     name: character.name,
     source: character.generated ? 'generated' : 'live',
     fkind: character.fkind,
@@ -174,13 +185,11 @@ const CAPTION_ORIGIN = Object.freeze({ regular: 4, condensed: 3 });
 // Rightmost column the 1 px outline may reach (the tile's frame is column CELL_W-1).
 const CAPTION_RIGHT_LIMIT = CELL_W - 2;
 
-function layoutCaption(text, tracking = 0, condensed = false) {
+function layoutCaption(text, tracking = 0, cut = 'regular', squeeze = 0) {
   if (!captionFont) return { width: text.length * 5 };
-  const layout = captionFont.layoutText(text, { exact: false, tracking, condensed });
+  const layout = captionFont.layoutText(text, { exact: false, tracking, cut, squeeze });
   if (!layout.glyphs.length) return { width: 0 };
-  const table = condensed
-    ? captionFont.SSB_NAME_FONT.condensed.glyphs
-    : captionFont.SSB_NAME_FONT.glyphs;
+  const table = captionFont.glyphSet(cut);
   let right = -Infinity;
   for (const { id, x } of layout.glyphs) {
     const glyph = table[id];
@@ -195,25 +204,36 @@ function normalizeCaption(value) {
   return String(value).toUpperCase().replace(CAPTION_CHARS, '').trim();
 }
 
+// Fitting ladder: regular -> condensed (closing up to 2 non-colliding pairs)
+// -> extra-narrow (closing non-colliding pairs one at a time) -> truncate.
+// Squeezing where strokes won't merge beats cropping letters off.
+const CAPTION_LADDER = Object.freeze([
+  ['regular', 0], ['condensed', 0], ['condensed', 1], ['condensed', 2], ['narrow', 0],
+]);
+
 function fitCaption(value, rightLimit = CAPTION_RIGHT_LIMIT) {
   let text = normalizeCaption(value);
   const letters = text.replace(/[^A-Z]/g, '').length;
-  const fits = (condensed) => {
-    const width = layoutCaption(text, 0, condensed).width;
-    const originX = condensed ? CAPTION_ORIGIN.condensed : CAPTION_ORIGIN.regular;
+  const fits = (cut, squeeze) => {
+    const width = layoutCaption(text, 0, cut, squeeze).width;
+    const originX = cut === 'regular' ? CAPTION_ORIGIN.regular : CAPTION_ORIGIN.condensed;
     return originX + width <= rightLimit ? width : null;
   };
-  for (const condensed of letters >= CONDENSE_FROM_LENGTH ? [true] : [false, true]) {
-    const width = fits(condensed);
-    if (width !== null) return Object.freeze({ text, tracking: 0, condensed, width: Math.max(1, width) });
-  }
-  while (text && fits(true) === null) text = text.slice(0, -1).trim();
-  return Object.freeze({
-    text,
-    tracking: 0,
-    condensed: true,
-    width: Math.max(1, layoutCaption(text, 0, true).width),
+  const done = (cut, squeeze, width) => Object.freeze({
+    text, tracking: 0, cut, squeeze, condensed: cut !== 'regular', width: Math.max(1, width),
   });
+  const ladder = letters >= CONDENSE_FROM_LENGTH ? CAPTION_LADDER.slice(1) : CAPTION_LADDER;
+  for (const [cut, squeeze] of ladder) {
+    const width = fits(cut, squeeze);
+    if (width !== null) return done(cut, squeeze, width);
+  }
+  for (let squeeze = 1; squeeze < letters; squeeze++) {
+    const width = fits('narrow', squeeze);
+    if (width !== null) return done('narrow', squeeze, width);
+  }
+  const maxSqueeze = Math.max(0, letters - 1);
+  while (text && fits('narrow', maxSqueeze) === null) text = text.slice(0, -1).trim();
+  return done('narrow', maxSqueeze, layoutCaption(text, 0, 'narrow', maxSqueeze).width);
 }
 
 function renderCaption(value, rightLimit = CAPTION_RIGHT_LIMIT) {
@@ -222,7 +242,8 @@ function renderCaption(value, rightLimit = CAPTION_RIGHT_LIMIT) {
   const rendered = captionFont.renderIA(layout.text, {
     exact: false,
     tracking: layout.tracking,
-    condensed: layout.condensed,
+    cut: layout.cut,
+    squeeze: layout.squeeze,
   });
   const top = captionFont.SSB_NAME_FONT.faceRow - rendered.originY;
   const height = Math.max(10, top + rendered.height);
@@ -1211,7 +1232,7 @@ async function updateJobCell(job) {
   button.dataset.revision = String(job.revision || 0);
   button.dataset.status = job.status;
   button.dataset.displayName = job.character?.name || job.name;
-  button.dataset.label = fitCaption(job.character?.short || job.name).text;
+  button.dataset.label = fitCaption(expandShortLabel(job.character?.short, job.character?.name) || job.name).text;
   button.dataset.rosterCharacter = job.character?.slug || job.slug;
   button.classList.toggle('is-generating', active);
   button.classList.toggle('is-failed', failed);
@@ -1245,7 +1266,7 @@ async function updateJobCell(job) {
   } else {
     button.dataset.kind = 'job';
     clearNativePortrait(button);
-    setCellLabel(button, job.character?.short || job.character?.name || job.name);
+    setCellLabel(button, expandShortLabel(job.character?.short, job.character?.name) || job.character?.name || job.name);
   }
   return button;
 }

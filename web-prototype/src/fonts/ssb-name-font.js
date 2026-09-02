@@ -20,17 +20,59 @@ const LAYOUT_BY_TEXT = new Map();
 for (const [name, lay] of Object.entries(FONT.layouts)) LAYOUT_BY_TEXT.set(lay.text, { name, ...lay });
 
 /** Kerning value for a pair of base letters (measured first, then class guesses). */
-export function kernFor(a, b, { synthKern = true, condensed = false } = {}) {
-  if (condensed) return FONT.condensed.kern[a + b] || 0;
+export function kernFor(a, b, { synthKern = true, condensed = false, cut = null } = {}) {
+  const face = cutName(cut, condensed);
+  if (face !== 'regular') return FONT[face].kern[a + b] || 0;
   const k = FONT.kern[a + b];
   if (k !== undefined) return k;
   if (synthKern && FONT.kernSynth[a + b] !== undefined) return FONT.kernSynth[a + b];
   return 0;
 }
 
-/** Glyph table for a face: the regular cut or the condensed (JIGGLYPUFF-style) cut. */
-export function glyphSet(condensed = false) {
-  return condensed ? FONT.condensed.glyphs : FONT.glyphs;
+/** 'regular' | 'condensed' (JIGGLYPUFF-style) | 'narrow' (3 px letters for very long names) */
+export function cutName(cut = null, condensed = false) {
+  if (cut === 'condensed' || cut === 'narrow') return cut;
+  return condensed ? 'condensed' : 'regular';
+}
+
+/** Glyph table for a cut. */
+export function glyphSet(cut = null, condensed = false) {
+  const face = cutName(cut, condensed);
+  return face === 'regular' ? FONT.glyphs : FONT[face].glyphs;
+}
+
+function cutMetrics(face) {
+  return face === 'regular' ? FONT : FONT[face];
+}
+
+// Rows (0..6) where a glyph's outermost inked face column has ink; used to
+// decide which pairs can lose their gap without the strokes merging.
+const edgeCache = new Map();
+function edgeRows(face, id, side) {
+  const key = face + '/' + id + '/' + side;
+  if (edgeCache.has(key)) return edgeCache.get(key);
+  const g = glyphSet(face)[id];
+  const rows = [];
+  const faceTop = FONT.faceRow - FONT.boxRow;
+  const cols = [];
+  for (let bx = 0; bx < g.w; bx++) {
+    let inked = false;
+    for (let y = 0; y < FONT.capHeight; y++) if (g.c[(faceTop + y) * g.w + bx] >= 0.5) { inked = true; break; }
+    if (inked) cols.push(bx);
+  }
+  if (cols.length) {
+    const bx = side === 'L' ? cols[0] : cols[cols.length - 1];
+    for (let y = 0; y < FONT.capHeight; y++) if (g.c[(faceTop + y) * g.w + bx] >= 0.5) rows.push(y);
+  }
+  edgeCache.set(key, rows);
+  return rows;
+}
+
+/** How many rows would touch if two glyphs were set with no gap. */
+export function pairCollision(a, b, cut = null) {
+  const face = cutName(cut);
+  const right = edgeRows(face, a, 'R'), left = new Set(edgeRows(face, b, 'L'));
+  return right.filter(y => left.has(y)).length;
 }
 
 /**
@@ -40,12 +82,13 @@ export function glyphSet(condensed = false) {
  * opts.tracking: extra pixels added to every advance (negative tightens).
  */
 export function layoutText(text, opts = {}) {
-  const { exact = true, kern = true, synthKern = true, tracking = 0, condensed = false } = opts;
+  const { exact = true, kern = true, synthKern = true, tracking = 0, condensed = false, cut = null, squeeze = 0 } = opts;
   const up = text.toUpperCase();
-  const glyphTable = glyphSet(condensed);
-  const gap = condensed ? FONT.condensed.defaultGap : FONT.defaultGap;
-  const space = condensed ? FONT.condensed.spaceAdvance : FONT.spaceAdvance;
-  if (exact && !condensed && LAYOUT_BY_TEXT.has(up)) {
+  const face = cutName(cut, condensed);
+  const glyphTable = glyphSet(face);
+  const gap = cutMetrics(face).defaultGap;
+  const space = cutMetrics(face).spaceAdvance;
+  if (exact && face === 'regular' && LAYOUT_BY_TEXT.has(up)) {
     const lay = LAYOUT_BY_TEXT.get(up);
     const x0 = lay.glyphs[0][1];
     return { glyphs: lay.glyphs.map(([id, x]) => ({ id, x: x - x0 })), exactName: lay.name };
@@ -53,6 +96,18 @@ export function layoutText(text, opts = {}) {
   const glyphs = [];
   let pen = 0;
   const chars = [...up];
+  // squeeze: close the gap (by 1 px) at the `squeeze` pairs whose facing edges
+  // collide least, so long names tighten where the strokes won't merge.
+  const squeezed = new Set();
+  if (squeeze > 0) {
+    const pairs = [];
+    for (let i = 0; i + 1 < chars.length; i++) {
+      if (chars[i] === ' ' || chars[i + 1] === ' ' || !glyphTable[chars[i]] || !glyphTable[chars[i + 1]]) continue;
+      pairs.push({ i, collision: pairCollision(chars[i], chars[i + 1], face) });
+    }
+    pairs.sort((p, q) => p.collision - q.collision || p.i - q.i);
+    for (const pr of pairs.slice(0, squeeze)) squeezed.add(pr.i);
+  }
   for (let i = 0; i < chars.length; i++) {
     const ch = chars[i];
     if (ch === ' ') { pen += space; continue; }
@@ -63,10 +118,11 @@ export function layoutText(text, opts = {}) {
     const next = chars[i + 1];
     const nextG = next && next !== ' ' ? glyphTable[next] : null;
     // (bearings are fractional: a half-covered edge column counts as half a pixel)
-    if (nextG) pen = Math.floor(pen + g.inkR + gap + tracking + (kern ? kernFor(ch, next, { synthKern, condensed }) : 0) - nextG.inkL + 0.5);
+    const tighten = squeezed.has(i) ? -1 : 0;
+    if (nextG) pen = Math.floor(pen + g.inkR + gap + tracking + tighten + (kern ? kernFor(ch, next, { synthKern, cut: face }) : 0) - nextG.inkL + 0.5);
     else pen = Math.floor(pen + g.inkR + gap + 0.5);
   }
-  return { glyphs, exactName: null, condensed };
+  return { glyphs, exactName: null, condensed: face === 'condensed', cut: face };
 }
 
 /**
@@ -75,8 +131,8 @@ export function layoutText(text, opts = {}) {
  * originX/originY: position of the first glyph's face origin inside the bitmap.
  */
 export function renderIA(text, opts = {}) {
-  const { glyphs } = layoutText(text, opts);
-  const table = glyphSet(opts.condensed);
+  const { glyphs, cut } = layoutText(text, opts);
+  const table = glyphSet(cut);
   const H = FONT.boxH;
   if (!glyphs.length) return { width: 0, height: H, I: new Uint8Array(0), A: new Uint8Array(0), originX: 0, originY: 0 };
   let xmin = Infinity, xmax = -Infinity;
