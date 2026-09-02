@@ -268,7 +268,11 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("name")
     ap.add_argument("--short", default=None,
-                    help="display name for in-game text (<=10 chars, A-Z)")
+                    help="tile caption for in-game text (<=10 chars, A-Z)")
+    ap.add_argument("--display", default=None,
+                    help="in-game name AND what the announcer shouts (e.g. \"Mozart\"); "
+                         "the expander picks it, this overrides and persists it. Delete "
+                         "announcer.wav to re-record after changing it.")
     ap.add_argument("--photo", default=None)
     ap.add_argument("--notes", default=None,
                     help="steering for the expander (which depiction, outfit, era); "
@@ -310,6 +314,19 @@ def main():
         open(F("character.json"), "w").write(sh(cmd, timeout=180))
         bill("expand", json.loads(open(F("character.json")).read()).get("cost_usd"))
     cdef = json.loads(open(F("character.json")).read())
+    # display = in-game name = announcer call ("Mozart", "Hercules", "Marilyn
+    # Monroe"); name_full keeps the roster entry for search. Older
+    # character.json files predate name_full — backfill it from the name
+    # this run was invoked with.
+    _dirty = False
+    if a.display and cdef.get("display") != a.display:
+        cdef["display"] = a.display
+        _dirty = True
+    if not cdef.get("name_full"):
+        cdef["name_full"] = a.name
+        _dirty = True
+    if _dirty:
+        json.dump(cdef, open(F("character.json"), "w"), indent=1)
     short = (a.short or cdef.get("short") or re.sub(r"[^A-Za-z]", "", cdef["display"]).upper())
     short = re.sub(r"[^A-Z]", "", short.upper())[:10]
     # Persist the resolved short name. The .osbui pack takes it as an argument,
@@ -319,7 +336,7 @@ def main():
     if cdef.get("short") != short:
         cdef["short"] = short
         json.dump(cdef, open(F("character.json"), "w"), indent=1)
-    log(f"character: {cdef['display']} (short: {short})")
+    log(f"character: {cdef['display']} (short: {short}, full: {cdef['name_full']})")
 
     # 2. tpose -----------------------------------------------------------
     if stage_needed(F("tpose.png"), force, "tpose"):
@@ -573,10 +590,11 @@ def main():
     wav = F("announcer.wav")
     if stage_needed(wav, force, "voice"):
         log("voice: generating announcer clip")
-        sh(["python3", pipeline_script("announcer_voice.py"), cdef["display"], "--slug", slug,
+        spoken = cdef["display"].strip()   # display IS the announcer form (Mozart, Hercules, Marilyn Monroe)
+        log(f"voice: announcer says {spoken!r}")
+        sh(["python3", pipeline_script("announcer_voice.py"), spoken, "--slug", slug,
             "--out", wav, "--no-stage"], timeout=300)
-        # generate_announcer speaks the display name plus a terminal "!"
-        spoken = cdef["display"].strip()
+        # generate_announcer speaks the name plus a terminal "!"
         spoken += "" if spoken.endswith("!") else "!"
         bill("voice", len(spoken) / 1000.0 * FAL_TTS_USD_PER_1K_CHARS)
 
