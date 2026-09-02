@@ -10,21 +10,24 @@ import { createJobDatabase } from "./job-database.js";
 import { createJobDispatcher } from "./job-dispatcher.js";
 import { createObjectStore } from "./object-store.js";
 import { withInitialState } from "./html-state.js";
+import { resolveProjectPaths } from "./project-paths.js";
 import { assignRosterBases, bundleForBase, FIGHTERS } from "./roster.js";
 import { matchesCharacterSearch } from "../shared/character-search.js";
 import { bakedRosterEntries } from "../shared/baked-roster.js";
 import { ROMS_BY_SHA1, UNSUPPORTED_ROMS_BY_SHA1 } from "../shared/rom-catalog.js";
 
 const APP_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const REPO_ROOT = path.resolve(APP_ROOT, "..", "..");
+const {
+  pipelineProjectRoot: PIPELINE_PROJECT_ROOT,
+  engineRoot: ENGINE_ROOT,
+  pipelineUiRoot: PIPELINE_UI_ROOT,
+} = resolveProjectPaths(APP_ROOT);
 const DIST_ROOT = path.join(APP_ROOT, "dist");
 const APP_SHELL_PATHS = new Set(["/", "/create", "/create/", "/index.html"]);
 const APP_SHELL_CACHE_CONTROL = "public, max-age=15";
 const APP_SHELL_EDGE_CACHE_CONTROL =
   "public, max-age=30, stale-while-revalidate=300, stale-if-error=86400";
-const ENGINE_ROOT = path.join(REPO_ROOT, "BattleShip", "web-dist");
-const PIPELINE_PLAY_ROOT = path.join(REPO_ROOT, "pipeline", "play");
-const PIPELINE_UI_ROOT = path.join(REPO_ROOT, "pipeline", "play", "ui");
+const PIPELINE_PLAY_ROOT = path.join(PIPELINE_PROJECT_ROOT, "play");
 const SITE_ASSETS_ROOT = path.join(APP_ROOT, "visual", "assets");
 const CHARACTERS_CONFIG = path.join(APP_ROOT, "config", "characters.json");
 const objectStore = createObjectStore({ appRoot: APP_ROOT });
@@ -34,7 +37,7 @@ const jobDatabase = createJobDatabase({
 });
 const fighterJobs = createFighterJobs({
   appRoot: APP_ROOT,
-  repoRoot: REPO_ROOT,
+  repoRoot: PIPELINE_PROJECT_ROOT,
   engineRoot: ENGINE_ROOT,
   pipelineUiRoot: PIPELINE_UI_ROOT,
   objectStore,
