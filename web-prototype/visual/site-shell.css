@@ -4,6 +4,7 @@
   @media (hover: hover) and (pointer: fine) {
     html.is-custom-cursor-ready,
     html.is-custom-cursor-ready * { cursor: none !important; }
+    html.is-custom-cursor-ready .launch-flow-rom-filenames code { cursor: text !important; }
   }
   html { background: #000; }
   body {
@@ -665,6 +666,12 @@
     gap: 6px;
   }
   .launch-flow-rom-filenames code {
+    /* The filename is meant to be copied: keep it selectable under the
+     * custom hand cursor and show a text cursor while over it. */
+    user-select: text;
+    -webkit-user-select: text;
+    cursor: text;
+    pointer-events: auto;
     padding: 4px 8px 3px;
     border: 1px solid rgba(255, 240, 181, .32);
     background: rgba(8, 5, 4, .74);
