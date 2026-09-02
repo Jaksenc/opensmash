@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Does each character's t-pose depict the roster entry (name + CSV section)?
 Catches the expander picking a namesake (Michelangelo -> turtle, Butterbean -> fairy).
---sweep -> batch-state/depiction-sweep.jsonl"""
+--sweep -> artifacts/batch-1000/depiction-sweep.jsonl"""
 import base64, csv, json, os, re, sys
 sys.path.insert(0, "pipeline")
 from gen import http, ENV, token_cost
@@ -29,7 +29,7 @@ if __name__ == "__main__":
     slug = lambda n: re.sub(r"[^a-z0-9]", "", n.lower())[:16]
     rows = [r for r in csv.DictReader(open("config/seed-roster/seed-roster.csv")) if r["tier"].strip() in ("S", "A")]
     from concurrent.futures import ThreadPoolExecutor
-    out = open("batch-state/depiction-sweep.jsonl", "a")
+    out = open("artifacts/batch-1000/depiction-sweep.jsonl", "a")
     def one(r):
         s = slug(r["name"]); p = f"play/ui/{s}/tpose.png"
         if not os.path.exists(p): return None

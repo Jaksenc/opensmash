@@ -37,9 +37,9 @@ def check(tpose, render, model="gpt-5.6-luna"):
 if __name__ == "__main__":
     if sys.argv[1] == "--sweep":
         from concurrent.futures import ThreadPoolExecutor
-        rows = [json.loads(l) for l in open("batch-state/facing-sweep.jsonl")]
+        rows = [json.loads(l) for l in open("artifacts/batch-1000/facing-sweep.jsonl")]
         rows = [r for r in rows if r.get("renders") and os.path.exists(os.path.join(r["renders"], "yaw0.png"))]
-        out = open("batch-state/mesh-sweep.jsonl", "a")
+        out = open("artifacts/batch-1000/mesh-sweep.jsonl", "a")
         def one(r):
             s = r["slug"]
             try:

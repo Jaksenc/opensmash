@@ -3,10 +3,10 @@
 drop the base/variant .osb, .osb6 and bundle.json so run_character redoes the
 convert stage, where the facing gate now re-runs convert_rigged with
 --flip-facing when the render faces away. Deterministic, no model calls
-except the $0.0004 gate. -> batch-state/facing_fix.log"""
+except the $0.0004 gate. -> artifacts/batch-1000/facing_fix.log"""
 import json, os, subprocess, sys, time
 from concurrent.futures import ThreadPoolExecutor
-rows = [json.loads(l) for l in open("batch-state/facing-sweep.jsonl")]
+rows = [json.loads(l) for l in open("artifacts/batch-1000/facing-sweep.jsonl")]
 todo = sorted({r["slug"] for r in rows if r.get("flipped") or r.get("error")})
 names = {}
 for s in todo:

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Propose announcer-length display names for the existing roster (text-only,
-~$0.0003 each) -> batch-state/announcer-names.csv (slug, current display,
+~$0.0003 each) -> artifacts/batch-1000/announcer-names.csv (slug, current display,
 proposed, reason). Review, then apply with --apply (rewrites character.json
 display, keeps name_full, deletes announcer.wav so run_character regenerates
 the clip) — --apply only touches rows whose proposed != current."""
@@ -35,7 +35,7 @@ for l in open("config/seed-roster/seed-roster-sa.txt"):
         n = l.split("\t")[0].strip(); names[slug(n)] = n
 if "--apply" in sys.argv:
     n = 0
-    for row in csv.DictReader(open("batch-state/announcer-names.csv")):
+    for row in csv.DictReader(open("artifacts/batch-1000/announcer-names.csv")):
         if row["proposed"].strip() and row["proposed"] != row["current"]:
             p = f"play/ui/{row['slug']}/character.json"; d = json.load(open(p))
             d.setdefault("name_full", row["entry"]); d["display"] = row["proposed"]
@@ -51,8 +51,8 @@ def one(s):
     except Exception as e: v = {"display": "", "reason": "error " + str(e)[-80:]}
     return {"slug": s, "entry": entry, "current": d.get("display", ""), "proposed": v["display"], "reason": v["reason"]}
 with ThreadPoolExecutor(8) as ex: rows = list(ex.map(one, slugs))
-with open("batch-state/announcer-names.csv", "w", newline="") as f:
+with open("artifacts/batch-1000/announcer-names.csv", "w", newline="") as f:
     w = csv.DictWriter(f, fieldnames=["slug", "entry", "current", "proposed", "reason"]); w.writeheader(); w.writerows(rows)
 ch = [r for r in rows if r["proposed"] and r["proposed"] != r["current"]]
-print(f"{len(rows)} characters, {len(ch)} proposed renames -> batch-state/announcer-names.csv")
+print(f"{len(rows)} characters, {len(ch)} proposed renames -> artifacts/batch-1000/announcer-names.csv")
 for r in ch[:40]: print(f"  {r['current']!r:40} -> {r['proposed']!r}")

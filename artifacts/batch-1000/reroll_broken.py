@@ -3,14 +3,14 @@
 the new material/cloth rules (+ roster category), fresh t-pose, fresh Tripo mesh,
 reconvert through the facing gate; portrait/stock/emblem/voice are kept.
 Then re-run the mesh check on the new bundle. Extra slugs may be given as args.
--> batch-state/reroll_broken.log ; backups in batch-state/reroll-backup/<slug>/"""
+-> artifacts/batch-1000/reroll_broken.log ; backups in artifacts/batch-1000/reroll-backup/<slug>/"""
 import json, os, re, subprocess, sys, time
 from concurrent.futures import ThreadPoolExecutor
 ROOT = "/Users/tdimson/projects/opensmash/pipeline"; os.chdir(ROOT)
-sys.path.insert(0, "batch-state"); sys.path.insert(0, "pipeline")
+sys.path.insert(0, "artifacts/batch-1000"); sys.path.insert(0, "pipeline")
 import mesh_check
 SKIP = {"theheadlesshorse", "humptydumpty"}   # judged 'broken' for being the shape they are
-rows = [json.loads(l) for l in open("batch-state/mesh-sweep.jsonl")]
+rows = [json.loads(l) for l in open("artifacts/batch-1000/mesh-sweep.jsonl")]
 todo = sorted(({r["slug"] for r in rows if r["verdict"] == "broken"} - SKIP) | set(sys.argv[1:]))
 slug = lambda n: re.sub(r"[^a-z0-9]", "", n.lower())[:16]
 names = {}
@@ -20,7 +20,7 @@ for l in open("config/seed-roster/seed-roster-sa.txt"):
 TARGETS = "captain fox kirby link luigi ness pikachu purin samus donkey yoshi".split()
 def reroll(s):
     name, notes = names.get(s, (json.load(open(f"play/ui/{s}/character.json")).get("display", s), ""))
-    bk = f"batch-state/reroll-backup/{s}"; os.makedirs(bk, exist_ok=True)
+    bk = f"artifacts/batch-1000/reroll-backup/{s}"; os.makedirs(bk, exist_ok=True)
     for f in ("tpose.png", "character.json", "rigged.glb"):
         if os.path.exists(f"play/ui/{s}/{f}"): os.replace(f"play/ui/{s}/{f}", f"{bk}/{f}")
     for f in ("rigged.glb.part", "tripo_tasks.json", "bundle.json", "bundle-atlas.png", "facing_flipped"):

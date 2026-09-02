@@ -14,17 +14,14 @@ eval/*.log
 eval/pairs.json
 eval/*/cells/*/shots/
 eval/*/cells/*/shots-full/
-batch-state/run.log
-batch-state/*.png
-batch-state/*/
+# scripts/batch_characters.py working state (results/failures jsonl, logs,
+# per-run scratch). The 1000-fighter run's sweep outputs are kept under
+# artifacts/batch-1000/.
+batch-state/
 play/ui/*/*.log
 # Generated fighter workspace. Production runtime files are published to GCS
 # and pinned by web-prototype/config/baked-assets.json.
 play/
-batch-state/*.log
-batch-state/*.glb
-batch-state/*.patch
-batch-state-pilot.log
 
 # The engine checkout is a sibling symlink here (pipeline/BattleShip -> ../BattleShip).
 BattleShip
