@@ -67,17 +67,17 @@ const CONSOLE_CARTRIDGE_FIT_SCALE = 0.44;
 const CONSOLE_CARTRIDGE_READY_CLEARANCE = 0.34;
 const CONSOLE_DOCK_FRONT_YAW = Math.PI * 1.5;
 const CONSOLE_DOCK_FRONT_PITCH = 0.18;
-// The engine's keyboard map (libultraship defaults): X=A, C=B, Z=Z, E=L, R=R.
-const REQUIRED_CONTROL_KEYS = Object.freeze(['w', 'a', 's', 'd', 'x', 'c', 'z', 'e', 'r']);
+// The engine's keyboard map (libultraship defaults): J=A, K=B, L=Z, I=L, O=R.
+const REQUIRED_CONTROL_KEYS = Object.freeze(['w', 'a', 's', 'd', 'j', 'k', 'l', 'i', 'o']);
 // Gamepad (standard layout) -> the same control ids the keyboard tutorial
 // uses, so a pad player lights up the very same callouts: A, B, LT=Z,
 // LB=L, RB/RT=R, left stick = W A S D.
-const PAD_BUTTON_CONTROLS = Object.freeze({ 0: 'x', 1: 'c', 6: 'z', 4: 'e', 5: 'r', 7: 'r' });
+const PAD_BUTTON_CONTROLS = Object.freeze({ 0: 'j', 1: 'k', 6: 'l', 4: 'i', 5: 'o', 7: 'o' });
 const PAD_STICK_THRESHOLD = 0.5;
 const PAD_CONTROL_LABELS = Object.freeze({
-  xbox: Object.freeze({ w: '↑', a: '←', s: '↓', d: '→', x: 'A', c: 'B', z: 'LT', e: 'LB', r: 'RB' }),
-  playstation: Object.freeze({ w: '↑', a: '←', s: '↓', d: '→', x: '✕', c: '○', z: 'L2', e: 'L1', r: 'R1' }),
-  switch: Object.freeze({ w: '↑', a: '←', s: '↓', d: '→', x: 'B', c: 'A', z: 'ZL', e: 'L', r: 'R' }),
+  xbox: Object.freeze({ w: '↑', a: '←', s: '↓', d: '→', j: 'A', k: 'B', l: 'LT', i: 'LB', o: 'RB' }),
+  playstation: Object.freeze({ w: '↑', a: '←', s: '↓', d: '→', j: '✕', k: '○', l: 'L2', i: 'L1', o: 'R1' }),
+  switch: Object.freeze({ w: '↑', a: '←', s: '↓', d: '→', j: 'B', k: 'A', l: 'ZL', i: 'L', o: 'R' }),
 });
 const SOUND_STORAGE_KEY = 'opensmash-sound';
 const LAUNCH_SOUNDS = Object.freeze({
@@ -89,11 +89,11 @@ const CONTROLLER_KEY_TORQUE = Object.freeze({
   a: Object.freeze([0.038, 0, 0.025]),
   s: Object.freeze([0.055, 0, 0]),
   d: Object.freeze([0.038, 0, -0.025]),
-  x: Object.freeze([0.02, 0, -0.068]),
-  c: Object.freeze([0.03, 0, -0.08]),
-  z: Object.freeze([0.06, 0, 0]),
-  e: Object.freeze([0.02, 0, 0.078]),
-  r: Object.freeze([0.02, 0, -0.078]),
+  j: Object.freeze([0.02, 0, -0.068]),
+  k: Object.freeze([0.03, 0, -0.08]),
+  l: Object.freeze([0.06, 0, 0]),
+  i: Object.freeze([0.02, 0, 0.078]),
+  o: Object.freeze([0.02, 0, -0.078]),
 });
 
 const grid = document.getElementById('replica-grid');
@@ -960,7 +960,7 @@ function pressControllerControl(key, repeated) {
   controllerTiltVelocity.y += torque[1] * 3.4;
   controllerTiltVelocity.z += torque[2] * 3.4;
   controllerDropVelocity -= 0.085;
-  if (key === 'z') {
+  if (key === 'l') {
     controllerZRevealUntil = performance.now() + CONTROLLER_Z_REVEAL_MS;
     controllerFlipVelocity = Math.max(controllerFlipVelocity, 1.25);
   }
@@ -1000,7 +1000,7 @@ function updateControllerPhysics(now, dt, homeY, homeScale, reducedMotion) {
   controllerDrop += controllerDropVelocity * dt;
 
   const flipTarget = !reducedMotion &&
-      (heldControlKeys.has('z') || now < controllerZRevealUntil)
+      (heldControlKeys.has('l') || now < controllerZRevealUntil)
     ? Math.PI
     : 0;
   controllerFlipVelocity += (

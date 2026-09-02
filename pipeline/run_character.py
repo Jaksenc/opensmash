@@ -248,7 +248,8 @@ def stage_needed(path, force, name):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("name")
-    ap.add_argument("--short", default=None, help="display name for in-game text (<=7 chars, A-Z)")
+    ap.add_argument("--short", default=None,
+                    help="display name for in-game text (<=10 chars, A-Z)")
     ap.add_argument("--photo", default=None)
     ap.add_argument("--emblem", default=None,
                     help="context for the series emblem, or the object itself "
@@ -286,7 +287,7 @@ def main():
         bill("expand", json.loads(open(F("character.json")).read()).get("cost_usd"))
     cdef = json.loads(open(F("character.json")).read())
     short = (a.short or cdef.get("short") or re.sub(r"[^A-Za-z]", "", cdef["display"]).upper())
-    short = re.sub(r"[^A-Z]", "", short.upper())[:7]
+    short = re.sub(r"[^A-Z]", "", short.upper())[:10]
     # Persist the resolved short name. The .osbui pack takes it as an argument,
     # but the dev server's /roster.json reads it back out of character.json --
     # so a --short override has to land in the file or the tile caption and the
