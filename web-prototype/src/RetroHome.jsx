@@ -50,7 +50,8 @@ export function LaunchFlow() {
       <section className="launch-flow-step launch-flow-upload" role="dialog" aria-modal="true" aria-labelledby="launch-flow-title" aria-describedby="launch-flow-copy">
         <h2 id="launch-flow-title" className="visually-hidden">Play Smash the Weights</h2>
         <p id="launch-flow-copy" className="launch-flow-copy">
-          To play Smash the Weights, upload your legally obtained Super Smash Bros. 64 ROM.
+          To play Smash the Weights, upload your legally obtained USA-release Super Smash Bros. 64 ROM. It stays on
+          your device; Safari may ask again after a week away.
         </p>
         <input id="rom-file-input" className="launch-flow-file-input" type="file" hidden accept=".zip,.z64,.n64,.v64,.rom,application/zip,application/octet-stream" />
         <FlameAction id="rom-upload-button" type="button">Upload ROM</FlameAction>
@@ -424,6 +425,7 @@ export default function RetroHome({
                   create custom fighters and play them inside the original game.
                 </p>
                 <p className="launch-flow-copy">You must supply a legally obtained copy of the game ROM to play.</p>
+                <p className="launch-flow-copy">Your ROM and its assets stay on your device. Nothing is uploaded.</p>
                 <p className="launch-flow-copy about-legal">
                   OpenSmash is not affiliated with, endorsed by, or sponsored by Nintendo. Super Smash Bros., Nintendo
                   64, and all related characters, names, and marks are trademarks of Nintendo and their respective

@@ -56,8 +56,10 @@ normalizes N64 `.z64` / `.v64` / `.n64` byte order plus recognized leading
 headers and trailing padding, and compares the canonical SHA-1 and size against
 `shared/rom-catalog.js`. It sends only that canonical digest and byte count to
 `POST /api/validate-rom`; the server checks the same shared catalog and issues a
-signed, HTTP-only, 30-day cookie. The accepted catalog covers the known Japan,
-Australia, Europe, USA, and USA LodgeNet images. The engine routes return 401
+signed, HTTP-only, 30-day cookie. The accepted catalog is the USA v1.0 image
+only: the browser builds the engine's assets from the ROM with Torch compiled
+to wasm and the engine is region-compiled, so other dumps are recognised and
+rejected with a region-specific message. The engine routes return 401
 without that cookie, and the cookie itself is signed with HMAC-SHA-256.
 
 The ROM and archive bytes are never uploaded or stored. Password-protected and
