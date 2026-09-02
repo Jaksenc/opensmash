@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>SSB64 character-select name font playground</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; background: #0b0b0d; color: #ddd; font: 14px/1.4 system-ui, sans-serif; padding: 24px 32px 80px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  h2 { font-size: 15px; margin: 32px 0 8px; color: #fff; }
+  p.note { color: #999; margin: 0 0 12px; max-width: 960px; }
+  .ctl { display: flex; gap: 18px; align-items: center; margin: 12px 0 8px; flex-wrap: wrap; }
+  .ctl label { color: #aaa; }
+  input[type=text] { background: #16161a; color: #fff; border: 1px solid #333; padding: 6px 8px; font: inherit; width: 320px; text-transform: uppercase; }
+  .row { display: flex; gap: 18px; align-items: flex-start; flex-wrap: wrap; }
+  .cell { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 3px; margin: 0 6px 10px 0; }
+  .cell canvas { image-rendering: pixelated; image-rendering: crisp-edges; background: #000; }
+  .cell.red canvas { background: linear-gradient(180deg, #7a1410, #3a0806 60%, #240403); }
+  .tag { font-size: 11px; color: #888; }
+  .tag b { color: #fff; font-weight: 600; }
+  .ok { color: #5fd18a; } .bad { color: #ff6a6a; } .syn { color: #f2c14e; }
+  table { border-collapse: collapse; }
+  td, th { padding: 4px 10px; text-align: left; border-bottom: 1px solid #222; font-size: 13px; }
+  th { color: #999; font-weight: 500; }
+  .letters { display: flex; flex-wrap: wrap; gap: 4px 2px; }
+  .summary { font-size: 15px; margin: 8px 0; }
+</style>
+</head>
+<body>
+<h1>SSB64 character-select name font</h1>
+<p class="note">Source: the names baked into the 12 character-select portrait tiles (<code>MNPlayersPortraits</code>, RGBA32). Tan face with a 1 px black outline, 7 px cap height (the soft glow under the names belongs to the portrait art, not the text). In every pair the top row is the original sprite pixels and the bottom row the font rendering the same string. Diffs compare 8-bit colour and alpha of every pixel; pixels covered by character art (hats, ears…) are unknown and shown dimmed in the diff; pixels outside every glyph box (art and its own dark shading) are not compared.</p>
+<div class="ctl">
+  <label>Zoom <input id="zoom" type="range" min="1" max="14" value="8" /> <span id="zoomv">8×</span></label>
+  <label><input id="bg" type="checkbox" /> draw over the panel red instead of black</label>
+</div>
+
+<h2>A–Z — existing (cut from the portraits) vs recreation (font glyph)</h2>
+<p class="note">Letters marked <span class="syn">synth</span> never appear on the character-select screen and were built from parts of real glyphs (J from the JIGGLYPUFF tile with a standard-width stem, T = E bar + I stem, V = flipped A, W = flipped M, Z = E bars + diagonal, Q = O + tail). Isolated letters have no neighbour outline merging in, so a crop from a word can differ in the columns between letters; the per-name comparison below is the exact test.</p>
+<div id="letters" class="letters"></div>
+
+<h2>Character-select names — before / after</h2>
+<div class="summary" id="summary"></div>
+<div id="names" class="row"></div>
+
+<h2>Default font (one glyph per letter + kerning table) vs the portraits</h2>
+<p class="note">Same names rendered with the default glyph for every letter and only the kerning table, i.e. what a new fighter name gets. Differences here are the per-name sub-pixel phase variants; exact mode above reproduces them.</p>
+<div id="default" class="row"></div>
+
+<h2>Kerning pairs measured from the names</h2>
+<div id="kern"></div>
+
+<h2>Type your own</h2>
+<div class="ctl"><input id="custom" type="text" value="SCRAPPER" /> <label><input id="ckern" type="checkbox" checked /> kerning</label></div>
+<div id="customout" class="row"></div>
+
+<script type="module">
+import { SSB_NAME_FONT as FONT, renderIA, toImageData, spriteIA, layoutText } from './src/fonts/ssb-name-font.js';
+
+const $ = (s) => document.querySelector(s);
+let ZOOM = 8, RED = false;
+
+function iaToCanvas(r, zoom, img) {
+  const c = document.createElement('canvas');
+  c.width = Math.max(1, r.width) * zoom; c.height = r.height * zoom;
+  const ctx = c.getContext('2d');
+  const tmp = document.createElement('canvas'); tmp.width = Math.max(1, r.width); tmp.height = r.height;
+  tmp.getContext('2d').putImageData(img || toImageData(r), 0, 0);
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(tmp, 0, 0, c.width, c.height);
+  return c;
+}
+
+function diffIA(a, b, art) {
+  const W = Math.max(a.width, b.width), H = Math.max(a.height, b.height);
+  let n = 0; const mask = new Uint8Array(W * H);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const ia = x < a.width && y < a.height ? y * a.width + x : -1;
+    const ib = x < b.width && y < b.height ? y * b.width + x : -1;
+    const aI = ia >= 0 ? a.I[ia] : 0, aA = ia >= 0 ? a.A[ia] : 0;
+    const bI = ib >= 0 ? b.I[ib] : 0, bA = ib >= 0 ? b.A[ib] : 0;
+    if (art && ia >= 0 && art[ia]) { mask[y * W + x] = 2; continue; }
+    if (b.covered && ib >= 0 && !b.covered[ib]) { if (aA) mask[y * W + x] = 3; continue; }   // outside every glyph box: character art / its shadow
+    if ((aA || bA) && (Math.abs(aI - bI) > 1 || Math.abs(aA - bA) > 1)) { n++; mask[y * W + x] = 1; }
+  }
+  return { n, mask, W, H };
+}
+
+function diffCanvas(d, zoom) {
+  const c = document.createElement('canvas'); c.width = d.W * zoom; c.height = d.H * zoom;
+  const ctx = c.getContext('2d');
+  for (let y = 0; y < d.H; y++) for (let x = 0; x < d.W; x++) {
+    const m = d.mask[y * d.W + x]; if (!m) continue;
+    ctx.fillStyle = m === 1 ? '#ff3b3b' : (m === 2 ? '#2a2a33' : '#1a1f2a'); ctx.fillRect(x * zoom, y * zoom, zoom, zoom);
+  }
+  return c;
+}
+
+function col() { const d = document.createElement('div'); d.style.display = 'flex'; d.style.flexDirection = 'column'; d.style.gap = '3px'; return d; }
+function wrapCell(cols, tag) {
+  const wrap = document.createElement('div'); wrap.className = 'cell' + (RED ? ' red' : ''); wrap.appendChild(cols);
+  const t = document.createElement('div'); t.className = 'tag'; t.innerHTML = tag; wrap.appendChild(t); return wrap;
+}
+
+/** Font render placed into a sprite-sized bitmap at the name's own origin. */
+function recreate(name, opts) {
+  const sp = spriteIA(name); const lay = FONT.layouts[name];
+  const r = renderIA(sp.text, opts);
+  const out = { width: sp.width, height: sp.height, I: new Uint8Array(sp.width * sp.height), A: new Uint8Array(sp.width * sp.height), covered: new Uint8Array(sp.width * sp.height) };
+  const x0 = lay ? lay.glyphs[0][1] : FONT.textOrigin.x, y0 = FONT.faceRow;
+  for (let y = 0; y < r.height; y++) for (let x = 0; x < r.width; x++) {
+    const dx = x - r.originX + x0, dy = y - r.originY + y0;
+    if (dx < 0 || dy < 0 || dx >= sp.width || dy >= sp.height) continue;
+    const o = dy * sp.width + dx, k = y * r.width + x;
+    out.I[o] = r.I[k]; out.A[o] = r.A[k]; out.covered[o] = 1;
+  }
+  return out;
+}
+
+function cropSprite(sp, x0, x1, y0, y1) {
+  const w = x1 - x0, h = y1 - y0; const out = { width: w, height: h, I: new Uint8Array(w * h), A: new Uint8Array(w * h) };
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const sx = x + x0, sy = y + y0; if (sx < 0 || sy < 0 || sx >= sp.width || sy >= sp.height) continue;
+    const o = sy * sp.width + sx; if (sp.art[o]) continue;
+    out.I[y * w + x] = sp.I[o]; out.A[y * w + x] = sp.A[o];
+  }
+  return out;
+}
+
+function renderAll() {
+  const L = $('#letters'); L.innerHTML = '';
+  for (const letter of [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ', '.']) {
+    const g = FONT.glyphs[letter];
+    let src = null;
+    for (const [name, lay] of Object.entries(FONT.layouts)) for (const [id, x] of lay.glyphs) if (id === letter && !src) src = { name, x };
+    const cols = col();
+    const rec = renderIA(letter, { exact: false });
+    if (src) {
+      const sp = spriteIA(src.name);
+      const crop = cropSprite(sp, src.x + g.ox, src.x + g.ox + g.w, FONT.boxRow, FONT.boxRow + FONT.boxH);
+      for (let y = 0; y < crop.height; y++) for (let x = 0; x < crop.width; x++) {
+        const fx = x + g.ox, o = y * crop.width + x;
+        if ((fx < 0 || fx >= g.faceW) && crop.I[o] > 40) { crop.I[o] = 0; crop.A[o] = 0; }   // neighbour ink in the margin
+      }
+      cols.appendChild(iaToCanvas(crop, ZOOM));
+    } else {
+      cols.appendChild(iaToCanvas({ width: rec.width, height: rec.height, I: new Uint8Array(rec.width * rec.height), A: new Uint8Array(rec.width * rec.height) }, ZOOM));
+    }
+    cols.appendChild(iaToCanvas(rec, ZOOM));
+    const label = g.synth ? '<span class="syn">synth</span>' : (src ? src.name.toUpperCase() + (g.repaired ? ' <span class="syn">(repaired)</span>' : '') : '');
+    L.appendChild(wrapCell(cols, `<b>${letter}</b> ${label}`));
+  }
+  const N = $('#names'); N.innerHTML = ''; let totalDiff = 0, exactNames = 0, counted = 0;
+  for (const name of Object.keys(FONT.sprites)) {
+    const sp = spriteIA(name);
+    const isLayout = !!FONT.layouts[name];
+    const cols = col();
+    cols.appendChild(iaToCanvas(sp, ZOOM, sp.imageData));
+    let tag;
+    if (isLayout) {
+      const rec = recreate(name, { exact: true });
+      const d = diffIA(sp, rec, sp.art); totalDiff += d.n; counted++; if (!d.n) exactNames++;
+      cols.appendChild(iaToCanvas(rec, ZOOM)); cols.appendChild(diffCanvas(d, ZOOM));
+      tag = `<b>${sp.text}</b> — font glyphs — <span class="${d.n ? 'bad' : 'ok'}">${d.n} px differ</span> (art pixels dimmed)`;
+    } else {
+      tag = `<b>${sp.text}</b> — condensed cut (1 px stems), not part of the font; source of J`;
+    }
+    N.appendChild(wrapCell(cols, tag));
+  }
+  $('#summary').innerHTML = `<span class="${totalDiff ? 'bad' : 'ok'}">${exactNames}/${counted} names pixel-identical on every non-art pixel, ${totalDiff} differing pixels total</span>`;
+  const D = $('#default'); D.innerHTML = '';
+  for (const name of Object.keys(FONT.layouts)) {
+    const sp = spriteIA(name); const rec = recreate(name, { exact: false }); const d = diffIA(sp, rec, sp.art);
+    const cols = col(); cols.appendChild(iaToCanvas(sp, ZOOM, sp.imageData)); cols.appendChild(iaToCanvas(rec, ZOOM)); if (d.n) cols.appendChild(diffCanvas(d, ZOOM));
+    D.appendChild(wrapCell(cols, `<b>${sp.text}</b> — <span class="${d.n ? 'bad' : 'ok'}">${d.n} px differ</span>`));
+  }
+  const rows = Object.entries(FONT.kern).map(([p, k]) => `<tr><td><b>${p}</b></td><td>${k > 0 ? '+' : ''}${k}</td><td>measured</td></tr>`)
+    .concat(Object.entries(FONT.kernSynth).map(([p, k]) => `<tr><td>${p}</td><td>${k}</td><td class="syn">class guess (unseen pair)</td></tr>`));
+  $('#kern').innerHTML = `<table><tr><th>pair</th><th>kern (px)</th><th>source</th></tr>${rows.join('')}</table>`;
+  renderCustom();
+}
+
+function renderCustom() {
+  const C = $('#customout'); C.innerHTML = '';
+  const text = $('#custom').value.toUpperCase();
+  const r = renderIA(text, { exact: true, kern: $('#ckern').checked });
+  const cols = col(); cols.appendChild(iaToCanvas(r, ZOOM));
+  C.appendChild(wrapCell(cols, `<b>${text}</b> ${r.width}×${r.height}` + (layoutText(text).exactName ? ' — original layout' : ' — default glyphs + kerning')));
+}
+
+$('#zoom').addEventListener('input', (e) => { ZOOM = +e.target.value; $('#zoomv').textContent = ZOOM + '×'; renderAll(); });
+$('#bg').addEventListener('change', (e) => { RED = e.target.checked; renderAll(); });
+$('#custom').addEventListener('input', renderCustom);
+$('#ckern').addEventListener('change', renderCustom);
+renderAll();
+window.__fontPlayground = { renderIA, spriteIA, diffIA, FONT, recreate };
+</script>
+</body>
+</html>
