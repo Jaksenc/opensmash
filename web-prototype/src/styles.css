@@ -938,7 +938,7 @@ body.retro-home::before {
   stroke-linejoin: round;
 }
 .retro-page-error {
-  display: none;
+  display: block;
   position: fixed;
   z-index: 2200;
   top: 14px;
