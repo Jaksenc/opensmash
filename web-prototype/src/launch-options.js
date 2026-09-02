@@ -248,6 +248,7 @@ function characterAssets(character) {
     slug: character.slug,
     fkind: character.fkind,
     short: character.short || character.name,
+    name: character.name || character.display || null,
     bundleUrl: character.bundleUrl || `bundles/${character.bundle}`,
     uiUrl: character.uiUrl || (character.ui ? `bundles/${character.slug}.osbui` : null),
     voiceUrl: character.voiceUrl || (character.voice ? `bundles/${character.slug}.wav` : null),
@@ -320,6 +321,7 @@ export function engineUrl(action, advancedOptions, gamepads = []) {
     }
     params.set("fkind", String(character.fkind));
     params.set("player", "0");
+    if (character.name) params.set("inject_name", character.name);
     if (options.characterMesh !== "auto") {
       params.set("base", `${character.slug}:${options.characterMesh}`);
     }
