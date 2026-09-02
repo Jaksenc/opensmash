@@ -1076,6 +1076,69 @@ body.is-advanced-open #glove-canvas { z-index: 1800; }
 .game-surface-shell { width: 100%; }
 .mobile-controls { display: none; }
 
+/* Temporary `?trailer=1` capture surface. Start Capture releases the staged
+   engine from a user gesture; Reveal Website FLIP-animates that same live
+   iframe into its normal page position. */
+.game-surface-shell.is-cinematic {
+  position: fixed;
+  inset: 0;
+  z-index: 2500;
+  display: grid;
+  width: 100vw;
+  height: 100dvh;
+  background: #000;
+}
+.game-surface-shell.is-cinematic .intro-video-frame {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  max-height: none;
+  aspect-ratio: auto;
+}
+body.is-trailer-cinematic { overflow: hidden; }
+body.is-trailer-mode .retro-site-header,
+body.is-trailer-mode .arena-surface {
+  transition: opacity 620ms ease 180ms, filter 620ms ease 180ms;
+}
+body.is-trailer-cinematic .retro-site-header,
+body.is-trailer-cinematic .arena-surface {
+  opacity: 0;
+  filter: brightness(.35) blur(8px);
+}
+body.is-trailer-mode .game-fullscreen-control { display: none; }
+body.is-trailer-mode.is-launch-flow-open .launch-flow-overlay { z-index: 3000; }
+body.is-trailer-mode.is-launch-flow-open #glove-canvas { z-index: 3200; }
+.trailer-cinematic-control {
+  position: fixed;
+  z-index: 2600;
+  right: 16px;
+  bottom: 16px;
+  padding: 9px 12px;
+  border: 1px solid rgba(255, 242, 214, .5);
+  border-radius: 3px;
+  background: rgba(8, 5, 4, .82);
+  color: #fff2d6;
+  font: 600 11px/1 "Kanit", sans-serif;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  opacity: .82;
+  cursor: none;
+  transition: opacity 120ms linear, filter 120ms linear;
+}
+.trailer-cinematic-control:hover,
+.trailer-cinematic-control:focus-visible {
+  opacity: 1;
+  outline: 0;
+  filter: drop-shadow(0 0 8px rgba(255, 179, 81, .65));
+}
+.trailer-cinematic-control:disabled {
+  color: rgba(255, 242, 214, .6);
+  filter: none;
+}
+.trailer-cinematic-control.is-reveal { opacity: 0; }
+.trailer-cinematic-control.is-reveal:hover,
+.trailer-cinematic-control.is-reveal:focus-visible { opacity: 1; }
+
 /* Fullscreen (native) or immersive (CSS fallback for browsers without an
    element Fullscreen API, i.e. iPhone Safari): the shell pins over the page
    and the frame fills it; the engine letterboxes its own 4:3 canvas. */

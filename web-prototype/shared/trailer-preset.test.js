@@ -1,0 +1,84 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+
+import { DEFAULT_ADVANCED_OPTIONS, engineUrl } from "../src/launch-options.js";
+import {
+  TRAILER_CPU_LEVEL,
+  TRAILER_INTRO_ROOM_PICKS,
+  TRAILER_INTRO_SLUGS,
+  TRAILER_OPPONENT_SLUGS,
+  TRAILER_STAGE,
+  createTrailerIntroAction,
+  createTrailerMatchAction,
+} from "../src/trailer-preset.js";
+
+function fighter(slug, fkind) {
+  return {
+    slug,
+    name: slug,
+    short: slug,
+    fkind,
+    bundle: `${slug}.osb6`,
+    bundleUrl: `/bundles/${slug}.osb6`,
+  };
+}
+
+test("trailer intro assigns the fixed cast to every injectable opening card", () => {
+  const characters = TRAILER_INTRO_SLUGS.map((slug, index) => fighter(slug, index));
+  const action = createTrailerIntroAction({ type: "start", trailerIntro: true }, characters);
+  const config = action.introConfig;
+
+  assert.deepEqual(
+    config.filter((card) => card.type === "character").map((card) => card.character.slug),
+    TRAILER_INTRO_SLUGS,
+  );
+  assert.deepEqual(
+    config.filter((card) => card.type === "vanilla").map((card) => card.mesh),
+    ["donkey", "yoshi"],
+  );
+
+  const url = new URL(engineUrl(
+    action,
+    { ...DEFAULT_ADVANCED_OPTIONS, bootMode: "full-boot" },
+  ), "https://opensmash.test");
+  assert.equal(url.searchParams.get("SSB64_TRAILER_HOLD"), "1");
+  const roomFkinds = TRAILER_INTRO_ROOM_PICKS.map((slug) =>
+    config.find((card) => card.type === "character" && card.character.slug === slug).fkind,
+  );
+  assert.equal(url.searchParams.get("SSB64_OPENING_FIRST_FKIND"), String(roomFkinds[0]));
+  assert.equal(url.searchParams.get("SSB64_OPENING_SECOND_FKIND"), String(roomFkinds[1]));
+});
+
+test("trailer hero launches the exact fixed opponents and capture settings", () => {
+  const hero = fighter("nicolascage", 7);
+  const opponents = TRAILER_OPPONENT_SLUGS.map((slug, index) => fighter(slug, index + 1));
+  const action = createTrailerMatchAction({ type: "character", character: hero }, [hero, ...opponents]);
+  const url = new URL(engineUrl(action, {
+    ...DEFAULT_ADVANCED_OPTIONS,
+    bootMode: "free-for-all",
+    stage: TRAILER_STAGE,
+    opponentLevel: TRAILER_CPU_LEVEL,
+  }), "https://opensmash.test");
+
+  assert.deepEqual(
+    action.opponents.map((opponent) => opponent.character.slug),
+    TRAILER_OPPONENT_SLUGS.slice(0, 3),
+  );
+  assert.equal(url.searchParams.get("SSB64_BOOT_BATTLE"), "7,1,7,1,2,3");
+  assert.equal(url.searchParams.get("SSB64_CPU_LEVEL"), TRAILER_CPU_LEVEL);
+  assert.deepEqual(
+    url.searchParams.getAll("inject_player").map((row) => JSON.parse(row).slug),
+    TRAILER_OPPONENT_SLUGS.slice(0, 3),
+  );
+});
+
+test("selecting a configured opponent deterministically advances through the pool", () => {
+  const roster = TRAILER_OPPONENT_SLUGS.map((slug, index) => fighter(slug, index + 1));
+  const selected = roster[0];
+  const action = createTrailerMatchAction({ type: "character", character: selected }, roster);
+
+  assert.deepEqual(
+    action.opponents.map((opponent) => opponent.character.slug),
+    TRAILER_OPPONENT_SLUGS.slice(1, 4),
+  );
+});
