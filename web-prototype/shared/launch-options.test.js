@@ -31,6 +31,7 @@ test("launch URLs do not contain per-launch cache busters", () => {
 test("default launches start a free-for-all", () => {
   const characterQuery = queryFor({ type: "character", character: CHARACTER });
   assert.equal(characterQuery.get("inject"), "bundles/testfighter.osb6");
+  assert.equal(characterQuery.get("inject_name"), "Test Fighter");
   assert.equal(characterQuery.get("inject_ui"), null);
   assert.equal(characterQuery.get("inject_voice"), null);
   assert.match(characterQuery.get("SSB64_BOOT_BATTLE"), /^0,\d+,\d+,1,\d+,\d+$/);
@@ -81,6 +82,7 @@ test("character launches mix one vanilla, one grid, and one unused owned opponen
         slug: "gridfighter",
         fkind: 5,
         short: "GRID",
+        name: "Grid Fighter",
         bundleUrl: "bundles/gridfighter-link.osb",
         uiUrl: null,
         voiceUrl: null,
@@ -90,6 +92,7 @@ test("character launches mix one vanilla, one grid, and one unused owned opponen
         slug: "myfighter",
         fkind: 3,
         short: "MINE",
+        name: "My Fighter",
         bundleUrl: "/api/fighters/mine/assets/bundle",
         uiUrl: null,
         voiceUrl: null,
