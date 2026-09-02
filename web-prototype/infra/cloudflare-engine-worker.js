@@ -82,11 +82,22 @@ export function sharedCacheAllowed(pathname) {
   return !pathname.startsWith("/engine/bundles/");
 }
 
+// Mirrors ENGINE_SECURITY_HEADERS in server/index.js: the engine may only be
+// framed by the outer app on the same origin.
+export const ENGINE_SECURITY_HEADERS = Object.freeze({
+  "X-Content-Type-Options": "nosniff",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=()",
+  "Content-Security-Policy": "frame-ancestors 'self'",
+  "X-Frame-Options": "SAMEORIGIN",
+});
+
 function clientResponse(response, request, cacheStatus) {
   const url = new URL(request.url);
   const headers = new Headers(response.headers);
   headers.set("Cache-Control", browserCacheControl(url.pathname, url.searchParams.has("v")));
   headers.set("X-OpenSmash-Edge-Cache", cacheStatus);
+  for (const [name, value] of Object.entries(ENGINE_SECURITY_HEADERS)) headers.set(name, value);
   return new Response(request.method === "HEAD" ? null : response.body, {
     status: response.status,
     statusText: response.statusText,

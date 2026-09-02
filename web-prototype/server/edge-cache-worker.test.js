@@ -52,3 +52,10 @@ test("all versioned shared runtime files are immutable, but bundles are not", ()
   assert.equal(sharedCacheAllowed("/engine/files/BattleShip.o2r"), true);
   assert.equal(sharedCacheAllowed("/engine/bundles/private.zip"), false);
 });
+
+test("edge responses carry the engine security headers", async () => {
+  const { ENGINE_SECURITY_HEADERS } = await import("../infra/cloudflare-engine-worker.js");
+  assert.equal(ENGINE_SECURITY_HEADERS["Content-Security-Policy"], "frame-ancestors 'self'");
+  assert.equal(ENGINE_SECURITY_HEADERS["X-Frame-Options"], "SAMEORIGIN");
+  assert.equal(ENGINE_SECURITY_HEADERS["X-Content-Type-Options"], "nosniff");
+});

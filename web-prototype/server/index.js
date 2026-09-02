@@ -10,19 +10,50 @@ import { createAuthService } from "./auth.js";
 import { createJobDatabase } from "./job-database.js";
 import { createJobDispatcher } from "./job-dispatcher.js";
 import { createObjectStore } from "./object-store.js";
-import { assignRosterBases, bundleForBase, FIGHTERS } from "./roster.js";
+import { cacheControlForEnvironment, edgeCacheHeaders } from "./cache-policy.js";
+import { withInitialState } from "./html-state.js";
+import { resolveProjectPaths } from "./project-paths.js";
+import { assignRosterBases, bundleForBase, FIGHTERS, readOsb6Targets } from "./roster.js";
 import { matchesCharacterSearch } from "../shared/character-search.js";
+import { bakedRosterEntries } from "../shared/baked-roster.js";
 import { ROMS_BY_SHA1, UNSUPPORTED_ROMS_BY_SHA1 } from "../shared/rom-catalog.js";
 
 const APP_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const REPO_ROOT = path.resolve(APP_ROOT, "..", "..");
+const {
+  pipelineProjectRoot: PIPELINE_PROJECT_ROOT,
+  engineRoot: ENGINE_ROOT,
+  pipelineUiRoot: PIPELINE_UI_ROOT,
+} = resolveProjectPaths(APP_ROOT);
 const DIST_ROOT = path.join(APP_ROOT, "dist");
 const APP_SHELL_PATHS = new Set(["/", "/create", "/create/", "/index.html"]);
 const APP_SHELL_CACHE_CONTROL = "public, max-age=15";
 const APP_SHELL_EDGE_CACHE_CONTROL =
-  "public, max-age=60, stale-while-revalidate=300, stale-if-error=86400";
-const ENGINE_ROOT = path.join(REPO_ROOT, "BattleShip", "web-dist");
-const PIPELINE_UI_ROOT = path.join(REPO_ROOT, "pipeline", "play", "ui");
+  "public, max-age=30, stale-while-revalidate=300, stale-if-error=86400";
+// Only "/" and "/create" are client-side routes; everything else under the
+// outer app is a real file or a 404, so the shell is never served for
+// /favicon.ico, /robots.txt, or typos.
+const BASE_SECURITY_HEADERS = Object.freeze({
+  "X-Content-Type-Options": "nosniff",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=()",
+});
+// The outer app must never be framed (a framed /create could be clickjacked
+// into a public submission). The engine is framed by the outer app itself.
+const APP_SECURITY_HEADERS = Object.freeze({
+  ...BASE_SECURITY_HEADERS,
+  "Content-Security-Policy": "frame-ancestors 'none'",
+  "X-Frame-Options": "DENY",
+});
+const ENGINE_SECURITY_HEADERS = Object.freeze({
+  ...BASE_SECURITY_HEADERS,
+  "Content-Security-Policy": "frame-ancestors 'self'",
+  "X-Frame-Options": "SAMEORIGIN",
+});
+
+function securityHeaders(pathname) {
+  return pathname.startsWith("/engine/") ? ENGINE_SECURITY_HEADERS : APP_SECURITY_HEADERS;
+}
+const PIPELINE_PLAY_ROOT = path.join(PIPELINE_PROJECT_ROOT, "play");
 const SITE_ASSETS_ROOT = path.join(APP_ROOT, "visual", "assets");
 const CHARACTERS_CONFIG = path.join(APP_ROOT, "config", "characters.json");
 const objectStore = createObjectStore({ appRoot: APP_ROOT });
@@ -32,7 +63,7 @@ const jobDatabase = createJobDatabase({
 });
 const fighterJobs = createFighterJobs({
   appRoot: APP_ROOT,
-  repoRoot: REPO_ROOT,
+  repoRoot: PIPELINE_PROJECT_ROOT,
   engineRoot: ENGINE_ROOT,
   pipelineUiRoot: PIPELINE_UI_ROOT,
   objectStore,
@@ -72,6 +103,8 @@ const MIME_TYPES = {
   ".js": "text/javascript; charset=utf-8",
   ".json": "application/json; charset=utf-8",
   ".glb": "model/gltf-binary",
+  ".ico": "image/x-icon",
+  ".txt": "text/plain; charset=utf-8",
   ".mp3": "audio/mpeg",
   ".mp4": "video/mp4",
   ".png": "image/png",
@@ -88,6 +121,7 @@ function json(res, status, data, headers = {}) {
     "Content-Type": "application/json; charset=utf-8",
     "Content-Length": body.length,
     "Cache-Control": "no-store",
+    ...BASE_SECURITY_HEADERS,
     ...headers,
   });
   res.end(body);
@@ -226,10 +260,12 @@ async function serveFile(req, res, filePath, cacheControl = "no-store", extraHea
   try {
     const info = await stat(filePath);
     if (!info.isFile()) return false;
+    const pathname = new URL(req.url, "http://localhost").pathname;
     res.writeHead(200, {
       "Content-Type": MIME_TYPES[path.extname(filePath).toLowerCase()] || "application/octet-stream",
       "Content-Length": info.size,
-      "Cache-Control": cacheControl,
+      "Cache-Control": cacheControlForEnvironment(cacheControl, IS_PRODUCTION),
+      ...securityHeaders(pathname),
       ...extraHeaders,
     });
     if (req.method === "HEAD") {
@@ -267,49 +303,7 @@ async function readJsonBody(req, limit = MAX_JSON_BODY) {
 }
 
 async function configuredCharacters(query = "", user = null) {
-  const config = JSON.parse(await readFile(CHARACTERS_CONFIG, "utf8"));
-  const featuredOrder = new Map(
-    config.map((entry, index) => [typeof entry === "string" ? entry : entry.slug, index]),
-  );
-  const result = [];
-
-  for (const character of await engineRoster()) {
-    const { slug } = character;
-    if (!/^[a-z0-9]+$/.test(slug)) continue;
-    if (!fighterJobs.isSlugAccessible(slug, user?.uid)) continue;
-
-    const fighterName = character.base || "mario";
-    const fkind = FIGHTERS.indexOf(fighterName);
-    if (fkind === -1) continue;
-
-    const characterRoot = path.join(PIPELINE_UI_ROOT, slug);
-    try {
-      await access(path.join(characterRoot, "portrait_raw.png"));
-      const bundle = bundleForBase(slug, fighterName);
-      await access(path.join(ENGINE_ROOT, "bundles", bundle));
-      result.push({
-        slug,
-        name: character.display,
-        short: character.short,
-        portrait: `/character-assets/${slug}/portrait.png`,
-        announcer: character.voice ? `/character-assets/${slug}/announcer.wav` : null,
-        base: fighterName,
-        fkind,
-        bundle,
-        ui: character.ui,
-        voice: character.voice,
-      });
-    } catch (error) {
-      console.warn(`Skipping staged character '${slug}': ${error.message}`);
-    }
-  }
-
-  result.sort((left, right) => {
-    const leftRank = featuredOrder.get(left.slug) ?? Number.MAX_SAFE_INTEGER;
-    const rightRank = featuredOrder.get(right.slug) ?? Number.MAX_SAFE_INTEGER;
-    return leftRank - rightRank || left.name.localeCompare(right.name);
-  });
-
+  const result = [...(await bakedRoster()).characters];
   const configuredSlugs = new Set(result.map((character) => character.slug));
   for (const job of fighterJobs.listVisible(user?.uid)) {
     if (job.status !== "complete" || !job.character || configuredSlugs.has(job.slug)) continue;
@@ -319,38 +313,185 @@ async function configuredCharacters(query = "", user = null) {
   return result.filter((character) => matchesCharacterSearch(character, query));
 }
 
+async function bakedCharacterConfig() {
+  return (await bakedRoster()).entries;
+}
+
+// The baked roster is computed once and reused by every request. It walks
+// play/ and play/ui/<slug> (readdir, OSB6 header, character.json, access
+// checks per character), which at 1000 fighters is thousands of fs ops, so
+// it must never run per request. The cache is rebuilt when
+// config/characters.json changes (one stat per request to notice that).
+let bakedRosterCache = null;
+let bakedRosterBuild = null;
+
+async function bakedRoster() {
+  let mtime = 0;
+  try {
+    mtime = (await stat(CHARACTERS_CONFIG)).mtimeMs;
+  } catch {
+    // A missing manifest means an empty baked roster; keep any prior cache.
+  }
+  if (bakedRosterCache && bakedRosterCache.mtime === mtime) return bakedRosterCache;
+  bakedRosterBuild ||= buildBakedRoster(mtime).finally(() => { bakedRosterBuild = null; });
+  return bakedRosterBuild;
+}
+
+async function buildBakedRoster(mtime) {
+  const started = Date.now();
+  const entries = bakedRosterEntries(JSON.parse(await readFile(CHARACTERS_CONFIG, "utf8")));
+  const roster = await scanEngineRoster(entries);
+  const characters = [];
+  for (const character of roster) {
+    const { slug } = character;
+    const fighterName = character.base || "mario";
+    const fkind = FIGHTERS.indexOf(fighterName);
+    if (fkind === -1) continue;
+    const characterRoot = path.join(PIPELINE_UI_ROOT, slug);
+    try {
+      await access(path.join(characterRoot, "portrait_raw.png"));
+      const bundle = bundleForBase(slug);
+      await access(path.join(PIPELINE_PLAY_ROOT, bundle));
+      // Small derivatives (pipeline/portrait_tiles.py); the grid draws the
+      // 90x86 tile and thumbnails use the 256, so a 1000-fighter home page
+      // is a few MB, not a gigabyte. Fall back to the raw portrait for a
+      // character published before the derivatives existed.
+      const derivative = async (name) => {
+        try {
+          await access(path.join(characterRoot, name));
+          return `/character-assets/${slug}/${name}`;
+        } catch {
+          return `/character-assets/${slug}/portrait.png`;
+        }
+      };
+      characters.push({
+        slug,
+        name: character.display,
+        short: character.short,
+        portrait: await derivative("portrait_tile.png"),
+        portraitMedium: await derivative("portrait_medium.png"),
+        portraitFull: `/character-assets/${slug}/portrait.png`,
+        announcer: character.voice ? `/character-assets/${slug}/announcer.wav` : null,
+        base: fighterName,
+        fkind,
+        bundle,
+        variants: character.variants,
+        ui: character.ui,
+        voice: character.voice,
+      });
+    } catch (error) {
+      console.warn(`Skipping staged character '${slug}': ${error.message}`);
+    }
+  }
+  bakedRosterCache = {
+    mtime,
+    entries,
+    roster,
+    characters,
+    slugs: new Set(roster.map((character) => character.slug)),
+  };
+  console.log(`Baked roster: ${characters.length} characters in ${Date.now() - started} ms`);
+  return bakedRosterCache;
+}
+
 async function engineRoster() {
-  const bundleRoot = path.join(ENGINE_ROOT, "bundles");
-  const files = new Set(await readdir(bundleRoot));
+  return (await bakedRoster()).roster;
+}
+
+async function scanEngineRoster(entries) {
+  const files = new Set(await readdir(PIPELINE_PLAY_ROOT));
   const characters = [];
 
-  for (const file of [...files].sort()) {
-    if (!file.endsWith(".osb") || file.slice(0, -4).includes("-")) continue;
-    const slug = file.slice(0, -4);
-    const variants = [...files]
-      .filter((candidate) => candidate.startsWith(`${slug}-`) && candidate.endsWith(".osb"))
-      .map((candidate) => candidate.slice(slug.length + 1, -4))
-      .sort();
+  for (const entry of entries) {
+    const { slug } = entry;
+    if (!files.has(`${slug}.osb6`)) {
+      console.warn(`Skipping baked character '${slug}': play/${slug}.osb6 is missing`);
+      continue;
+    }
+    let variants;
+    try {
+      variants = (await readOsb6Targets(path.join(PIPELINE_PLAY_ROOT, `${slug}.osb6`)))
+        .filter((target) => target !== "mario")
+        .sort();
+    } catch (error) {
+      console.warn(`Skipping baked character '${slug}': ${error.message}`);
+      continue;
+    }
     let metadata = {};
     try {
       metadata = JSON.parse(await readFile(path.join(PIPELINE_UI_ROOT, slug, "character.json"), "utf8"));
     } catch {
       // Bundle-only characters still work with generated labels.
     }
-    const display = metadata.display || slug;
+    const display = entry.name || metadata.display || slug;
+    let uiFiles = new Set();
+    try {
+      uiFiles = new Set(await readdir(path.join(PIPELINE_UI_ROOT, slug)));
+    } catch {
+      // configuredCharacters reports the missing required portrait clearly.
+    }
     characters.push({
       slug,
       display,
-      short: metadata.short || display.toUpperCase().replace(/[^A-Z]/g, "").slice(0, 7),
-      base: metadata.base ?? null,
-      preferredBases: metadata.preferred_bases,
+      short: entry.short || metadata.short || display.toUpperCase().replace(/[^A-Z]/g, "").slice(0, 10),
+      base: entry.base ?? metadata.base ?? null,
+      preferredBases: entry.preferredBases || metadata.preferred_bases,
       variants,
-      ui: files.has(`${slug}.osbui`),
-      voice: files.has(`${slug}.wav`),
+      ui: uiFiles.has(`${slug}.osbui`),
+      voice: uiFiles.has("announcer.wav"),
     });
   }
 
   return assignRosterBases(characters);
+}
+
+async function bakedEngineFile(relative) {
+  const match = relative.match(/^bundles\/([a-z0-9]+)\.(osb6|osbui|wav)$/);
+  if (!match) return null;
+  const [, slug, extension] = match;
+  if (!(await bakedRoster()).slugs.has(slug)) return null;
+
+  if (extension === "osb6") {
+    return path.join(PIPELINE_PLAY_ROOT, `${slug}.osb6`);
+  }
+  return path.join(
+    PIPELINE_UI_ROOT,
+    slug,
+    extension === "osbui" ? `${slug}.osbui` : "announcer.wav",
+  );
+}
+
+async function serveAppShell(req, res) {
+  const shellPath = path.join(DIST_ROOT, "index.html");
+  let html;
+  try {
+    html = await readFile(shellPath, "utf8");
+  } catch {
+    return false;
+  }
+
+  // This response is cached and shared by Cloudflare, so it must never contain
+  // cookie-derived or private fighter data. Public Firestore fighters are
+  // intentionally resolved on each edge cache miss rather than at startup.
+  // If roster discovery fails, omit the seed and let the client fall back to
+  // the no-store API instead of caching an authoritative empty roster.
+  let initialState = {};
+  try {
+    initialState = { characters: await configuredCharacters("", null) };
+  } catch (error) {
+    console.warn(`Could not embed the public character roster: ${error.message}`);
+  }
+  const body = Buffer.from(withInitialState(html, initialState));
+  res.writeHead(200, {
+    "Content-Type": "text/html; charset=utf-8",
+    "Content-Length": body.length,
+    "Cache-Control": cacheControlForEnvironment(APP_SHELL_CACHE_CONTROL, IS_PRODUCTION),
+    ...edgeCacheHeaders(APP_SHELL_EDGE_CACHE_CONTROL, IS_PRODUCTION),
+    ...APP_SECURITY_HEADERS,
+  });
+  if (req.method === "HEAD") res.end();
+  else res.end(body);
+  return true;
 }
 
 async function handleRequest(req, res, vite) {
@@ -481,8 +622,17 @@ async function handleRequest(req, res, vite) {
     }
   }
 
+  const fighterCancelMatch = pathname.match(/^\/api\/fighters\/([a-f0-9-]+)\/cancel$/);
+  if (req.method === "POST" && fighterCancelMatch) {
+    try {
+      return json(res, 200, { job: await fighterJobs.cancel(fighterCancelMatch[1], user.uid) });
+    } catch (error) {
+      return json(res, error.status || 400, { error: error.message || "Could not cancel fighter." });
+    }
+  }
+
   const fighterArtifactMatch = pathname.match(
-    /^\/api\/fighters\/([a-f0-9-]+)\/assets\/(portrait|announcer|bundle|ui|manifest|stock|emblem)\/?$/,
+    /^\/api\/fighters\/([a-f0-9-]+)\/assets\/(portrait|portraitTile|portraitMedium|announcer|bundle|ui|manifest|stock|emblem)\/?$/,
   );
   const fighterVariantMatch = pathname.match(
     /^\/api\/fighters\/([a-f0-9-]+)\/assets\/variants\/([a-z0-9]+)\/?$/,
@@ -498,9 +648,12 @@ async function handleRequest(req, res, vite) {
       res.writeHead(200, {
         "Content-Type": artifact.contentType || "application/octet-stream",
         "Content-Length": contents.length,
-        "Cache-Control": artifact.public
-          ? "public, max-age=31536000, immutable"
-          : "private, no-store",
+        "Cache-Control": cacheControlForEnvironment(
+          artifact.public
+            ? "public, max-age=31536000, immutable"
+            : "private, no-store",
+          IS_PRODUCTION,
+        ),
         Vary: "Cookie",
       });
       return req.method === "HEAD" ? res.end() : res.end(contents);
@@ -611,7 +764,15 @@ async function handleRequest(req, res, vite) {
     if (!validSession(req)) return json(res, 401, { error: "ROM validation required" });
     const relative = pathname.slice("/engine/".length) || "index.html";
     const bundleMatch = relative.match(/^bundles\/([a-z0-9]+)(?:-|\.)/);
-    if (bundleMatch && !fighterJobs.isSlugAccessible(bundleMatch[1], user?.uid)) {
+    const bakedFile = bundleMatch ? await bakedEngineFile(relative) : null;
+    const visibleDynamicBundle = bundleMatch && fighterJobs
+      .listVisible(user?.uid)
+      .some((job) => job.slug === bundleMatch[1]);
+    if (bundleMatch && !bakedFile && !visibleDynamicBundle) {
+      return json(res, 404, { error: "Engine file not found" });
+    }
+    if (bakedFile) {
+      if (await serveFile(req, res, bakedFile, engineCacheControl(relative, url.searchParams))) return;
       return json(res, 404, { error: "Engine file not found" });
     }
     const filePath = safeFile(ENGINE_ROOT, relative);
@@ -622,30 +783,27 @@ async function handleRequest(req, res, vite) {
   if (pathname === "/bundles.json" || pathname === "/roster.json") {
     if (!validSession(req)) return json(res, 401, { error: "ROM validation required" });
     if (pathname === "/bundles.json") {
-      const names = (await readdir(path.join(ENGINE_ROOT, "bundles")))
-        .filter((name) => /\.(osb|osbui|wav)$/.test(name))
-        .filter((name) => fighterJobs.isSlugAccessible(name.match(/^([a-z0-9]+)/)?.[1], user?.uid))
-        .sort();
+      const names = (await engineRoster()).flatMap((character) => [
+        `${character.slug}.osb6`,
+        ...(character.ui ? [`${character.slug}.osbui`] : []),
+        ...(character.voice ? [`${character.slug}.wav`] : []),
+      ]).sort();
       return json(res, 200, names);
     }
-    return json(res, 200, (await engineRoster()).filter(
-      (character) => fighterJobs.isSlugAccessible(character.slug, user?.uid),
-    ));
+    return json(res, 200, await engineRoster());
   }
 
   if (pathname.startsWith("/character-assets/")) {
     const match = pathname.match(
-      /^\/character-assets\/([a-z0-9]+)\/(portrait\.png|announcer\.wav)$/,
+      /^\/character-assets\/([a-z0-9]+)\/(portrait\.png|portrait_tile\.png|portrait_medium\.png|announcer\.wav)$/,
     );
     if (!match) return json(res, 404, { error: "Character asset not found" });
-    if (!fighterJobs.isSlugAccessible(match[1], user?.uid)) {
+    if (!(await bakedRoster()).slugs.has(match[1])) {
       return json(res, 404, { error: "Character asset not found" });
     }
-    const allowed = (await engineRoster()).some((character) => character.slug === match[1]);
-    if (!allowed) return json(res, 404, { error: "Character asset not found" });
-    const fileName = match[2] === "portrait.png" ? "portrait_raw.png" : "announcer.wav";
+    const fileName = match[2] === "portrait.png" ? "portrait_raw.png" : match[2];
     const filePath = path.join(PIPELINE_UI_ROOT, match[1], fileName);
-    if (await serveFile(req, res, filePath, "public, max-age=300")) return;
+    if (await serveFile(req, res, filePath, "public, max-age=3600")) return;
     return json(res, 404, { error: "Character asset not found" });
   }
 
@@ -687,13 +845,7 @@ async function handleRequest(req, res, vite) {
   }
 
   if (APP_SHELL_PATHS.has(pathname)) {
-    if (await serveFile(
-      req,
-      res,
-      path.join(DIST_ROOT, "index.html"),
-      APP_SHELL_CACHE_CONTROL,
-      { "Cloudflare-CDN-Cache-Control": APP_SHELL_EDGE_CACHE_CONTROL },
-    )) return;
+    if (await serveAppShell(req, res)) return;
     return json(res, 404, { error: "Frontend build not found. Run pnpm build first." });
   }
 
@@ -703,8 +855,7 @@ async function handleRequest(req, res, vite) {
     ? "public, max-age=31536000, immutable"
     : "public, max-age=300";
   if (filePath && (await serveFile(req, res, filePath, cacheControl))) return;
-  if (await serveFile(req, res, path.join(DIST_ROOT, "index.html"), "no-store")) return;
-  return json(res, 404, { error: "Frontend build not found. Run pnpm build first." });
+  return json(res, 404, { error: "Not found" });
 }
 
 let vite = null;
@@ -721,6 +872,12 @@ if (IS_PRODUCTION && process.env.COOKIE_SECRET === undefined) {
   throw new Error("COOKIE_SECRET must be set in production.");
 }
 
+// Cloud Run runs a single instance; an unhandled rejection anywhere would
+// otherwise exit the process and take the whole site down with it.
+process.on("unhandledRejection", (reason) => {
+  console.error("Unhandled promise rejection:", reason);
+});
+
 const server = http.createServer((req, res) => {
   handleRequest(req, res, vite).catch((error) => {
     console.error(error);
@@ -736,6 +893,7 @@ await jobDatabase.init();
 await dispatcher.init();
 await authService.init();
 await fighterJobs.init();
+await bakedRoster().catch((error) => console.warn(`Baked roster unavailable at boot: ${error.message}`));
 server.listen(PORT, HOST, () => {
   console.log(`OpenSmash web: http://${HOST}:${PORT}`);
 });

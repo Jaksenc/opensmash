@@ -3,8 +3,9 @@
 The production React site and Node server. It combines the live character,
 authentication, ROM-validation, launch, and fighter-generation flows with the
 CRT, pixel-grid, 3D logo, hand cursor, cartridge, console, and controller visual
-system under `visual/`. It reads character portraits and metadata from `play/ui`
-and serves the browser engine from `BattleShip/web-dist`.
+system under `visual/`. It reads baked character bundles from `play`, portraits
+and metadata from `play/ui`, and serves the browser engine from
+`BattleShip/web-dist`.
 
 The deployed app is self-contained. `visual/` is the canonical visual runtime
 and asset tree; edit and review those files directly with the React app.
@@ -33,21 +34,26 @@ contract, and the API/worker cutover checklist, see
 Deployment prerequisites and the one-command GCP rollout are in
 [`infra/README.md`](infra/README.md).
 
-## Choose the featured characters
+## Publish baked characters
 
-Every character staged in `BattleShip/web-dist/bundles` appears automatically.
-Edit `config/characters.json` only to pin characters to the front of the roster:
+`config/characters.json` is the ordered allowlist and single source of truth for
+the baked roster. Ignored files in `BattleShip/web-dist/bundles` never add a
+website character. After reviewing a manually generated fighter, publish it
+through the pipeline:
 
-```json
-{ "slug": "queen" }
+```bash
+python3 pipeline/baked_roster.py character-slug
 ```
 
-The prototype uses the same deterministic, balanced skeleton/moveset assignment
-as the game. A character can declare `base` or `preferred_bases` in its pipeline
-`character.json`; otherwise it is balanced across the production-ready targets.
-Donkey Kong and Yoshi remain available as explicit targets but are excluded from
-the default pool. Completed database generation jobs are appended when they have
-not yet been staged into the engine bundle directory.
+This validates the required `play/<slug>*.osb` and `play/ui/<slug>` outputs and
+adds the slug to the manifest once. You can also pass `--publish` to
+`run_character.py` when the full generation run itself is the reviewed run.
+Commit the generated assets and manifest together. The site
+uses the same deterministic, balanced skeleton/moveset assignment as the game.
+A character can declare `base` or `preferred_bases` in its pipeline
+`character.json`; otherwise it is balanced across production-ready targets.
+Completed public database jobs are appended as the separate dynamic roster;
+signed-in users also receive their private jobs.
 
 ## ROM gate
 

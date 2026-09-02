@@ -3,8 +3,10 @@ opensmash/
 .DS_Store
 .env
 web-prototype/visual/assets/generated/
+web-prototype/.baked-characters/
 __pycache__/
 *.pyc
+.cache/
 eval/cells/
 eval/ratings.jsonl
 eval/state*.json
@@ -12,3 +14,9 @@ eval/*.log
 eval/pairs.json
 eval/*/cells/*/shots/
 eval/*/cells/*/shots-full/
+batch-state/run.log
+batch-state/*.png
+batch-state/*/
+play/ui/*/*.log
+# pipeline intermediates: rebuilt from play/ui/<slug>/bundle.json (osb_merge/convert_rigged); ship files are play/<slug>.osb6
+play/*.osb

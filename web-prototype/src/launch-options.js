@@ -1,3 +1,10 @@
+import {
+  controllerPortParams,
+  humanPortCount,
+  normalizePortChoices,
+  planControllerPorts,
+} from "../shared/controller-ports.js";
+
 export const CHARACTER_MESHES = [
   { value: "auto", label: "Automatic" },
   { value: "mario", label: "Mario", fkind: 0 },
@@ -52,6 +59,7 @@ export const DEFAULT_ADVANCED_OPTIONS = Object.freeze({
   stage: "random",
   opponentLevel: "3",
   bootMode: "free-for-all",
+  ports: Object.freeze(["auto", "auto", "auto", "auto"]),
 });
 
 const VALID_MESHES = new Set(CHARACTER_MESHES.map(({ value }) => value));
@@ -71,13 +79,20 @@ export function normalizeAdvancedOptions(value) {
     bootMode: VALID_BOOT_MODES.has(value?.bootMode)
       ? value.bootMode
       : DEFAULT_ADVANCED_OPTIONS.bootMode,
+    ports: normalizePortChoices(value?.ports),
   };
 }
 
 export function hasAdvancedOverrides(options) {
   return Object.keys(DEFAULT_ADVANCED_OPTIONS).some(
-    (key) => options[key] !== DEFAULT_ADVANCED_OPTIONS[key],
+    (key) => JSON.stringify(options[key]) !== JSON.stringify(DEFAULT_ADVANCED_OPTIONS[key]),
   );
+}
+
+// Which device drives each N64 port for a launch, from the controllers the
+// page can currently see plus the player's Advanced choices.
+export function controllerPlan(options, gamepads = []) {
+  return planControllerPorts({ gamepads, ports: normalizeAdvancedOptions(options).ports });
 }
 
 function resolvedCharacter(character, meshName) {
@@ -86,20 +101,14 @@ function resolvedCharacter(character, meshName) {
   const mesh = CHARACTER_MESHES.find(({ value }) => value === meshName);
   if (!mesh || mesh.fkind === character.fkind) return character;
 
-  if (meshName === "mario") {
-    return {
-      ...character,
-      fkind: mesh.fkind,
-      base: meshName,
-      bundle: `${character.slug}.osb`,
-      bundleUrl: character.originalBundleUrl || character.bundleUrl || null,
-    };
-  }
-
-  const bundleUrl = character.variants?.[meshName] || (
-    character.bundleUrl ? null : `bundles/${character.slug}-${meshName}.osb`
-  );
-  if (!bundleUrl) {
+  // One OSB6 per character carries every built target, so an override only
+  // changes which fighter the engine spawns; the file stays the same. The
+  // server lists the built targets in `variants` (array); an object form is
+  // a legacy per-target-file job and its keys mean the same thing.
+  const built = Array.isArray(character.variants)
+    ? character.variants
+    : character.variants ? Object.keys(character.variants) : null;
+  if (meshName !== "mario" && built && !built.includes(meshName)) {
     throw new Error(`${character.name} does not have a ${mesh.label} mesh variant.`);
   }
 
@@ -107,8 +116,6 @@ function resolvedCharacter(character, meshName) {
     ...character,
     fkind: mesh.fkind,
     base: meshName,
-    bundle: `${character.slug}-${meshName}.osb`,
-    bundleUrl,
   };
 }
 
@@ -251,34 +258,57 @@ function characterInjection(character, player) {
   return { player, ...characterAssets(character) };
 }
 
-function directBattle(params, character, stage, opponents) {
-  const player = character?.fkind ?? 0;
-  const cpuKinds = opponents?.map((opponent) => (
-    opponent.type === "character" ? opponent.character.fkind : opponent.fkind
+// Direct boot into a VS match. Port 1 is the site's pick; `picks` holds the
+// fighters of any further human ports (double select); CPUs fill the rest
+// from `opponents`. Custom fighters on ports 2-4 ride the per-player
+// injection rows, human or CPU alike (the engine binds them by port).
+function directBattle(params, character, stage, opponents, picks = []) {
+  const humans = 1 + picks.length;
+  const slots = [character ?? null, ...picks];
+  const cpus = (opponents || []).filter((opponent) => (
+    opponent.type !== "character" || !slots.some((slot) => slot?.slug === opponent.character.slug)
   ));
-  const [playerTwo, playerThree, playerFour] = cpuKinds?.length === 3
-    ? cpuKinds
-    : [
-        Math.floor(Math.random() * 12),
-        Math.floor(Math.random() * 12),
-        Math.floor(Math.random() * 12),
-      ];
+  while (slots.length < 4) {
+    const opponent = cpus.shift();
+    slots.push(opponent
+      ? (opponent.type === "character" ? opponent.character : { fkind: opponent.fkind })
+      : { fkind: Math.floor(Math.random() * 12) });
+  }
+  const kinds = slots.map((slot) => slot?.fkind ?? 0);
   params.set(
     "SSB64_BOOT_BATTLE",
-    [player, playerTwo, stage, 1, playerThree, playerFour].join(","),
+    [kinds[0], kinds[1], stage, humans >= 2 ? 0 : 1, kinds[2], kinds[3]].join(","),
   );
-  opponents?.forEach((opponent, index) => {
-    if (opponent.type === "character") {
-      params.append("inject_player", JSON.stringify(characterInjection(opponent.character, index + 1)));
+  if (humans >= 2) params.set("SSB64_BOOT_HUMANS", String(humans));
+  slots.forEach((slot, index) => {
+    if (index > 0 && slot?.slug) {
+      params.append("inject_player", JSON.stringify(characterInjection(slot, index)));
     }
   });
 }
 
-export function engineUrl(action, advancedOptions) {
+// Two or more human ports: every player picks live on the VS character
+// select (the site's pick pre-places P1's token; other human tokens start
+// in hand, unused ports stay closed and can be flipped to CPU there).
+function multiplayerSelect(params, character, stage, humans) {
+  params.set("SSB64_START_SCENE", "16");
+  params.set("roster", "1");
+  params.set("SSB64_BOOT_BATTLE", [character?.fkind ?? -1, -1, stage, 0, -1, -1].join(","));
+  params.set("SSB64_BOOT_HUMANS", String(humans));
+}
+
+export function engineUrl(action, advancedOptions, gamepads = []) {
   const options = normalizeAdvancedOptions(advancedOptions);
   const character = resolvedCharacter(action.character, options.characterMesh);
+  const picks = (action.picks || []).map((pick) => resolvedCharacter(pick, options.characterMesh));
   const stage = options.stage === "random" ? Math.floor(Math.random() * 9) : Number(options.stage);
   const params = new URLSearchParams();
+  const plan = controllerPlan(options, gamepads);
+  const humans = humanPortCount(plan);
+  const multiplayer = humans >= 2;
+  for (const [key, value] of Object.entries(controllerPortParams(plan))) {
+    params.set(key, value);
+  }
 
   if (character) {
     params.set("inject", character.bundleUrl || `bundles/${character.bundle}`);
@@ -321,7 +351,12 @@ export function engineUrl(action, advancedOptions) {
       params.set("roster", "1");
     }
   } else if (options.bootMode === "free-for-all") {
-    directBattle(params, character, stage, action.type === "character" ? action.opponents : null);
+    if (multiplayer && picks.length !== humans - 1) {
+      // No double select happened (e.g. the "play" action): everyone picks in-game.
+      multiplayerSelect(params, character, stage, humans);
+    } else {
+      directBattle(params, character, stage, action.type === "character" ? action.opponents : null, picks);
+    }
   } else if (options.bootMode === "vs-menu") {
     params.set("SSB64_START_SCENE", "9");
     params.set("roster", "1");
@@ -334,13 +369,18 @@ export function engineUrl(action, advancedOptions) {
   }
 
   if (
-    (character || options.stage !== "random") &&
     options.bootMode !== "default" &&
     options.bootMode !== "free-for-all" &&
     options.bootMode !== "full-boot" &&
-    options.bootMode !== "one-player-character-select"
+    options.bootMode !== "one-player-character-select" &&
+    (multiplayer || character || options.stage !== "random")
   ) {
-    params.set("SSB64_BOOT_BATTLE", `${character?.fkind ?? -1},8,${stage}`);
+    if (multiplayer) {
+      params.set("SSB64_BOOT_BATTLE", [character?.fkind ?? -1, -1, stage, 0, -1, -1].join(","));
+      params.set("SSB64_BOOT_HUMANS", String(humans));
+    } else {
+      params.set("SSB64_BOOT_BATTLE", `${character?.fkind ?? -1},8,${stage}`);
+    }
   } else if (
     action.type === "select" &&
     options.bootMode === "default" &&

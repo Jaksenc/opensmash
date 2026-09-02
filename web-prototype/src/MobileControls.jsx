@@ -240,7 +240,7 @@ export default function MobileControls({ active, frameRef, preview = false }) {
       </p>
 
       <div className="mobile-shoulder-controls" role="group" aria-label="Shoulder and pause buttons">
-        <MobileButton {...buttonProps("KeyE")} label="L" description="L shoulder" className="is-shoulder is-l" />
+        <MobileButton {...buttonProps("KeyI")} label="L" description="L shoulder" className="is-shoulder is-l" />
         <button
           className="mobile-start-button"
           type="button"
@@ -249,7 +249,7 @@ export default function MobileControls({ active, frameRef, preview = false }) {
         >
           Start
         </button>
-        <MobileButton {...buttonProps("KeyR")} label="R" description="R shoulder" className="is-shoulder is-r" />
+        <MobileButton {...buttonProps("KeyO")} label="R" description="R shoulder" className="is-shoulder is-r" />
       </div>
 
       <button
@@ -283,9 +283,10 @@ export default function MobileControls({ active, frameRef, preview = false }) {
       </button>
 
       <div className="mobile-action-controls" role="group" aria-label="Action buttons">
-        <MobileButton {...buttonProps("KeyC")} label="B" description="B special" caption="Special" className="is-action is-b" />
-        <MobileButton {...buttonProps("KeyX")} label="A" description="A attack" caption="Attack" className="is-action is-a" />
-        <MobileButton {...buttonProps("KeyZ")} label="Z" description="Z shield" caption="Shield" className="is-z" />
+        <MobileButton {...buttonProps("ArrowUp")} label="↑" description="Jump" caption="Jump" className="is-action is-jump" />
+        <MobileButton {...buttonProps("KeyK")} label="B" description="B special" caption="Special" className="is-action is-b" />
+        <MobileButton {...buttonProps("KeyJ")} label="A" description="A attack" caption="Attack" className="is-action is-a" />
+        <MobileButton {...buttonProps("KeyL")} label="Z" description="Z shield" caption="Shield" className="is-z" />
       </div>
     </div>
   );

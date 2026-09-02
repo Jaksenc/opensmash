@@ -30,7 +30,7 @@ test("preferences constrain balancing and explicit experimental bases win", () =
   assert.equal(assigned[1].base, "donkey");
 });
 
-test("bundle names follow the resolved base", () => {
-  assert.equal(bundleForBase("michelleobama", "mario"), "michelleobama.osb");
-  assert.equal(bundleForBase("michelleobama", "captain"), "michelleobama-captain.osb");
+test("one OSB6 bundle serves every resolved base", () => {
+  assert.equal(bundleForBase("michelleobama", "mario"), "michelleobama.osb6");
+  assert.equal(bundleForBase("michelleobama", "captain"), "michelleobama.osb6");
 });

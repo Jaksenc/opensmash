@@ -66,6 +66,40 @@ export function assignRosterBases(characters) {
   });
 }
 
-export function bundleForBase(slug, base) {
-  return base === "mario" ? `${slug}.osb` : `${slug}-${base}.osb`;
+// One OSB6 per character carries every built target; the engine picks the
+// block for the fighter it spawns, so the file name no longer encodes the base.
+export function bundleForBase(slug) {
+  return `${slug}.osb6`;
+}
+
+// Target names present in an OSB6 (pipeline/osb_merge.py layout):
+//   'OSB6' u32 texW, texH, ntargets; u16 atlas[texW*texH];
+//   ntargets x { u32 fkind, u32 length, payload[length] }
+// Only the block headers are read, so this costs a few hundred bytes of I/O.
+export async function readOsb6Targets(filePath) {
+  const { open } = await import("node:fs/promises");
+  const handle = await open(filePath, "r");
+  try {
+    const head = Buffer.alloc(16);
+    if ((await handle.read(head, 0, 16, 0)).bytesRead !== 16 || head.toString("latin1", 0, 4) !== "OSB6") {
+      throw new Error(`${filePath}: not an OSB6 bundle`);
+    }
+    const texW = head.readUInt32LE(4);
+    const texH = head.readUInt32LE(8);
+    const count = head.readUInt32LE(12);
+    if (count > 64) throw new Error(`${filePath}: implausible target count ${count}`);
+    let offset = 16 + texW * texH * 2;
+    const targets = [];
+    const block = Buffer.alloc(8);
+    for (let index = 0; index < count; index += 1) {
+      if ((await handle.read(block, 0, 8, offset)).bytesRead !== 8) break;
+      const fkind = block.readUInt32LE(0);
+      const length = block.readUInt32LE(4);
+      if (fkind < FIGHTERS.length) targets.push(FIGHTERS[fkind]);
+      offset += 8 + length;
+    }
+    return targets;
+  } finally {
+    await handle.close();
+  }
 }

@@ -10,6 +10,7 @@ import RetroHome from "./RetroHome.jsx";
 import RetroChoiceGrid from "./RetroChoiceGrid.jsx";
 import RomHandoffModal from "./RomHandoffModal.jsx";
 import { matchesCharacterSearch } from "../shared/character-search.js";
+import { mergeCharactersBySlug } from "../shared/character-roster.js";
 import {
   controlsRoadblockRequired,
   requireControlsRoadblock,
@@ -18,6 +19,8 @@ import { identifyRomFile } from "./rom-validation.js";
 import { handoffCodeFromLocation } from "../shared/rom-handoff.js";
 import { clearRomStore, hasStoredRom, prewarmEngineArchive, storeRom } from "../shared/rom-store.js";
 import { clearControllerTutorialCompletion } from "../visual/control-tutorial.js";
+import { choiceForEntry, describePort, portOptions } from "../shared/controller-ports.js";
+import { useGamepads } from "./gamepads.js";
 import {
   FLOW_MUSIC_MAX_VOLUME,
   transitionMediaVolume,
@@ -29,6 +32,7 @@ import {
   DEFAULT_ADVANCED_OPTIONS,
   OPPONENT_LEVELS,
   STAGES,
+  controllerPlan,
   engineUrl,
   hasAdvancedOverrides,
   normalizeAdvancedOptions,
@@ -39,6 +43,13 @@ import {
 const ADVANCED_OPTIONS_KEY = "opensmash-advanced-options";
 // Posted by BattleShip/web/index.html when the engine cannot obtain its assets.
 const ENGINE_ASSET_ERROR_MESSAGE = "opensmash:engine-asset-error";
+
+function inlineCharacters() {
+  const characters = window.__OPENSMASH_INITIAL_STATE__?.characters;
+  return Array.isArray(characters) ? characters : null;
+}
+
+const INLINE_CHARACTERS = inlineCharacters();
 
 // Fire-and-forget: build the engine's asset archive while the launch flow
 // animates, so the engine boots straight from the cache. Failures are
@@ -224,9 +235,9 @@ function RomModal({ action, onCancel, onValidated, onPrewarmError }) {
           ×
         </button>
         <p className="eyebrow">One-time check</p>
-        <h2 id="rom-title">Upload a ROM to continue</h2>
+        <h2 id="rom-title">Choose your ROM to continue</h2>
         <p className="modal-copy">Choose your legally obtained Smash 64 ROM (USA release) to launch {target}.</p>
-        <p className="modal-copy modal-copy-secondary">It stays on your device. Safari may ask again after a week away.</p>
+        <p className="modal-copy modal-copy-secondary">It never leaves your device.</p>
         <form onSubmit={validate}>
           <label className={`file-picker ${file ? "has-file" : ""}`}>
             <input
@@ -257,9 +268,23 @@ function RomModal({ action, onCancel, onValidated, onPrewarmError }) {
   );
 }
 
-function AdvancedModal({ authorized, debugMode, open, options, onCancel, onResetControllerTutorial, onResetRom, onSave, onSendRom, onReceiveRom }) {
+function AdvancedModal({
+  authorized,
+  debugMode,
+  gamepads,
+  open,
+  options,
+  onCancel,
+  onResetControllerTutorial,
+  onResetRom,
+  onSave,
+  onSendRom,
+  onReceiveRom,
+}) {
   const [draft, setDraft] = useState(options);
   const firstFieldRef = useRef(null);
+  const portPlan = controllerPlan(draft, gamepads);
+  const humanPorts = portPlan.filter((entry) => entry && entry.kind !== "none").length;
 
   useEffect(() => {
     if (open) setDraft(options);
@@ -267,6 +292,14 @@ function AdvancedModal({ authorized, debugMode, open, options, onCancel, onReset
 
   function update(key, value) {
     setDraft((current) => ({ ...current, [key]: value }));
+  }
+
+  function updatePort(port, value) {
+    setDraft((current) => {
+      const ports = [...(current.ports ?? DEFAULT_ADVANCED_OPTIONS.ports)];
+      ports[port] = value;
+      return { ...current, ports };
+    });
   }
 
   return (
@@ -299,12 +332,57 @@ function AdvancedModal({ authorized, debugMode, open, options, onCancel, onReset
               close(() => onSave(draft));
             }}
           >
+          <section className="advanced-input" aria-labelledby="advanced-input-title">
+            <div className="advanced-controllers-heading">
+              <strong id="advanced-input-title" className="advanced-field-label">Input</strong>
+              <small>
+                {gamepads.length
+                  ? "Controllers take ports in the order they connected. Pick who plays where."
+                  : "No controllers detected. Press any button on a controller to wake it up."}
+              </small>
+            </div>
+            <div className="advanced-selects advanced-inputs">
+              {portPlan.map((entry, port) => {
+                const options = portOptions(portPlan, gamepads, port);
+                const current = choiceForEntry(entry);
+                const disabled = options.length === 0 && current === "none";
+                return (
+                  <label className="advanced-field" key={port}>
+                    <span className="advanced-field-label">{`P${port + 1}`}</span>
+                    <span className={`advanced-select-shell advanced-cell-frame flame-bridge-cell ${disabled ? "is-disabled" : ""}`}>
+                      <select
+                        ref={port === 0 ? firstFieldRef : undefined}
+                        value={current}
+                        disabled={disabled}
+                        onChange={(event) => updatePort(port, event.target.value)}
+                      >
+                        <option value="none">{disabled ? "Empty" : "None"}</option>
+                        {options.map((option) => (
+                          <option value={option.value} key={option.value}>{option.label}</option>
+                        ))}
+                      </select>
+                    </span>
+                    <small>
+                      {disabled
+                        ? "Connect a controller to enable."
+                        : entry && entry.kind !== "none" ? describePort(entry, gamepads) : "Nobody"}
+                    </small>
+                  </label>
+                );
+              })}
+            </div>
+            <small className="advanced-controllers-note">
+              {humanPorts >= 2
+                ? "Two or more players: launches open the VS character select so everyone picks a fighter."
+                : "Controller buttons follow the standard layout: A / B, bumpers L / R, triggers Z / R, right stick or X / Y to jump."}
+            </small>
+          </section>
+
           <div className="advanced-selects">
             <label className="advanced-field">
               <span className="advanced-field-label">Character Mesh</span>
               <span className="advanced-select-shell advanced-cell-frame flame-bridge-cell">
                 <select
-                  ref={firstFieldRef}
                   value={draft.characterMesh}
                   onChange={(event) => update("characterMesh", event.target.value)}
                 >
@@ -472,9 +550,10 @@ function CreateExperienceOverlay({ onAuthenticated, onClose, onCreated, onPlay, 
 
 export default function App() {
   const isCreatePage = window.location.pathname.replace(/\/+$/, "") === "/create";
-  const [characters, setCharacters] = useState([]);
+  const [characters, setCharacters] = useState(() => INLINE_CHARACTERS || []);
   const [fighterJobs, setFighterJobs] = useState([]);
-  const [loadingCharacters, setLoadingCharacters] = useState(true);
+  const [loadingCharacters, setLoadingCharacters] = useState(() => INLINE_CHARACTERS === null);
+  const [loadingSession, setLoadingSession] = useState(true);
   const [authorized, setAuthorized] = useState(false);
   const [user, setUser] = useState(null);
   const [pendingAction, setPendingAction] = useState(null);
@@ -482,8 +561,11 @@ export default function App() {
   const [pageError, setPageError] = useState("");
   const [fighterSearch, setFighterSearch] = useState("");
   const [isFullscreen, setIsFullscreen] = useState(false);
+  // CSS-only fullscreen for browsers without an element Fullscreen API (iPhone Safari).
+  const [immersive, setImmersive] = useState(false);
   const [soundOn, setSoundOn] = useState(() => localStorage.getItem("opensmash-sound") !== "off");
   const [advancedOptions, setAdvancedOptions] = useState(loadAdvancedOptions);
+  const gamepads = useGamepads();
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [handoffOpen, setHandoffOpen] = useState(false);
 
@@ -538,14 +620,20 @@ export default function App() {
     return () => window.removeEventListener(FLOW_MUSIC_EVENT, syncFlowMusic);
   }, [engine, startFlowMusic]);
   const reportCreateVisualError = useCallback((error) => {
-    setPageError(error.message || "Could not load the ROM upload screen.");
+    setPageError(error.message || "Could not load the ROM screen.");
   }, []);
 
-  async function loadCharacters() {
+  async function fetchCharacters() {
     const response = await fetch("/api/characters", { cache: "no-store" });
     if (!response.ok) throw new Error("Could not load the configured characters");
-    const loadedCharacters = (await response.json()).characters;
-    setCharacters(loadedCharacters);
+    return (await response.json()).characters;
+  }
+
+  async function loadCharacters({ replace = false } = {}) {
+    const loadedCharacters = await fetchCharacters();
+    setCharacters((current) =>
+      replace ? loadedCharacters : mergeCharactersBySlug(current, loadedCharacters),
+    );
     return loadedCharacters;
   }
 
@@ -567,20 +655,70 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    Promise.all([
-      loadCharacters(),
-      getSession(),
-    ])
-      .then(([, session]) => {
+    let cancelled = false;
+
+    async function refreshCharacters({ finishInitialLoad = false } = {}) {
+      try {
+        const loadedCharacters = await fetchCharacters();
+        if (!cancelled) {
+          setCharacters((current) => mergeCharactersBySlug(current, loadedCharacters));
+        }
+      } catch (error) {
+        if (!cancelled) setPageError(error.message);
+      } finally {
+        if (!cancelled && finishInitialLoad) setLoadingCharacters(false);
+      }
+    }
+
+    if (INLINE_CHARACTERS === null) {
+      refreshCharacters({ finishInitialLoad: true });
+    }
+
+    getSession()
+      .then((session) => {
+        if (cancelled) return;
         setAuthorized(Boolean(session.authorized));
         setUser(session.user || null);
         if (isCreatePage && session.user && !session.authorized) {
           setPendingAction({ type: "create" });
         }
+        // The edge-cached seed is deliberately public. Once the private
+        // session is known, merge in the complete roster visible to this
+        // user without holding up the public first paint. Merging also keeps
+        // a live job completion that beats this request back to the client.
+        if (INLINE_CHARACTERS !== null && session.user) {
+          refreshCharacters();
+        }
       })
-      .catch((error) => setPageError(error.message))
-      .finally(() => setLoadingCharacters(false));
+      .catch((error) => {
+        if (!cancelled) setPageError(error.message);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingSession(false);
+      });
+
+    return () => { cancelled = true; };
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    let timer;
+    let attempts = 0;
+    function syncGridCharacters() {
+      if (cancelled) return;
+      if (window.characterGrid?.syncCharacters) {
+        Promise.resolve(window.characterGrid.syncCharacters(characters)).catch(() => {});
+        return;
+      }
+      attempts += 1;
+      if (attempts < 100) timer = window.setTimeout(syncGridCharacters, 50);
+    }
+    syncGridCharacters();
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [characters]);
 
   useEffect(() => {
     if (!authorized || !user) {
@@ -671,7 +809,7 @@ export default function App() {
       if (attempts < 100) timer = window.setTimeout(requestCreateRom, 50);
       else {
         setCreateStage(null);
-        setPageError("Could not open the cartridge upload screen.");
+        setPageError("Could not open the cartridge screen.");
       }
     }
 
@@ -707,10 +845,26 @@ export default function App() {
     };
   }, [engine, soundOn]);
 
+  // Re-plan the running game's ports when the controller settings change;
+  // the shell (window.controllerPorts) handles hot-plug on its own.
+  useEffect(() => {
+    if (!engine) return;
+    engineRef.current?.contentWindow?.controllerPorts?.apply?.(controllerPlan(advancedOptions, gamepads));
+  }, [engine, advancedOptions, gamepads]);
+
+  useEffect(() => {
+    document.body.classList.toggle("is-immersive", immersive);
+    return () => document.body.classList.remove("is-immersive");
+  }, [immersive]);
+
+  useEffect(() => {
+    if (!engine) setImmersive(false);
+  }, [engine]);
+
   useEffect(() => {
     function syncFullscreenState() {
       const fullscreenElement = document.fullscreenElement || document.webkitFullscreenElement;
-      setIsFullscreen(fullscreenElement === gameFrameRef.current);
+      setIsFullscreen(Boolean(fullscreenElement) && fullscreenElement === fullscreenTarget());
     }
 
     document.addEventListener("fullscreenchange", syncFullscreenState);
@@ -724,7 +878,7 @@ export default function App() {
   function launch(action) {
     try {
       const launchAction = prepareLaunchAction(action);
-      setEngine({ src: engineUrl(launchAction, advancedOptions), action: launchAction });
+      setEngine({ src: engineUrl(launchAction, advancedOptions, gamepads), action: launchAction });
       setPendingAction(null);
       requestAnimationFrame(() => gameRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
     } catch (error) {
@@ -838,7 +992,7 @@ export default function App() {
     }
     setUser(null);
     setCreateStage(null);
-    await loadCharacters().catch((error) => setPageError(error.message));
+    await loadCharacters({ replace: true }).catch((error) => setPageError(error.message));
   }
 
   function selectCharacter(character) {
@@ -894,17 +1048,21 @@ export default function App() {
     return result;
   }
 
-  function launchVisualAction({ type, slug }) {
+  function launchVisualAction({ type, slug, picks = [] }) {
     const action = type === "character"
-      ? { type, character: characters.find((character) => character.slug === slug) }
+      ? {
+          type,
+          character: characters.find((character) => character.slug === slug),
+          picks: picks.map((pickSlug) => characters.find((character) => character.slug === pickSlug)),
+        }
       : { type };
-    if (type === "character" && !action.character) {
+    if (type === "character" && (!action.character || action.picks.some((pick) => !pick))) {
       setPageError("That fighter is no longer available.");
       return "about:blank";
     }
     try {
       const launchAction = prepareLaunchAction(action);
-      const src = engineUrl(launchAction, advancedOptions);
+      const src = engineUrl(launchAction, advancedOptions, gamepads);
       setEngine({ src, action: launchAction });
       setPendingAction(null);
       setPageError("");
@@ -981,9 +1139,21 @@ export default function App() {
     });
   }
 
-  async function toggleFullscreen() {
+  // Fullscreen the surface shell (frame + touch deck) so mobile controls stay
+  // visible; on the desktop layout the shell is just the frame's wrapper.
+  function fullscreenTarget() {
     const frame = gameFrameRef.current;
-    if (!frame) return;
+    return frame?.closest?.(".game-surface-shell") || frame || null;
+  }
+
+  async function toggleFullscreen() {
+    const target = fullscreenTarget();
+    if (!target) return;
+
+    if (immersive) {
+      setImmersive(false);
+      return;
+    }
 
     try {
       const fullscreenElement = document.fullscreenElement || document.webkitFullscreenElement;
@@ -991,12 +1161,14 @@ export default function App() {
         const exitFullscreen = document.exitFullscreen || document.webkitExitFullscreen;
         await exitFullscreen.call(document);
       } else {
-        const requestFullscreen = frame.requestFullscreen || frame.webkitRequestFullscreen;
+        const requestFullscreen = target.requestFullscreen || target.webkitRequestFullscreen;
         if (!requestFullscreen) throw new Error("Fullscreen API unavailable");
-        await requestFullscreen.call(frame);
+        await requestFullscreen.call(target);
       }
     } catch {
-      setPageError("Fullscreen is not available in this browser.");
+      // iPhone Safari exposes no element fullscreen: pin the shell over the
+      // page instead. Safari's own toolbars stay, but tabs and page chrome go.
+      setImmersive(true);
     }
   }
 
@@ -1027,6 +1199,11 @@ export default function App() {
       clearVerification,
       closeGame() { setEngine(null); },
       completeCreateRom() { setCreateStage("creator"); },
+      hasGamepad() { return gamepads.length > 0; },
+      humanPortCount() {
+        return controllerPlan(advancedOptions, gamepads)
+          .filter((entry) => entry && entry.kind !== "none").length;
+      },
       isAuthorized() { return authorized; },
       launch: launchVisualAction,
       cancelCreateRom() { setCreateStage(null); },
@@ -1050,7 +1227,9 @@ export default function App() {
           engine={engine}
           engineRef={engineRef}
           gameFrameRef={gameFrameRef}
-          isFullscreen={isFullscreen}
+          gamepadCount={gamepads.length}
+          immersive={immersive}
+          isFullscreen={isFullscreen || immersive}
           launchFlowOpen={overlayMusicActive}
           onAboutChange={setAboutOpen}
           onAdvanced={() => setAdvancedOpen(true)}
@@ -1076,6 +1255,7 @@ export default function App() {
         <AdvancedModal
           authorized={authorized}
           debugMode={new URLSearchParams(window.location.search).get("debug") === "1"}
+          gamepads={gamepads}
           open={advancedOpen}
           options={advancedOptions}
           onCancel={() => setAdvancedOpen(false)}
@@ -1095,7 +1275,7 @@ export default function App() {
       {isCreatePage && (
         <CreateVisualShell
           onError={reportCreateVisualError}
-          romUploadRequired={!loadingCharacters && Boolean(user) && !authorized}
+          romUploadRequired={!loadingSession && Boolean(user) && !authorized}
         />
       )}
       <header className="site-header">
@@ -1183,7 +1363,7 @@ export default function App() {
         </div>
       </section>}
 
-      {isCreatePage && !loadingCharacters && !user && <AuthGate onAuthenticated={authenticated} />}
+      {isCreatePage && !loadingSession && !user && <AuthGate onAuthenticated={authenticated} />}
 
       {isCreatePage && (
         <CreateExperienceOverlay
@@ -1191,7 +1371,7 @@ export default function App() {
           onClose={() => window.location.assign("/")}
           onCreated={() => window.location.assign("/")}
           onPlay={selectCharacter}
-          stage={!loadingCharacters && authorized && user ? "creator" : null}
+          stage={!loadingSession && authorized && user ? "creator" : null}
           user={user}
         />
       )}
@@ -1248,7 +1428,7 @@ export default function App() {
               onClick={() => selectCharacter(character)}
             >
               <span className="portrait-wrap">
-                <img src={character.portrait} alt="" />
+                <img src={character.portraitMedium || character.portrait} alt="" loading="lazy" />
               </span>
               <span className="character-number">{String(index + 1).padStart(2, "0")}</span>
               {character.generated && <span className="generated-label">Fighter Lab</span>}

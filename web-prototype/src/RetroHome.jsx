@@ -47,14 +47,20 @@ export function LaunchFlow() {
   return (
     <div id="launch-flow-overlay" className="launch-flow-overlay" data-step="upload" data-mode="launch" hidden>
       <canvas id="launch-flow-canvas" className="launch-flow-canvas" aria-hidden="true" />
-      <section className="launch-flow-step launch-flow-upload" role="dialog" aria-modal="true" aria-labelledby="launch-flow-title" aria-describedby="launch-flow-copy">
+      <section className="launch-flow-step launch-flow-upload" role="dialog" aria-modal="true" aria-labelledby="launch-flow-title" aria-describedby="launch-flow-copy rom-filename-hint">
         <h2 id="launch-flow-title" className="visually-hidden">Play Smash the Weights</h2>
         <p id="launch-flow-copy" className="launch-flow-copy">
-          To play Smash the Weights, upload your legally obtained USA-release Super Smash Bros. 64 ROM. It stays on
-          your device; Safari may ask again after a week away.
+          To play Smash the Weights, choose your legally obtained USA-release Super Smash Bros. 64 ROM. It never
+          leaves your device.
         </p>
+        <div id="rom-filename-hint" className="launch-flow-rom-hint">
+          <span className="launch-flow-rom-hint-label">The file is normally named</span>
+          <span className="launch-flow-rom-filenames">
+            <code>Super Smash Bros. (USA).z64</code>
+          </span>
+        </div>
         <input id="rom-file-input" className="launch-flow-file-input" type="file" hidden accept=".zip,.z64,.n64,.v64,.rom,application/zip,application/octet-stream" />
-        <FlameAction id="rom-upload-button" type="button">Upload ROM</FlameAction>
+        <FlameAction id="rom-upload-button" type="button">Choose ROM</FlameAction>
         <button id="launch-cancel-button" className="launch-flow-action launch-flow-cancel" type="button">Cancel</button>
         <button id="rom-more-options-button" className="launch-flow-text-link" type="button" aria-expanded="false" aria-controls="rom-more-options">Other options</button>
         <div id="rom-more-options" className="launch-flow-more-options" hidden>
@@ -154,6 +160,8 @@ export default function RetroHome({
   engine,
   engineRef,
   gameFrameRef,
+  gamepadCount = 0,
+  immersive = false,
   isFullscreen,
   launchFlowOpen,
   onAboutChange,
@@ -224,6 +232,50 @@ export default function RetroHome({
     return transitionMediaVolume(video, launchFlowOpen || engine ? 0 : 1);
   }, [engine, launchFlowOpen]);
 
+  // Browsers only guarantee muted autoplay. The element always starts muted;
+  // when sound is on we try to unmute right away (allowed on return visits in
+  // Chrome) and otherwise unmute on the first gesture anywhere on the page.
+  useEffect(() => {
+    const video = introVideoRef.current;
+    if (!video) return undefined;
+    if (!soundOn) {
+      video.muted = true;
+      return undefined;
+    }
+    let cancelled = false;
+    const gestureEvents = ["pointerdown", "keydown", "touchstart"];
+    const removeGestureListeners = () => {
+      for (const type of gestureEvents) document.removeEventListener(type, unmuteOnGesture, true);
+    };
+    function unmuteOnGesture() {
+      removeGestureListeners();
+      if (cancelled) return;
+      video.muted = false;
+      if (video.paused && !engine) {
+        video.play().catch(() => { video.muted = true; });
+      }
+    }
+    const tryUnmute = async () => {
+      video.muted = false;
+      try {
+        await video.play();
+        if (cancelled) return;
+        if (video.muted) throw new Error("still muted");
+      } catch {
+        if (cancelled) return;
+        video.muted = true;
+        // Keep the muted loop running while we wait for a gesture.
+        video.play().catch(() => {});
+        for (const type of gestureEvents) document.addEventListener(type, unmuteOnGesture, true);
+      }
+    };
+    tryUnmute();
+    return () => {
+      cancelled = true;
+      removeGestureListeners();
+    };
+  }, [soundOn]);
+
   function toggleMobileControls(event) {
     if (!mobileLayout) return;
     event.stopPropagation();
@@ -281,6 +333,23 @@ export default function RetroHome({
             <canvas id="hero-logo-canvas" className="hero-logo-canvas" aria-hidden="true" />
           </div>
           <nav className="retro-site-nav" aria-label="Site information and settings">
+            {gamepadCount > 0 && (
+              <button
+                className="retro-site-link retro-site-pads"
+                type="button"
+                aria-haspopup="dialog"
+                aria-label={`${gamepadCount} controller${gamepadCount === 1 ? "" : "s"} connected. Open controller settings.`}
+                title={`${gamepadCount} controller${gamepadCount === 1 ? "" : "s"} connected`}
+                onClick={onAdvanced}
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M7.5 6.5h9a4.5 4.5 0 0 1 4.5 4.5v2.2a4.3 4.3 0 0 1-7.6 2.8L12 14.6l-1.4 1.4A4.3 4.3 0 0 1 3 13.2V11a4.5 4.5 0 0 1 4.5-4.5z" />
+                  <path d="M7.5 9.5v4M5.5 11.5h4" />
+                  <path d="M16.2 10.6h.01M18.6 12.6h.01" />
+                </svg>
+                <span>{gamepadCount}</span>
+              </button>
+            )}
             <button
               className="retro-site-link"
               type="button"
@@ -339,14 +408,14 @@ export default function RetroHome({
           </nav>
         </header>
         <section className="intro-video-stage" aria-label="Intro video">
-          <div className={`game-surface-shell ${mobileControlsVisible ? "has-mobile-control-deck" : ""}`}>
+          <div className={`game-surface-shell ${mobileControlsVisible ? "has-mobile-control-deck" : ""} ${immersive ? "is-immersive" : ""}`}>
             <div className={`intro-video-frame ${engine ? "is-game-running" : ""}`} ref={gameFrameRef}>
               <video
                 ref={introVideoRef}
                 id="intro-video"
                 className="intro-video"
                 src={introVideoUrl}
-                muted={!soundOn}
+                muted
                 autoPlay
                 loop
                 playsInline
@@ -430,7 +499,7 @@ export default function RetroHome({
             />
           </div>
         </section>
-        <div className="arena-surface"><div id="replica-grid" className="replica-grid" role="grid" aria-label="Search, create, and character roster" />{!ready && <p className="retro-roster-loading">Loading fighters…</p>}<p id="fighter-empty-state" className="fighter-empty-state" role="status" aria-live="polite" hidden /></div>
+        <div className="arena-surface"><div id="replica-grid" className="replica-grid" role="grid" aria-label="Search, create, and character roster" />{!ready && <p className="retro-roster-loading">Loading fighters…</p>}<p id="fighter-empty-state" className="fighter-empty-state" role="status" aria-live="polite" hidden /><p id="fighter-pick-prompt" className="fighter-pick-prompt" role="status" aria-live="polite" hidden /></div>
         <span id="replica-metrics" hidden>Building 200-cell grid…</span>
       </main>
 

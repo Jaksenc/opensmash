@@ -3,11 +3,14 @@ import { fileURLToPath } from "node:url";
 import { createFighterJobs } from "./fighter-jobs.js";
 import { createJobDatabase } from "./job-database.js";
 import { createObjectStore } from "./object-store.js";
+import { resolveProjectPaths } from "./project-paths.js";
 
 const APP_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const REPO_ROOT = path.resolve(APP_ROOT, "..", "..");
-const ENGINE_ROOT = path.join(REPO_ROOT, "BattleShip", "web-dist");
-const PIPELINE_UI_ROOT = path.join(REPO_ROOT, "pipeline", "play", "ui");
+const {
+  pipelineProjectRoot: PIPELINE_PROJECT_ROOT,
+  engineRoot: ENGINE_ROOT,
+  pipelineUiRoot: PIPELINE_UI_ROOT,
+} = resolveProjectPaths(APP_ROOT);
 const jobsRoot = path.resolve(
   process.env.FIGHTER_JOBS_ROOT || path.join(APP_ROOT, "data", "fighter-jobs"),
 );
@@ -21,7 +24,7 @@ const objectStore = createObjectStore({ appRoot: APP_ROOT });
 const jobDatabase = createJobDatabase({ jobsRoot });
 const fighterJobs = createFighterJobs({
   appRoot: APP_ROOT,
-  repoRoot: REPO_ROOT,
+  repoRoot: PIPELINE_PROJECT_ROOT,
   engineRoot: ENGINE_ROOT,
   pipelineUiRoot: PIPELINE_UI_ROOT,
   objectStore,

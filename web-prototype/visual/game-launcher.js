@@ -69,7 +69,18 @@ const CONSOLE_CARTRIDGE_FIT_SCALE = 0.44;
 const CONSOLE_CARTRIDGE_READY_CLEARANCE = 0.34;
 const CONSOLE_DOCK_FRONT_YAW = Math.PI * 1.5;
 const CONSOLE_DOCK_FRONT_PITCH = 0.18;
+// The engine's keyboard map (libultraship defaults): J=A, K=B, L=Z, I=L, O=R.
 const REQUIRED_CONTROL_KEYS = Object.freeze(['w', 'a', 's', 'd', 'j', 'k', 'l', 'i', 'o']);
+// Gamepad (standard layout) -> the same control ids the keyboard tutorial
+// uses, so a pad player lights up the very same callouts: A, B, LT=Z,
+// LB=L, RB/RT=R, left stick = W A S D.
+const PAD_BUTTON_CONTROLS = Object.freeze({ 0: 'j', 1: 'k', 6: 'l', 4: 'i', 5: 'o', 7: 'o' });
+const PAD_STICK_THRESHOLD = 0.5;
+const PAD_CONTROL_LABELS = Object.freeze({
+  xbox: Object.freeze({ w: '↑', a: '←', s: '↓', d: '→', j: 'A', k: 'B', l: 'LT', i: 'LB', o: 'RB' }),
+  playstation: Object.freeze({ w: '↑', a: '←', s: '↓', d: '→', j: '✕', k: '○', l: 'L2', i: 'L1', o: 'R1' }),
+  switch: Object.freeze({ w: '↑', a: '←', s: '↓', d: '→', j: 'B', k: 'A', l: 'ZL', i: 'L', o: 'R' }),
+});
 const SOUND_STORAGE_KEY = 'opensmash-sound';
 const LAUNCH_SOUNDS = Object.freeze({
   cartridgeChunk: Object.freeze({ url: cartridgeChunkUrl, volume: 0.46 }),
@@ -211,7 +222,42 @@ function resetControllerTutorial() {
   catch { /* The in-memory reset still applies to this tab. */ }
 }
 
+function connectedGamepads() {
+  try {
+    return Array.from(navigator.getGamepads?.() || []).filter(pad => pad && pad.connected);
+  } catch {
+    return [];
+  }
+}
+
+function hasGamepad() {
+  return Boolean(APP_BRIDGE?.hasGamepad?.()) || connectedGamepads().length > 0;
+}
+
+function padControlLabels() {
+  const ids = connectedGamepads().map(pad => pad.id).join(' ');
+  if (/dualsense|dualshock|playstation|sony|054c/i.test(ids)) return PAD_CONTROL_LABELS.playstation;
+  if (/switch|nintendo|joy-con|057e/i.test(ids)) return PAD_CONTROL_LABELS.switch;
+  return PAD_CONTROL_LABELS.xbox;
+}
+
+// The callouts show keycaps for the keyboard; with a pad connected they
+// show that pad's button names instead (same positions, same checks).
+function applyControlLabels() {
+  const labels = hasGamepad() ? padControlLabels() : null;
+  controlKeycaps.forEach(keycap => {
+    if (keycap.dataset.keyLabel === undefined) keycap.dataset.keyLabel = keycap.textContent;
+    keycap.textContent = labels?.[keycap.dataset.controlKey] ?? keycap.dataset.keyLabel;
+  });
+}
+
 function requiresControllerTutorial() {
+  // The tutorial teaches the keyboard map; the touch deck replaces it, so a
+  // touch device never sees it (and clears any /create roadblock it carries).
+  if (usesMobileControls()) {
+    completeControlsRoadblock();
+    return false;
+  }
   return controlsRoadblockRequired() || shouldRequireControllerTutorial({
     completed: hasCompletedControllerTutorial(),
     mobileControls: usesMobileControls(),
@@ -294,13 +340,58 @@ function keepPageScrollableFromGame() {
   }, { capture: true, passive: false });
 }
 
+// Double select: with two or more human ports, each player clicks a tile in
+// turn (P1 first). Picks are stamped on the grid and the match launches once
+// every port has a fighter. Clicking a stamped tile takes the pick back.
+const pickPrompt = document.getElementById('fighter-pick-prompt');
+let pendingPicks = [];
+
+function showPickPrompt(text) {
+  if (!pickPrompt) return;
+  pickPrompt.textContent = text || '';
+  pickPrompt.hidden = !text;
+}
+
+function clearPicks() {
+  pendingPicks = [];
+  window.characterGrid?.clearPicks?.();
+  showPickPrompt('');
+}
+
+function collectPick(fighter, humans) {
+  const index = pendingPicks.findIndex(pick => pick.slug === fighter.slug);
+  if (index >= 0) {
+    pendingPicks.splice(index, 1);
+  } else {
+    pendingPicks.push(fighter);
+  }
+  window.characterGrid?.clearPicks?.();
+  pendingPicks.forEach((pick, i) => window.characterGrid?.markPick?.(pick.selectionName || pick.slug, `${i + 1}P`));
+  if (pendingPicks.length >= humans) {
+    const picks = pendingPicks;
+    clearPicks();
+    return picks;
+  }
+  showPickPrompt(`P${pendingPicks.length + 1}, pick your fighter`);
+  return null;
+}
+
 function launch(fighter) {
   if (!gameFrame || !videoFrame) return;
   pendingFighter = null;
+  let picks = [];
+  const humans = APP_BRIDGE?.humanPortCount?.() ?? 1;
+  if (humans >= 2 && (fighter.actionType || 'character') === 'character') {
+    const ready = collectPick(fighter, humans);
+    if (!ready) return;
+    [fighter, ...picks] = ready;
+  } else {
+    clearPicks();
+  }
   introVideo?.pause();
   gameFrame.title = `${fighter.displayName} — Super Weights Bros`;
   const source = APP_BRIDGE?.launch
-    ? APP_BRIDGE.launch({ type: fighter.actionType || 'character', slug: fighter.slug })
+    ? APP_BRIDGE.launch({ type: fighter.actionType || 'character', slug: fighter.slug, picks: picks.map(pick => pick.slug) })
     : engineUrl(fighter);
   if (!source || source === 'about:blank') {
     window.characterGrid?.select(null);
@@ -316,6 +407,7 @@ function launch(fighter) {
 }
 
 function closeGame() {
+  clearPicks();
   window.characterGrid?.select(null);
   if (!gameFrame || !videoFrame) return;
   APP_BRIDGE?.closeGame?.();
@@ -1886,7 +1978,7 @@ function resetRomPrompt() {
   }
   if (uploadButton) {
     uploadButton.disabled = false;
-    uploadButton.textContent = 'Upload ROM';
+    uploadButton.textContent = 'Choose ROM';
   }
   if (cancelButton) cancelButton.disabled = false;
   if (formError) {
@@ -2099,6 +2191,8 @@ function skipControlCheck() {
   if (!overlay || overlay.hidden || overlay.dataset.step !== 'controller' || controlsPreviewMode) return;
   hideControlSkip();
   controlCheckComplete = true;
+  // A skipped tutorial stays skipped for this visit; it returns next time.
+  controllerTutorialCompletedThisSession = true;
   controlExitPending = false;
   clearTimeout(flowTimer);
   continueToGame();
@@ -2112,10 +2206,14 @@ function resetControlCheck() {
   resetControllerPhysics();
   controlKeycaps.forEach(keycap => keycap.classList.remove('is-complete', 'is-pressed'));
   controlPrompt?.classList.remove('is-complete');
+  applyControlLabels();
   if (controlPrompt) {
+    const pad = hasGamepad();
     controlPrompt.textContent = controlsPreviewMode
-      ? 'Press the mapped keys to try the controls'
-      : 'Press each key on your keyboard to continue';
+      ? (pad ? 'Press the buttons on your controller or the mapped keys to try the controls'
+             : 'Press the mapped keys to try the controls')
+      : (pad ? 'Press each button on your controller to continue'
+             : 'Press each key on your keyboard to continue');
   }
 }
 
@@ -2125,7 +2223,66 @@ function registerControlKey(event) {
   const key = event.key.toLowerCase();
   if (!REQUIRED_CONTROL_KEYS.includes(key)) return false;
   event.preventDefault();
-  pressControllerControl(key, event.repeat);
+  return registerControlInput(key, event.repeat);
+}
+
+function releaseControlKey(key) {
+  heldControlKeys.delete(key);
+  controlKeycaps.find(item => item.dataset.controlKey === key)
+    ?.classList.remove('is-pressed');
+}
+
+// Gamepad input for the tutorial: poll while the controller step is open,
+// turn rising edges into the same control presses the keyboard produces.
+const padHeldControls = new Set();
+let padPollHandle = 0;
+
+function padControlsNow() {
+  const active = new Set();
+  for (const pad of connectedGamepads()) {
+    pad.buttons.forEach((button, index) => {
+      const control = PAD_BUTTON_CONTROLS[index];
+      if (control && (button.pressed || button.value > 0.5)) active.add(control);
+    });
+    const x = pad.axes[0] || 0;
+    const y = pad.axes[1] || 0;
+    if (y < -PAD_STICK_THRESHOLD) active.add('w');
+    if (y > PAD_STICK_THRESHOLD) active.add('s');
+    if (x < -PAD_STICK_THRESHOLD) active.add('a');
+    if (x > PAD_STICK_THRESHOLD) active.add('d');
+  }
+  return active;
+}
+
+function pollPadControls() {
+  padPollHandle = 0;
+  const open = overlay && !overlay.hidden && overlay.dataset.step === 'controller';
+  if (!open) {
+    for (const control of padHeldControls) releaseControlKey(control);
+    padHeldControls.clear();
+    padPollHandle = window.setTimeout(pollPadControls, 250);
+    return;
+  }
+  const active = padControlsNow();
+  for (const control of active) {
+    if (!padHeldControls.has(control)) {
+      padHeldControls.add(control);
+      registerControlInput(control, false);
+    }
+  }
+  for (const control of padHeldControls) {
+    if (!active.has(control)) {
+      padHeldControls.delete(control);
+      releaseControlKey(control);
+    }
+  }
+  padPollHandle = requestAnimationFrame(pollPadControls);
+}
+
+function registerControlInput(key, repeated) {
+  if (!overlay || overlay.hidden || overlay.dataset.step !== 'controller' ||
+      controlCheckComplete) return false;
+  pressControllerControl(key, repeated);
   const firstPress = !completedControlKeys.has(key);
   completedControlKeys.add(key);
   if (firstPress) playLaunchSound(LAUNCH_SOUNDS.controllerPunch);
@@ -2217,8 +2374,8 @@ function showLaunchFlow(fighter, { create = false } = {}) {
   if (flowTitle) flowTitle.textContent = create ? 'Create a fighter' : 'Play Smash the Weights';
   if (flowCopy) {
     flowCopy.textContent = create
-      ? 'To create a fighter, upload your legally obtained Super Smash Bros. 64 ROM. It stays on your device.'
-      : 'To play Smash the Weights, upload your legally obtained Super Smash Bros. 64 ROM. It stays on your device.';
+      ? 'To create a fighter, choose your legally obtained USA-release Super Smash Bros. 64 ROM. It never leaves your device.'
+      : 'To play Smash the Weights, choose your legally obtained USA-release Super Smash Bros. 64 ROM. It never leaves your device.';
   }
   overlay.dataset.mode = create ? 'create' : 'launch';
   overlay.dataset.step = 'upload';
@@ -2356,6 +2513,12 @@ async function validateRom(file) {
       APP_BRIDGE?.completeCreateRom?.();
       createUploadMode = false;
       closeLaunchFlow();
+    } else if (usesMobileControls()) {
+      // Touch devices skip the keyboard tutorial and boot straight away.
+      const fighter = pendingFighter;
+      completeControlsRoadblock();
+      closeLaunchFlow();
+      launch(fighter);
     } else {
       // A fresh play upload always gets the full console/cartridge docking
       // sequence before the required controller check, even if this browser
@@ -2370,7 +2533,7 @@ async function validateRom(file) {
     }
     if (uploadButton) {
       uploadButton.disabled = false;
-      uploadButton.textContent = 'Upload ROM';
+      uploadButton.textContent = 'Choose ROM';
     }
     if (cancelButton) cancelButton.disabled = false;
     if (formError) {
@@ -2508,11 +2671,12 @@ window.addEventListener('keydown', event => {
   }
 });
 window.addEventListener('keyup', event => {
-  const key = event.key.toLowerCase();
-  heldControlKeys.delete(key);
-  controlKeycaps.find(item => item.dataset.controlKey === key)
-    ?.classList.remove('is-pressed');
+  releaseControlKey(event.key.toLowerCase());
 });
+window.addEventListener('gamepadconnected', () => {
+  if (overlay && !overlay.hidden && overlay.dataset.step === 'controller') applyControlLabels();
+});
+pollPadControls();
 gameFrame?.addEventListener('load', () => {
   if (!videoFrame?.classList.contains('is-game-running')) return;
   keepPageScrollableFromGame();

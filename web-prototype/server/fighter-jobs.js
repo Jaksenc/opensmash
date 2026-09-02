@@ -1,5 +1,5 @@
 import Busboy from "busboy";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { createWriteStream } from "node:fs";
 import {
   access,
@@ -17,6 +17,8 @@ import { EventEmitter } from "node:events";
 import { pipeline } from "node:stream/promises";
 import { promisify } from "node:util";
 import { ACTIVE_JOB_STATUSES, jobSnapshot, publicJob } from "./job-protocol.js";
+import { QuotaError, assertQuota, quotaLimits, quotaUsage } from "./job-quota.js";
+import { readOsb6Targets } from "./roster.js";
 import { moderateFighterSubmission } from "./submission-moderation.js";
 
 const execFileAsync = promisify(execFile);
@@ -54,8 +56,31 @@ class HttpError extends Error {
   }
 }
 
+// Reaching one of these stages proves an expensive earlier output (Tripo task
+// ids, the paid rigged mesh, generated art) is on disk, so it is checkpointed
+// immediately instead of only when the attempt fails.
+const CHECKPOINT_STAGES = new Set([
+  "mesh-build", "mesh-rig", "mesh", "convert", "variants",
+  "portrait", "stock", "emblem", "ui", "voice", "publish",
+]);
+
 function slugFor(name) {
   return name.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 16);
+}
+
+// Public manifests carry an opaque per-account id rather than the account's
+// display name, so fighters by the same uploader can still be grouped.
+export function uploaderToken(uid, salt = process.env.UPLOADER_TOKEN_SALT || "opensmash-uploader") {
+  if (!uid) return null;
+  return createHash("sha256").update(`${salt}:${uid}`).digest("hex").slice(0, 16);
+}
+
+// The pipeline's character.json includes the model's free-text description of
+// the person in the photo. Only the fields the game needs are published.
+export function publicCharacterMetadata(metadata) {
+  const result = { display: metadata.display, short: metadata.short };
+  if (typeof metadata.emblem === "string") result.emblem = metadata.emblem;
+  return result;
 }
 
 export function submissionSettings(fields = {}) {
@@ -234,6 +259,7 @@ export function createFighterJobs({
 }) {
   const jobsRoot = path.resolve(process.env.FIGHTER_JOBS_ROOT || path.join(appRoot, "data", "fighter-jobs"));
   const pipelineRoot = path.join(repoRoot, "pipeline");
+  const playRoot = path.join(repoRoot, "play");
   const pipelineScript = path.join(pipelineRoot, "run_character.py");
   const normalizeImageScript = path.join(appRoot, "server", "normalize-image.py");
   const jobs = new Map();
@@ -242,11 +268,20 @@ export function createFighterJobs({
   events.setMaxListeners(0);
   const localExecution = dispatcher.driver === "local";
   const leaseSeconds = Number(process.env.FIGHTER_LEASE_SECONDS || 15 * 60);
-  const maxActivePerOwner = Number(process.env.MAX_ACTIVE_JOBS_PER_OWNER || 1);
-  const maxDailyPerOwner = Number(process.env.MAX_DAILY_JOBS_PER_OWNER || 3);
-  const maxGlobalActive = Number(process.env.MAX_GLOBAL_ACTIVE_JOBS || 20);
+  const limits = quotaLimits();
+  const maxManualRetries = Number(process.env.MAX_MANUAL_RETRIES_PER_JOB || 3);
+  // Creations that passed the quota check but are not yet in `jobs`. Counted
+  // synchronously so parallel uploads from one account cannot all see zero.
+  const pending = { owners: new Map(), global: 0 };
   let stopDatabaseWatch = null;
   let workerBusy = false;
+  // Set when this process is a worker holding a lease; every save is then
+  // conditional on the stored lease still naming this execution.
+  let workerExecutionId = null;
+  let leaseLost = false;
+  let currentRun = null;
+  let checkpointChain = Promise.resolve();
+  let checkpointQueued = false;
 
   function jobRoot(id) {
     return path.join(jobsRoot, id);
@@ -260,15 +295,35 @@ export function createFighterJobs({
     if (job.lease?.executionId) {
       job.lease.expiresAt = new Date(Date.now() + leaseSeconds * 1000).toISOString();
     }
-    await jobDatabase.save(job);
+    if (leaseLost) {
+      const error = new Error(`Fighter job '${job.id}' is no longer leased by this worker.`);
+      error.code = "LEASE_LOST";
+      throw error;
+    }
+    try {
+      await jobDatabase.save(job, workerExecutionId ? { executionId: workerExecutionId } : {});
+    } catch (error) {
+      if (error.code === "LEASE_LOST") {
+        leaseLost = true;
+        console.error(`Fighter job '${job.id}' lease was taken by another owner; stopping this worker.`);
+        abortCurrentRun("lease-lost");
+      }
+      throw error;
+    }
     events.emit(job.id, jobSnapshot(job));
   }
 
   async function insertJob(job) {
     job.revision = (job.revision || 0) + 1;
     job.updatedAt = new Date().toISOString();
-    await jobDatabase.insert(job);
+    await jobDatabase.insert(job, { quota: limits });
     events.emit(job.id, jobSnapshot(job));
+  }
+
+  function httpErrorFrom(error) {
+    return error instanceof QuotaError || error?.code === "QUOTA_EXCEEDED"
+      ? new HttpError(error.status || 429, error.message)
+      : error;
   }
 
   function normalizeStoredJob(job) {
@@ -281,6 +336,7 @@ export function createFighterJobs({
       nextAttemptAt: job.nextAttemptAt || null,
       label: job.retryLabel || null,
     };
+    job.retry.manualRetriesAt ||= [];
     delete job.automaticRetryCounts;
     delete job.nextAttemptAt;
     delete job.retryLabel;
@@ -337,49 +393,78 @@ export function createFighterJobs({
   async function restoreCheckpoint(job) {
     for (const file of job.checkpoint?.files || []) {
       const destination = file.scope === "play"
-        ? path.join(pipelineRoot, "play", file.name)
+        ? path.join(playRoot, file.name)
         : path.join(pipelineUiRoot, job.slug, file.name);
       await objectStore.getFile(file.key, destination);
     }
   }
 
-  async function saveFailureCheckpoint(job) {
+  // Uploads every completed stage output to the private checkpoint prefix.
+  // Runs after each expensive stage, on failure, and on SIGTERM; files whose
+  // size and mtime match the previous checkpoint are not re-uploaded.
+  async function saveCheckpoint(job) {
     const outputRoot = path.join(pipelineUiRoot, job.slug);
     const checkpointRoot = `characters/${job.slug}/checkpoints/${job.id}`;
     const candidates = [
-      "character.json", "cost.json", "tpose.png", "rigged.glb", "bundle.json",
-      "portrait_raw.png", "stock_raw.png", "emblem_raw.png", `${job.slug}.osbui`,
-      "announcer.wav",
+      "character.json", "cost.json", "tpose.png", "tripo_tasks.json", "rigged.glb",
+      "bundle.json", "portrait_raw.png", "stock_raw.png", "emblem_raw.png",
+      `${job.slug}.osbui`, "announcer.wav",
     ];
+    const previous = new Map(
+      (job.checkpoint?.files || []).map((file) => [`${file.scope}/${file.name}`, file]),
+    );
     const files = [];
-    for (const name of candidates) {
-      const source = path.join(outputRoot, name);
+    async function checkpointFile(scope, name, source) {
+      let info;
       try {
-        await access(source);
-        const artifact = await objectStore.putFile(
-          `${checkpointRoot}/output/${name}`, source, { public: false },
-        );
-        files.push({ ...artifact, scope: "output", name });
+        info = await stat(source);
       } catch {
-        // Missing files simply mean that stage had not completed yet.
+        return; // Missing files simply mean that stage had not completed yet.
       }
+      const fingerprint = `${info.size}:${Math.floor(info.mtimeMs)}`;
+      const existing = previous.get(`${scope}/${name}`);
+      if (existing?.fingerprint === fingerprint) {
+        files.push(existing);
+        return;
+      }
+      const artifact = await objectStore.putFile(
+        `${checkpointRoot}/${scope}/${name}`, source, { public: false },
+      );
+      files.push({ ...artifact, scope, name, fingerprint });
     }
-    const playRoot = path.join(pipelineRoot, "play");
+    for (const name of candidates) {
+      await checkpointFile("output", name, path.join(outputRoot, name));
+    }
+    let bundles = [];
     try {
-      const bundles = (await readdir(playRoot))
-        .filter((name) => (name === `${job.slug}.osb` || name.startsWith(`${job.slug}-`)) && name.endsWith(".osb"));
-      for (const name of bundles) {
-        const artifact = await objectStore.putFile(
-          `${checkpointRoot}/play/${name}`, path.join(playRoot, name), { public: false },
-        );
-        files.push({ ...artifact, scope: "play", name });
-      }
+      bundles = (await readdir(playRoot))
+        .filter((name) => name === `${job.slug}.osb6` ||
+          ((name === `${job.slug}.osb` || name.startsWith(`${job.slug}-`)) && name.endsWith(".osb")));
     } catch {
       // The play directory may not exist if generation failed very early.
+    }
+    for (const name of bundles) {
+      await checkpointFile("play", name, path.join(playRoot, name));
     }
     if (files.length) {
       job.checkpoint = { savedAt: new Date().toISOString(), files };
     }
+  }
+
+  function queueCheckpoint(job) {
+    if (checkpointQueued) return checkpointChain;
+    checkpointQueued = true;
+    checkpointChain = checkpointChain.then(async () => {
+      checkpointQueued = false;
+      if (leaseLost) return;
+      try {
+        await saveCheckpoint(job);
+        await saveJob(job);
+      } catch (error) {
+        if (error.code !== "LEASE_LOST") console.error("Could not checkpoint fighter progress:", error);
+      }
+    });
+    return checkpointChain;
   }
 
   async function finishJob(job, code, signal, attemptLog = "") {
@@ -388,7 +473,7 @@ export function createFighterJobs({
         const outputRoot = path.join(pipelineUiRoot, job.slug);
         await Promise.all([
           access(path.join(outputRoot, "portrait_raw.png")),
-          access(path.join(engineRoot, "bundles", `${job.slug}.osb`)),
+          access(path.join(engineRoot, "bundles", `${job.slug}.osb6`)),
           access(path.join(engineRoot, "bundles", `${job.slug}.osbui`)),
           access(path.join(engineRoot, "bundles", `${job.slug}.wav`)),
         ]);
@@ -406,18 +491,11 @@ export function createFighterJobs({
         const versionRoot = `characters/${job.slug}/versions/${version}`;
         const isPublic = job.visibility !== "private";
         const bundleRoot = path.join(engineRoot, "bundles");
-        const variantFiles = (await readdir(bundleRoot))
-          .filter((name) => name.startsWith(`${job.slug}-`) && name.endsWith(".osb"))
+        // One OSB6 holds every built target; record which so the client can
+        // offer mesh overrides without probing for files.
+        const targets = (await readOsb6Targets(path.join(bundleRoot, `${job.slug}.osb6`)))
+          .filter((target) => target !== "mario")
           .sort();
-        const variants = {};
-        for (const fileName of variantFiles) {
-          const fighter = fileName.slice(job.slug.length + 1, -4);
-          variants[fighter] = await objectStore.putFile(
-            `${versionRoot}/injection/${fileName}`,
-            path.join(bundleRoot, fileName),
-            { contentType: "application/octet-stream", public: isPublic },
-          );
-        }
         job.artifacts = {
           portrait: await objectStore.putFile(
             `${versionRoot}/portrait.png`,
@@ -430,8 +508,8 @@ export function createFighterJobs({
             { contentType: "audio/wav", public: isPublic },
           ),
           bundle: await objectStore.putFile(
-            `${versionRoot}/injection/${job.slug}.osb`,
-            path.join(bundleRoot, `${job.slug}.osb`),
+            `${versionRoot}/injection/${job.slug}.osb6`,
+            path.join(bundleRoot, `${job.slug}.osb6`),
             { contentType: "application/octet-stream", public: isPublic },
           ),
           ui: await objectStore.putFile(
@@ -439,14 +517,17 @@ export function createFighterJobs({
             path.join(bundleRoot, `${job.slug}.osbui`),
             { contentType: "application/octet-stream", public: isPublic },
           ),
-          character: await objectStore.putFile(
+          character: await objectStore.putJson(
             `${versionRoot}/character.json`,
-            path.join(outputRoot, "character.json"),
-            { contentType: "application/json", public: isPublic },
+            publicCharacterMetadata(metadata),
+            { public: isPublic },
           ),
-          variants,
+          targets,
         };
-        for (const [key, fileName] of [["stock", "stock_raw.png"], ["emblem", "emblem_raw.png"]]) {
+        for (const [key, fileName] of [
+          ["stock", "stock_raw.png"], ["emblem", "emblem_raw.png"],
+          ["portraitTile", "portrait_tile.png"], ["portraitMedium", "portrait_medium.png"],
+        ]) {
           try {
             await access(path.join(outputRoot, fileName));
             job.artifacts[key] = await objectStore.putFile(
@@ -466,7 +547,7 @@ export function createFighterJobs({
             short: metadata.short || metadata.display || job.name,
           },
           visibility: job.visibility,
-          uploader: job.uploader?.displayName ? { displayName: job.uploader.displayName } : null,
+          uploader: job.ownerId ? { id: uploaderToken(job.ownerId) } : null,
           version,
           generatedAt: new Date().toISOString(),
           artifacts: job.artifacts,
@@ -525,7 +606,7 @@ export function createFighterJobs({
     }
     if (job.status === "failed") {
       try {
-        await saveFailureCheckpoint(job);
+        await saveCheckpoint(job);
       } catch (error) {
         job.logTail = [...(job.logTail || []), `checkpoint: ${error.message}`].slice(-24);
       }
@@ -539,8 +620,61 @@ export function createFighterJobs({
     return STAGES.find((stage) => normalized.includes(stage.match.toLowerCase()));
   }
 
+  // Stops the pipeline child (if any) and records why, so the close handler
+  // records an interruption instead of a failure or a new attempt. Reasons:
+  // "sigterm" (Cloud Run shutdown), "lease-lost" (another owner took the job),
+  // "cancelled" (owner cancelled a locally running job).
+  function abortCurrentRun(reason) {
+    const run = currentRun;
+    if (!run || run.abortReason) return;
+    run.abortReason = reason;
+    const child = run.child;
+    if (child && child.exitCode === null && child.signalCode === null) {
+      child.kill("SIGTERM");
+      setTimeout(() => {
+        if (child.exitCode === null && child.signalCode === null) child.kill("SIGKILL");
+      }, 3_000).unref();
+    }
+    if (run.retryTimer) {
+      clearTimeout(run.retryTimer);
+      run.retryTimer = null;
+      void run.proceed();
+    }
+  }
+
+  async function interruptJob(job, reason) {
+    await checkpointChain;
+    if (reason === "lease-lost" || leaseLost) return;
+    if (reason === "cancelled") {
+      job.lease = null;
+      await saveJob(job);
+      return;
+    }
+    try {
+      await saveCheckpoint(job);
+    } catch (error) {
+      job.logTail = [...(job.logTail || []), `checkpoint: ${error.message}`].slice(-24);
+    }
+    job.status = "failed";
+    job.stage = "interrupted";
+    job.stageLabel = "Generation worker was stopped";
+    job.error = "The worker was stopped before it finished. Resume to continue from its last saved checkpoint.";
+    job.retry.label = "Resume generation";
+    job.retry.nextAttemptAt = null;
+    job.lease = null;
+    await saveJob(job);
+  }
+
+  function endRun() {
+    currentRun = null;
+    workerBusy = false;
+    void runNext();
+  }
+
   async function runJob(job, { automatic = false } = {}) {
     workerBusy = true;
+    const run = { job, child: null, abortReason: null, retryTimer: null, proceed: null };
+    currentRun = run;
     job.attempt = (job.attempt || 0) + 1;
     job.status = "running";
     if (!automatic) {
@@ -576,6 +710,11 @@ export function createFighterJobs({
       }
       await saveJob(job);
     } catch (error) {
+      if (error.code === "LEASE_LOST" || run.abortReason) {
+        await interruptJob(job, run.abortReason || "lease-lost");
+        endRun();
+        return publicJob(job);
+      }
       job.status = "failed";
       job.stage = "failed";
       job.stageLabel = "Could not prepare the reference photo";
@@ -583,9 +722,13 @@ export function createFighterJobs({
       job.logTail = [...(job.logTail || []), error.message].slice(-24);
       job.lease = null;
       await saveJob(job);
-      workerBusy = false;
-      void runNext();
-      return;
+      endRun();
+      return publicJob(job);
+    }
+    if (run.abortReason) {
+      await interruptJob(job, run.abortReason);
+      endRun();
+      return publicJob(job);
     }
 
     const args = [pipelineScript, job.name, "--photo", normalizedPhoto, "--out", path.join(pipelineUiRoot, job.slug)];
@@ -595,6 +738,7 @@ export function createFighterJobs({
       env: process.env,
       stdio: ["ignore", "pipe", "pipe"],
     });
+    run.child = child;
     const logPath = path.join(jobRoot(job.id), "run.log");
     let pending = "";
     let saveTimer = null;
@@ -604,7 +748,9 @@ export function createFighterJobs({
       if (saveTimer) return;
       saveTimer = setTimeout(() => {
         saveTimer = null;
-        saveJob(job).catch((error) => console.error("Could not save fighter progress:", error));
+        saveJob(job).catch((error) => {
+          if (error.code !== "LEASE_LOST") console.error("Could not save fighter progress:", error);
+        });
       }, 150);
     }
 
@@ -622,9 +768,11 @@ export function createFighterJobs({
         if (!structuredStage) job.logTail = [...(job.logTail || []), line].slice(-24);
         const stage = structuredStage || stageFromLine(line);
         if (stage && stage.progress >= (job.progress || 0)) {
+          const entered = job.stage !== stage.key;
           job.stage = stage.key;
           job.stageLabel = stage.label;
           job.progress = stage.progress;
+          if (entered && CHECKPOINT_STAGES.has(stage.key)) queueCheckpoint(job);
         }
       }
       scheduleSave();
@@ -638,12 +786,19 @@ export function createFighterJobs({
         spawnError = error;
       });
       child.on("close", async (code, signal) => {
+        run.child = null;
         if (saveTimer) clearTimeout(saveTimer);
         if (pending.trim()) {
           const finalLine = pending;
           pending = "";
           consume(`${finalLine}\n`);
           if (saveTimer) clearTimeout(saveTimer);
+        }
+        if (run.abortReason) {
+          await interruptJob(job, run.abortReason);
+          endRun();
+          resolve();
+          return;
         }
         if (spawnError) {
           job.logTail = [...(job.logTail || []), spawnError.message].slice(-24);
@@ -653,8 +808,7 @@ export function createFighterJobs({
           job.error = spawnError.message;
           job.lease = null;
           await saveJob(job);
-          workerBusy = false;
-          void runNext();
+          endRun();
           resolve();
           return;
         }
@@ -670,15 +824,23 @@ export function createFighterJobs({
           job.error = null;
           job.retry.label = null;
           await saveJob(job);
-          setTimeout(async () => {
+          run.proceed = async () => {
+            run.retryTimer = null;
+            if (run.abortReason) {
+              await interruptJob(job, run.abortReason);
+              endRun();
+              resolve();
+              return;
+            }
             await runJob(job, { automatic: true });
             resolve();
-          }, retryPlan.delayMs);
+          };
+          run.retryTimer = setTimeout(run.proceed, retryPlan.delayMs);
           return;
         }
+        await checkpointChain;
         await finishJob(job, code, signal, attemptLog);
-        workerBusy = false;
-        void runNext();
+        endRun();
         resolve();
       });
     });
@@ -727,15 +889,20 @@ export function createFighterJobs({
     if (localExecution) return;
     const now = Date.now();
     const dispatchTimeout = Number(process.env.FIGHTER_DISPATCH_TIMEOUT_SECONDS || 10 * 60) * 1000;
+    const queueTimeout = Number(process.env.FIGHTER_QUEUE_TIMEOUT_SECONDS || 5 * 60) * 1000;
     for (const job of jobs.values()) {
       const leaseExpiry = Date.parse(job.lease?.expiresAt || "");
       const leaseExpired =
         (job.status === "running" || job.status === "retrying") &&
         (!Number.isFinite(leaseExpiry) || leaseExpiry < now);
+      // A queued job either has a dispatch record whose worker never claimed
+      // it, or no record at all because the API died between insert and
+      // dispatch. Both must expire or the owner's active-job slot is stuck.
       const neverClaimed =
         job.status === "queued" &&
-        job.dispatch?.dispatchedAt &&
-        Date.parse(job.dispatch.dispatchedAt) + dispatchTimeout < now;
+        (job.dispatch?.dispatchedAt
+          ? Date.parse(job.dispatch.dispatchedAt) + dispatchTimeout < now
+          : Date.parse(job.updatedAt || job.createdAt) + queueTimeout < now);
       if (!leaseExpired && !neverClaimed) continue;
       job.status = "failed";
       job.stage = "interrupted";
@@ -747,26 +914,27 @@ export function createFighterJobs({
     }
   }
 
-  function assertCreationQuota(ownerId) {
+  // Synchronous: checks the quota and reserves a slot before create() yields
+  // to the upload, moderation, and object-store writes. Returns the release
+  // function; the reservation ends once the job is in `jobs` (or on failure).
+  function reserveCreation(ownerId) {
     if (!ownerId) throw new HttpError(401, "A validated ROM session is required.");
-    const allJobs = [...jobs.values()];
-    const activeForOwner = allJobs.filter(
-      (job) => job.ownerId === ownerId && ACTIVE_JOB_STATUSES.has(job.status),
-    ).length;
-    if (activeForOwner >= maxActivePerOwner) {
-      throw new HttpError(429, "Finish your current fighter before starting another.");
+    try {
+      assertQuota(quotaUsage(jobs.values(), ownerId, { pending }), limits);
+    } catch (error) {
+      throw httpErrorFrom(error);
     }
-    const startOfDay = Date.now() - 24 * 60 * 60 * 1000;
-    const dailyForOwner = allJobs.filter(
-      (job) => job.ownerId === ownerId && Date.parse(job.createdAt) >= startOfDay,
-    ).length;
-    if (dailyForOwner >= maxDailyPerOwner) {
-      throw new HttpError(429, "This account has reached its daily fighter limit.");
-    }
-    const globalActive = allJobs.filter((job) => ACTIVE_JOB_STATUSES.has(job.status)).length;
-    if (globalActive >= maxGlobalActive) {
-      throw new HttpError(503, "The fighter queue is full. Try again shortly.");
-    }
+    pending.owners.set(ownerId, (pending.owners.get(ownerId) || 0) + 1);
+    pending.global += 1;
+    let released = false;
+    return () => {
+      if (released) return;
+      released = true;
+      const remaining = (pending.owners.get(ownerId) || 1) - 1;
+      if (remaining > 0) pending.owners.set(ownerId, remaining);
+      else pending.owners.delete(ownerId);
+      pending.global = Math.max(0, pending.global - 1);
+    };
   }
 
   function ownedJob(id, ownerId) {
@@ -776,7 +944,7 @@ export function createFighterJobs({
 
   async function create(req, uploader) {
     const ownerId = uploader?.uid;
-    assertCreationQuota(ownerId);
+    const release = reserveCreation(ownerId);
     const id = randomUUID();
     const root = jobRoot(id);
     try {
@@ -857,11 +1025,15 @@ export function createFighterJobs({
           automaticCounts: { moderation: 0, transient: 0 },
           nextAttemptAt: null,
           label: null,
+          manualRetriesAt: [],
         },
         input,
         logTail: [],
       };
+      // Once in the map the job counts as active on its own; the database
+      // insert re-checks the quota transactionally for multi-instance safety.
       jobs.set(id, job);
+      release();
       try {
         await insertJob(job);
       } catch (error) {
@@ -869,34 +1041,71 @@ export function createFighterJobs({
         if (error.code === "DUPLICATE_SLUG") {
           throw new HttpError(409, `A generation for '${name}' already exists.`);
         }
-        throw error;
+        throw httpErrorFrom(error);
       }
       await dispatch(job);
       return publicJob(job);
     } catch (error) {
       await rm(root, { recursive: true, force: true });
       throw error;
+    } finally {
+      release();
     }
   }
 
+  // Manual retries are capped per job and count against the owner's daily
+  // limit. Automatic reroll/transient budgets carry over between attempts, so
+  // a job can never exceed 1 + manual + automatic worker executions.
   async function retry(id, ownerId) {
     const job = ownedJob(id, ownerId);
     if (!job) throw new HttpError(404, "Fighter job not found.");
     if (ACTIVE_JOB_STATUSES.has(job.status)) throw new HttpError(409, "That fighter is already being generated.");
     if (job.status === "complete") throw new HttpError(409, "That fighter is already complete.");
+    const manualRetriesAt = job.retry?.manualRetriesAt || [];
+    if (manualRetriesAt.length >= maxManualRetries) {
+      throw new HttpError(429, "This fighter has used all of its retries. Create a new fighter instead.");
+    }
+    try {
+      assertQuota(quotaUsage(jobs.values(), job.ownerId, { pending }), limits);
+    } catch (error) {
+      throw httpErrorFrom(error);
+    }
     job.status = "queued";
     job.stage = "queued";
     job.stageLabel = workerBusy ? "Waiting for the current fighter" : "Queued to resume";
     job.progress = 0;
     job.error = null;
     job.retry = {
-      automaticCounts: { moderation: 0, transient: 0 },
+      automaticCounts: job.retry?.automaticCounts || { moderation: 0, transient: 0 },
       nextAttemptAt: null,
       label: null,
+      manualRetriesAt: [...manualRetriesAt, new Date().toISOString()],
     };
     job.completedAt = null;
+    job.dispatch = null;
+    job.lease = null;
     await saveJob(job);
     await dispatch(job);
+    return publicJob(job);
+  }
+
+  // Cancelling clears the lease, so a worker still running the job fails its
+  // next conditional write, stops the pipeline, and writes nothing further.
+  async function cancel(id, ownerId) {
+    const job = ownedJob(id, ownerId);
+    if (!job) throw new HttpError(404, "Fighter job not found.");
+    if (job.status === "complete") throw new HttpError(409, "That fighter is already complete.");
+    if (job.status === "cancelled") return publicJob(job);
+    job.status = "cancelled";
+    job.stage = "cancelled";
+    job.stageLabel = "Cancelled";
+    job.error = null;
+    job.retry.nextAttemptAt = null;
+    job.retry.label = "Resume generation";
+    job.lease = null;
+    job.completedAt = null;
+    await saveJob(job);
+    if (currentRun?.job.id === job.id) abortCurrentRun("cancelled");
     return publicJob(job);
   }
 
@@ -966,12 +1175,39 @@ export function createFighterJobs({
     async retry(id, ownerId) {
       return retry(id, ownerId);
     },
+    async cancel(id, ownerId) {
+      return cancel(id, ownerId);
+    },
+    async reconcile() {
+      return reconcileStaleJobs();
+    },
     async runSingle(id, executionId) {
       const claim = await jobDatabase.claim(id, executionId, leaseSeconds);
       if (!claim.claimed) return claim.job ? publicJob(normalizeStoredJob(claim.job)) : null;
+      workerExecutionId = executionId;
       const job = normalizeStoredJob(claim.job);
       jobs.set(job.id, job);
-      return runJob(job);
+      // Renew the lease on a clock, not on pipeline output: mesh polling can be
+      // silent for longer than the lease, which used to look like a dead worker.
+      const heartbeat = setInterval(() => {
+        if (leaseLost || !job.lease?.executionId) return;
+        saveJob(job).catch((error) => {
+          if (error.code !== "LEASE_LOST") console.error("Could not renew the fighter lease:", error);
+        });
+      }, Math.max(1_000, Math.floor((leaseSeconds * 1000) / 3)));
+      // Cloud Run sends SIGTERM shortly before killing the container. Stop the
+      // pipeline, checkpoint every finished stage, and leave the job resumable.
+      const onTerminate = () => {
+        console.warn(`SIGTERM received; checkpointing fighter job '${job.id}' before shutdown.`);
+        abortCurrentRun("sigterm");
+      };
+      process.once("SIGTERM", onTerminate);
+      try {
+        return await runJob(job);
+      } finally {
+        clearInterval(heartbeat);
+        process.off("SIGTERM", onTerminate);
+      }
     },
     portraitPath(id, ownerId = null) {
       const job = jobs.get(id);
