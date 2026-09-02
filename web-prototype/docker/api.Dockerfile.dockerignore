@@ -23,6 +23,11 @@ pipeline/web-prototype/dist/
 !BattleShip/web-dist/manifest.json
 !BattleShip/web-dist/files/
 !BattleShip/web-dist/files/**
+# In-browser asset extraction module + scripts (BattleShip/docs/web_rom_extraction.md)
+!BattleShip/web-dist/torch/
+!BattleShip/web-dist/torch/**
+!BattleShip/web-dist/rom-extract.js
+!BattleShip/web-dist/torch-worker.js
 !BattleShip/web-dist/bundles/
 !BattleShip/web-dist/bundles/joeyflynn*
 !BattleShip/web-dist/bundles/barackobama*
