@@ -29,11 +29,11 @@ function ControllerCallouts() {
         </span>
       </div>
       {[
-        ['a', 'j', 'J: A button'],
-        ['b', 'k', 'K: B button'],
-        ['z', 'l', 'L: Z button'],
-        ['left-bumper', 'i', 'I: left bumper'],
-        ['right-bumper', 'o', 'O: right bumper'],
+        ['a', 'x', 'X: A button'],
+        ['b', 'c', 'C: B button'],
+        ['z', 'z', 'Z: Z button'],
+        ['left-bumper', 'e', 'E: left bumper'],
+        ['right-bumper', 'r', 'R: right bumper'],
       ].map(([control, key, label]) => (
         <div className="controller-callout" data-control-callout={control} aria-label={label} key={control}>
           <kbd className="controller-keycap" data-control-key={key} aria-hidden="true">{key.toUpperCase()}</kbd>

@@ -67,7 +67,18 @@ const CONSOLE_CARTRIDGE_FIT_SCALE = 0.44;
 const CONSOLE_CARTRIDGE_READY_CLEARANCE = 0.34;
 const CONSOLE_DOCK_FRONT_YAW = Math.PI * 1.5;
 const CONSOLE_DOCK_FRONT_PITCH = 0.18;
-const REQUIRED_CONTROL_KEYS = Object.freeze(['w', 'a', 's', 'd', 'j', 'k', 'l', 'i', 'o']);
+// The engine's keyboard map (libultraship defaults): X=A, C=B, Z=Z, E=L, R=R.
+const REQUIRED_CONTROL_KEYS = Object.freeze(['w', 'a', 's', 'd', 'x', 'c', 'z', 'e', 'r']);
+// Gamepad (standard layout) -> the same control ids the keyboard tutorial
+// uses, so a pad player lights up the very same callouts: A, B, LT=Z,
+// LB=L, RB/RT=R, left stick = W A S D.
+const PAD_BUTTON_CONTROLS = Object.freeze({ 0: 'x', 1: 'c', 6: 'z', 4: 'e', 5: 'r', 7: 'r' });
+const PAD_STICK_THRESHOLD = 0.5;
+const PAD_CONTROL_LABELS = Object.freeze({
+  xbox: Object.freeze({ w: '↑', a: '←', s: '↓', d: '→', x: 'A', c: 'B', z: 'LT', e: 'LB', r: 'RB' }),
+  playstation: Object.freeze({ w: '↑', a: '←', s: '↓', d: '→', x: '✕', c: '○', z: 'L2', e: 'L1', r: 'R1' }),
+  switch: Object.freeze({ w: '↑', a: '←', s: '↓', d: '→', x: 'B', c: 'A', z: 'ZL', e: 'L', r: 'R' }),
+});
 const SOUND_STORAGE_KEY = 'opensmash-sound';
 const LAUNCH_SOUNDS = Object.freeze({
   cartridgeChunk: Object.freeze({ url: cartridgeChunkUrl, volume: 0.46 }),
@@ -78,11 +89,11 @@ const CONTROLLER_KEY_TORQUE = Object.freeze({
   a: Object.freeze([0.038, 0, 0.025]),
   s: Object.freeze([0.055, 0, 0]),
   d: Object.freeze([0.038, 0, -0.025]),
-  j: Object.freeze([0.02, 0, -0.068]),
-  k: Object.freeze([0.03, 0, -0.08]),
-  l: Object.freeze([0.06, 0, 0]),
-  i: Object.freeze([0.02, 0, 0.078]),
-  o: Object.freeze([0.02, 0, -0.078]),
+  x: Object.freeze([0.02, 0, -0.068]),
+  c: Object.freeze([0.03, 0, -0.08]),
+  z: Object.freeze([0.06, 0, 0]),
+  e: Object.freeze([0.02, 0, 0.078]),
+  r: Object.freeze([0.02, 0, -0.078]),
 });
 
 const grid = document.getElementById('replica-grid');
@@ -197,10 +208,36 @@ function resetControllerTutorial() {
   catch { /* The in-memory reset still applies to this tab. */ }
 }
 
+function connectedGamepads() {
+  try {
+    return Array.from(navigator.getGamepads?.() || []).filter(pad => pad && pad.connected);
+  } catch {
+    return [];
+  }
+}
+
+function hasGamepad() {
+  return Boolean(APP_BRIDGE?.hasGamepad?.()) || connectedGamepads().length > 0;
+}
+
+function padControlLabels() {
+  const ids = connectedGamepads().map(pad => pad.id).join(' ');
+  if (/dualsense|dualshock|playstation|sony|054c/i.test(ids)) return PAD_CONTROL_LABELS.playstation;
+  if (/switch|nintendo|joy-con|057e/i.test(ids)) return PAD_CONTROL_LABELS.switch;
+  return PAD_CONTROL_LABELS.xbox;
+}
+
+// The callouts show keycaps for the keyboard; with a pad connected they
+// show that pad's button names instead (same positions, same checks).
+function applyControlLabels() {
+  const labels = hasGamepad() ? padControlLabels() : null;
+  controlKeycaps.forEach(keycap => {
+    if (keycap.dataset.keyLabel === undefined) keycap.dataset.keyLabel = keycap.textContent;
+    keycap.textContent = labels?.[keycap.dataset.controlKey] ?? keycap.dataset.keyLabel;
+  });
+}
+
 function requiresControllerTutorial() {
-  // The tutorial teaches the keyboard layout; a player holding a gamepad
-  // (see useGamepads in the React app) can go straight in.
-  if (APP_BRIDGE?.hasGamepad?.()) return false;
   return controlsRoadblockRequired() || shouldRequireControllerTutorial({
     completed: hasCompletedControllerTutorial(),
     mobileControls: usesMobileControls(),
@@ -923,7 +960,7 @@ function pressControllerControl(key, repeated) {
   controllerTiltVelocity.y += torque[1] * 3.4;
   controllerTiltVelocity.z += torque[2] * 3.4;
   controllerDropVelocity -= 0.085;
-  if (key === 'l') {
+  if (key === 'z') {
     controllerZRevealUntil = performance.now() + CONTROLLER_Z_REVEAL_MS;
     controllerFlipVelocity = Math.max(controllerFlipVelocity, 1.25);
   }
@@ -963,7 +1000,7 @@ function updateControllerPhysics(now, dt, homeY, homeScale, reducedMotion) {
   controllerDrop += controllerDropVelocity * dt;
 
   const flipTarget = !reducedMotion &&
-      (heldControlKeys.has('l') || now < controllerZRevealUntil)
+      (heldControlKeys.has('z') || now < controllerZRevealUntil)
     ? Math.PI
     : 0;
   controllerFlipVelocity += (
@@ -1952,6 +1989,8 @@ function skipControlCheck() {
   if (!overlay || overlay.hidden || overlay.dataset.step !== 'controller' || controlsPreviewMode) return;
   hideControlSkip();
   controlCheckComplete = true;
+  // A skipped tutorial stays skipped for this visit; it returns next time.
+  controllerTutorialCompletedThisSession = true;
   controlExitPending = false;
   clearTimeout(flowTimer);
   continueToGame();
@@ -1965,10 +2004,14 @@ function resetControlCheck() {
   resetControllerPhysics();
   controlKeycaps.forEach(keycap => keycap.classList.remove('is-complete', 'is-pressed'));
   controlPrompt?.classList.remove('is-complete');
+  applyControlLabels();
   if (controlPrompt) {
+    const pad = hasGamepad();
     controlPrompt.textContent = controlsPreviewMode
-      ? 'Press the mapped keys to try the controls'
-      : 'Press each key on your keyboard to continue';
+      ? (pad ? 'Press the buttons on your controller or the mapped keys to try the controls'
+             : 'Press the mapped keys to try the controls')
+      : (pad ? 'Press each button on your controller to continue'
+             : 'Press each key on your keyboard to continue');
   }
 }
 
@@ -1978,7 +2021,66 @@ function registerControlKey(event) {
   const key = event.key.toLowerCase();
   if (!REQUIRED_CONTROL_KEYS.includes(key)) return false;
   event.preventDefault();
-  pressControllerControl(key, event.repeat);
+  return registerControlInput(key, event.repeat);
+}
+
+function releaseControlKey(key) {
+  heldControlKeys.delete(key);
+  controlKeycaps.find(item => item.dataset.controlKey === key)
+    ?.classList.remove('is-pressed');
+}
+
+// Gamepad input for the tutorial: poll while the controller step is open,
+// turn rising edges into the same control presses the keyboard produces.
+const padHeldControls = new Set();
+let padPollHandle = 0;
+
+function padControlsNow() {
+  const active = new Set();
+  for (const pad of connectedGamepads()) {
+    pad.buttons.forEach((button, index) => {
+      const control = PAD_BUTTON_CONTROLS[index];
+      if (control && (button.pressed || button.value > 0.5)) active.add(control);
+    });
+    const x = pad.axes[0] || 0;
+    const y = pad.axes[1] || 0;
+    if (y < -PAD_STICK_THRESHOLD) active.add('w');
+    if (y > PAD_STICK_THRESHOLD) active.add('s');
+    if (x < -PAD_STICK_THRESHOLD) active.add('a');
+    if (x > PAD_STICK_THRESHOLD) active.add('d');
+  }
+  return active;
+}
+
+function pollPadControls() {
+  padPollHandle = 0;
+  const open = overlay && !overlay.hidden && overlay.dataset.step === 'controller';
+  if (!open) {
+    for (const control of padHeldControls) releaseControlKey(control);
+    padHeldControls.clear();
+    padPollHandle = window.setTimeout(pollPadControls, 250);
+    return;
+  }
+  const active = padControlsNow();
+  for (const control of active) {
+    if (!padHeldControls.has(control)) {
+      padHeldControls.add(control);
+      registerControlInput(control, false);
+    }
+  }
+  for (const control of padHeldControls) {
+    if (!active.has(control)) {
+      padHeldControls.delete(control);
+      releaseControlKey(control);
+    }
+  }
+  padPollHandle = requestAnimationFrame(pollPadControls);
+}
+
+function registerControlInput(key, repeated) {
+  if (!overlay || overlay.hidden || overlay.dataset.step !== 'controller' ||
+      controlCheckComplete) return false;
+  pressControllerControl(key, repeated);
   const firstPress = !completedControlKeys.has(key);
   completedControlKeys.add(key);
   if (firstPress) playLaunchSound(LAUNCH_SOUNDS.controllerPunch);
@@ -2346,11 +2448,12 @@ window.addEventListener('keydown', event => {
   }
 });
 window.addEventListener('keyup', event => {
-  const key = event.key.toLowerCase();
-  heldControlKeys.delete(key);
-  controlKeycaps.find(item => item.dataset.controlKey === key)
-    ?.classList.remove('is-pressed');
+  releaseControlKey(event.key.toLowerCase());
 });
+window.addEventListener('gamepadconnected', () => {
+  if (overlay && !overlay.hidden && overlay.dataset.step === 'controller') applyControlLabels();
+});
+pollPadControls();
 gameFrame?.addEventListener('load', () => {
   if (!videoFrame?.classList.contains('is-game-running')) return;
   keepPageScrollableFromGame();
