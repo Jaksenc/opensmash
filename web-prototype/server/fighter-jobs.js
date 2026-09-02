@@ -84,7 +84,7 @@ export function publicCharacterMetadata(metadata) {
 }
 
 export function submissionSettings(fields = {}) {
-  const visibility = fields.visibility || "public";
+  const visibility = fields.visibility || "private";
   if (visibility !== "public" && visibility !== "private") {
     throw new HttpError(400, "Choose public or private visibility.");
   }

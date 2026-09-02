@@ -1,11 +1,6 @@
 import { useEffect, useState } from "react";
 import FlameAction from "./FlameAction.jsx";
-import RetroChoiceGrid from "./RetroChoiceGrid.jsx";
-
-const VISIBILITY_OPTIONS = [
-  { value: "public", label: "Public", description: "Added to the community roster" },
-  { value: "private", label: "Private", description: "Visible only to your account" },
-];
+import plusIconUrl from "../visual/assets/ui/Plus.png";
 
 async function readResult(response) {
   const result = await response.json().catch(() => ({}));
@@ -18,7 +13,6 @@ export default function FighterCreator({ onCancel, onCreated }) {
   const [emblem, setEmblem] = useState("");
   const [photo, setPhoto] = useState(null);
   const [photoPreview, setPhotoPreview] = useState("");
-  const [visibility, setVisibility] = useState("public");
   const [rightsAttested, setRightsAttested] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -44,13 +38,12 @@ export default function FighterCreator({ onCancel, onCreated }) {
       const form = new FormData();
       form.set("name", name.trim());
       form.set("emblem", emblem.trim());
-      form.set("visibility", visibility);
+      form.set("visibility", "private");
       form.set("rightsAttested", String(rightsAttested));
       form.set("photo", photo);
       const result = await readResult(await fetch("/api/fighters", { method: "POST", body: form }));
       setName("");
       setEmblem("");
-      setVisibility("public");
       setRightsAttested(false);
       choosePhoto(null);
       createdJob = result.job;
@@ -66,7 +59,10 @@ export default function FighterCreator({ onCancel, onCreated }) {
     <section className="creator-section" id="create-fighter" aria-labelledby="creator-title">
       <div className="creator-intro">
         <h2 id="creator-title">Create a Fighter</h2>
-        <p>Upload a reference photo and name to generate a playable fighter.</p>
+        <p>
+          Upload a reference photo and name to generate a playable fighter. Fighters are private
+          and ran through safety checks before being created.
+        </p>
       </div>
 
       <div className="creator-panel">
@@ -80,12 +76,14 @@ export default function FighterCreator({ onCancel, onCreated }) {
               disabled={submitting}
             />
             {photoPreview ? (
-              <img src={photoPreview} alt="Fighter reference preview" />
+              <img className="fighter-photo-preview" src={photoPreview} alt="Fighter reference preview" />
             ) : (
-              <span>
-                <i>+</i>
-                Upload photo
-                <small>JPEG, PNG or WebP · 12 MB max</small>
+              <span className="fighter-photo-empty">
+                <img className="fighter-photo-plus" src={plusIconUrl} alt="" aria-hidden="true" />
+                <span className="fighter-photo-copy">
+                  <strong>Upload photo</strong>
+                  <small>JPEG, PNG or WebP · 12 MB max</small>
+                </span>
               </span>
             )}
             {photoPreview && <small className="replace-photo">Choose another photo</small>}
@@ -115,17 +113,6 @@ export default function FighterCreator({ onCancel, onCreated }) {
                 disabled={submitting}
               />
             </label>
-            <fieldset className="visibility-fieldset">
-              <legend>Who can see this fighter?</legend>
-              <RetroChoiceGrid
-                className="creator-visibility-grid"
-                name="visibility"
-                value={visibility}
-                options={VISIBILITY_OPTIONS}
-                onChange={setVisibility}
-                disabled={submitting}
-              />
-            </fieldset>
             <label className="rights-attestation">
               <input
                 type="checkbox"
@@ -139,9 +126,6 @@ export default function FighterCreator({ onCancel, onCreated }) {
                 the submission does not contain nudity or abusive content.
               </span>
             </label>
-            <p className="moderation-copy">
-              The name, direction, and photo are safety-screened before the paid build starts.
-            </p>
           </div>
           </form>
 
