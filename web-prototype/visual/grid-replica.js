@@ -324,9 +324,11 @@ await Promise.all(FEATURED_ROSTER.map(async character => {
 }));
 
 await Promise.all(Object.values(ACTION_PORTRAITS).map(async portraitName => {
+  const portraitUrl = BUILD_ASSETS[`./assets/featured-fighters/${portraitName}.png`];
+  if (!portraitUrl) return;
   CHARACTER_PORTRAITS.set(
     portraitName,
-    await loadFeaturedPortrait(portraitName)
+    await loadFeaturedPortrait(portraitName, portraitUrl)
   );
 }));
 
