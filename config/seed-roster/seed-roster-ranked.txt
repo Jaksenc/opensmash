@@ -34,7 +34,14 @@ Conor McGregor
 Novak Djokovic
 IShowSpeed
 Dario Amodei
+Baba Yaga
+The Loch Ness Monster
 Odysseus
+Robin Hood
+Don Quixote
+King Lear
+The Statue of Liberty
+Popeye
 Homer
 Napoleon
 Billy the Kid
@@ -71,7 +78,14 @@ John Cena
 Lewis Hamilton
 MrBeast
 Sam Altman
+Rumpelstiltskin
+Bigfoot
 Achilles
+King Arthur
+Sherlock Holmes
+Falstaff
+Mona Lisa
+Betty Boop
 Alexander the Great
 Queen Elizabeth the First
 Blackbeard
@@ -108,7 +122,14 @@ Muhammad Ali
 Serena Williams
 Kai Cenat
 Daniela Amodei
+The Pied Piper
+Mothman
 Polyphemus the Cyclops
+Merlin
+Winnie the Pooh
+Hamlet
+Michelangelo's David
+Oswald the Lucky Rabbit
 Jesus Christ
 Genghis Khan
 Benedict Arnold
@@ -145,7 +166,14 @@ Khabib Nurmagomedov
 Rafael Nadal
 KSI
 Demis Hassabis
-The Statue of Liberty
+Little Red Riding Hood
+The Chupacabra
+Zeus
+Paul Bunyan
+Cthulhu
+Caliban
+Terracotta Warrior
+Felix the Cat
 Julius Caesar
 Marie Antoinette
 Wyatt Earp
@@ -182,7 +210,14 @@ Hulk Hogan
 Naomi Osaka
 Logan Paul
 Aravind Srinivas
-Zeus
+Santa Claus
+The Yeti
+Hercules the Greek Hero
+William Tell
+Mr. Hyde
+Iago
+The Scream
+Olive Oyl
 Caesar Augustus
 Anne Boleyn
 Aaron Burr
@@ -219,7 +254,14 @@ Mike Tyson
 Carlos Alcaraz
 Grimes
 Palmer Luckey
-Mona Lisa
+Uncle Sam
+The Jersey Devil
+Medusa
+John Henry the Steel-Driving Man
+Faust
+Puck from A Midsummer Night's Dream
+Girl with a Pearl Earring
+Tintin
 Marcus Aurelius
 Mary, Queen of Scots
 Doc Holliday
@@ -256,7 +298,12 @@ Jon Jones
 Roger Federer
 Markiplier
 Clément Delangue
-Robin Hood
+The Flying Dutchman
+Beowulf
+Lancelot
+Hercule Poirot
+Lady Macbeth
+Vitruvian Man
 Buddha
 Joan of Arc
 James Cook
@@ -293,7 +340,12 @@ Batista
 Coco Gauff
 PewDiePie
 Ilya Sutskever
-King Arthur
+The Grim Reaper
+Odin
+Friar Tuck
+Professor Moriarty
+Juliet Capulet
+Rosie the Riveter
 Nero
 William the Conqueror
 Jesse James
@@ -329,7 +381,12 @@ Tyson Fury
 Virat Kohli
 Khaby Lame
 Terence Tao
-Don Quixote
+Krampus
+The Minotaur
+Pecos Bill
+Robinson Crusoe
+Prospero
+The American Gothic Farmer
 Aristotle
 King Louis the Fourteenth
 Simón Bolívar
@@ -363,7 +420,11 @@ Alex Pereira
 Max Verstappen
 MySpace Tom
 Alexandr Wang
-Sherlock Holmes
+The Boogeyman
+Gilgamesh
+Count Dracula
+Romeo Montague
+Botticelli's Venus
 Caligula
 Vlad the Impaler
 Davy Crockett
@@ -397,7 +458,11 @@ Brock Lesnar
 Michael Schumacher
 Tyler Ninja Blevins
 Geoffrey Hinton
-Hercules the Greek Hero
+Davy Jones
+Loki the Norse God
+Zorro
+Macbeth
+Easter Island Moai
 Socrates
 Rasputin
 Ferdinand Magellan
@@ -430,7 +495,11 @@ Anthony Joshua
 Martina Navratilova
 Pikotaro
 Claude Shannon
-Medusa
+Leprechaun
+Sun Wukong the Monkey King
+Oliver Twist
+Othello
+The Thinker
 Hannibal
 Catherine the Great
 Francis Drake
@@ -462,7 +531,11 @@ Sidney Crosby
 Roman Reigns
 Andre Agassi
 Marc Andreessen
-Beowulf
+Cupid
+Thor the Norse God
+Mephistopheles
+Shylock
+Venus de Milo
 Plato
 Charlemagne
 Wild Bill Hickok
@@ -494,7 +567,10 @@ Gordie Howe
 CM Punk
 Niki Lauda
 Andrej Karpathy
-Winnie the Pooh
+The Headless Horseman
+Anubis
+Humpty Dumpty
+The Winged Victory of Samothrace
 Constantine the Great
 King Richard the Third
 Hernán Cortés
@@ -526,7 +602,10 @@ Ted Williams
 Andre the Giant
 Steffi Graf
 Mira Murati
-The Loch Ness Monster
+The Tooth Fairy
+The Golem of Prague
+Tarzan
+Lady Justice
 Tutankhamun
 Shivaji
 Ned Kelly
@@ -558,7 +637,10 @@ Ken Griffey Jr.
 Floyd Mayweather
 Usain Bolt
 Lisa Su
-Bigfoot
+Jack Frost
+Valkyrie
+Pinocchio
+Liberty Leading the People
 Cyrus the Great
 Oliver Cromwell
 Vasco da Gama
@@ -589,7 +671,10 @@ Ichiro
 George Foreman
 John McEnroe
 Jeff Dean
-Odin
+John Bull
+The Sphinx
+Carmen
+Whistler's Mother
 Attila the Hun
 Lawrence of Arabia
 Marco Polo
@@ -620,7 +705,10 @@ Alex Ovechkin
 Cody Rhodes
 Andy Murray
 Noam Shazeer
-Michelangelo's David
+The Big Bad Wolf
+Sinbad the Sailor
+Ebenezer Scrooge
+The Discus Thrower
 Moses
 Saladin
 Ernest Shackleton
@@ -651,7 +739,9 @@ Hank Aaron
 Canelo Álvarez
 Maria Sharapova
 Greg Brockman
-The Minotaur
+Mother Goose
+Oni Demon
+Rip Van Winkle
 Boudica
 Richard the Lionheart
 Daniel Boone
@@ -682,7 +772,9 @@ Yogi Berra
 Ric Flair
 Tiger Woods
 Yann LeCun
-Terracotta Warrior
+Father Time
+Kappa the Yokai
+The Cheshire Cat
 Ramesses the Great
 William Wallace
 Calamity Jane
@@ -713,7 +805,9 @@ David Ortiz
 Jake Paul
 Ayrton Senna
 Lex Fridman
-Cthulhu
+The Easter Bunny
+Scheherazade
+Long John Silver
 Xerxes
 Mansa Musa
 Paul Revere
@@ -744,7 +838,9 @@ Willie Mays
 Kurt Angle
 Rory McIlroy
 Eliezer Yudkowsky
-Gilgamesh
+Jack the Giant Killer
+Tengu
+Frankenstein's Monster
 Qin Shi Huang
 Marquis de Lafayette
 John Hancock
@@ -773,7 +869,8 @@ Connor McDavid
 The Undertaker
 Sachin Tendulkar
 Reid Hoffman
-The Scream
+Ali Baba
+Van Helsing
 Confucius
 Robert the Bruce
 Edmund Hillary
@@ -801,7 +898,8 @@ Mario Lemieux
 Georges St-Pierre
 Joey Chestnut
 Stephen Wolfram
-Loki the Norse God
+Anansi
+Captain Hook
 Spartacus
 The Duke of Wellington
 Anne Bonny
@@ -829,7 +927,8 @@ Jaromir Jagr
 Manny Pacquiao
 Lance Armstrong
 Fei-Fei Li
-Baba Yaga
+Nezha
+Miss Marple
 Ashoka
 Emperor Puyi
 Pancho Villa
@@ -857,7 +956,8 @@ Bobby Orr
 Israel Adesanya
 Pete Sampras
 Ray Kurzweil
-Mr. Hyde
+Grendel
+Count Orlok
 Leonidas
 Haile Selassie
 Tenzing Norgay
@@ -884,7 +984,8 @@ Roberto Carlos
 Rey Mysterio
 Jim Thorpe
 Andrew Ng
-Sun Wukong the Monkey King
+Momotaro
+Quasimodo
 Archimedes
 Miyamoto Musashi
 Buffalo Bill
@@ -909,7 +1010,8 @@ Mario Balotelli
 Macho Man Randy Savage
 Billie Jean King
 Mustafa Suleyman
-Faust
+Brunhilde
+Don Juan
 Pythagoras
 Suleiman the Magnificent
 Jacques Cousteau
@@ -934,7 +1036,7 @@ Andrés Iniesta
 Hafthor Björnsson
 MS Dhoni
 Guido van Rossum
-Girl with a Pearl Earring
+Peter Pan
 Nefertiti
 Robespierre
 Walter Raleigh
@@ -959,7 +1061,7 @@ Franz Beckenbauer
 Triple H
 Michael Phelps
 Paul Graham
-Thor the Norse God
+Captain Nemo
 Sun Tzu
 Peter the Great
 Santa Anna
@@ -983,7 +1085,7 @@ Alex Ferguson
 Ronnie Coleman
 Simone Biles
 Nick Bostrom
-Merlin
+Cyrano de Bergerac
 Laozi
 Ragnar Lothbrok
 Butch Cassidy
@@ -1007,7 +1109,7 @@ Roberto Baggio
 Ronda Rousey
 Tony Hawk
 John McCarthy
-Anubis
+Victor Frankenstein
 Euclid
 Ivan the Terrible
 Ibn Battuta
@@ -1031,7 +1133,7 @@ Gianluigi Buffon
 Stone Cold Steve Austin
 Björn Borg
 Donald Knuth
-Rumpelstiltskin
+d'Artagnan
 Hippocrates
 Guy Fawkes
 Johnny Appleseed
@@ -1054,7 +1156,7 @@ George Best
 Chyna
 Boris Becker
 Dwarkesh Patel
-Hercule Poirot
+Captain Ahab
 Cao Cao
 Akbar the Great
 Emiliano Zapata
@@ -1077,7 +1179,7 @@ Arsène Wenger
 Seth Rollins
 Eileen Gu
 Yoshua Bengio
-Popeye
+Ichabod Crane
 Lu Bu
 Kublai Khan
 David Livingstone
@@ -1100,7 +1202,7 @@ Steven Gerrard
 Francis Ngannou
 Phil Mickelson
 Marvin Minsky
-Mothman
+The Wicked Witch of the West
 Guan Yu
 Mehmed the Conqueror
 Toussaint Louverture
@@ -1123,7 +1225,7 @@ Paul Gascoigne
 Anderson Silva
 Jesse Owens
 Timnit Gebru
-Professor Moriarty
+The Invisible Man
 Zhuge Liang
 Horatio Nelson
 Annie Oakley
@@ -1145,7 +1247,7 @@ Oliver Kahn
 Big Show
 Dale Earnhardt
 Lee Sedol
-The Chupacabra
+Dorothy Gale
 Frederick the Great
 Roald Amundsen
 Kofi Annan
@@ -1165,7 +1267,7 @@ Mike Ditka
 Eric Cantona
 Eddie Hall
 Jack Nicklaus
-The Golem of Prague
+Baron Munchausen
 Wu Zetian
 Zheng He
 Bob Hawke
@@ -1185,7 +1287,7 @@ Troy Polamalu
 Megan Rapinoe
 Butterbean
 John Daly
-The Pied Piper
+Huckleberry Finn
 Oda Nobunaga
 Betsy Ross
 Isambard Kingdom Brunel
@@ -1204,7 +1306,7 @@ Vince Lombardi
 Ruud Gullit
 Eddie Guerrero
 Kimi Räikkönen
-Vitruvian Man
+The Phantom of the Opera
 Mata Hari
 Thor Heyerdahl
 Alexander Fleming
@@ -1222,7 +1324,7 @@ Zion Williamson
 Alex Morgan
 Evander Holyfield
 Sha'Carri Richardson
-Rosie the Riveter
+The Tin Man
 Tokugawa Ieyasu
 Johannes Gutenberg
 Victor Hugo
@@ -1238,7 +1340,7 @@ Dikembe Mutombo
 Mia Hamm
 Rowdy Roddy Piper
 Nadia Comăneci
-King Lear
+The Count of Monte Cristo
 Nostradamus
 Jonas Salk
 William Faulkner
@@ -1253,7 +1355,7 @@ Busta Rhymes
 Vince Carter
 Rocky Marciano
 Valentino Rossi
-The American Gothic Farmer
+The Mad Hatter
 Leif Erikson
 Vishy Anand
 Hans Christian Andersen
@@ -1268,7 +1370,7 @@ Flavor Flav
 James Naismith
 Shawn Michaels
 Florence Griffith Joyner
-Little Red Riding Hood
+Tom Sawyer
 Toyotomi Hideyoshi
 Grace Hopper
 H. G. Wells
@@ -1283,7 +1385,7 @@ Missy Elliott
 Mike Krzyzewski
 Lennox Lewis
 Eddie the Eagle
-Robinson Crusoe
+John Carter of Mars
 Empress Dowager Cixi
 Tycho Brahe
 J. D. Salinger
@@ -1297,7 +1399,7 @@ Carlos Santana
 Master P
 Randy Orton
 Danica Patrick
-Botticelli's Venus
+Tigger
 Rani Lakshmibai
 Johannes Kepler
 Emily Brontë
@@ -1311,7 +1413,7 @@ Sam Smith
 Lil Kim
 Joe Frazier
 Neeraj Chopra
-Betty Boop
+Sancho Panza
 El Cid
 Rachel Carson
 Arthur C. Clarke
@@ -1325,7 +1427,7 @@ SZA
 Macklemore
 Fedor Emelianenko
 Shane Warne
-Easter Island Moai
+The Scarecrow
 Yasuke
 Ivan Pavlov
 Toni Morrison
@@ -1339,7 +1441,7 @@ Lizzo
 Lil Jon
 Kimbo Slice
 Richard Petty
-Count Dracula
+Alice in Wonderland
 Casanova
 Lewis Carroll
 Pedro Almodóvar
@@ -1352,7 +1454,7 @@ Adam Levine
 Chance the Rapper
 Mick Foley
 Katie Ledecky
-Zorro
+The Queen of Hearts
 Shaka Zulu
 Jean-Paul Sartre
 John Woo
@@ -1364,7 +1466,7 @@ Ricky Martin
 Big Boi
 Chris Jericho
 Jeff Gordon
-Santa Claus
+Phileas Fogg
 Montezuma
 Jack Kerouac
 Michael Moore
@@ -1376,7 +1478,7 @@ Jimin
 Chuck D
 Nate Diaz
 Arnold Palmer
-Paul Bunyan
+The Cowardly Lion
 Erik the Red
 Johann Wolfgang von Goethe
 George A. Romero
@@ -1388,7 +1490,7 @@ Karol G
 Grandmaster Flash
 Sugar Ray Leonard
 Mo Farah
-Valkyrie
+Figaro
 Sejong the Great
 Ray Bradbury
 Federico Fellini
@@ -1400,7 +1502,7 @@ Iggy Azalea
 Sir Mix-a-Lot
 Bret Hart
 Don Bradman
-The Thinker
+Lemuel Gulliver
 Yi Sun-sin
 Jules Verne
 Cecil B. DeMille
@@ -1411,7 +1513,6 @@ Robert Plant
 Sean Paul
 Joe Louis
 Lindsey Vonn
-Venus de Milo
 Hattori Hanzo
 Aldous Huxley
 Ed Wood
@@ -1422,7 +1523,6 @@ Sting
 Gloria Estefan
 Becky Lynch
 Greg Norman
-The Yeti
 Date Masamune
 Gabriel García Márquez
 Zhang Yimou
@@ -1433,7 +1533,6 @@ Dean Martin
 Shaggy
 Ultimate Warrior
 Takeru Kobayashi
-Oliver Twist
 Shel Silverstein
 James Dean
 Mark Wahlberg
@@ -1442,7 +1541,6 @@ Keith Richards
 Lata Mangeshkar
 Roberto Durán
 Jonah Lomu
-Uncle Sam
 Charlotte Brontë
 Tommy Lee Jones
 Sally Field
@@ -1451,7 +1549,6 @@ Barry Manilow
 Pitbull
 Roy Jones Jr.
 Gary Player
-Mephistopheles
 Frank Herbert
 Clark Gable
 Aamir Khan
@@ -1460,7 +1557,6 @@ Tom Petty
 Psy
 Randy Couture
 Kapil Dev
-Humpty Dumpty
 Walt Whitman
 Richard Burton
 Megan Fox
@@ -1469,7 +1565,6 @@ Mel B
 G-Dragon
 Chuck Liddell
 Yuzuru Hanyu
-The Flying Dutchman
 William Blake
 Danny Glover
 Blake Lively
@@ -1478,7 +1573,6 @@ Alice Cooper
 Luis Miguel
 Bill Goldberg
 Carl Lewis
-Tarzan
 Robert Louis Stevenson
 James Earl Jones
 James Gandolfini
@@ -1487,7 +1581,6 @@ Janis Joplin
 Jay Chou
 Amanda Nunes
 Eliud Kipchoge
-Pinocchio
 Harper Lee
 Sophia Loren
 Reese Witherspoon
@@ -1496,7 +1589,6 @@ Jack White
 Juan Gabriel
 Marvin Hagler
 Kelly Slater
-Carmen
 Douglas Adams
 Mark Hamill
 Cameron Diaz
@@ -1505,7 +1597,6 @@ Chris Martin
 Maluma
 Jack Dempsey
 Shaun White
-William Tell
 Jorge Luis Borges
 Lauren Bacall
 Denzel Washington
@@ -1514,7 +1605,6 @@ Lionel Richie
 Celia Cruz
 Booker T
 Michelle Kwan
-John Henry the Steel-Driving Man
 Beatrix Potter
 Ingrid Bergman
 Alfred Molina
@@ -1523,7 +1613,6 @@ Gene Simmons
 J Balvin
 Antonio Inoki
 Cathy Freeman
-The Sphinx
 Emily Dickinson
 Henry Winkler
 Philip Seymour Hoffman
@@ -1532,7 +1621,6 @@ Eddie Van Halen
 Peso Pluma
 Royce Gracie
 Mary Kom
-Ebenezer Scrooge
 Herman Melville
 Roger Moore
 Chris Hemsworth
@@ -1541,7 +1629,6 @@ Roy Orbison
 Vicente Fernández
 Zhang Weili
 Ian Thorpe
-Lancelot
 Alan Moore
 Vivien Leigh
 Priyanka Chopra
@@ -1550,7 +1637,6 @@ Axl Rose
 Umm Kulthum
 Jake the Snake Roberts
 Mark Spitz
-The Grim Reaper
 Alexander Pushkin
 Rick Moranis
 Hailee Steinfeld
@@ -1559,7 +1645,6 @@ Steven Tyler
 Teresa Teng
 Julio César Chávez
 Kim Yuna
-The Winged Victory of Samothrace
 Bram Stoker
 Fred Astaire
 Emma Thompson
@@ -1568,316 +1653,231 @@ Jimmy Page
 Wizkid
 Bob Sapp
 Apolo Ohno
-Oswald the Lucky Rabbit
 Frank Miller
 Bette Davis
 Kristen Stewart
 George Lopez
 Barry Gibb
 Shinsuke Nakamura
-Sinbad the Sailor
 Miguel de Cervantes
 Raquel Welch
 Mark Ruffalo
 Bob Hope
 Ray Charles
 Hakuho
-Oni Demon
 Charles Schulz
 Eugene Levy
 Liam Neeson
 Sam Kinison
 Slash
 Charles Atlas
-The Jersey Devil
 Malcolm Gladwell
 Doris Day
 Emilia Clarke
 Cheech Marin
 Debbie Harry
-Rip Van Winkle
 Pablo Neruda
 Joan Crawford
 Pedro Pascal
 Alfonso Ribeiro
 Anthony Kiedis
-Kappa the Yokai
 Maurice Sendak
 Leslie Nielsen
 Christian Bale
 Larry the Cable Guy
 Bono
-The Cheshire Cat
 Charlton Heston
 Demi Moore
 Eric Idle
 Brian May
-Long John Silver
 Sidney Poitier
 Tom Hardy
 Gabriel Iglesias
 Joni Mitchell
-Felix the Cat
 Bette Midler
 Idris Elba
 Benny Hill
 Buddy Holly
-Frankenstein's Monster
 Leonard Nimoy
 Vanessa Kirby
 Dana Carvey
 James Brown
-Krampus
 Andy Griffith
 Ralph Fiennes
 Gallagher
 Patti Smith
-Van Helsing
 Mary Tyler Moore
 Diane Keaton
 Carrot Top
 Cat Stevens
-The Boogeyman
 Eartha Kitt
 John Travolta
 David Byrne
-Scheherazade
 Peter Sellers
 Emma Watson
 Morrissey
-Tengu
 Brigitte Bardot
 Colin Farrell
 James Hetfield
-Ali Baba
 David Hasselhoff
 Morgan Freeman
 Miles Davis
-Captain Hook
 Alec Guinness
 Chris Evans
 Bryan Adams
-Miss Marple
 Gene Kelly
 Cillian Murphy
 Joan Baez
-Anansi
 Don Knotts
 Michelle Pfeiffer
 Cyndi Lauper
-Davy Jones
 Jackie Gleason
 Michael Fassbender
 Peter Gabriel
-Count Orlok
 Buster Keaton
 Jane Fonda
 Lou Reed
-Nezha
 Lynda Carter
 Dolph Lundgren
 Flea
-Quasimodo
 Max von Sydow
 Elizabeth Olsen
 Leonard Cohen
-Leprechaun
 Marlene Dietrich
 Michael B. Jordan
 Grace Jones
-Lady Justice
 George Takei
 Sofía Vergara
 Billy Idol
-Liberty Leading the People
 Adam West
 Barbra Streisand
 Corey Taylor
-Don Juan
 Ginger Rogers
 George Clooney
 Iggy Pop
-Peter Pan
 Greta Garbo
 Chadwick Boseman
 Angus Young
-Cupid
 Groucho Marx
 Ewan McGregor
 Kate Bush
-Captain Nemo
 Billy Dee Williams
 Julie Andrews
 Sammy Davis Jr.
-Cyrano de Bergerac
 Curly Howard
 Salma Hayek
 Annie Lennox
-Grendel
 Moe Howard
 Orlando Bloom
 Van Morrison
-Victor Frankenstein
 Mae West
 Gary Oldman
 Billie Joe Armstrong
-d'Artagnan
 Toshiro Mifune
 Joaquin Phoenix
 Little Richard
-Falstaff
 Stan Laurel
 Bryan Cranston
 John Mayer
-Captain Ahab
 Oliver Hardy
 Jodie Foster
 Chuck Berry
-Ichabod Crane
 Nathan Fillion
 Fred Durst
-The Wicked Witch of the West
 Tom Hiddleston
 Keith Moon
-The Invisible Man
 J. K. Simmons
 Liam Gallagher
-The Headless Horseman
 Will Smith
 Serj Tankian
-Whistler's Mother
 Willem Dafoe
 Donna Summer
-Dorothy Gale
 Goldie Hawn
 Louis Armstrong
-Baron Munchausen
 Giancarlo Esposito
 Joan Jett
-Huckleberry Finn
 Rami Malek
 Rob Zombie
-Momotaro
 Margot Robbie
 Billy Corgan
-The Phantom of the Opera
 Jamie Lee Curtis
 Sid Vicious
-Brunhilde
 Woody Harrelson
 Ian Curtis
-The Tin Man
 Kit Harington
 Trent Reznor
-Olive Oyl
 Vin Diesel
 Jerry Garcia
-The Count of Monte Cristo
 Katie Holmes
 Brian Eno
-Hamlet
 Daniel Radcliffe
 Tony Bennett
-The Mad Hatter
 Susan Sarandon
 Bing Crosby
-Caliban
 Matthew Perry
 Wayne Newton
-Tom Sawyer
 Drew Barrymore
 Florence Welch
-John Carter of Mars
 Helen Mirren
 Lemmy
-Tintin
 Viggo Mortensen
 Beck
-The Tooth Fairy
 Mila Kunis
 Noel Gallagher
-Iago
 Dave Bautista
 Michael Bublé
-Tigger
 Halle Berry
 Thom Yorke
-Puck from A Midsummer Night's Dream
 Ray Liotta
 Chad Kroeger
-Jack Frost
 Keira Knightley
 Maynard James Keenan
-Sancho Panza
 Pamela Anderson
 Otis Redding
-John Bull
 Jenna Ortega
 Nina Simone
-The Big Bad Wolf
 Daniel Day-Lewis
 Johnny Rotten
-Mother Goose
 Russell Crowe
 Billie Holiday
-The Scarecrow
 Sean Bean
 Michael Stipe
-Lady Macbeth
 Uma Thurman
 Dave Matthews
-Juliet Capulet
 Winona Ryder
 Edith Piaf
-Alice in Wonderland
 Salman Khan
 Jonathan Davis
-The Queen of Hearts
 Monica Bellucci
 Smokey Robinson
-Friar Tuck
 Samuel L. Jackson
 Nat King Cole
-Prospero
 Peter Dinklage
 John Coltrane
-Father Time
 Sharon Stone
 Siouxsie Sioux
-Phileas Fogg
 Oscar Isaac
 Marc Bolan
-The Discus Thrower
 Kate Winslet
 Rivers Cuomo
-Romeo Montague
 Gal Gadot
 Roger Daltrey
-Macbeth
 Sarah Jessica Parker
 Simon Le Bon
-Othello
 Sebastian Stan
 Barry White
-Pecos Bill
 Nicholas Hoult
 Joey Ramone
-The Cowardly Lion
 Danny DeVito
 Dave Gahan
-The Easter Bunny
 Ethan Hawke
 Adam Ant
-Figaro
 Shah Rukh Khan
 Ella Fitzgerald
-Jack the Giant Killer
 Christopher Walken
 Herbie Hancock
-Lemuel Gulliver
 Aaron Paul
 Kenny G
-Shylock
 Paul Rudd
 The Edge
 Brie Larson
