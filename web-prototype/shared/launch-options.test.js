@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   DEFAULT_ADVANCED_OPTIONS,
+  FULL_BOOT_INTRO_CARDS,
+  createFullBootIntroConfig,
   engineUrl,
   hasAdvancedOverrides,
   normalizeAdvancedOptions,
@@ -124,6 +126,138 @@ test("duplicate roster records never cause duplicate fighters when unique choice
     .map((opponent) => opponent.character.slug);
   assert.deepEqual(customSlugs, ["third", "second"]);
   assert.equal(new Set([CHARACTER.slug, ...customSlugs]).size, 3);
+});
+
+test("full-boot launch config injects every opening card except Donkey Kong and Yoshi", () => {
+  const candidates = [
+    { ...CHARACTER, slug: "mario-base", fkind: 0 },
+    { ...CHARACTER, slug: "fox-base", fkind: 1 },
+    { ...CHARACTER, slug: "samus-base", fkind: 3 },
+    { ...CHARACTER, slug: "link-base", fkind: 5 },
+    { ...CHARACTER, slug: "kirby-base", fkind: 8 },
+    { ...CHARACTER, slug: "pikachu-base", fkind: 9 },
+  ];
+  const introConfig = createFullBootIntroConfig(candidates, () => 0);
+
+  assert.deepEqual(introConfig.map(({ fkind }) => fkind), FULL_BOOT_INTRO_CARDS.map(({ fkind }) => fkind));
+  assert.deepEqual(
+    introConfig.filter(({ type }) => type === "vanilla").map(({ fkind }) => fkind),
+    [2, 6],
+  );
+  assert.equal(new Set(
+    introConfig.filter(({ type }) => type === "character").map(({ character }) => character.slug),
+  ).size, 6);
+
+  const query = queryFor(
+    { type: "start", introConfig },
+    { ...DEFAULT_ADVANCED_OPTIONS, bootMode: "full-boot" },
+  );
+  const injections = query.getAll("intro_character").map((entry) => JSON.parse(entry));
+  assert.deepEqual(injections.map(({ fkind }) => fkind), [0, 3, 1, 5, 9, 8]);
+  assert.equal(query.has("inject_player"), false);
+  assert.equal(query.has("SSB64_START_SCENE"), false);
+  assert.equal(query.has("SSB64_BOOT_BATTLE"), false);
+});
+
+test("full-boot transport preserves future Donkey Kong and Yoshi injections", () => {
+  const introConfig = [
+    {
+      fkind: 2,
+      mesh: "donkey",
+      mode: "inject",
+      type: "character",
+      character: { ...CHARACTER, slug: "future-dk", fkind: 2, bundle: "future-dk-donkey.osb" },
+    },
+    {
+      fkind: 6,
+      mesh: "yoshi",
+      mode: "inject",
+      type: "character",
+      character: { ...CHARACTER, slug: "future-yoshi", fkind: 6, bundle: "future-yoshi-yoshi.osb" },
+    },
+  ];
+  const injections = queryFor(
+    { type: "start", introConfig },
+    { ...DEFAULT_ADVANCED_OPTIONS, bootMode: "full-boot" },
+  ).getAll("intro_character").map((entry) => JSON.parse(entry));
+
+  assert.deepEqual(injections.map(({ fkind }) => fkind), [2, 6]);
+  assert.deepEqual(
+    injections.map(({ bundleUrl }) => bundleUrl),
+    ["bundles/future-dk-donkey.osb", "bundles/future-yoshi-yoshi.osb"],
+  );
+});
+
+test("clicked grid fighter is the featured first pickup on its native target", () => {
+  const selected = {
+    ...CHARACTER,
+    slug: "selected-samus",
+    fkind: 3,
+    bundle: "selected-samus-samus.osb",
+  };
+  const introConfig = createFullBootIntroConfig(
+    [CHARACTER, selected],
+    () => 0,
+    selected,
+  );
+  const featured = introConfig.find((card) => card.featured);
+
+  assert.equal(featured.fkind, 3);
+  assert.equal(featured.character.slug, "selected-samus");
+  assert.equal(
+    introConfig.filter((card) => card.character?.slug === "selected-samus").length,
+    1,
+  );
+  assert.equal(queryFor(
+    { type: "character", character: selected, introConfig },
+    { ...DEFAULT_ADVANCED_OPTIONS, bootMode: "full-boot" },
+  ).get("SSB64_OPENING_FIRST_FKIND"), "3");
+});
+
+test("explicit clicked mesh targets the matching opening card", () => {
+  const introConfig = createFullBootIntroConfig(
+    [CHARACTER],
+    () => 0,
+    CHARACTER,
+    "link",
+  );
+  const featured = introConfig.find((card) => card.featured);
+
+  assert.equal(featured.fkind, 5);
+  assert.equal(featured.character.bundleUrl, "bundles/testfighter-link.osb");
+});
+
+test("missing intro variants fall back to vanilla per card", () => {
+  const limited = {
+    ...CHARACTER,
+    slug: "limited",
+    bundleUrl: "https://objects.test/limited.osb",
+    variants: { fox: "https://objects.test/limited-fox.osb" },
+  };
+  const introConfig = createFullBootIntroConfig([limited], () => 0);
+  assert.deepEqual(
+    introConfig.filter(({ type }) => type === "character").map(({ fkind }) => fkind),
+    [0],
+  );
+  assert.deepEqual(
+    introConfig.filter(({ type }) => type === "vanilla").map(({ fkind }) => fkind),
+    [2, 3, 1, 5, 6, 9, 8],
+  );
+});
+
+test("intro launch config is exclusive to the Full Boot destination", () => {
+  const introConfig = createFullBootIntroConfig([
+    { ...CHARACTER, slug: "intro", fkind: 0 },
+  ], () => 0);
+  assert.equal(queryFor({ type: "start", introConfig }).has("intro_character"), false);
+  assert.equal(queryFor(
+    { type: "select", introConfig },
+    { ...DEFAULT_ADVANCED_OPTIONS, bootMode: "full-boot" },
+  ).getAll("intro_character").length, 1);
+  assert.equal(queryFor(
+    { type: "character", character: CHARACTER, introConfig },
+    { ...DEFAULT_ADVANCED_OPTIONS, bootMode: "full-boot" },
+  ).getAll("intro_character").length, 1);
 });
 
 test("mesh and stage overrides select the matching injection variant", () => {
