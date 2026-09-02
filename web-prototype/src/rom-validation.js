@@ -3,7 +3,7 @@ import {
   Uint8ArrayWriter,
   ZipReader,
 } from "@zip.js/zip.js";
-import { ROM_CATALOG } from "../shared/rom-catalog.js";
+import { ROM_CATALOG, UNSUPPORTED_ROMS } from "../shared/rom-catalog.js";
 
 const MIB = 1024 * 1024;
 const MAX_INPUT_SIZE = 128 * MIB;
@@ -97,6 +97,17 @@ export async function identifyRomBytes(input, options = {}) {
     // builds its asset archive from it locally, so it must travel with the
     // identification result.
     if (rom) return { ...rom, sha1, size, bytes: normalized.slice(0, size) };
+  }
+
+  // A real dump of a region the port cannot run: say so, rather than "not a
+  // ROM". Only checked once the supported catalog has missed.
+  const unsupported = options.unsupported || UNSUPPORTED_ROMS;
+  for (const candidate of unsupported) {
+    if (candidate.size > normalized.length) continue;
+    const sha1 = await digestHex("SHA-1", normalized.subarray(0, candidate.size), subtle);
+    if (sha1 === candidate.sha1) {
+      throw new Error(`That is the ${candidate.region} release, which this port cannot run yet. Only the USA (NALE) ROM is supported.`);
+    }
   }
   return null;
 }
