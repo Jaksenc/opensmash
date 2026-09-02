@@ -41,7 +41,13 @@ export function publicJob(job) {
       slug: job.slug,
       name: job.displayName || job.name,
       short: job.short || job.name,
-      portrait: artifacts.portrait?.url || `${assetRoot}/portrait?v=${encodeURIComponent(job.completedAt || "")}`,
+      // The grid draws `portrait` (tile-sized when the worker produced one);
+      // `portraitMedium` is for thumbnails and `portraitFull` the 1024 art.
+      portrait: artifacts.portraitTile?.url || artifacts.portrait?.url ||
+        `${assetRoot}/portrait?v=${encodeURIComponent(job.completedAt || "")}`,
+      portraitMedium: artifacts.portraitMedium?.url || artifacts.portrait?.url ||
+        `${assetRoot}/portrait?v=${encodeURIComponent(job.completedAt || "")}`,
+      portraitFull: artifacts.portrait?.url || `${assetRoot}/portrait?v=${encodeURIComponent(job.completedAt || "")}`,
       announcer: artifacts.announcer?.url || `${assetRoot}/announcer?v=${encodeURIComponent(job.completedAt || "")}`,
       bundleUrl: artifacts.bundle?.url || `${assetRoot}/bundle`,
       uiUrl: artifacts.ui?.url || `${assetRoot}/ui`,

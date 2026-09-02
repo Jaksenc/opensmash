@@ -524,7 +524,10 @@ export function createFighterJobs({
           ),
           targets,
         };
-        for (const [key, fileName] of [["stock", "stock_raw.png"], ["emblem", "emblem_raw.png"]]) {
+        for (const [key, fileName] of [
+          ["stock", "stock_raw.png"], ["emblem", "emblem_raw.png"],
+          ["portraitTile", "portrait_tile.png"], ["portraitMedium", "portrait_medium.png"],
+        ]) {
           try {
             await access(path.join(outputRoot, fileName));
             job.artifacts[key] = await objectStore.putFile(
