@@ -9,6 +9,7 @@ import { createAuthService } from "./auth.js";
 import { createJobDatabase } from "./job-database.js";
 import { createJobDispatcher } from "./job-dispatcher.js";
 import { createObjectStore } from "./object-store.js";
+import { cacheControlForEnvironment, edgeCacheHeaders } from "./cache-policy.js";
 import { withInitialState } from "./html-state.js";
 import { resolveProjectPaths } from "./project-paths.js";
 import { assignRosterBases, bundleForBase, FIGHTERS, readOsb6Targets } from "./roster.js";
@@ -253,7 +254,7 @@ async function serveFile(req, res, filePath, cacheControl = "no-store", extraHea
     res.writeHead(200, {
       "Content-Type": MIME_TYPES[path.extname(filePath).toLowerCase()] || "application/octet-stream",
       "Content-Length": info.size,
-      "Cache-Control": cacheControl,
+      "Cache-Control": cacheControlForEnvironment(cacheControl, IS_PRODUCTION),
       ...securityHeaders(pathname),
       ...extraHeaders,
     });
@@ -474,8 +475,8 @@ async function serveAppShell(req, res) {
   res.writeHead(200, {
     "Content-Type": "text/html; charset=utf-8",
     "Content-Length": body.length,
-    "Cache-Control": APP_SHELL_CACHE_CONTROL,
-    "Cloudflare-CDN-Cache-Control": APP_SHELL_EDGE_CACHE_CONTROL,
+    "Cache-Control": cacheControlForEnvironment(APP_SHELL_CACHE_CONTROL, IS_PRODUCTION),
+    ...edgeCacheHeaders(APP_SHELL_EDGE_CACHE_CONTROL, IS_PRODUCTION),
     ...APP_SECURITY_HEADERS,
   });
   if (req.method === "HEAD") res.end();
@@ -636,9 +637,12 @@ async function handleRequest(req, res, vite) {
       res.writeHead(200, {
         "Content-Type": artifact.contentType || "application/octet-stream",
         "Content-Length": contents.length,
-        "Cache-Control": artifact.public
-          ? "public, max-age=31536000, immutable"
-          : "private, no-store",
+        "Cache-Control": cacheControlForEnvironment(
+          artifact.public
+            ? "public, max-age=31536000, immutable"
+            : "private, no-store",
+          IS_PRODUCTION,
+        ),
         Vary: "Cookie",
       });
       return req.method === "HEAD" ? res.end() : res.end(contents);
