@@ -62,10 +62,10 @@ export function LaunchFlow() {
         <div className="launch-flow-controller-instructions">
           <h2 id="how-to-play-title" className="launch-flow-title launch-flow-how-title">How to play</h2>
           <p id="launch-control-prompt" className="launch-flow-control-prompt" aria-live="polite">Press each key on your keyboard to continue</p>
-          <button id="launch-control-skip" className="launch-flow-action launch-flow-skip" type="button" hidden>Skip</button>
         </div>
         <ControllerCallouts />
-        <FlameAction cellClassName="launch-flow-controls-close" id="controls-close-button" type="button">Close</FlameAction>
+        <FlameAction cellClassName="launch-flow-controls-skip launch-flow-controls-bottom" className="launch-flow-skip" id="launch-control-skip" type="button" hidden>Skip</FlameAction>
+        <FlameAction cellClassName="launch-flow-controls-close launch-flow-controls-bottom" id="controls-close-button" type="button">Close</FlameAction>
       </section>
     </div>
   );

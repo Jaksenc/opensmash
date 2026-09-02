@@ -20,7 +20,7 @@ import {
 } from '../src/fonts/ssb-name-font.js';
 
 const BUILD_ASSETS = {
-  ...import.meta.glob('./assets/featured-fighters/*.png', {
+  ...import.meta.glob(['./assets/featured-fighters/*.png', './assets/ui/*.png'], {
     eager: true,
     query: '?url',
     import: 'default',
@@ -331,6 +331,61 @@ await Promise.all(Object.values(ACTION_PORTRAITS).map(async portraitName => {
     await loadFeaturedPortrait(portraitName, portraitUrl)
   );
 }));
+
+// SEARCH / CREATE tiles borrow the game's locked-fighter look: the sprite is a
+// coverage mask (like MNPlayersPortraits' question mark) tinted between the
+// game's primitive colour (light face) and environment colour (dark rim), drawn
+// over per-frame static (the decomp draws that slot with the RDP NOISE
+// combiner at 0x30 blend, see mnPlayersVSPortraitProcDisplay).
+const ICON_PRIM = Object.freeze([0xC4, 0xB9, 0xA9]);
+const ICON_ENV = Object.freeze([0x5B, 0x41, 0x33]);
+const STATIC_BLEND = 0x30 / 255;
+
+async function loadTintedIcon(fileName) {
+  const source = await loadCaptionImage(buildAssetUrl(`ui/${fileName}`));
+  const pixels = new Uint8ClampedArray(CELL_W * CELL_H * 4);
+  for (let y = 1; y < Math.min(CELL_H, source.height) - 1; y++) {
+    for (let x = 1; x < Math.min(CELL_W, source.width) - 1; x++) {
+      const i = (y * source.width + x) * 4;
+      const k = source.pixels[i] / 255;
+      const a = source.pixels[i + 3];
+      if (!a) continue;
+      const o = (y * CELL_W + x) * 4;
+      pixels[o] = Math.round(ICON_ENV[0] + (ICON_PRIM[0] - ICON_ENV[0]) * k);
+      pixels[o + 1] = Math.round(ICON_ENV[1] + (ICON_PRIM[1] - ICON_ENV[1]) * k);
+      pixels[o + 2] = Math.round(ICON_ENV[2] + (ICON_PRIM[2] - ICON_ENV[2]) * k);
+      pixels[o + 3] = a;
+    }
+  }
+  return Object.freeze({ width: CELL_W, height: CELL_H, pixels });
+}
+
+const ACTION_ICONS = Object.freeze({
+  search: await loadTintedIcon('SearchGlass.png'),
+  create: await loadTintedIcon('Plus.png')
+});
+
+// The locked slot's silhouette layer is dark and mostly opaque; the NOISE
+// combiner pushes each texel 0x30/255 of the way toward random per-frame
+// noise, in colour and alpha. Without a silhouette we keep the same numbers
+// over a flat dark layer, which reads as the game's dim static.
+function drawStatic(dst, rng) {
+  const baseTone = 22, baseAlpha = 0.48;
+  for (let y = 1; y < CELL_H - 1; y++) for (let x = 1; x < CELL_W - 1; x++) {
+    const noise = rng() * 255;
+    const tone = Math.round(baseTone + (noise - baseTone) * STATIC_BLEND * 1.6);
+    const alpha = Math.round(255 * (baseAlpha + (baseAlpha - noise / 255) * STATIC_BLEND));
+    put(dst, CELL_W, x, y, tone, tone, tone, Math.max(0, Math.min(255, alpha)));
+  }
+}
+
+function compositeIcon(dst, icon, opacity = 1) {
+  for (let y = 0; y < CELL_H; y++) for (let x = 0; x < CELL_W; x++) {
+    const i = (y * CELL_W + x) * 4;
+    if (!icon.pixels[i + 3]) continue;
+    put(dst, CELL_W, x, y, icon.pixels[i], icon.pixels[i + 1], icon.pixels[i + 2], Math.round(icon.pixels[i + 3] * opacity));
+  }
+}
 
 await Promise.all(LIVE_ROSTER.map(async character => {
   try {
@@ -668,12 +723,15 @@ function renderCellFramebuffer(
   name,
   portraitName = null,
   labelOpacity = 1,
-  backgroundPixels = null
+  backgroundPixels = null,
+  options = {}
 ) {
   const native = backgroundPixels
     ? new Uint8ClampedArray(backgroundPixels)
     : renderCellBackground();
   compositePortrait(native, portraitName);
+  if (options.static) drawStatic(native, Math.random);
+  if (options.icon) compositeIcon(native, options.icon, labelOpacity);
   const background = scalePixels2x(native, CELL_W, CELL_H, false);
   if (!name || (portraitName && USE_SOURCE_PORTRAIT_CAPTIONS &&
     BAKED_CAPTION_PORTRAITS.has(portraitName))) return background;
@@ -764,10 +822,11 @@ function paintCellCanvas(
   label,
   portraitName,
   labelOpacity = 1,
-  backgroundPixels = null
+  backgroundPixels = null,
+  options = {}
 ) {
   const framebuffer = renderCellFramebuffer(
-    label, portraitName, labelOpacity, backgroundPixels
+    label, portraitName, labelOpacity, backgroundPixels, options
   );
   paintPixels(
     canvas, framebuffer.pixels, framebuffer.width, framebuffer.height
@@ -856,14 +915,19 @@ CELL_IDS.forEach((id, index) => {
     button.append(input);
   }
   const framebuffer = renderCellFramebuffer(
-    label,
+    isSearch || isCreate ? '' : label,
     character.portrait,
     1,
     isSearch
       ? ACTION_CELL_BACKGROUND_PIXELS.search
       : isCreate
         ? ACTION_CELL_BACKGROUND_PIXELS.create
-        : null
+        : null,
+    isSearch
+      ? { static: true, icon: ACTION_ICONS.search }
+      : isCreate
+        ? { static: true, icon: ACTION_ICONS.create }
+        : {}
   );
   button.append(canvasFromPixels(
     framebuffer.pixels, framebuffer.width, framebuffer.height, 'replica-texture-layer'
@@ -1066,14 +1130,36 @@ function updateSearchTile(query = '') {
 
   searchCell.classList.toggle('is-searching', active);
   searchCell.style.setProperty('--search-caret-left', `${100 * caretX / CELL_W}%`);
+  // Idle: just the glass. Focused: the glass steps aside and the SEARCH
+  // placeholder (or the typed query) appears at the top; blur swaps back.
+  const showText = active || Boolean(value);
   paintCellCanvas(
     searchCell.querySelector('.replica-texture-layer'),
-    displayLabel,
+    showText ? displayLabel : '',
     ACTION_PORTRAITS.search,
     active && !value ? 0.5 : 1,
-    ACTION_CELL_BACKGROUND_PIXELS.search
+    ACTION_CELL_BACKGROUND_PIXELS.search,
+    showText ? { static: true } : { static: true, icon: ACTION_ICONS.search }
   );
 }
+
+// Re-roll the static every frame like the RDP does, at a retro-ish cadence.
+const createCell = [...cells.values()].find(button => button.dataset.kind === 'create');
+function repaintActionCells() {
+  if (document.hidden) return;
+  updateSearchTile(fighterSearch?.value || '');
+  if (createCell && !createCell.hidden) {
+    paintCellCanvas(
+      createCell.querySelector('.replica-texture-layer'),
+      '',
+      ACTION_PORTRAITS.create,
+      1,
+      ACTION_CELL_BACKGROUND_PIXELS.create,
+      { static: true, icon: ACTION_ICONS.create }
+    );
+  }
+}
+setInterval(repaintActionCells, 1000 / 12);
 
 function filterRoster(query = '') {
   const normalized = String(query).trim().toLocaleLowerCase();
