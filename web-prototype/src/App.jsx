@@ -235,9 +235,9 @@ function RomModal({ action, onCancel, onValidated, onPrewarmError }) {
           ×
         </button>
         <p className="eyebrow">One-time check</p>
-        <h2 id="rom-title">Upload a ROM to continue</h2>
+        <h2 id="rom-title">Choose your ROM to continue</h2>
         <p className="modal-copy">Choose your legally obtained Smash 64 ROM (USA release) to launch {target}.</p>
-        <p className="modal-copy modal-copy-secondary">It stays on your device. Safari may ask again after a week away.</p>
+        <p className="modal-copy modal-copy-secondary">It never leaves your device.</p>
         <form onSubmit={validate}>
           <label className={`file-picker ${file ? "has-file" : ""}`}>
             <input
@@ -366,7 +366,7 @@ export default function App() {
     return () => window.removeEventListener(FLOW_MUSIC_EVENT, syncFlowMusic);
   }, [engine, startFlowMusic]);
   const reportCreateVisualError = useCallback((error) => {
-    setPageError(error.message || "Could not load the ROM upload screen.");
+    setPageError(error.message || "Could not load the ROM screen.");
   }, []);
 
   async function fetchCharacters() {
@@ -559,7 +559,7 @@ export default function App() {
       if (attempts < 100) timer = window.setTimeout(requestCreateRom, 50);
       else {
         setCreateStage(null);
-        setPageError("Could not open the cartridge upload screen.");
+        setPageError("Could not open the cartridge screen.");
       }
     }
 
@@ -1162,7 +1162,7 @@ export default function App() {
               onClick={() => selectCharacter(character)}
             >
               <span className="portrait-wrap">
-                <img src={character.portrait} alt="" />
+                <img src={character.portraitMedium || character.portrait} alt="" loading="lazy" />
               </span>
               <span className="character-number">{String(index + 1).padStart(2, "0")}</span>
               {character.generated && <span className="generated-label">Fighter Lab</span>}

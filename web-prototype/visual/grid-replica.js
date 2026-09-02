@@ -93,16 +93,14 @@ const VANILLA_ROSTER = Object.freeze([
   { asset: 'purin', portrait: 'jigglypuff', label: 'JIGGLYPUFF', name: 'Jigglypuff' },
   { asset: 'ness', portrait: 'ness', label: 'NESS', name: 'Ness' }
 ]);
-const ACTION_PORTRAITS = Object.freeze({
-  search: 'action-search',
-  create: 'action-create'
-});
 const APP_BRIDGE = window.openSmashReactBridge;
 function liveRosterCharacter(character) {
   return {
     asset: character.slug,
     portrait: `live:${character.slug}`,
-    portraitUrl: character.portrait,
+    // The server points `portrait` at the 90x86 tile derivative; a job that
+    // predates the derivatives still resolves to a usable portrait.
+    portraitUrl: character.portraitTile || character.portrait,
     label: character.short || character.name,
     name: character.name,
     source: character.generated ? 'generated' : 'live',
@@ -299,15 +297,6 @@ async function loadFeaturedPortrait(portraitName, portraitUrl = null) {
     pixels: context.getImageData(0, 0, CELL_W, CELL_H).data
   });
 }
-
-await Promise.all(Object.values(ACTION_PORTRAITS).map(async portraitName => {
-  const portraitUrl = BUILD_ASSETS[`./assets/featured-fighters/${portraitName}.png`];
-  if (!portraitUrl) return;
-  CHARACTER_PORTRAITS.set(
-    portraitName,
-    await loadFeaturedPortrait(portraitName, portraitUrl)
-  );
-}));
 
 // SEARCH / CREATE tiles borrow the game's locked-fighter look: the sprite is a
 // coverage mask (like MNPlayersPortraits' question mark) tinted between the
@@ -728,22 +717,36 @@ function renderCellFramebuffer(
   return background;
 }
 
+// Scratch canvases shared by every paint. A roster cell is painted once
+// into these and then stored as an <img> (see canvasFromPixels), so the DOM
+// holds no per-cell canvas backing stores: at 1000 fighters that is the
+// difference between a few MB of PNG and Safari's canvas memory cap.
+const SCRATCH = {
+  source: document.createElement('canvas'),
+  stepped: document.createElement('canvas'),
+  output: document.createElement('canvas'),
+};
+
+function scratchCanvas(name, width, height) {
+  const canvas = SCRATCH[name];
+  if (canvas.width !== width) canvas.width = width;
+  if (canvas.height !== height) canvas.height = height;
+  return canvas;
+}
+
 function paintPixels(
   target, pixels, width, height, displayScale = 1,
   pixelStep = 1, stepMix = 1, captureRect = null
 ) {
-  const source = document.createElement('canvas');
-  source.width = width;
-  source.height = height;
+  const source = scratchCanvas('source', width, height);
   source.getContext('2d').putImageData(new ImageData(pixels, width, height), 0, 0);
 
   let renderSource = source;
   if (pixelStep > 1) {
-    const stepped = document.createElement('canvas');
-    stepped.width = width * pixelStep;
-    stepped.height = height * pixelStep;
+    const stepped = scratchCanvas('stepped', width * pixelStep, height * pixelStep);
     const steppedCtx = stepped.getContext('2d');
     steppedCtx.imageSmoothingEnabled = false;
+    steppedCtx.clearRect(0, 0, stepped.width, stepped.height);
     steppedCtx.drawImage(source, 0, 0, stepped.width, stepped.height);
     renderSource = stepped;
   }
@@ -752,7 +755,7 @@ function paintPixels(
   const scaleY = typeof displayScale === 'number' ? displayScale : displayScale.y;
   const canvas = typeof target.getContext === 'function'
     ? target
-    : document.createElement('canvas');
+    : scratchCanvas('output', Math.round(width * scaleX), Math.round(height * scaleY));
   canvas.width = Math.round(width * scaleX);
   canvas.height = Math.round(height * scaleY);
   const ctx = canvas.getContext('2d', {
@@ -783,15 +786,21 @@ function paintPixels(
   if (canvas !== target) target.src = canvas.toDataURL('image/png');
 }
 
+// A painted cell texture as a plain <img>: same pixels as before (rendered
+// through the shared scratch canvas and stored as a PNG data URL), but no
+// live canvas per cell. paintPixels() repaints an <img> target in place.
 function canvasFromPixels(
   pixels, width, height, className = '', displayScale = 1,
   pixelStep = 1, stepMix = 1, captureRect = null
 ) {
-  const canvas = document.createElement('canvas');
-  canvas.className = className;
-  canvas.setAttribute('aria-hidden', 'true');
-  paintPixels(canvas, pixels, width, height, displayScale, pixelStep, stepMix, captureRect);
-  return canvas;
+  const image = document.createElement('img');
+  image.className = className;
+  image.setAttribute('aria-hidden', 'true');
+  image.alt = '';
+  image.decoding = 'async';
+  image.draggable = false;
+  paintPixels(image, pixels, width, height, displayScale, pixelStep, stepMix, captureRect);
+  return image;
 }
 
 function paintCellCanvas(
@@ -855,9 +864,9 @@ CELL_IDS.forEach((id, index) => {
   const isSearch = index === 0;
   const isCreate = index === 1;
   const character = isSearch
-    ? { asset: 'search', portrait: ACTION_PORTRAITS.search, label: 'SEARCH', name: 'Search fighters' }
+    ? { asset: 'search', portrait: '', label: 'SEARCH', name: 'Search fighters' }
     : isCreate
-      ? { asset: 'create', portrait: ACTION_PORTRAITS.create, label: 'CREATE', name: 'Create fighter' }
+      ? { asset: 'create', portrait: '', label: 'CREATE', name: 'Create fighter' }
       : rosterCharacterForIndex(index - 2);
   const fkind = character.fkind ?? VANILLA_ROSTER.indexOf(character);
   const label = character.label;
@@ -996,6 +1005,22 @@ function visibleCellsInDisplayOrder() {
   ];
 }
 
+// The rule lattice is a full-board pixel buffer (several MB at 1000
+// fighters) and depends only on the board geometry, so typing in the search
+// box, which changes the visible set every keystroke, must not re-render it
+// unless the geometry actually changed. Keep the last few boards.
+const RULE_BOARDS = new Map();
+function rulesForBoard(width, height, columns, cellCount) {
+  const key = `${width}x${height}:${columns}:${cellCount}`;
+  let pixels = RULE_BOARDS.get(key);
+  if (!pixels) {
+    pixels = renderRules(width, height, columns, cellCount);
+    RULE_BOARDS.set(key, pixels);
+    if (RULE_BOARDS.size > 8) RULE_BOARDS.delete(RULE_BOARDS.keys().next().value);
+  }
+  return pixels;
+}
+
 function applyGridLayout(columns = columnsForContainer()) {
   const visibleCells = visibleCellsInDisplayOrder();
   const visibleSignature = visibleCells.map(button => button.dataset.character).join(',');
@@ -1059,7 +1084,7 @@ function applyGridLayout(columns = columnsForContainer()) {
 
   paintPixels(
     ruleCanvas,
-    renderRules(width, height, columns, visibleCells.length),
+    rulesForBoard(width, height, columns, visibleCells.length),
     width,
     height
   );
@@ -1115,7 +1140,7 @@ function updateSearchTile(query = '') {
   paintCellCanvas(
     searchCell.querySelector('.replica-texture-layer'),
     displayLabel,
-    ACTION_PORTRAITS.search,
+    null,
     active && !value ? 0.5 : 1,
     ACTION_CELL_BACKGROUND_PIXELS.search,
     showGlass ? { static: true, icon: ACTION_ICONS.search } : { static: true }
@@ -1131,7 +1156,7 @@ function repaintActionCells() {
     paintCellCanvas(
       createCell.querySelector('.replica-texture-layer'),
       'CREATE',
-      ACTION_PORTRAITS.create,
+      null,
       1,
       ACTION_CELL_BACKGROUND_PIXELS.create,
       { static: true, icon: ACTION_ICONS.create }
@@ -1664,12 +1689,10 @@ function buildFontBench() {
 
   for (const char of ALPHABET) {
     const glyph = CAPTION_GLYPHS.get(char);
-    const expected = stageCaption(glyph);
-    const sourceCanvas = canvasFromPixels(expected, BENCH_W, BENCH_H);
-    const sourcePixels = sourceCanvas.getContext('2d')
-      .getImageData(0, 0, BENCH_W, BENCH_H).data;
-    const canvas = canvasFromPixels(stageCaption(renderCaption(char, BENCH_W)), BENCH_W, BENCH_H);
-    const actual = canvas.getContext('2d').getImageData(0, 0, BENCH_W, BENCH_H).data;
+    // Grade the pixel buffers directly; cell textures are <img> elements
+    // now, so there is no canvas to read back (and none was needed).
+    const sourcePixels = stageCaption(glyph);
+    const actual = stageCaption(renderCaption(char, BENCH_W));
     const grade = strictPixelGrade(sourcePixels, actual);
     const integrityIssue = glyphIntegrityIssue(char, glyph);
     if (!integrityIssue) validGlyphs++;

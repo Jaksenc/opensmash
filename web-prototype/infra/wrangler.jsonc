@@ -5,6 +5,8 @@
   "compatibility_date": "2026-09-01",
   "routes": [
     { "pattern": "smashtheweights.com/engine/*", "zone_name": "smashtheweights.com" },
-    { "pattern": "www.smashtheweights.com/engine/*", "zone_name": "smashtheweights.com" }
+    { "pattern": "www.smashtheweights.com/engine/*", "zone_name": "smashtheweights.com" },
+    { "pattern": "intheweights64.com/engine/*", "zone_name": "intheweights64.com" },
+    { "pattern": "www.intheweights64.com/engine/*", "zone_name": "intheweights64.com" }
   ]
 }

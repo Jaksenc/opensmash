@@ -12,9 +12,10 @@ class BakedRosterTest(unittest.TestCase):
             slug = "newcomer"
             ui_root = os.path.join(root, "play", "ui", slug)
             os.makedirs(ui_root)
-            with open(os.path.join(root, "play", f"{slug}.osb"), "wb") as output:
+            with open(os.path.join(root, "play", f"{slug}.osb6"), "wb") as output:
                 output.write(b"bundle")
-            for name in ("portrait_raw.png", f"{slug}.osbui", "announcer.wav"):
+            for name in ("portrait_raw.png", "portrait_tile.png", "portrait_medium.png",
+                         f"{slug}.osbui", "announcer.wav"):
                 with open(os.path.join(ui_root, name), "wb") as output:
                     output.write(b"asset")
             with open(os.path.join(ui_root, "character.json"), "w", encoding="utf-8") as output:

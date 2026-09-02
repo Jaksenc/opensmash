@@ -1969,7 +1969,7 @@ function resetRomPrompt() {
   }
   if (uploadButton) {
     uploadButton.disabled = false;
-    uploadButton.textContent = 'Upload ROM';
+    uploadButton.textContent = 'Choose ROM';
   }
   if (cancelButton) cancelButton.disabled = false;
   if (formError) {
@@ -2186,8 +2186,8 @@ function showLaunchFlow(fighter, { create = false } = {}) {
   if (flowTitle) flowTitle.textContent = create ? 'Create a fighter' : 'Play Smash the Weights';
   if (flowCopy) {
     flowCopy.textContent = create
-      ? 'To create a fighter, upload your legally obtained Super Smash Bros. 64 ROM. It stays on your device.'
-      : 'To play Smash the Weights, upload your legally obtained Super Smash Bros. 64 ROM. It stays on your device.';
+      ? 'To create a fighter, choose your legally obtained USA-release Super Smash Bros. 64 ROM. It never leaves your device.'
+      : 'To play Smash the Weights, choose your legally obtained USA-release Super Smash Bros. 64 ROM. It never leaves your device.';
   }
   overlay.dataset.mode = create ? 'create' : 'launch';
   overlay.dataset.step = 'upload';
@@ -2339,7 +2339,7 @@ async function validateRom(file) {
     }
     if (uploadButton) {
       uploadButton.disabled = false;
-      uploadButton.textContent = 'Upload ROM';
+      uploadButton.textContent = 'Choose ROM';
     }
     if (cancelButton) cancelButton.disabled = false;
     if (formError) {
