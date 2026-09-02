@@ -50,8 +50,8 @@ export function LaunchFlow() {
       <section className="launch-flow-step launch-flow-upload" role="dialog" aria-modal="true" aria-labelledby="launch-flow-title" aria-describedby="launch-flow-copy rom-filename-hint">
         <h2 id="launch-flow-title" className="visually-hidden">Play Smash the Weights</h2>
         <p id="launch-flow-copy" className="launch-flow-copy">
-          To play Smash the Weights, upload your legally obtained USA-release Super Smash Bros. 64 ROM. It stays on
-          your device; Safari may ask again after a week away.
+          To play Smash the Weights, choose your legally obtained USA-release Super Smash Bros. 64 ROM. It never
+          leaves your device; Safari may ask again after a week away.
         </p>
         <div id="rom-filename-hint" className="launch-flow-rom-hint">
           <span className="launch-flow-rom-hint-label">The file is normally named</span>
@@ -60,7 +60,7 @@ export function LaunchFlow() {
           </span>
         </div>
         <input id="rom-file-input" className="launch-flow-file-input" type="file" hidden accept=".zip,.z64,.n64,.v64,.rom,application/zip,application/octet-stream" />
-        <FlameAction id="rom-upload-button" type="button">Upload ROM</FlameAction>
+        <FlameAction id="rom-upload-button" type="button">Choose ROM</FlameAction>
         <button id="launch-cancel-button" className="launch-flow-action launch-flow-cancel" type="button">Cancel</button>
         <p id="rom-form-error" className="launch-flow-error" role="alert" hidden />
       </section>
