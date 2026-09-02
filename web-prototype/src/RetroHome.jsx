@@ -191,6 +191,50 @@ export default function RetroHome({
     return transitionMediaVolume(video, launchFlowOpen || engine ? 0 : 1);
   }, [engine, launchFlowOpen]);
 
+  // Browsers only guarantee muted autoplay. The element always starts muted;
+  // when sound is on we try to unmute right away (allowed on return visits in
+  // Chrome) and otherwise unmute on the first gesture anywhere on the page.
+  useEffect(() => {
+    const video = introVideoRef.current;
+    if (!video) return undefined;
+    if (!soundOn) {
+      video.muted = true;
+      return undefined;
+    }
+    let cancelled = false;
+    const gestureEvents = ["pointerdown", "keydown", "touchstart"];
+    const removeGestureListeners = () => {
+      for (const type of gestureEvents) document.removeEventListener(type, unmuteOnGesture, true);
+    };
+    function unmuteOnGesture() {
+      removeGestureListeners();
+      if (cancelled) return;
+      video.muted = false;
+      if (video.paused && !engine) {
+        video.play().catch(() => { video.muted = true; });
+      }
+    }
+    const tryUnmute = async () => {
+      video.muted = false;
+      try {
+        await video.play();
+        if (cancelled) return;
+        if (video.muted) throw new Error("still muted");
+      } catch {
+        if (cancelled) return;
+        video.muted = true;
+        // Keep the muted loop running while we wait for a gesture.
+        video.play().catch(() => {});
+        for (const type of gestureEvents) document.addEventListener(type, unmuteOnGesture, true);
+      }
+    };
+    tryUnmute();
+    return () => {
+      cancelled = true;
+      removeGestureListeners();
+    };
+  }, [soundOn]);
+
   function toggleMobileControls(event) {
     if (!mobileLayout) return;
     event.stopPropagation();
@@ -330,7 +374,7 @@ export default function RetroHome({
                 id="intro-video"
                 className="intro-video"
                 src={introVideoUrl}
-                muted={!soundOn}
+                muted
                 autoPlay
                 loop
                 playsInline
