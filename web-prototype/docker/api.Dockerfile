@@ -18,10 +18,10 @@ COPY pipeline/web-prototype/server ./server
 COPY pipeline/web-prototype/shared ./shared
 COPY pipeline/web-prototype/config ./config
 COPY pipeline/web-prototype/visual ./visual
-COPY pipeline/play/ui/joeyflynn /workspace/pipeline/play/ui/joeyflynn
-COPY pipeline/play/ui/barackobama /workspace/pipeline/play/ui/barackobama
-COPY pipeline/play/ui/queen /workspace/pipeline/play/ui/queen
-COPY pipeline/play/ui/rohansahai /workspace/pipeline/play/ui/rohansahai
+# Generated immediately before Cloud Build from config/characters.json and
+# committed pipeline/play outputs. No ignored web-dist character state enters
+# the image.
+COPY pipeline/web-prototype/.baked-characters/play /workspace/pipeline/play
 COPY BattleShip/web-dist/index.html BattleShip/web-dist/BattleShip.js BattleShip/web-dist/BattleShip.wasm BattleShip/web-dist/manifest.json /workspace/BattleShip/web-dist/
 COPY BattleShip/web-dist/files /workspace/BattleShip/web-dist/files
 # In-browser asset extraction (BattleShip/docs/web_rom_extraction.md): Torch
@@ -30,10 +30,6 @@ COPY BattleShip/web-dist/files /workspace/BattleShip/web-dist/files
 # absent from files/. A missing source path fails the build here, on purpose.
 COPY BattleShip/web-dist/torch /workspace/BattleShip/web-dist/torch
 COPY BattleShip/web-dist/rom-extract.js BattleShip/web-dist/torch-worker.js /workspace/BattleShip/web-dist/
-COPY BattleShip/web-dist/bundles/joeyflynn* /workspace/BattleShip/web-dist/bundles/
-COPY BattleShip/web-dist/bundles/barackobama* /workspace/BattleShip/web-dist/bundles/
-COPY BattleShip/web-dist/bundles/queen* /workspace/BattleShip/web-dist/bundles/
-COPY BattleShip/web-dist/bundles/rohansahai* /workspace/BattleShip/web-dist/bundles/
 
 USER node
 EXPOSE 8080

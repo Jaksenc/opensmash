@@ -3,7 +3,7 @@
 
   run_character.py "Weird Al Yankovic" [--short WEIRDAL] [--photo ref.png]
                    [--emblem "context or object"] [--out play/ui/<slug>]
-                   [--variants TARGET,...|all] [--force-stage <stage>]
+                   [--variants TARGET,...|all] [--force-stage <stage>] [--publish]
 
 Stages (each skipped if its output already exists — delete a file or use
 --force-stage to redo): expand -> tpose -> mesh (Tripo v3 + rig) ->
@@ -248,7 +248,8 @@ def stage_needed(path, force, name):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("name")
-    ap.add_argument("--short", default=None, help="display name for in-game text (<=7 chars, A-Z)")
+    ap.add_argument("--short", default=None,
+                    help="display name for in-game text (<=10 chars, A-Z)")
     ap.add_argument("--photo", default=None)
     ap.add_argument("--emblem", default=None,
                     help="context for the series emblem, or the object itself "
@@ -262,6 +263,8 @@ def main():
              "donkey/yoshi, while 'all' includes those experimental targets")
     ap.add_argument("--force-stage", default=None,
                     choices=["expand", "tpose", "mesh", "convert", "variants", "portrait", "stock", "emblem", "ui", "voice"])
+    ap.add_argument("--publish", action="store_true",
+                    help="after a successful run, validate and add this manual character to the baked roster")
     a = ap.parse_args()
 
     slug = re.sub(r"[^a-z0-9]", "", a.name.lower())[:16]
@@ -284,7 +287,7 @@ def main():
         bill("expand", json.loads(open(F("character.json")).read()).get("cost_usd"))
     cdef = json.loads(open(F("character.json")).read())
     short = (a.short or cdef.get("short") or re.sub(r"[^A-Za-z]", "", cdef["display"]).upper())
-    short = re.sub(r"[^A-Z]", "", short.upper())[:7]
+    short = re.sub(r"[^A-Z]", "", short.upper())[:10]
     # Persist the resolved short name. The .osbui pack takes it as an argument,
     # but the dev server's /roster.json reads it back out of character.json --
     # so a --short override has to land in the file or the tile caption and the
@@ -307,29 +310,65 @@ def main():
 
     # 3. mesh + rig ------------------------------------------------------
     if stage_needed(F("rigged.glb"), force, "mesh"):
-        log("mesh: uploading to Tripo")
-        tok = tripo_json(sh(["python3", pipeline_script("tripo.py"), "upload", F("tpose.png")], timeout=300))["image_token"]
-        task = tripo_json(sh(["python3", pipeline_script("tripo.py"), "img3d", tok], timeout=120))["task_id"]
-        log(f"mesh: img3d task {task}")
-        for _ in range(90):
-            st = tripo_json(sh(["python3", pipeline_script("tripo.py"), "status", task], timeout=60))
-            if st["status"] in ("success", "failed", "banned"):
-                break
-            time.sleep(10)
+        # Tripo task IDs are persisted the moment they exist so an interrupted
+        # container (SIGTERM, lease loss) resumes polling the paid task instead
+        # of buying the mesh again. --force-stage mesh deliberately starts over.
+        tasks_path = F("tripo_tasks.json")
+        tasks = {}
+        if force != "mesh" and os.path.exists(tasks_path):
+            try:
+                tasks = json.loads(open(tasks_path).read())
+            except json.JSONDecodeError:
+                tasks = {}
+
+        def remember(key, task_id):
+            tasks[key] = task_id
+            json.dump(tasks, open(tasks_path, "w"), indent=1)
+
+        def forget():
+            tasks.clear()
+            if os.path.exists(tasks_path):
+                os.remove(tasks_path)
+
+        def wait_task(task_id):
+            st = {"status": "unknown"}
+            for _ in range(90):
+                st = tripo_json(sh(["python3", pipeline_script("tripo.py"), "status", task_id], timeout=60))
+                if st["status"] in ("success", "failed", "banned"):
+                    break
+                time.sleep(10)
+            return st
+
+        task = tasks.get("img3d")
+        if task:
+            log(f"mesh: img3d task {task} (resumed)")
+        else:
+            log("mesh: uploading to Tripo")
+            tok = tripo_json(sh(["python3", pipeline_script("tripo.py"), "upload", F("tpose.png")], timeout=300))["image_token"]
+            task = tripo_json(sh(["python3", pipeline_script("tripo.py"), "img3d", tok], timeout=120))["task_id"]
+            remember("img3d", task)
+            log(f"mesh: img3d task {task}")
+        st = wait_task(task)
         if st["status"] != "success":
+            forget()
             raise RuntimeError(f"img3d {st['status']}")
         model_credits = st.get("consumed_credit")
-        rig = tripo_json(sh(["python3", pipeline_script("tripo.py"), "rig", task], timeout=120))["task_id"]
-        log(f"mesh: rig task {rig}")
-        for _ in range(90):
-            st = tripo_json(sh(["python3", pipeline_script("tripo.py"), "status", rig], timeout=60))
-            if st["status"] in ("success", "failed", "banned"):
-                break
-            time.sleep(10)
+        rig = tasks.get("rig")
+        if rig:
+            log(f"mesh: rig task {rig} (resumed)")
+        else:
+            rig = tripo_json(sh(["python3", pipeline_script("tripo.py"), "rig", task], timeout=120))["task_id"]
+            remember("rig", rig)
+            log(f"mesh: rig task {rig}")
+        st = wait_task(rig)
         if st["status"] != "success":
+            forget()
             raise RuntimeError(f"rig {st['status']}")
         rig_credits = st.get("consumed_credit")
-        sh(["python3", pipeline_script("tripo.py"), "download", rig, F("rigged.glb")], timeout=600)
+        # Download to a side file so a kill mid-transfer never leaves a
+        # truncated rigged.glb that the resume logic would treat as complete.
+        sh(["python3", pipeline_script("tripo.py"), "download", rig, F("rigged.glb.part")], timeout=600)
+        os.replace(F("rigged.glb.part"), F("rigged.glb"))
         if model_credits is None or rig_credits is None:
             log("mesh: Tripo did not report per-task credits")
         else:
@@ -452,6 +491,13 @@ def main():
             dst = os.path.join(WEBDIST, base)
             open(dst, "wb").write(open(src, "rb").read())
         log(f"staged into web-dist/bundles ({len(stage_files)} files)")
+    if a.publish:
+        canonical_out = os.path.join(HERE, "play", "ui", slug)
+        if os.path.realpath(out) != os.path.realpath(canonical_out):
+            raise RuntimeError("--publish requires the canonical play/ui/<slug> output directory")
+        from baked_roster import publish_character
+        changed = publish_character(slug)
+        log(f"{'published' if changed else 'already present in'} baked roster manifest")
     url = (f"http://localhost:8600/index.html?inject=bundles/{slug}.osb"
            f"&inject_ui=bundles/{slug}.osbui&inject_voice=bundles/{slug}.wav"
            f"&SSB64_START_SCENE=16")

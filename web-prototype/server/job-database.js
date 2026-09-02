@@ -1,6 +1,47 @@
 import { mkdir, readFile, readdir, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
+import { ACTIVE_JOB_STATUSES } from "./job-protocol.js";
+import { assertQuota, quotaUsage } from "./job-quota.js";
+
+function duplicateSlugError(slug) {
+  const error = new Error(`A fighter with slug '${slug}' already exists.`);
+  error.code = "DUPLICATE_SLUG";
+  return error;
+}
+
+function leaseLostError(id) {
+  const error = new Error(`Fighter job '${id}' is no longer leased by this worker.`);
+  error.code = "LEASE_LOST";
+  return error;
+}
+
+// A job may be claimed when nobody is working on it. "running" and
+// "retrying" are refused outright even if the lease looks expired: the API's
+// reconciliation is the only path that turns a silent worker into a
+// resumable job, so two containers can never publish the same attempt.
+function claimDecision(job, executionId) {
+  if (!job) return { claimed: false, job: null };
+  if (job.status === "complete" || job.status === "cancelled") {
+    return { claimed: false, job };
+  }
+  if (job.lease?.executionId === executionId) return { claimed: true, job };
+  if (job.status === "running" || job.status === "retrying") {
+    return { claimed: false, job };
+  }
+  const leaseExpires = Date.parse(job.lease?.expiresAt || "");
+  if (job.lease?.executionId && leaseExpires > Date.now()) {
+    return { claimed: false, job };
+  }
+  return { claimed: true, job };
+}
+
+function leaseFor(executionId, leaseSeconds) {
+  return {
+    executionId,
+    expiresAt: new Date(Date.now() + leaseSeconds * 1000).toISOString(),
+  };
+}
 
 class LocalJobDatabase {
   constructor(root) {
@@ -36,17 +77,24 @@ class LocalJobDatabase {
     }
   }
 
-  async insert(job) {
-    const duplicate = (await this.list()).find((candidate) => candidate.slug === job.slug);
-    if (duplicate) {
-      const error = new Error(`A fighter with slug '${job.slug}' already exists.`);
-      error.code = "DUPLICATE_SLUG";
-      throw error;
+  async insert(job, { quota = null } = {}) {
+    const existing = await this.list();
+    if (existing.some((candidate) => candidate.slug === job.slug)) {
+      throw duplicateSlugError(job.slug);
     }
-    await this.save(job);
+    if (quota) assertQuota(quotaUsage(existing, job.ownerId), quota);
+    await this.write(job);
   }
 
-  async save(job) {
+  async save(job, { executionId = null } = {}) {
+    if (executionId) {
+      const stored = await this.get(job.id);
+      if (stored?.lease?.executionId !== executionId) throw leaseLostError(job.id);
+    }
+    await this.write(job);
+  }
+
+  async write(job) {
     const root = path.join(this.root, job.id);
     await mkdir(root, { recursive: true });
     const finalPath = path.join(root, "job.json");
@@ -60,20 +108,11 @@ class LocalJobDatabase {
   }
 
   async claim(id, executionId, leaseSeconds) {
-    const job = await this.get(id);
-    if (!job || job.status === "complete" || job.status === "cancelled") {
-      return { claimed: false, job };
-    }
-    const leaseExpires = Date.parse(job.lease?.expiresAt || "");
-    if (job.lease?.executionId !== executionId && leaseExpires > Date.now()) {
-      return { claimed: false, job };
-    }
-    job.lease = {
-      executionId,
-      expiresAt: new Date(Date.now() + leaseSeconds * 1000).toISOString(),
-    };
-    await this.save(job);
-    return { claimed: true, job };
+    const decision = claimDecision(await this.get(id), executionId);
+    if (!decision.claimed) return decision;
+    decision.job.lease = leaseFor(executionId, leaseSeconds);
+    await this.write(decision.job);
+    return decision;
   }
 }
 
@@ -102,23 +141,47 @@ class FirestoreJobDatabase {
     return document.exists ? document.data() : null;
   }
 
-  async insert(job) {
+  async insert(job, { quota = null } = {}) {
     const jobRef = this.collection.doc(job.id);
     const slugRef = this.collection.firestore.collection(`${this.collectionName}Slugs`).doc(job.slug);
     await this.collection.firestore.runTransaction(async (transaction) => {
       const slug = await transaction.get(slugRef);
-      if (slug.exists) {
-        const error = new Error(`A fighter with slug '${job.slug}' already exists.`);
-        error.code = "DUPLICATE_SLUG";
-        throw error;
+      if (slug.exists) throw duplicateSlugError(job.slug);
+      if (quota) {
+        // Both queries use single-field indexes only; the owner's own jobs are
+        // few enough to filter in memory. Reading them inside the transaction
+        // makes concurrent inserts for the same owner serialize.
+        const [ownerJobs, activeJobs] = await Promise.all([
+          transaction.get(this.collection.where("ownerId", "==", job.ownerId)),
+          transaction.get(
+            this.collection
+              .where("status", "in", [...ACTIVE_JOB_STATUSES])
+              .limit(quota.maxGlobalActive),
+          ),
+        ]);
+        const seen = new Map();
+        for (const document of [...ownerJobs.docs, ...activeJobs.docs]) {
+          seen.set(document.id, document.data());
+        }
+        assertQuota(quotaUsage(seen.values(), job.ownerId), quota);
       }
       transaction.create(slugRef, { jobId: job.id, createdAt: job.createdAt });
       transaction.create(jobRef, job);
     });
   }
 
-  async save(job) {
-    await this.collection.doc(job.id).set(job);
+  async save(job, { executionId = null } = {}) {
+    const reference = this.collection.doc(job.id);
+    if (!executionId) {
+      await reference.set(job);
+      return;
+    }
+    await this.collection.firestore.runTransaction(async (transaction) => {
+      const document = await transaction.get(reference);
+      const stored = document.exists ? document.data() : null;
+      if (stored?.lease?.executionId !== executionId) throw leaseLostError(job.id);
+      transaction.set(reference, job);
+    });
   }
 
   watch(listener) {
@@ -129,26 +192,15 @@ class FirestoreJobDatabase {
     }, (error) => console.error("Firestore fighter job watch failed:", error));
   }
 
-
   async claim(id, executionId, leaseSeconds) {
     const reference = this.collection.doc(id);
     return this.collection.firestore.runTransaction(async (transaction) => {
       const document = await transaction.get(reference);
-      if (!document.exists) return { claimed: false, job: null };
-      const job = document.data();
-      if (job.status === "complete" || job.status === "cancelled") {
-        return { claimed: false, job };
-      }
-      const leaseExpires = Date.parse(job.lease?.expiresAt || "");
-      if (job.lease?.executionId !== executionId && leaseExpires > Date.now()) {
-        return { claimed: false, job };
-      }
-      job.lease = {
-        executionId,
-        expiresAt: new Date(Date.now() + leaseSeconds * 1000).toISOString(),
-      };
-      transaction.set(reference, job);
-      return { claimed: true, job };
+      const decision = claimDecision(document.exists ? document.data() : null, executionId);
+      if (!decision.claimed) return decision;
+      decision.job.lease = leaseFor(executionId, leaseSeconds);
+      transaction.set(reference, decision.job);
+      return decision;
     });
   }
 }

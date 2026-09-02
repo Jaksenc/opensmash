@@ -9,6 +9,7 @@ import ModalPage from "./ModalPage.jsx";
 import RetroHome from "./RetroHome.jsx";
 import RetroChoiceGrid from "./RetroChoiceGrid.jsx";
 import { matchesCharacterSearch } from "../shared/character-search.js";
+import { mergeCharactersBySlug } from "../shared/character-roster.js";
 import {
   controlsRoadblockRequired,
   requireControlsRoadblock,
@@ -40,6 +41,13 @@ import {
 const ADVANCED_OPTIONS_KEY = "opensmash-advanced-options";
 // Posted by BattleShip/web/index.html when the engine cannot obtain its assets.
 const ENGINE_ASSET_ERROR_MESSAGE = "opensmash:engine-asset-error";
+
+function inlineCharacters() {
+  const characters = window.__OPENSMASH_INITIAL_STATE__?.characters;
+  return Array.isArray(characters) ? characters : null;
+}
+
+const INLINE_CHARACTERS = inlineCharacters();
 
 // Fire-and-forget: build the engine's asset archive while the launch flow
 // animates, so the engine boots straight from the cache. Failures are
@@ -514,9 +522,10 @@ function CreateExperienceOverlay({ onAuthenticated, onClose, onCreated, onPlay, 
 
 export default function App() {
   const isCreatePage = window.location.pathname.replace(/\/+$/, "") === "/create";
-  const [characters, setCharacters] = useState([]);
+  const [characters, setCharacters] = useState(() => INLINE_CHARACTERS || []);
   const [fighterJobs, setFighterJobs] = useState([]);
-  const [loadingCharacters, setLoadingCharacters] = useState(true);
+  const [loadingCharacters, setLoadingCharacters] = useState(() => INLINE_CHARACTERS === null);
+  const [loadingSession, setLoadingSession] = useState(true);
   const [authorized, setAuthorized] = useState(false);
   const [user, setUser] = useState(null);
   const [pendingAction, setPendingAction] = useState(null);
@@ -554,11 +563,17 @@ export default function App() {
     setPageError(error.message || "Could not load the ROM upload screen.");
   }, []);
 
-  async function loadCharacters() {
+  async function fetchCharacters() {
     const response = await fetch("/api/characters", { cache: "no-store" });
     if (!response.ok) throw new Error("Could not load the configured characters");
-    const loadedCharacters = (await response.json()).characters;
-    setCharacters(loadedCharacters);
+    return (await response.json()).characters;
+  }
+
+  async function loadCharacters({ replace = false } = {}) {
+    const loadedCharacters = await fetchCharacters();
+    setCharacters((current) =>
+      replace ? loadedCharacters : mergeCharactersBySlug(current, loadedCharacters),
+    );
     return loadedCharacters;
   }
 
@@ -580,20 +595,70 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    Promise.all([
-      loadCharacters(),
-      getSession(),
-    ])
-      .then(([, session]) => {
+    let cancelled = false;
+
+    async function refreshCharacters({ finishInitialLoad = false } = {}) {
+      try {
+        const loadedCharacters = await fetchCharacters();
+        if (!cancelled) {
+          setCharacters((current) => mergeCharactersBySlug(current, loadedCharacters));
+        }
+      } catch (error) {
+        if (!cancelled) setPageError(error.message);
+      } finally {
+        if (!cancelled && finishInitialLoad) setLoadingCharacters(false);
+      }
+    }
+
+    if (INLINE_CHARACTERS === null) {
+      refreshCharacters({ finishInitialLoad: true });
+    }
+
+    getSession()
+      .then((session) => {
+        if (cancelled) return;
         setAuthorized(Boolean(session.authorized));
         setUser(session.user || null);
         if (isCreatePage && session.user && !session.authorized) {
           setPendingAction({ type: "create" });
         }
+        // The edge-cached seed is deliberately public. Once the private
+        // session is known, merge in the complete roster visible to this
+        // user without holding up the public first paint. Merging also keeps
+        // a live job completion that beats this request back to the client.
+        if (INLINE_CHARACTERS !== null && session.user) {
+          refreshCharacters();
+        }
       })
-      .catch((error) => setPageError(error.message))
-      .finally(() => setLoadingCharacters(false));
+      .catch((error) => {
+        if (!cancelled) setPageError(error.message);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingSession(false);
+      });
+
+    return () => { cancelled = true; };
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    let timer;
+    let attempts = 0;
+    function syncGridCharacters() {
+      if (cancelled) return;
+      if (window.characterGrid?.syncCharacters) {
+        Promise.resolve(window.characterGrid.syncCharacters(characters)).catch(() => {});
+        return;
+      }
+      attempts += 1;
+      if (attempts < 100) timer = window.setTimeout(syncGridCharacters, 50);
+    }
+    syncGridCharacters();
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [characters]);
 
   useEffect(() => {
     if (!authorized || !user) {
@@ -858,7 +923,7 @@ export default function App() {
     }
     setUser(null);
     setCreateStage(null);
-    await loadCharacters().catch((error) => setPageError(error.message));
+    await loadCharacters({ replace: true }).catch((error) => setPageError(error.message));
   }
 
   function selectCharacter(character) {
@@ -1123,7 +1188,7 @@ export default function App() {
       {isCreatePage && (
         <CreateVisualShell
           onError={reportCreateVisualError}
-          romUploadRequired={!loadingCharacters && Boolean(user) && !authorized}
+          romUploadRequired={!loadingSession && Boolean(user) && !authorized}
         />
       )}
       <header className="site-header">
@@ -1211,7 +1276,7 @@ export default function App() {
         </div>
       </section>}
 
-      {isCreatePage && !loadingCharacters && !user && <AuthGate onAuthenticated={authenticated} />}
+      {isCreatePage && !loadingSession && !user && <AuthGate onAuthenticated={authenticated} />}
 
       {isCreatePage && (
         <CreateExperienceOverlay
@@ -1219,7 +1284,7 @@ export default function App() {
           onClose={() => window.location.assign("/")}
           onCreated={() => window.location.assign("/")}
           onPlay={selectCharacter}
-          stage={!loadingCharacters && authorized && user ? "creator" : null}
+          stage={!loadingSession && authorized && user ? "creator" : null}
           user={user}
         />
       )}
