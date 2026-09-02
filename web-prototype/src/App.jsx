@@ -223,10 +223,7 @@ function RomModal({ action, onCancel, onValidated, onPrewarmError }) {
         <p className="eyebrow">One-time check</p>
         <h2 id="rom-title">Upload a ROM to continue</h2>
         <p className="modal-copy">Choose your legally obtained Smash 64 ROM (USA release) to launch {target}.</p>
-        <p className="modal-copy modal-copy-secondary">
-          It never leaves your browser: the game builds its assets from it locally. Safari clears that
-          copy after a week without a visit, so you may be asked for it again.
-        </p>
+        <p className="modal-copy modal-copy-secondary">It stays on your device. Safari may ask again after a week away.</p>
         <form onSubmit={validate}>
           <label className={`file-picker ${file ? "has-file" : ""}`}>
             <input
