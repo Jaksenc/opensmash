@@ -1,0 +1,19 @@
+Kim Kardashian	tpose	input	public-figure	2026-09-02T01:26
+Michael Jackson	tpose	input	public-figure	2026-09-02T01:26
+Oswald the Lucky Rabbit	tpose	output	other	2026-09-02T01:34
+Mister Rogers	tpose	input	public-figure	2026-09-02T01:50
+Pinocchio	tpose	output	other	2026-09-02T01:52
+Adam West	emblem	output	other	2026-09-02T02:05
+Charles Manson	tpose	input	other	2026-09-02T02:11	SKIPPED by user (tattoo)
+LeBron James	tpose	input	public-figure	2026-09-02T02:12
+Winnie the Pooh	tpose	output	other	2026-09-02T02:17
+Walt Disney	tpose	input	public-figure	2026-09-02T02:27
+Xi Jinping	mesh-upload	input	tripo-content-policy	2026-09-02T02:27
+Ellen DeGeneres	tpose	input	public-figure	2026-09-02T02:48
+Michael Schumacher	tpose	input	public-figure	2026-09-02T03:02
+Saddam Hussein	tpose	input	other	2026-09-02T03:03
+Ryan Reynolds	emblem	output	other	2026-09-02T03:18
+The Tooth Fairy	portrait	output	other	2026-09-02T03:31
+Captain Hook	tpose	output	other	2026-09-02T03:52
+Peter Pan	tpose	output	other	2026-09-02T04:00
+Bryan Cranston	tpose	input	public-figure	2026-09-02T04:16

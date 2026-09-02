@@ -1,5 +1,7 @@
-// Engine keyboard map: WASD stick, J=A, K=B, L=Z, I=L, O=R, Space=Start.
+// Engine keyboard map: WASD stick, J=A, K=B, L=Z, I=L, O=R, Space=Start,
+// ArrowUp=C-up (jump in Smash 64).
 export const MOBILE_KEY_VALUES = Object.freeze({
+  ArrowUp: "ArrowUp",
   KeyA: "a",
   KeyD: "d",
   KeyI: "i",

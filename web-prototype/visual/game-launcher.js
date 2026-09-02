@@ -249,6 +249,12 @@ function applyControlLabels() {
 }
 
 function requiresControllerTutorial() {
+  // The tutorial teaches the keyboard map; the touch deck replaces it, so a
+  // touch device never sees it (and clears any /create roadblock it carries).
+  if (usesMobileControls()) {
+    completeControlsRoadblock();
+    return false;
+  }
   return controlsRoadblockRequired() || shouldRequireControllerTutorial({
     completed: hasCompletedControllerTutorial(),
     mobileControls: usesMobileControls(),
@@ -2325,6 +2331,12 @@ async function validateRom(file) {
       APP_BRIDGE?.completeCreateRom?.();
       createUploadMode = false;
       closeLaunchFlow();
+    } else if (usesMobileControls()) {
+      // Touch devices skip the keyboard tutorial and boot straight away.
+      const fighter = pendingFighter;
+      completeControlsRoadblock();
+      closeLaunchFlow();
+      launch(fighter);
     } else {
       // A fresh play upload always gets the full console/cartridge docking
       // sequence before the required controller check, even if this browser
