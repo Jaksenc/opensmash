@@ -1887,12 +1887,12 @@
       "slug": "johncena",
       "assets": {
         "bundle": {
-          "sha256": "bcbc01ac383b79cd2b3a730b08b1ec80b9ea2848699401f5423997001964f27a",
-          "size": 1567532
+          "sha256": "cee34ca03de165084bacc0629ce8db12f5074242c761cbc35ead08d3baa0537c",
+          "size": 1568220
         },
         "metadata": {
-          "sha256": "164b1b884197dbc3c5c699a32fd8f615907e10def6c271899a4a74e66a98595a",
-          "size": 682
+          "sha256": "34d7da576506fa814718e094cccede954abebc80e98c720e90884a938b6d733e",
+          "size": 708
         },
         "portrait": {
           "sha256": "c06f85e0373e065fb9005e79e02a85a1238afab4c1bc0dcd1ad45492992cefd0",
@@ -1929,7 +1929,7 @@
       ],
       "metadata": {
         "display": "John Cena",
-        "nameFull": null,
+        "nameFull": "John Cena",
         "short": "CENA",
         "base": null,
         "preferredBases": null
@@ -7401,12 +7401,12 @@
       "slug": "johndaly",
       "assets": {
         "bundle": {
-          "sha256": "b487edd2b0258439ff51190122bc49df1663b47c77bccf49843bd02c91882492",
-          "size": 1534788
+          "sha256": "fbd7e0b49d6829995f56b31823e408e4a4f9086bb44f2bd8748f36c2b22f86db",
+          "size": 1534796
         },
         "metadata": {
-          "sha256": "244f9d100bc599430434397b1576932df113048b99c1940e520a82222551d87b",
-          "size": 638
+          "sha256": "aec968c386fd3ec486579c6457812d5151d1288a48467e7976fef1f5928df242",
+          "size": 664
         },
         "portrait": {
           "sha256": "5a0193c99e4acce708408c45a55b69279be631013f9d15264f2d64baae931fee",
@@ -7443,7 +7443,7 @@
       ],
       "metadata": {
         "display": "John Daly",
-        "nameFull": null,
+        "nameFull": "John Daly",
         "short": "DALY",
         "base": null,
         "preferredBases": null
@@ -8753,12 +8753,12 @@
       "slug": "dolphlundgren",
       "assets": {
         "bundle": {
-          "sha256": "2922210da8039e9337f16fc12a2685af35c212bec2641adbc52b3a1e94958994",
-          "size": 1507488
+          "sha256": "458fc090e94bbea75ccc1a22534a081f28e00cd60aa096143e9470b946b8d2d4",
+          "size": 1508236
         },
         "metadata": {
-          "sha256": "bd092b101cd88ffefb0a9a76a4859c4050b7606d6379e67d3b472ddcb798cad4",
-          "size": 683
+          "sha256": "24fa1017f7de37def7cdb7c7fa7d23e156c80e5a8d9cfd52fcc4b004e5069ca8",
+          "size": 714
         },
         "portrait": {
           "sha256": "ef0bd2b31b6a859fd2d1ff17e55f4e5be14f89ead2cd8f5af010c2c82ab79685",
@@ -8795,7 +8795,7 @@
       ],
       "metadata": {
         "display": "Dolph Lundgren",
-        "nameFull": null,
+        "nameFull": "Dolph Lundgren",
         "short": "LUNDGREN",
         "base": null,
         "preferredBases": null
@@ -9273,12 +9273,12 @@
       "slug": "venusdemilo",
       "assets": {
         "bundle": {
-          "sha256": "48bf35a4b5d3bcad1c7c10c76f6dcd63f22d2f87b7315e5be1deb7a7ffc04879",
-          "size": 1549328
+          "sha256": "02876e6faeb89f070887bf0df5e13607b838423c28d594bfeb3247db83198d53",
+          "size": 1549060
         },
         "metadata": {
-          "sha256": "35224ca7fc8671460e4013f1576f6478e86bb30f258dc5cec8cc99594e21a668",
-          "size": 737
+          "sha256": "49aa50afed52219d48e8b26d793115008de64e09570b38fa4a2b70fca96df001",
+          "size": 767
         },
         "portrait": {
           "sha256": "bdd4b70923266001e515f61a22e36e4db6b2d6d11e5e33804cb6e2dc6c23915b",
@@ -9315,7 +9315,7 @@
       ],
       "metadata": {
         "display": "Venus de Milo",
-        "nameFull": null,
+        "nameFull": "Venus de Milo",
         "short": "VENUS",
         "base": null,
         "preferredBases": null
@@ -10677,12 +10677,12 @@
       "slug": "brocklesnar",
       "assets": {
         "bundle": {
-          "sha256": "c9b7d5a7f672134901b1725bfc14c537574176255899b787c97c1202b60aba8a",
-          "size": 1553364
+          "sha256": "625f2178658009282f2994d788f84cd8bacedca4c49495f4bf885ec0d5451752",
+          "size": 1553372
         },
         "metadata": {
-          "sha256": "e5608667975593901b0eea0137f054bc5d4e7e86844ad7cc7a6bafbbcbffed0e",
-          "size": 661
+          "sha256": "3c0aa907cd19523cbb6d5829814eca65bc4a16d7363a113b198e81172004ba71",
+          "size": 690
         },
         "portrait": {
           "sha256": "cc5b3024b8d4cfcc6095f77415243497e1fef4874e7216298f62fbdba27a768e",
@@ -10719,7 +10719,7 @@
       ],
       "metadata": {
         "display": "Brock Lesnar",
-        "nameFull": null,
+        "nameFull": "Brock Lesnar",
         "short": "LESNAR",
         "base": null,
         "preferredBases": null
@@ -11925,8 +11925,8 @@
       "slug": "thewickedwitchof",
       "assets": {
         "bundle": {
-          "sha256": "f6b342911d8c4fed88795de3e28546340c67d607fd595d5ef3a823953111e6c5",
-          "size": 1590836
+          "sha256": "a8af5da543e876427034b41df52be86faf0e4a447fa022de45a48f9fff17b555",
+          "size": 1590476
         },
         "metadata": {
           "sha256": "e17588f44b9176d58c86fdd720960ba47601cd4dd0bac9347b459b404f17c21d",
@@ -14941,12 +14941,12 @@
       "slug": "homer",
       "assets": {
         "bundle": {
-          "sha256": "4042367e194ae613560d56f549ffd01d42acbdacdef96db8c9b2e128e89919bb",
-          "size": 1549660
+          "sha256": "77623168e407006f59a7ce7eec718ebd98ed6c771fb098e8e56d272ee8f0ebd8",
+          "size": 1549852
         },
         "metadata": {
-          "sha256": "ec46c87a609cdb1cdc32ee857840c067c95d2cf95299d61eebef8d7703788982",
-          "size": 616
+          "sha256": "df7f9fc0fef4db5d147011d81f55b9e37afffd31ccf796eaabc4d793177dfb5b",
+          "size": 638
         },
         "portrait": {
           "sha256": "1b62b9e4d9ce570434139ef07c29e625143839c56046b05a7a96f63c885b7e71",
@@ -14983,7 +14983,7 @@
       ],
       "metadata": {
         "display": "Homer",
-        "nameFull": null,
+        "nameFull": "Homer",
         "short": "HOMER",
         "base": null,
         "preferredBases": null
@@ -31745,12 +31745,12 @@
       "slug": "theheadlesshorse",
       "assets": {
         "bundle": {
-          "sha256": "2b4184690b7891b42ad1b81d7c25471fe0efde7ee639f85c0cce6703b5fdffe5",
-          "size": 1521332
+          "sha256": "c73c5f2a3650d4c63f8823ae726f598574909ba8cbd8efb743a7abb8e56b5d7f",
+          "size": 1521884
         },
         "metadata": {
-          "sha256": "4249823c311abb58333b74767403f8f027eeefdd62f044a7af4bc4f03fb6d346",
-          "size": 714
+          "sha256": "42bcc2830dc2c0fe81f28def33ec72543456babd11aba83498fce14ae267b448",
+          "size": 752
         },
         "portrait": {
           "sha256": "551b06283ae5a2576a0a5b1909ce6dbb34cc9ab1a9d261fd21e8a96a66f32c5e",
@@ -31787,7 +31787,7 @@
       ],
       "metadata": {
         "display": "The Headless Horseman",
-        "nameFull": null,
+        "nameFull": "The Headless Horseman",
         "short": "HORSEMAN",
         "base": null,
         "preferredBases": null
@@ -33305,12 +33305,12 @@
       "slug": "spartacus",
       "assets": {
         "bundle": {
-          "sha256": "36fe2b048cb0e80f4e883f49c6691040f1bb5d6ccd44477ee33f9fbd3a9c503a",
-          "size": 1550988
+          "sha256": "c6d5b8113e22a88e0921616fd48b073207b04eddd8e8225afa1aae53e8c9d354",
+          "size": 1551076
         },
         "metadata": {
-          "sha256": "504762fbeb2ebb57d16ee833f9d15605de5ed79e677c135c091f25cc04a28791",
-          "size": 633
+          "sha256": "08fa2852d8943b17ffba5feedd4c86524523980d013e1ea32bb8450ce505da98",
+          "size": 659
         },
         "portrait": {
           "sha256": "5a4da84c89992d2c655deee036e323e54e271b9db81921e1945c21b58bfd5542",
@@ -33347,7 +33347,7 @@
       ],
       "metadata": {
         "display": "Spartacus",
-        "nameFull": null,
+        "nameFull": "Spartacus",
         "short": "SPARTACUS",
         "base": null,
         "preferredBases": null
@@ -40429,12 +40429,12 @@
       "slug": "jesseowens",
       "assets": {
         "bundle": {
-          "sha256": "24d8ce9a2effbd8a241464e922c01fb01d0e0b7687539ca559549ff541898dec",
-          "size": 1547548
+          "sha256": "c95312c35ba590ec6e7c92934bab2c706af92f215010f95b39cd0ac3e0ba0865",
+          "size": 1547580
         },
         "metadata": {
-          "sha256": "3d992b947951b824db5ebc919a64b3c33a4cd0861ddc30a3182e676f451f0b27",
-          "size": 674
+          "sha256": "7f77c4500b8ee18f488a8b51120a12a860697aa37efedc11f2c991a73e52ad1f",
+          "size": 702
         },
         "portrait": {
           "sha256": "fd0aaa55a626d753b831a0e80e2f4d3f88a30b39507dfa44111264e683017761",
@@ -40471,7 +40471,7 @@
       ],
       "metadata": {
         "display": "Jesse Owens",
-        "nameFull": null,
+        "nameFull": "Jesse Owens",
         "short": "OWENS",
         "base": null,
         "preferredBases": null
