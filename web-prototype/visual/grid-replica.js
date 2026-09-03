@@ -481,6 +481,10 @@ function renderSharedPanelRules(frameWidth, frameHeight, columns, rows) {
 const PAINT_SCRATCH = document.createElement('canvas');
 
 function paintPixels(target, pixels, width, height) {
+  // A zero/NaN size (hidden pane, collapsed frame before layout) makes
+  // `new ImageData` throw. Skip the paint; the resize observers repaint once
+  // the element has a real size.
+  if (!Number.isInteger(width) || !Number.isInteger(height) || width <= 0 || height <= 0) return;
   const canvas = typeof target.getContext === 'function' ? target : PAINT_SCRATCH;
   canvas.width = width;
   canvas.height = height;
@@ -735,6 +739,7 @@ function paintIntroVideoRule() {
   // NaN/Infinity and throw out of module evaluation, taking every runtime
   // module that follows this one (including the hand cursor) down with it.
   if (!Number.isFinite(rosterScale) || rosterScale <= 0) return;
+  if (!(frameRect.width > 0) || !(frameRect.height > 0)) return;
   const width = Math.max(RULE * 2 + 1, Math.round(frameRect.width / rosterScale));
   const height = Math.max(RULE * 2 + 1, Math.round(frameRect.height / rosterScale));
   const signature = `${width}x${height}`;
