@@ -45,7 +45,11 @@ CHROMA = ("ff00ff", "00ff00")
 # "selected" poses bow the chibi Kirby (8) and Purin (10) bodies into the
 # camera, which reads as a squashed head on a card; Kirby's Win2 is an upright
 # face and Purin's Win1 tilts least. Other kinds keep the card default.
-WIN_POSE = {8: "2", 10: "1"}
+WIN_POSE = {8: "2", 9: "2", 10: "1"}
+# Global frame to shoot. The card is held open (SSB64_VSINTRO_HOLD) so a
+# results pose can settle: Luigi's Win1 is still mid-motion at 100 and
+# identical from 130 on; nothing else changes between 100 and 130.
+DEFAULT_FRAME = 130
 
 
 def boot(fkind, bundle, fill, frames, shots, win=(0, 40)):
@@ -64,6 +68,7 @@ def boot(fkind, bundle, fill, frames, shots, win=(0, 40)):
         "SSB64_SCREENSHOT_RAW": "1",
         "SSB64_MAX_FRAMES": str(max(frames) + 4),
         "SSB64_MUTE": "1",
+        "SSB64_VSINTRO_HOLD": "1",
     })
     if fkind in WIN_POSE and "SSB64_VSINTRO_WIN" not in os.environ:
         env["SSB64_VSINTRO_WIN"] = WIN_POSE[fkind]
@@ -195,7 +200,7 @@ def main():
     ap.add_argument("slugs", nargs="+")
     ap.add_argument("--fkind", type=int, default=None, help="base fighter kind (single slug); else from --api")
     ap.add_argument("--api", default="http://localhost:4181", help="dev server for slug -> fkind lookup")
-    ap.add_argument("--frame", type=int, default=100, help="global frame to shoot (card spans ~40-110)")
+    ap.add_argument("--frame", type=int, default=DEFAULT_FRAME, help="global frame to shoot (card is held open)")
     ap.add_argument("--out", default=None, help="output PNG (single slug)")
     ap.add_argument("--keep", default=None, help="keep raw captures in this dir (single slug)")
     ap.add_argument("--force", action="store_true", help="re-bake existing sprites")

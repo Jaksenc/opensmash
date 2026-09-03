@@ -31,11 +31,22 @@ const DEFAULT_LOGO_PLACEMENT = Object.freeze({ x: 420, y: 18, width: 360 });
 // giant green band on cream. renderer: "engine" = native VS-card capture via
 // /api/og-sprite (dev machine only; falls back per fighter), "preview" =
 // the three.js bind-pose render.
-const DEFAULT_SCENE = Object.freeze({ backdrop: "sky", renderer: "engine" });
+const DEFAULT_SCENE = Object.freeze({ backdrop: "sky", renderer: "engine", bandColor: "#39ff14" });
 const BACKDROPS = Object.freeze([
   { value: "sky", label: "Pre-battle sky" },
-  { value: "band", label: "Title green band" },
+  { value: "band", label: "Solid colour band" },
 ]);
+const BAND_SWATCHES = Object.freeze([
+  { value: "#ff2d95", label: "Hot pink" },
+  { value: "#39ff14", label: "Hot green" },
+]);
+function validColor(value, fallback) {
+  return /^#[0-9a-f]{6}$/i.test(value || "") ? value.toLowerCase() : fallback;
+}
+function shade(hex, factor) {
+  const channels = [1, 3, 5].map((index) => Math.round(parseInt(hex.slice(index, index + 2), 16) * factor));
+  return `#${channels.map((value) => clamp(value, 0, 255).toString(16).padStart(2, "0")).join("")}`;
+}
 const RENDERERS = Object.freeze([
   { value: "engine", label: "In-engine (VS-card pose)" },
   { value: "preview", label: "Quick preview (bind pose)" },
@@ -44,6 +55,7 @@ function validScene(value) {
   return {
     backdrop: BACKDROPS.some((option) => option.value === value?.backdrop) ? value.backdrop : DEFAULT_SCENE.backdrop,
     renderer: RENDERERS.some((option) => option.value === value?.renderer) ? value.renderer : DEFAULT_SCENE.renderer,
+    bandColor: validColor(value?.bandColor, DEFAULT_SCENE.bandColor),
   };
 }
 const imageCache = new Map();
@@ -130,18 +142,17 @@ function drawFighter(context, image, slot, placement) {
   context.drawImage(image, frame.x, frame.y, frame.width, frame.height);
 }
 
-function drawBackdrop(context, image, backdrop = "sky") {
-  if (backdrop === "band") {
-    // Smash 64 title-screen treatment: cream field, one giant green band
-    // the crew stands on, with a darker lip along its bottom edge.
+function drawBackdrop(context, image, scene = DEFAULT_SCENE) {
+  if (scene.backdrop === "band") {
+    // One flat field with a single giant band in the chosen colour; the
+    // crew stands on the band, a darker lip marks its bottom edge.
+    const band = validColor(scene.bandColor, DEFAULT_SCENE.bandColor);
     context.fillStyle = "#f4efe4";
     context.fillRect(0, 0, OG_IMAGE_WIDTH, OG_IMAGE_HEIGHT);
-    context.fillStyle = "#33b24a";
+    context.fillStyle = band;
     context.fillRect(0, 118, OG_IMAGE_WIDTH, 486);
-    context.fillStyle = "#238c39";
+    context.fillStyle = shade(band, .72);
     context.fillRect(0, 588, OG_IMAGE_WIDTH, 16);
-    context.fillStyle = "#6fd07f";
-    context.fillRect(0, 118, OG_IMAGE_WIDTH, 5);
     return;
   }
   context.fillStyle = "#9ccde6";
@@ -262,7 +273,7 @@ async function renderArtwork(canvas, {
     renderGameLogo().catch(() => loadImage(logoFallbackUrl).catch(() => null)),
     ...fighterPromises,
   ]);
-  drawBackdrop(context, background, scene.backdrop);
+  drawBackdrop(context, background, scene);
   placements.forEach((placement, index) => {
     drawFighter(context, fighters[index], OG_ROSTER_SLOTS[index], placement);
   });
@@ -821,6 +832,30 @@ export default function OgStudio() {
                 </select>
               </label>
             </div>
+            {scene.backdrop === "band" ? (
+              <div className="og-band-colour" role="group" aria-label="Band colour">
+                {BAND_SWATCHES.map((swatch) => (
+                  <button
+                    key={swatch.value}
+                    type="button"
+                    className={scene.bandColor === swatch.value ? "is-active" : undefined}
+                    style={{ background: swatch.value }}
+                    title={swatch.label}
+                    aria-label={swatch.label}
+                    aria-pressed={scene.bandColor === swatch.value}
+                    onClick={() => setScene((current) => ({ ...current, bandColor: swatch.value }))}
+                  />
+                ))}
+                <label>
+                  <input
+                    type="color"
+                    value={scene.bandColor}
+                    onChange={(event) => setScene((current) => ({ ...current, bandColor: event.target.value }))}
+                  />
+                  <span>{scene.bandColor}</span>
+                </label>
+              </div>
+            ) : null}
             <p className="og-scene-help">In-engine renders boot the native game once per fighter (~15 s each, cached); anything it can't render falls back to the quick preview.</p>
           </section>
 
