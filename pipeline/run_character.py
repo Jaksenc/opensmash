@@ -217,6 +217,11 @@ def tripo_json(out):
         return obj.get("data", obj)
     except json.JSONDecodeError:
         fields = dict(re.findall(r'"(\w+)"\s*:\s*"([^"\x00-\x1f]*)"', out))
+        # Numeric fields too: consumed_credit is what the cost report bills
+        # from, and tripo.py's 700-char status cut leaves the trailing signed
+        # URL unterminated, so this path runs on every successful task.
+        for key, value in re.findall(r'"(\w+)"\s*:\s*(-?\d+(?:\.\d+)?)\b', out):
+            fields.setdefault(key, float(value) if "." in value else int(value))
         if "status" in fields or "task_id" in fields or "image_token" in fields:
             return fields
         raise
