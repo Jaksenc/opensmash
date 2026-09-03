@@ -53,7 +53,7 @@ python3 pipeline/generate_announcer.py "Queen Elizabeth the Second" \
   --out build/queen-announcer.wav
 ```
 
-The output is mono, 32 kHz, 16-bit PCM WAV. Native MiniMax timing is used.
+The output is mono, 32 kHz, 16-bit PCM WAV, trimmed to fixed lead/tail silence. Native MiniMax timing is used.
 
 ## Python integration
 
@@ -84,16 +84,17 @@ cheer to fit longer clips (`port_voice_results_extra_wait_tics`).
 Known gaps: the clip ignores the in-game voice-volume slider, and only the
 name line is generated (team-battle / 1P-mode announcer lines stay vanilla).
 
-## Provider settings: non-English names (2026-08-27)
+## Provider settings (2026-09-02)
 
-`language_boost` is left unset and `english_normalization` is off. Both were
-previously forced to English, which destabilized the voice clone on
-non-English names — first heard on "Boyang Niu", where the clone drifted
-audibly off the announcer character. Dropping the boost keeps it in
-character; English names are unaffected (a control run of an existing roster
-name under both settings was indistinguishable). Both are still overridable
-per call (`english_normalization=`, `language_boost=`, or the matching CLI
-flags) for A/B work.
+`language_boost="English"` is the default again and `english_normalization`
+stays off. Clips are trimmed to a fixed 40 ms lead / 150 ms tail of silence
+(`--no-trim` keeps the provider's padding). History: the boost was dropped on
+2026-08-27 because it destabilized the clone on non-English names (first
+heard on "Boyang Niu"). A nine-name A/B by ear on 2026-09-02 found the
+unboosted clips read non-American on ordinary names and the boost was "way
+better", so it is on for every name; the non-English drift is the accepted
+cost until phonetic respelling lands. Both remain overridable per call
+(`english_normalization=`, `language_boost=`, or the matching CLI flags).
 
 Better but not adopted: respelling the name phonetically ("Bo-Yang Nyoo")
 sounded clearly best of everything tried. It needs a per-character

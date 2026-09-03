@@ -18,11 +18,12 @@ This is the accepted native-timing path (the discarded OpenAI/WORLD
 experiment is gone; announcer_voice.py is now a thin staging wrapper around
 this module). No time compression is applied.
 
-Provider settings: language_boost is left unset and english_normalization
-off. Forcing them to English destabilized the voice clone on non-English
-names (heard first on "Boyang Niu"); with the boost dropped the clone stays
-in character. English names are unaffected. Both are still overridable per
-call for A/B work.
+Provider settings: language_boost defaults to "English" — an A/B by ear on
+2026-09-02 found the boost gives the clone a clearly more American read
+across the roster, which outweighs the drift it caused on a few non-English
+names (heard first on "Boyang Niu", 2026-08-27). english_normalization stays
+off. Both remain overridable per call for A/B work. Clips are trimmed to
+fixed lead/tail silence.
 """
 
 from __future__ import annotations
@@ -89,13 +90,15 @@ def generate_announcer(
     speed: float = 1.0,
     append_exclamation: bool = True,
     english_normalization: bool = False,
-    language_boost: str | None = None,
+    language_boost: str | None = "English",
+    trim: bool = True,
 ) -> Path:
     """Generate a mono 32 kHz PCM WAV for one character name.
 
     The provider receives exactly the supplied name, with a terminal
     exclamation mark added by default. No prompt expansion, prosody transfer,
-    silence removal, or time compression is performed.
+    or time compression is performed. With ``trim`` (default) the leading and
+    trailing silence is cut to a fixed pad so every clip starts and ends alike.
     """
     name = name.strip()
     if not name:
@@ -161,7 +164,51 @@ def generate_announcer(
         if temporary_path is not None:
             temporary_path.unlink(missing_ok=True)
 
+    if trim:
+        trim_silence(output)
     return output
+
+
+TRIM_LEAD_S = 0.04
+TRIM_TAIL_S = 0.15
+TRIM_THRESHOLD = 0.05  # fraction of the clip peak
+
+
+def trim_silence(path: str | os.PathLike[str], lead_s: float = TRIM_LEAD_S,
+                 tail_s: float = TRIM_TAIL_S, threshold: float = TRIM_THRESHOLD) -> None:
+    """Cut leading/trailing silence of a 16-bit mono WAV to fixed pads.
+
+    Silence is anything under ``threshold`` x the clip peak, measured in 5 ms
+    windows. Existing silence shorter than the pad is kept as is (no padding
+    is synthesised). Rewrites the file in place.
+    """
+    import array
+    import wave
+
+    path = Path(path)
+    with wave.open(str(path), "rb") as w:
+        params = w.getparams()
+        frames = w.readframes(w.getnframes())
+    if params.sampwidth != 2 or params.nchannels != 1:
+        raise ValueError("trim_silence expects 16-bit mono PCM")
+    samples = array.array("h", frames)
+    sr = params.framerate
+    win = max(1, sr // 200)
+    peak = max((abs(x) for x in samples), default=0)
+    if peak == 0:
+        return
+    gate = peak * threshold
+    loud = [i for i in range(0, len(samples), win)
+            if max(abs(x) for x in samples[i:i + win]) > gate]
+    if not loud:
+        return
+    start = max(0, loud[0] - int(lead_s * sr))
+    end = min(len(samples), loud[-1] + win + int(tail_s * sr))
+    if start == 0 and end == len(samples):
+        return
+    with wave.open(str(path), "wb") as w:
+        w.setparams(params)
+        w.writeframes(samples[start:end].tobytes())
 
 
 def main() -> int:
@@ -170,6 +217,10 @@ def main() -> int:
     )
     parser.add_argument("name", help="character name to announce")
     parser.add_argument("--out", required=True, type=Path, help="output .wav path")
+    parser.add_argument(
+        "--no-trim", action="store_true",
+        help="keep the provider's leading/trailing silence instead of trimming to fixed pads",
+    )
     parser.add_argument(
         "--speed",
         type=float,
@@ -188,8 +239,8 @@ def main() -> int:
     )
     parser.add_argument(
         "--language-boost",
-        default=None,
-        help="MiniMax language_boost, e.g. English (default: unset)",
+        default="English",
+        help="MiniMax language_boost, or none to unset (default: English)",
     )
     args = parser.parse_args()
 
@@ -199,7 +250,8 @@ def main() -> int:
         speed=args.speed,
         append_exclamation=not args.no_exclamation,
         english_normalization=args.english_normalization,
-        language_boost=args.language_boost,
+        language_boost=None if args.language_boost == "none" else args.language_boost,
+        trim=not args.no_trim,
     )
     print(output)
     return 0
