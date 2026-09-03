@@ -113,8 +113,8 @@
           "size": 1535468
         },
         "metadata": {
-          "sha256": "b308941c759d3d3ed7396d6447106c0ae5b7422a61681fbf54c60ccf7b49561f",
-          "size": 741
+          "sha256": "6cb0e3d55ef5bf181c3658f4059ac441c30f4b5effe9566707c07f0aa4ef4d37",
+          "size": 788
         },
         "portrait": {
           "sha256": "1cb23e83ced36e0c249d79709f65c599fdce828ce9e92710cdf2189ef23910f3",
@@ -154,7 +154,10 @@
         "nameFull": "Casey Aylward",
         "short": "CASEY",
         "base": null,
-        "preferredBases": null
+        "preferredBases": [
+          "luigi",
+          "mario"
+        ]
       }
     },
     {
