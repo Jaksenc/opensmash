@@ -3,13 +3,15 @@ import { getApp, getApps, initializeApp } from "firebase/app";
 import {
   GoogleAuthProvider,
   OAuthProvider,
+  browserSessionPersistence,
   getAuth,
-  inMemoryPersistence,
+  getRedirectResult,
   isSignInWithEmailLink,
   sendSignInLinkToEmail,
   setPersistence,
   signInWithEmailLink,
   signInWithPopup,
+  signInWithRedirect,
   signOut,
 } from "firebase/auth";
 import FlameAction from "./FlameAction.jsx";
@@ -25,6 +27,42 @@ async function readResult(response) {
 function firebaseAuth(config) {
   const app = getApps().length ? getApp() : initializeApp(config);
   return getAuth(app);
+}
+
+function oauthProvider(providerName) {
+  if (providerName === "google") return new GoogleAuthProvider();
+  const provider = new OAuthProvider("apple.com");
+  provider.addScope("email");
+  provider.addScope("name");
+  return provider;
+}
+
+// Popups are the fast path on desktop. On iOS a popup is a full tab that Apple's
+// form post leaves stranded on a blank handler page, and in a home-screen app it
+// opens in Safari and never comes back. Those get the redirect flow instead,
+// which only works because the auth domain is our own origin (see server/auth.js).
+function prefersRedirect() {
+  const ua = navigator.userAgent || "";
+  const iOS = /iP(hone|ad|od)/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const standalone = window.navigator.standalone === true
+    || window.matchMedia?.("(display-mode: standalone)").matches;
+  return iOS || standalone;
+}
+
+function popupFailed(error) {
+  return ["auth/popup-blocked", "auth/popup-closed-by-user", "auth/cancelled-popup-request",
+    "auth/operation-not-supported-in-this-environment", "auth/web-storage-unsupported"]
+    .includes(error?.code);
+}
+
+function friendlyAuthError(error, fallback) {
+  const code = error?.code || "";
+  if (code === "auth/popup-blocked") return "Your browser blocked the sign-in window. Allow pop-ups for this site or try again.";
+  if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request") return "The sign-in window was closed before finishing.";
+  if (code === "auth/network-request-failed") return "Could not reach the sign-in service. Check your connection and try again.";
+  if (code === "auth/unauthorized-domain") return "Sign-in is not configured for this address yet.";
+  if (code.startsWith("auth/")) return `Could not sign in (${code.slice(5).replace(/-/g, " ")}).`;
+  return error?.message || fallback;
 }
 
 export default function AuthGate({
@@ -76,7 +114,21 @@ export default function AuthGate({
           return;
         }
         const auth = firebaseAuth(loaded.firebase);
-        await setPersistence(auth, inMemoryPersistence);
+        // Session persistence: the redirect flow has to survive one navigation.
+        // exchangeSession signs the SDK user out again right after the cookie
+        // is minted, so nothing lingers past that.
+        await setPersistence(auth, browserSessionPersistence);
+        let redirected = null;
+        try {
+          redirected = await getRedirectResult(auth);
+        } catch (redirectError) {
+          if (!cancelled) setError(friendlyAuthError(redirectError, "Could not sign in."));
+        }
+        if (redirected?.user) {
+          setStatus("signing-in");
+          await exchangeSession(auth, redirected);
+          return;
+        }
         if (isSignInWithEmailLink(auth, window.location.href)) {
           const savedEmail = localStorage.getItem(EMAIL_KEY);
           if (savedEmail) {
@@ -101,18 +153,26 @@ export default function AuthGate({
   async function providerSignIn(providerName) {
     setStatus("signing-in");
     setError("");
+    const auth = firebaseAuth(config.firebase);
+    const provider = oauthProvider(providerName);
     try {
-      const auth = firebaseAuth(config.firebase);
-      const provider = providerName === "google"
-        ? new GoogleAuthProvider()
-        : new OAuthProvider("apple.com");
-      if (providerName === "apple") {
-        provider.addScope("email");
-        provider.addScope("name");
+      if (prefersRedirect()) {
+        await signInWithRedirect(auth, provider);
+        return; // the page navigates away; getRedirectResult picks it up on return
       }
       await exchangeSession(auth, await signInWithPopup(auth, provider));
     } catch (signInError) {
-      setError(signInError.message || "Could not sign in.");
+      if (popupFailed(signInError)) {
+        try {
+          await signInWithRedirect(auth, provider);
+          return;
+        } catch (redirectError) {
+          setError(friendlyAuthError(redirectError, "Could not sign in."));
+          setStatus("idle");
+          return;
+        }
+      }
+      setError(friendlyAuthError(signInError, "Could not sign in."));
       setStatus("idle");
     }
   }
@@ -138,7 +198,7 @@ export default function AuthGate({
       setMessage("Check your inbox for a sign-in link.");
       setStatus("sent");
     } catch (signInError) {
-      setError(signInError.message || "Could not send the sign-in link.");
+      setError(friendlyAuthError(signInError, "Could not send the sign-in link."));
       setStatus("idle");
     }
   }

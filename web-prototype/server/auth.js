@@ -15,15 +15,78 @@ function parseCookies(req) {
   return Object.fromEntries(entries);
 }
 
+// Sign in with Apple hands Firebase the user's name form-encoded, so spaces
+// arrive as "+" ("William+J Flynn+III"). Decode it before anyone sees it.
+function decodeDisplayName(name, provider) {
+  if (typeof name !== "string" || !name) return null;
+  if (provider !== "apple.com") return name;
+  try {
+    return decodeURIComponent(name.replace(/\+/g, " "));
+  } catch {
+    return name.replace(/\+/g, " ");
+  }
+}
+
 function publicUser(claims) {
   if (!claims?.uid && !claims?.sub) return null;
+  const provider = claims.firebase?.sign_in_provider || null;
   return {
     uid: claims.uid || claims.sub,
-    displayName: claims.name || null,
+    displayName: decodeDisplayName(claims.name, provider),
     email: claims.email || null,
     photoUrl: claims.picture || null,
-    provider: claims.firebase?.sign_in_provider || null,
+    provider,
   };
+}
+
+// Firebase's hosted sign-in helper lives at <project>.firebaseapp.com/__/auth/*.
+// Serving it from our own origin (authDomain = smash.fun) is Firebase's
+// recommended setup for browsers that partition third-party storage and for
+// iOS, where a cross-site popup tab strands the user on a blank handler page.
+// See "Best practices for using signInWithRedirect" in the Firebase docs.
+const AUTH_HANDLER_PREFIX = "/__/auth/";
+const AUTH_HANDLER_HOP_HEADERS = new Set([
+  "connection", "content-length", "content-encoding", "transfer-encoding",
+  "keep-alive", "host", "cookie", "set-cookie", "alt-svc", "server",
+]);
+
+export function isAuthHandlerPath(pathname) {
+  return pathname.startsWith(AUTH_HANDLER_PREFIX);
+}
+
+export async function proxyAuthHandler(req, res, { upstreamOrigin, fetchImpl = fetch } = {}) {
+  const url = new URL(req.url, "http://localhost");
+  const target = new URL(url.pathname + url.search, upstreamOrigin);
+  const headers = {};
+  for (const name of ["accept", "accept-language", "content-type", "user-agent", "referer"]) {
+    if (req.headers[name]) headers[name] = req.headers[name];
+  }
+  const hasBody = !["GET", "HEAD"].includes(req.method);
+  let upstream;
+  try {
+    upstream = await fetchImpl(target, {
+      method: req.method,
+      headers,
+      body: hasBody ? req : undefined,
+      duplex: hasBody ? "half" : undefined,
+      redirect: "manual",
+    });
+  } catch (error) {
+    res.writeHead(502, { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" });
+    res.end(`Sign-in helper unavailable: ${error.message}`);
+    return;
+  }
+  const responseHeaders = {};
+  upstream.headers.forEach((value, name) => {
+    if (!AUTH_HANDLER_HOP_HEADERS.has(name.toLowerCase())) responseHeaders[name] = value;
+  });
+  res.writeHead(upstream.status, responseHeaders);
+  if (req.method === "HEAD" || !upstream.body) {
+    res.end();
+    return;
+  }
+  const { Readable } = await import("node:stream");
+  Readable.fromWeb(upstream.body).pipe(res);
 }
 
 function cookie(value, { isProduction, maxAge = AUTH_COOKIE_MAX_AGE_SECONDS } = {}) {
@@ -105,10 +168,20 @@ export function createAuthService({ isProduction = process.env.NODE_ENV === "pro
     };
   }
 
+  const authDomain = process.env.FIREBASE_AUTH_DOMAIN || null;
+  const projectId = process.env.FIREBASE_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT || null;
+  // Where the real Firebase handler lives. When FIREBASE_AUTH_DOMAIN is our own
+  // origin, the SDK loads /__/auth/* from us and we forward it here.
+  const handlerOrigin = process.env.FIREBASE_AUTH_HANDLER_ORIGIN
+    || (authDomain && authDomain.endsWith(".firebaseapp.com") ? `https://${authDomain}`
+      : projectId ? `https://${projectId}.firebaseapp.com` : null);
+
   return {
     enabled,
     providers,
     init,
+    handlerOrigin,
+    proxyHandler: (req, res) => proxyAuthHandler(req, res, { upstreamOrigin: handlerOrigin }),
     readUser,
     createSession,
     clearCookie: () => cookie("", { isProduction, maxAge: 0 }),
@@ -125,4 +198,4 @@ export function createAuthService({ isProduction = process.env.NODE_ENV === "pro
   };
 }
 
-export { AUTH_COOKIE_NAME, publicUser };
+export { AUTH_COOKIE_NAME, decodeDisplayName, publicUser };

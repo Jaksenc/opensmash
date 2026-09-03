@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 import { createFighterJobs } from "./fighter-jobs.js";
 import { HandoffError, createHandoffRoomsFromEnv } from "./handoff-rooms.js";
 import { createIceServerProvider } from "./handoff-ice.js";
-import { createAuthService } from "./auth.js";
+import { createAuthService, isAuthHandlerPath } from "./auth.js";
 import { createJobDatabase } from "./job-database.js";
 import { createJobDispatcher } from "./job-dispatcher.js";
 import { createObjectStore } from "./object-store.js";
@@ -672,6 +672,12 @@ async function serveAppShell(req, res) {
 async function handleRequest(req, res, vite) {
   const url = new URL(req.url, `http://${req.headers.host || "localhost"}`);
   const { pathname } = url;
+  // Firebase's hosted sign-in helper, served from our origin (see auth.js).
+  // It carries no cookies either way and is never edge-cached.
+  if (isAuthHandlerPath(pathname)) {
+    if (!authService.enabled || !authService.handlerOrigin) return json(res, 404, { error: "Not found" });
+    return authService.proxyHandler(req, res);
+  }
   const romSession = readSession(req);
   let user = await authService.readUser(req, {
     checkRevoked: req.method === "POST" && pathname.startsWith("/api/fighters"),

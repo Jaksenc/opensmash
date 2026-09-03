@@ -22,7 +22,10 @@ API_SERVICE_ACCOUNT="${API_SERVICE_ACCOUNT:-opensmash-api}"
 WORKER_SERVICE_ACCOUNT="${WORKER_SERVICE_ACCOUNT:-opensmash-worker}"
 API_IDENTITY="${API_SERVICE_ACCOUNT}@${PROJECT_ID}.iam.gserviceaccount.com"
 WORKER_IDENTITY="${WORKER_SERVICE_ACCOUNT}@${PROJECT_ID}.iam.gserviceaccount.com"
-FIREBASE_AUTH_DOMAIN="${FIREBASE_AUTH_DOMAIN:-${PROJECT_ID}.firebaseapp.com}"
+# Serve Firebase's sign-in helper from our own domain (the API proxies /__/auth/*
+# to ${PROJECT_ID}.firebaseapp.com). Requires https://${DOMAIN}/__/auth/handler
+# as a return URL on the Apple Services ID and the Google OAuth client.
+FIREBASE_AUTH_DOMAIN="${FIREBASE_AUTH_DOMAIN:-${PUBLIC_ORIGIN#https://}}"
 IMAGE_ROOT="${REGION}-docker.pkg.dev/${PROJECT_ID}/${ARTIFACT_REPOSITORY}"
 VERSION="${VERSION:-$(date -u +%Y%m%d-%H%M%S)}"
 API_IMAGE="${IMAGE_ROOT}/web:${VERSION}"
@@ -249,7 +252,7 @@ gcloud run jobs deploy "$WORKER_JOB" \
 gcloud run jobs add-iam-policy-binding "$WORKER_JOB" \
   --region "$REGION" \
   --member "serviceAccount:${API_IDENTITY}" \
-  --role roles/run.invoker >/dev/null
+  --role roles/run.jobsExecutorWithOverrides >/dev/null
 
 # Fighter-creation killswitch. --set-env-vars replaces the whole environment,
 # so a deploy would otherwise silently reopen a lab that was paused with
