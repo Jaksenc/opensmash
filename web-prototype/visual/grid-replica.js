@@ -9,6 +9,10 @@ import {
   rosterGridDimensions,
 } from '../shared/roster-layout.js';
 import { formatFighterJobCellError } from '../shared/fighter-job-ui.js';
+import {
+  isPageScrollLocked,
+  onPageScrollUnlock,
+} from '../shared/page-scroll-lock.js';
 
 const ACTION_ICON_ASSETS = import.meta.glob('./assets/ui/*.png', {
   eager: true,
@@ -850,6 +854,11 @@ function rulesForBoard(width, height, columns, cellCount) {
 
 function updateMountedCellWindow() {
   cellWindowFrame = 0;
+  // Fixed-body modal scroll locks temporarily move the document through an
+  // intermediate scroll position on mobile browsers. Keep the current cells
+  // mounted until the saved page position has been restored, otherwise this
+  // pass can empty the visible roster for a frame.
+  if (isPageScrollLocked()) return;
   if (!currentGridLayout || !currentVisibleCells.length) return;
 
   const gridRect = grid.getBoundingClientRect();
@@ -999,6 +1008,7 @@ if (introVideoFrame && 'ResizeObserver' in window) {
 }
 window.addEventListener('resize', syncLayoutToVideoWidth);
 window.addEventListener('scroll', scheduleMountedCellWindowUpdate, { passive: true });
+onPageScrollUnlock(scheduleMountedCellWindowUpdate);
 
 const fighterSearch = document.getElementById('fighter-search');
 const fighterEmptyState = document.getElementById('fighter-empty-state');

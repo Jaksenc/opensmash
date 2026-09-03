@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { lockPageScroll } from "./page-scroll-lock.js";
+import {
+  isPageScrollLocked,
+  lockPageScroll,
+  onPageScrollUnlock,
+} from "./page-scroll-lock.js";
 
 class FakeStyle {
   constructor(initial = {}) {
@@ -32,6 +36,10 @@ test("page scroll locks nest and restore the exact document position and inline 
   const rootStyle = new FakeStyle({ "overflow-y": "clip", "scroll-behavior": "smooth" });
   const bodyStyle = new FakeStyle({ position: "relative", top: "3px" });
   const scrollCalls = [];
+  const unlockStates = [];
+  const stopWatchingUnlocks = onPageScrollUnlock(() => {
+    unlockStates.push({ locked: isPageScrollLocked(), scrollCalls: [...scrollCalls] });
+  });
 
   globalThis.document = {
     body: { style: bodyStyle },
@@ -51,6 +59,7 @@ test("page scroll locks nest and restore the exact document position and inline 
     const releaseFirstLock = lockPageScroll();
     const releaseSecondLock = lockPageScroll();
 
+    assert.equal(isPageScrollLocked(), true);
     assert.equal(rootStyle.getPropertyValue("overflow-x"), "hidden");
     assert.equal(rootStyle.getPropertyValue("overflow-y"), "hidden");
     assert.equal(rootStyle.getPropertyValue("overscroll-behavior"), "none");
@@ -59,10 +68,13 @@ test("page scroll locks nest and restore the exact document position and inline 
     assert.equal(bodyStyle.getPropertyValue("top"), "-640px");
 
     releaseFirstLock();
+    assert.equal(isPageScrollLocked(), true);
     assert.equal(bodyStyle.getPropertyValue("position"), "fixed");
     assert.deepEqual(scrollCalls, []);
+    assert.deepEqual(unlockStates, []);
 
     releaseSecondLock();
+    assert.equal(isPageScrollLocked(), false);
     assert.equal(rootStyle.getPropertyValue("overflow-x"), "");
     assert.equal(rootStyle.getPropertyValue("overflow-y"), "clip");
     assert.equal(rootStyle.getPropertyValue("overscroll-behavior"), "");
@@ -71,11 +83,14 @@ test("page scroll locks nest and restore the exact document position and inline 
     assert.equal(bodyStyle.getPropertyValue("left"), "");
     assert.equal(bodyStyle.getPropertyValue("top"), "3px");
     assert.deepEqual(scrollCalls, [[12, 640]]);
+    assert.deepEqual(unlockStates, [{ locked: false, scrollCalls: [[12, 640]] }]);
 
     // Each returned cleanup is idempotent, as React effect cleanups need it to be.
     releaseSecondLock();
     assert.deepEqual(scrollCalls, [[12, 640]]);
+    assert.equal(unlockStates.length, 1);
   } finally {
+    stopWatchingUnlocks();
     if (originalDocument === undefined) delete globalThis.document;
     else globalThis.document = originalDocument;
     if (originalWindow === undefined) delete globalThis.window;

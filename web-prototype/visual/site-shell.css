@@ -1115,8 +1115,8 @@
     width: min(880px, 92vw);
     margin-top: 14px;
     margin-bottom: 12px;
-    color: rgba(255, 242, 214, .72);
-    filter: blur(.3px) contrast(1.08);
+    color: #d9b98f;
+    filter: none;
     font: 600 clamp(16px, 1.6vw, 22px)/1.4 "Kanit", sans-serif;
     letter-spacing: .035em;
     text-shadow: 0 2px 0 #260500;

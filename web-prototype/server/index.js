@@ -33,11 +33,18 @@ const {
   pipelineUiRoot: PIPELINE_UI_ROOT,
 } = resolveProjectPaths(APP_ROOT);
 const DIST_ROOT = path.join(APP_ROOT, "dist");
-const APP_SHELL_PATHS = new Set(["/", "/create", "/create/", "/index.html"]);
+const APP_SHELL_PATHS = new Set([
+  "/",
+  "/create",
+  "/create/",
+  "/og-studio",
+  "/og-studio/",
+  "/index.html",
+]);
 const APP_SHELL_CACHE_CONTROL = "public, max-age=15";
 const APP_SHELL_EDGE_CACHE_CONTROL =
   "public, max-age=30, stale-while-revalidate=300, stale-if-error=86400";
-// Only "/" and "/create" are client-side routes; everything else under the
+// Only explicit app pages are client-side routes; everything else under the
 // outer app is a real file or a 404, so the shell is never served for
 // /favicon.ico, /robots.txt, or typos.
 const BASE_SECURITY_HEADERS = Object.freeze({

@@ -28,6 +28,17 @@ COOKIE_SECRET="replace-me" pnpm start
 Use `PORT` to change the port. Set a stable, private `COOKIE_SECRET` in any real
 deployment so validation cookies survive restarts and cannot be forged.
 
+The unlisted Open Graph artwork editor lives at
+<http://127.0.0.1:4174/og-studio>. It pulls from the current visible fighter
+roster, saves the draft locally in the browser, and exports a 1200×630 PNG.
+The composition renders the actual textured meshes from each fighter's OSB6
+game bundle over the exact blue `SC1PIntro` sky used by the game's pre-battle
+sequence; character-select portraits are used only inside the searchable
+picker. Each position can choose any body target present in that fighter's
+bundle, and the on-canvas box supports direct dragging and corner resizing.
+Both PNG buttons export the clean composition at the exact 1200×630 Open Graph
+size without editor handles.
+
 For production architecture, durable GCP adapters, the versioned status
 contract, and the API/worker cutover checklist, see
 [`docs/production-architecture.md`](docs/production-architecture.md).
