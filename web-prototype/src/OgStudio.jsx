@@ -31,21 +31,21 @@ const DEFAULT_LOGO_PLACEMENT = Object.freeze({ x: 420, y: 18, width: 360 });
 // giant green band on cream. renderer: "engine" = native VS-card capture via
 // /api/og-sprite (dev machine only; falls back per fighter), "preview" =
 // the three.js bind-pose render.
-const DEFAULT_SCENE = Object.freeze({ backdrop: "sky", renderer: "engine", bandColor: "#39ff14" });
+// "band": flat colour fill with one big black vertical divider, like the
+// engine's chroma capture frames; the divider's centre and width are tunable.
+const DEFAULT_SCENE = Object.freeze({ backdrop: "sky", renderer: "engine", bandColor: "#ff00ff", dividerX: 1000, dividerWidth: 216 });
 const BACKDROPS = Object.freeze([
   { value: "sky", label: "Pre-battle sky" },
-  { value: "band", label: "Solid colour band" },
+  { value: "band", label: "Solid colour + divider" },
 ]);
 const BAND_SWATCHES = Object.freeze([
-  { value: "#ff2d95", label: "Hot pink" },
-  { value: "#39ff14", label: "Hot green" },
+  { value: "#ff00ff", label: "Hot pink" },
+  { value: "#00ff00", label: "Hot green" },
 ]);
+const DIVIDER_MIN_WIDTH = 0;
+const DIVIDER_MAX_WIDTH = 600;
 function validColor(value, fallback) {
   return /^#[0-9a-f]{6}$/i.test(value || "") ? value.toLowerCase() : fallback;
-}
-function shade(hex, factor) {
-  const channels = [1, 3, 5].map((index) => Math.round(parseInt(hex.slice(index, index + 2), 16) * factor));
-  return `#${channels.map((value) => clamp(value, 0, 255).toString(16).padStart(2, "0")).join("")}`;
 }
 const RENDERERS = Object.freeze([
   { value: "engine", label: "In-engine (VS-card pose)" },
@@ -56,6 +56,10 @@ function validScene(value) {
     backdrop: BACKDROPS.some((option) => option.value === value?.backdrop) ? value.backdrop : DEFAULT_SCENE.backdrop,
     renderer: RENDERERS.some((option) => option.value === value?.renderer) ? value.renderer : DEFAULT_SCENE.renderer,
     bandColor: validColor(value?.bandColor, DEFAULT_SCENE.bandColor),
+    dividerX: Number.isFinite(value?.dividerX) ? clamp(value.dividerX, 0, OG_IMAGE_WIDTH) : DEFAULT_SCENE.dividerX,
+    dividerWidth: Number.isFinite(value?.dividerWidth)
+      ? clamp(value.dividerWidth, DIVIDER_MIN_WIDTH, DIVIDER_MAX_WIDTH)
+      : DEFAULT_SCENE.dividerWidth,
   };
 }
 const imageCache = new Map();
@@ -144,15 +148,13 @@ function drawFighter(context, image, slot, placement) {
 
 function drawBackdrop(context, image, scene = DEFAULT_SCENE) {
   if (scene.backdrop === "band") {
-    // One flat field with a single giant band in the chosen colour; the
-    // crew stands on the band, a darker lip marks its bottom edge.
-    const band = validColor(scene.bandColor, DEFAULT_SCENE.bandColor);
-    context.fillStyle = "#f4efe4";
+    context.fillStyle = validColor(scene.bandColor, DEFAULT_SCENE.bandColor);
     context.fillRect(0, 0, OG_IMAGE_WIDTH, OG_IMAGE_HEIGHT);
-    context.fillStyle = band;
-    context.fillRect(0, 118, OG_IMAGE_WIDTH, 486);
-    context.fillStyle = shade(band, .72);
-    context.fillRect(0, 588, OG_IMAGE_WIDTH, 16);
+    const width = scene.dividerWidth ?? DEFAULT_SCENE.dividerWidth;
+    if (width > 0) {
+      context.fillStyle = "#000";
+      context.fillRect((scene.dividerX ?? DEFAULT_SCENE.dividerX) - width / 2, 0, width, OG_IMAGE_HEIGHT);
+    }
     return;
   }
   context.fillStyle = "#9ccde6";
@@ -853,6 +855,18 @@ export default function OgStudio() {
                     onChange={(event) => setScene((current) => ({ ...current, bandColor: event.target.value }))}
                   />
                   <span>{scene.bandColor}</span>
+                </label>
+              </div>
+            ) : null}
+            {scene.backdrop === "band" ? (
+              <div className="og-range-grid">
+                <label>
+                  <span>Divider position <output>{Math.round(scene.dividerX)} px</output></span>
+                  <input type="range" min="0" max={OG_IMAGE_WIDTH} step="1" value={scene.dividerX} onChange={(event) => setScene((current) => ({ ...current, dividerX: Number(event.target.value) }))} />
+                </label>
+                <label>
+                  <span>Divider width <output>{Math.round(scene.dividerWidth)} px</output></span>
+                  <input type="range" min={DIVIDER_MIN_WIDTH} max={DIVIDER_MAX_WIDTH} step="1" value={scene.dividerWidth} onChange={(event) => setScene((current) => ({ ...current, dividerWidth: Number(event.target.value) }))} />
                 </label>
               </div>
             ) : null}
