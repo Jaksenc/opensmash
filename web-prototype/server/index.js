@@ -537,6 +537,9 @@ async function buildBakedRoster(mtime) {
       characters.push({
         slug,
         name: character.display,
+        // Roster entry as requested (e.g. "Wolfgang Amadeus Mozart"); the
+        // site's search and find-in-page text match on it.
+        nameFull: character.nameFull || null,
         short: character.short,
         portrait: await derivative("portrait_tile.png"),
         portraitMedium: await derivative("portrait_medium.png"),

@@ -84,6 +84,7 @@ function liveRosterCharacter(character) {
     portraitUrl: character.portraitTile || character.portrait,
     label: expandShortLabel(character.short, character.name) || character.name,
     name: character.name,
+    nameFull: character.nameFull || '',
     source: character.generated ? 'generated' : 'live',
     fkind: character.fkind,
     bundle: character.bundle,
@@ -566,12 +567,42 @@ function ensureLabel(button) {
   return label;
 }
 
+// Invisible find-in-page text laid over the bitmap caption so the browser's
+// own Ctrl/Cmd-F can match a fighter and paint its highlight on the tile.
+// Fighters get one span per word of their display and full names (the caption
+// may be a truncated short form like "DK"); action tiles keep their caption.
+// Layout and the highlight styling live in .replica-label / .replica-find-word.
+function setFindableText(button, captionText) {
+  const isFighter = button.dataset.kind === 'fighter' || button.dataset.kind === 'job';
+  const display = button.dataset.displayName || '';
+  const nameFull = button.dataset.nameFull || '';
+  // Skip a display name the full name already contains ("Mozart" in
+  // "Wolfgang Amadeus Mozart"): shorter text → a wider highlight band per match.
+  const redundant = nameFull.toLocaleLowerCase().includes(display.toLocaleLowerCase());
+  const full = isFighter
+    ? [redundant ? '' : display, nameFull].filter(Boolean).join(' · ') || display
+    : '';
+  const text = full || captionText;
+  const label = ensureLabel(button);
+  // One span per distinct word, each squeezed to the tile width (monospace
+  // advance ≈ 0.6em at font-size = tile height); see .replica-find-word.
+  const words = [...new Set(text.split(/[\s·]+/).filter(Boolean))];
+  label.replaceChildren(...words.map(word => {
+    const span = document.createElement('span');
+    span.className = 'replica-find-word';
+    span.textContent = word;
+    const sx = Math.min(1, (CELL_W / CELL_H) / (0.6 * word.length));
+    span.style.setProperty('--find-sx', sx.toFixed(4));
+    return span;
+  }));
+}
+
 async function paintExactCaption(button, value) {
   await captionFontReady;
   const source = normalizeCaption(value);
   if (button.dataset.captionSource !== source) return;
   const text = fitCaption(source).text;
-  ensureLabel(button).textContent = text;
+  setFindableText(button, text);
   button.dataset.label = text;
   let image = button.querySelector('.replica-caption-layer');
   if (!image) {
@@ -596,7 +627,7 @@ const captionObserver = 'IntersectionObserver' in window
 function setCellLabel(button, value) {
   const source = normalizeCaption(value);
   const text = captionFont ? fitCaption(source).text : source.slice(0, 8);
-  ensureLabel(button).textContent = text;
+  setFindableText(button, text);
   button.dataset.label = text;
   button.dataset.captionSource = source;
   const alreadyRendered = button.classList.contains('has-bitmap-caption');
@@ -848,34 +879,15 @@ function rulesForBoard(width, height, columns, cellCount) {
   return pixels;
 }
 
+// Every unfiltered tile is mounted. The grid used to keep only the rows near
+// the viewport in the DOM, but that made the browser's find-in-page blind to
+// most of the roster; a thousand tiles with lazy portraits lay out fine.
 function updateMountedCellWindow() {
   cellWindowFrame = 0;
   if (!currentGridLayout || !currentVisibleCells.length) return;
 
-  const gridRect = grid.getBoundingClientRect();
-  const renderedScale = gridRect.width / currentGridLayout.width;
-  if (!(renderedScale > 0)) return;
-
-  const rowHeight = (CELL_H + RULE) * renderedScale;
-  // One viewport of overscan keeps fast wheel/touch scrolling filled without
-  // returning to a roster-sized DOM during resize.
-  const overscan = window.innerHeight;
-  const firstRow = Math.max(0, Math.floor((-gridRect.top - overscan) / rowHeight));
-  const lastRow = Math.min(
-    currentGridLayout.rows - 1,
-    Math.floor((window.innerHeight - gridRect.top + overscan) / rowHeight)
-  );
-  const firstIndex = Math.max(0, firstRow * currentGridLayout.columns);
-  const lastIndex = Math.min(
-    currentVisibleCells.length,
-    (lastRow + 1) * currentGridLayout.columns
-  );
   const desiredCells = new Set(actionCells);
-  if (lastRow >= firstRow) {
-    currentVisibleCells.slice(firstIndex, lastIndex).forEach(button => {
-      desiredCells.add(button);
-    });
-  }
+  currentVisibleCells.forEach(button => desiredCells.add(button));
 
   for (const button of mountedCells) {
     if (desiredCells.has(button)) continue;
@@ -998,7 +1010,6 @@ if (introVideoFrame && 'ResizeObserver' in window) {
   videoWidthObserver.observe(introVideoFrame);
 }
 window.addEventListener('resize', syncLayoutToVideoWidth);
-window.addEventListener('scroll', scheduleMountedCellWindowUpdate, { passive: true });
 
 const fighterSearch = document.getElementById('fighter-search');
 const fighterEmptyState = document.getElementById('fighter-empty-state');
@@ -1040,6 +1051,7 @@ function filterRoster(query = '') {
     }
     const matches = !normalized || [
       button.dataset.displayName,
+      button.dataset.nameFull,
       button.dataset.label,
       button.dataset.rosterCharacter,
       button.dataset.portrait
@@ -1182,6 +1194,11 @@ async function syncCharacters(characters = []) {
     button.dataset.portrait = character.portrait;
     button.dataset.portraitUrl = character.portraitUrl || '';
     button.dataset.displayName = character.name;
+    if (character.nameFull && character.nameFull !== character.name) {
+      button.dataset.nameFull = character.nameFull;
+    } else {
+      delete button.dataset.nameFull;
+    }
     button.dataset.fkind = String(character.fkind ?? 0);
     if (character.bundle) button.dataset.bundle = character.bundle;
     else delete button.dataset.bundle;

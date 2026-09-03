@@ -117,6 +117,9 @@
   }
   .replica-cell {
     position: absolute;
+    /* Sized explicitly below, so a size container is safe; the find-text
+       spans derive their font size from the tile height (cqh). */
+    container-type: size;
     left: calc(var(--cell-x) * 100% / 96);
     top: calc(var(--cell-y) * 100% / 92);
     width: calc(45 * 100% / 96);
@@ -176,27 +179,36 @@
     pointer-events: none;
   }
   .replica-action-icon[hidden] { display: none; }
+  /* Invisible find-in-page target. The visible name is a bitmap; each WORD of
+     the fighter's name(s) gets its own transparent span stacked over the tile,
+     laid out as one line as tall as the tile in a monospace face and squeezed
+     horizontally (--find-sx, set per word from its length) to the tile width.
+     Chrome's find highlight covers only matched glyphs, so a whole-word match
+     ("wayne", "gretzky") paints the entire tile; a partial word paints that
+     share of it. Multi-word queries do not cross span boundaries. */
   .replica-label {
     position: absolute;
-    left: 8.9%;
-    top: 4.7%;
+    inset: 0;
     z-index: 2;
-    max-width: 84%;
     overflow: hidden;
-    color: rgb(146, 139, 114);
-    font: 900 clamp(9px, 1.15vw, 17px) / 1 "Kanit", ui-monospace, sans-serif;
-    letter-spacing: -.055em;
-    text-align: left;
-    text-overflow: clip;
-    text-shadow:
-      -1px 0 rgba(42, 40, 33, .95),
-      1px 0 rgba(42, 40, 33, .95),
-      0 -1px rgba(42, 40, 33, .95),
-      0 1px rgba(42, 40, 33, .95);
-    white-space: nowrap;
     pointer-events: none;
-    opacity: 0;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
   }
+  .replica-find-word {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    height: 100%;
+    width: max-content;
+    transform: translateX(-50%) scaleX(var(--find-sx, 1));
+    transform-origin: center;
+    font: 900 100cqh / 1 ui-monospace, Menlo, Consolas, monospace;
+    letter-spacing: 0;
+    white-space: nowrap;
+  }
+  .replica-find-word::search-text { background-color: rgba(255, 214, 64, .45); }
+  .replica-find-word::search-text:current { background-color: rgba(255, 128, 44, .7); }
   .replica-cell::after {
     content: "";
     position: absolute;
