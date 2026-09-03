@@ -57,24 +57,24 @@
       "slug": "barretzoph",
       "assets": {
         "bundle": {
-          "sha256": "a4a8e733dc716c880741856e474c35911d2d667938aaafa76ecd7b84534ee0ce",
-          "size": 1565108
+          "sha256": "9dd86f3bd11d3417079f2c8eda7148cdd2cd4403395d8c5012574e9eea43e0f3",
+          "size": 1546100
         },
         "metadata": {
           "sha256": "8d5f88c459c418f0918d6db357bfd2987f6d5afa1eabc325d71b22c5a39fbad0",
           "size": 716
         },
         "portrait": {
-          "sha256": "8b953d25d0c1c4cf7c920851b2d862f209d1858a408afcd2fe0dee46111ed3f4",
-          "size": 1112829
+          "sha256": "5760e8a649ec90b231292e302e6aa1e6e14803beddde3a124f2204c1f5648536",
+          "size": 1085396
         },
         "portraitTile": {
-          "sha256": "b802bb5ec725363acd669ede636bc85e4e7d83480754a8efdc4bfbe591a6304f",
-          "size": 12355
+          "sha256": "3abba7db7e2e0fe21e0e918fe4cb8b8d30701a0b5404e37d2a79a17b33c0946b",
+          "size": 12694
         },
         "portraitMedium": {
-          "sha256": "438d2df23ffa953f9c6cf4f0dba913de7715ac623246ab45d90c0d0756daac87",
-          "size": 72980
+          "sha256": "4fae58f3a22cb1a7d3cb8f120a800443c16c274b7988af28c63d8e42f8c55246",
+          "size": 82185
         },
         "ui": {
           "sha256": "2ba8b16c4659e4dda9a20fd70e259bd0438c42a2820bb1b1f2967b48e9c2feab",

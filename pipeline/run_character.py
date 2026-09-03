@@ -94,7 +94,7 @@ N64_TEMPLATE = (
     "only — the character must be {display})."
 )
 PHOTO_NOTE = (" Keep the exact likeness of the person in the attached photo(s), "
-              "same expression but with closed lips.")
+              "same expression but with closed lips, no teeth showing.")
 PORTRAIT_TEMPLATE = (
     "Create a late-1990s console fighting-game character-select portrait of "
     "the character shown in the FIRST reference image (a low-poly T-pose model "
