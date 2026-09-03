@@ -54221,6 +54221,110 @@
         "base": null,
         "preferredBases": null
       }
+    },
+    {
+      "slug": "reidhoffman",
+      "assets": {
+        "bundle": {
+          "sha256": "1aa8500df4ded45ea255eac2b67c8cee90245c79d092ef33d39386b16c843792",
+          "size": 1579476
+        },
+        "metadata": {
+          "sha256": "32bb4055c29b4afd3d5826908aa9b32c948a9a535e717a9105473cad53ee02d2",
+          "size": 736
+        },
+        "portrait": {
+          "sha256": "3669f1bbdb6d5523d146b31866452fd1abde82c09db01eeff94081d8b2c1f53f",
+          "size": 1092629
+        },
+        "portraitTile": {
+          "sha256": "852cf8ae0243c2102cdd6ae5f1ee1863bc10059b4ca2948945605250324673b7",
+          "size": 12862
+        },
+        "portraitMedium": {
+          "sha256": "7cf050b976c796856a610d4cd23a3eb111def46d0a691afca1624fd4091175f3",
+          "size": 75736
+        },
+        "ui": {
+          "sha256": "b0b34d4c91074598b306c6a0fecd8d0a08d3c893eba59aa958aadb778b325230",
+          "size": 12852
+        },
+        "announcer": {
+          "sha256": "66d1a0aad0b0907b41117d419d2683c487996f08f472eaeca17f5793a1bac1a2",
+          "size": 73640
+        }
+      },
+      "variants": [
+        "captain",
+        "fox",
+        "kirby",
+        "link",
+        "luigi",
+        "mario",
+        "ness",
+        "pikachu",
+        "purin",
+        "samus"
+      ],
+      "metadata": {
+        "display": "Reid Hoffman",
+        "nameFull": "Reid Hoffman",
+        "short": "HOFFMAN",
+        "base": null,
+        "preferredBases": null
+      }
+    },
+    {
+      "slug": "markpincus",
+      "assets": {
+        "bundle": {
+          "sha256": "5a57f78a856c22fbb10149b1c963a6bdbeea37e3541703f865df7c32ae94e893",
+          "size": 1587916
+        },
+        "metadata": {
+          "sha256": "d2917f35722d4117435985329ff08709ce0bf7e0f7b4e55301728c55e35b1846",
+          "size": 775
+        },
+        "portrait": {
+          "sha256": "60a98041f7263b1785d2c416bf8b76f772a5afc5bc887c478826807e3f4f351e",
+          "size": 1223730
+        },
+        "portraitTile": {
+          "sha256": "fe2d57121e196dbdc749212cd721e3d831a8cc2e3655023fe2fc42c665dbb018",
+          "size": 13868
+        },
+        "portraitMedium": {
+          "sha256": "eeb6e196135717abc42a894f9bdf64ec36edef6e483084fd6feed55449932987",
+          "size": 96459
+        },
+        "ui": {
+          "sha256": "4fbc48df4a75b142dcc8236a481765f7d241855852688fd6931523828243483d",
+          "size": 12852
+        },
+        "announcer": {
+          "sha256": "ec58b8d7537a36000ce3668c12f5efa1e6228f3276ed3d7603a3ee718046cddb",
+          "size": 73964
+        }
+      },
+      "variants": [
+        "captain",
+        "fox",
+        "kirby",
+        "link",
+        "luigi",
+        "mario",
+        "ness",
+        "pikachu",
+        "purin",
+        "samus"
+      ],
+      "metadata": {
+        "display": "Mark Pincus",
+        "nameFull": "Mark Pincus",
+        "short": "PINCUS",
+        "base": null,
+        "preferredBases": null
+      }
     }
   ]
 }
