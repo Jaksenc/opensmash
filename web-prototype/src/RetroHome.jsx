@@ -223,7 +223,7 @@ export default function RetroHome({
   onCreate,
   onFullscreen,
   onTrailerControl,
-  audioUnlocked = false,
+  audioActive = false,
   onResetRom,
   onSignOut,
   pageError,
@@ -349,15 +349,15 @@ export default function RetroHome({
   }, []);
 
   // Desired trailer state is a pure function of: player ready, game running,
-  // launch overlay open, sound preference, and whether the page has had its
-  // first user gesture (audible playback needs one; muted autoplay does not).
+  // launch overlay open, sound preference, and audioActive (page has had its
+  // first user gesture and is in the foreground). Muted autoplay needs neither.
   useEffect(() => {
     const player = introVideoRef.current;
     if (!player || !trailerPlayerReady) return;
-    const audible = soundOn && audioUnlocked;
+    const audible = soundOn && audioActive;
     controlEmbeddedTrailer(player, audible ? "unMute" : "mute");
     controlEmbeddedTrailer(player, launchFlowOpen || engine ? "pauseVideo" : "playVideo");
-  }, [audioUnlocked, engine, launchFlowOpen, soundOn, trailerPlayerReady]);
+  }, [audioActive, engine, launchFlowOpen, soundOn, trailerPlayerReady]);
 
   function toggleMobileControls(event) {
     if (!mobileLayout) return;

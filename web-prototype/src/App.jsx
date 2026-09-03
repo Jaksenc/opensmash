@@ -347,6 +347,13 @@ export default function App() {
   // AudioContext. The sound preference stays the single override.
   const [audioUnlocked, setAudioUnlocked] = useState(false);
   const firstGestureTargetRef = useRef(null);
+  // Audio is only ever audible while the page is in the foreground. A hidden
+  // tab / backgrounded iPhone throttles the engine's setTimeout pacer to ~1fps,
+  // which starves the SDL audio queue and produces garbage, and looping music
+  // playing under another app is just annoying. Everything audible keys off
+  // audioActive = unlocked && visible; soundOn stays the user override.
+  const [pageVisible, setPageVisible] = useState(() => document.visibilityState !== "hidden");
+  const audioActive = audioUnlocked && pageVisible;
   const [crtOn, setCrtOn] = useState(readCrtEnabled);
   const [advancedOptions, setAdvancedOptions] = useState(loadAdvancedOptions);
   const gamepads = useGamepads();
@@ -412,7 +419,28 @@ export default function App() {
     const timer = window.setTimeout(() => setPageErrorToast(null), TOAST_DURATION_MS);
     return () => window.clearTimeout(timer);
   }, [pageErrorToast]);
-  useUiSounds(soundOn);
+  useUiSounds(soundOn && pageVisible);
+
+  useEffect(() => {
+    const update = () => setPageVisible(document.visibilityState !== "hidden");
+    const hide = () => setPageVisible(false);
+    document.addEventListener("visibilitychange", update);
+    window.addEventListener("pagehide", hide);
+    window.addEventListener("pageshow", update);
+    return () => {
+      document.removeEventListener("visibilitychange", update);
+      window.removeEventListener("pagehide", hide);
+      window.removeEventListener("pageshow", update);
+    };
+  }, []);
+
+  // Cut the announcer clip the moment the page goes to the background.
+  useEffect(() => {
+    if (pageVisible || !announcerRef.current) return;
+    announcerRef.current.pause();
+    announcerRef.current.currentTime = 0;
+    announcerRef.current = null;
+  }, [pageVisible]);
 
   useEffect(() => {
     const gestureEvents = ["pointerdown", "keydown", "touchstart"];
@@ -428,7 +456,7 @@ export default function App() {
   }, []);
   // The launch flow, About, and Settings overlays share one music bed.
   const overlayMusicActive = flowMusicActive || advancedOpen || aboutOpen;
-  const startFlowMusic = useFlowMusic(overlayMusicActive && !engine, soundOn);
+  const startFlowMusic = useFlowMusic(overlayMusicActive && !engine, soundOn && pageVisible);
   useEffect(() => {
     const syncFlowMusic = (event) => {
       const open = Boolean(event.detail?.open);
@@ -654,7 +682,7 @@ export default function App() {
       if (cancelled) return;
       const audioContext = engineRef.current?.contentWindow?.Module?.SDL2?.audioContext;
       if (audioContext) {
-        const update = soundOn ? audioContext.resume() : audioContext.suspend();
+        const update = soundOn && pageVisible ? audioContext.resume() : audioContext.suspend();
         update?.catch(() => {});
         return;
       }
@@ -667,7 +695,7 @@ export default function App() {
       cancelled = true;
       window.clearTimeout(retry);
     };
-  }, [audioUnlocked, engine, soundOn]);
+  }, [audioUnlocked, engine, pageVisible, soundOn]);
 
   // Re-plan the running game's ports when the controller settings change;
   // the shell (window.controllerPorts) handles hot-plug on its own.
@@ -1233,7 +1261,7 @@ export default function App() {
           onSignOut={signOutUser}
           pageError={pageError}
           ready={!loadingCharacters}
-          audioUnlocked={audioUnlocked}
+          audioActive={audioActive}
           soundOn={soundOn}
           trailerCinematic={trailerCinematic}
           trailerEngineReady={trailerEngineReady}
