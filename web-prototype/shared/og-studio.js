@@ -63,6 +63,7 @@ export function fighterFrame(slot, placement, sourceWidth = 480, sourceHeight = 
 
 export function fighterSlotAtPoint(x, y, placements, slots = OG_ROSTER_SLOTS) {
   for (let index = Math.min(slots.length, placements.length) - 1; index >= 0; index -= 1) {
+    if (!placements[index]?.slug) continue; // empty position: nothing to grab
     const frame = fighterFrame(slots[index], placements[index]);
     if (x >= frame.x && x <= frame.x + frame.width && y >= frame.y && y <= frame.y + frame.height) {
       return index;

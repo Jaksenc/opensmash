@@ -89,6 +89,10 @@ function blankPlacement(slot) {
   return { slug: null, fkind: null, zoom: slot.zoom, offsetX: 0, offsetY: 0 };
 }
 
+function emptyPlacements() {
+  return OG_ROSTER_SLOTS.map((slot) => blankPlacement(slot));
+}
+
 function freshPlacements(characters) {
   const picks = shuffledRoster(characters, OG_ROSTER_SLOTS.length);
   return OG_ROSTER_SLOTS.map((slot, index) => {
@@ -318,10 +322,17 @@ function oppositeCorner(frame, handle) {
   };
 }
 
-function SearchableFighterSelect({ characters, selected, onSelect }) {
+function SearchableFighterSelect({ characters, selected, onSelect, openToken = 0 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (openToken) {
+      setQuery("");
+      setOpen(true);
+    }
+  }, [openToken]);
   const matches = useMemo(
     () => characters.filter((character) => matchesCharacterSearch(character, query)),
     [characters, query],
@@ -411,6 +422,7 @@ export default function OgStudio() {
   const [logoPlacement, setLogoPlacement] = useState({ ...DEFAULT_LOGO_PLACEMENT });
   const [scene, setScene] = useState({ ...DEFAULT_SCENE });
   const [renderProgress, setRenderProgress] = useState(0);
+  const [pickerOpenToken, setPickerOpenToken] = useState(0);
   const [selectedIndex, setSelectedIndex] = useState(OG_ROSTER_SLOTS.length - 1);
   const [selectedTarget, setSelectedTarget] = useState("fighter");
   const [status, setStatus] = useState("Loading your roster…");
@@ -440,7 +452,8 @@ export default function OgStudio() {
         const roster = Array.isArray(loaded) ? loaded : [];
         const restored = restoreComposition(roster);
         setCharacters(roster);
-        setPlacements(restored?.placements || freshPlacements(roster));
+        // A new draft starts empty; positions fill as fighters are added.
+        setPlacements(restored?.placements || emptyPlacements());
         setLogoPlacement(restored?.logoPlacement || { ...DEFAULT_LOGO_PLACEMENT });
         setScene(restored?.scene || { ...DEFAULT_SCENE });
         setStatus(roster.length ? "" : "No generated fighters are available yet.");
@@ -498,6 +511,31 @@ export default function OgStudio() {
   function randomizeAll() {
     setPlacements(freshPlacements(characters));
     setStatus("A fresh, non-repeating roster is on stage.");
+  }
+
+  function clearAll() {
+    setPlacements(emptyPlacements());
+    setSelectedTarget("fighter");
+    setSelectedIndex(0);
+    setStatus("Stage cleared.");
+  }
+
+  const placedCount = placements.filter((placement) => placement.slug).length;
+  const firstEmptyIndex = placements.findIndex((placement) => !placement.slug);
+
+  // Select the next free position and open the picker there.
+  function addFighter() {
+    if (firstEmptyIndex < 0) return;
+    setSelectedTarget("fighter");
+    setSelectedIndex(firstEmptyIndex);
+    setPickerOpenToken((token) => token + 1);
+  }
+
+  function removeSelected() {
+    if (!selectedPlacement?.slug) return;
+    setPlacements((current) => current.map((placement, index) => (
+      index === selectedIndex ? blankPlacement(OG_ROSTER_SLOTS[index]) : placement
+    )));
   }
 
   function chooseSelectedCharacter(character) {
@@ -672,8 +710,14 @@ export default function OgStudio() {
           <p>Open Graph Studio</p>
         </div>
         <div className="og-studio-header-actions">
+          <button className="og-button og-button-muted" type="button" onClick={addFighter} disabled={!characters.length || firstEmptyIndex < 0}>
+            Add fighter
+          </button>
           <button className="og-button og-button-muted" type="button" onClick={randomizeAll} disabled={!characters.length}>
-            Shuffle all
+            Fill randomly
+          </button>
+          <button className="og-button og-button-muted" type="button" onClick={clearAll} disabled={!placedCount}>
+            Clear
           </button>
           <button className="og-button og-button-primary" type="button" onClick={exportPng} disabled={!placements.length || exporting}>
             {exporting ? "Rendering…" : "Download PNG"}
@@ -715,7 +759,7 @@ export default function OgStudio() {
             />
           </div>
           <div className="og-stage-meta">
-            <span>{characters.length ? `${characters.length.toLocaleString()} in-game fighters available` : status}</span>
+            <span>{characters.length ? `${placedCount}/${OG_ROSTER_SLOTS.length} positions filled · ${characters.length.toLocaleString()} fighters available` : status}</span>
             {status && characters.length ? <output aria-live="polite">{status}</output> : null}
           </div>
         </section>
@@ -758,6 +802,7 @@ export default function OgStudio() {
                     characters={characters}
                     selected={selectedCharacter}
                     onSelect={chooseSelectedCharacter}
+                    openToken={pickerOpenToken}
                   />
                   <label className="og-field og-body-select">
                     <span>Body model</span>
@@ -786,13 +831,18 @@ export default function OgStudio() {
                     <input type="range" min={-MAX_OFFSET_Y} max={MAX_OFFSET_Y} step=".01" value={selectedPlacement?.offsetY || 0} onChange={(event) => updateSelected({ offsetY: Number(event.target.value) })} />
                   </label>
                 </div>
-                <button className="og-reset-framing" type="button" onClick={() => updateSelected({
-                  zoom: OG_ROSTER_SLOTS[selectedIndex].zoom,
-                  offsetX: 0,
-                  offsetY: 0,
-                })}>
-                  Reset framing
-                </button>
+                <div className="og-slot-actions">
+                  <button className="og-reset-framing" type="button" onClick={() => updateSelected({
+                    zoom: OG_ROSTER_SLOTS[selectedIndex].zoom,
+                    offsetX: 0,
+                    offsetY: 0,
+                  })}>
+                    Reset framing
+                  </button>
+                  <button className="og-reset-framing og-remove-fighter" type="button" onClick={removeSelected} disabled={!selectedPlacement?.slug}>
+                    Remove from stage
+                  </button>
+                </div>
               </>
             ) : (
               <>
