@@ -2,6 +2,370 @@
   "schemaVersion": 2,
   "characters": [
     {
+      "slug": "liamfedus",
+      "assets": {
+        "bundle": {
+          "sha256": "4ea54d2c2d2ded6d93f652355a91d4244e8de9dd418f5962a72598cbe653abdb",
+          "size": 1533188
+        },
+        "metadata": {
+          "sha256": "ce6815f6a6afc5d09520f70085fa83c2afa3506c0ac9a4d7c033b84dbdd90fc5",
+          "size": 709
+        },
+        "portrait": {
+          "sha256": "217f6135957ae1ad77862bd9d4687ccd2e921f9ff54a89a3cff7fce76779cefd",
+          "size": 1192290
+        },
+        "portraitTile": {
+          "sha256": "4f7c81be146565f135bea3a731b690c84bc2d7452425347f1c1cb758551eec9f",
+          "size": 13561
+        },
+        "portraitMedium": {
+          "sha256": "02b38a8021660d61175dda38b4793330e3ce5096ec85f5d8005b6bb4492bf171",
+          "size": 84584
+        },
+        "ui": {
+          "sha256": "cca10a68e7b7b0a73d0b1ca4b6a86745ba97e5663156b91ae802a4dcaea25b96",
+          "size": 12852
+        },
+        "announcer": {
+          "sha256": "f488233942ba46828627b960679a21975622e830a3459239e0a2833f66152958",
+          "size": 92216
+        }
+      },
+      "variants": [
+        "captain",
+        "fox",
+        "kirby",
+        "link",
+        "luigi",
+        "mario",
+        "ness",
+        "pikachu",
+        "purin",
+        "samus"
+      ],
+      "metadata": {
+        "display": "Liam Fedus",
+        "nameFull": "Liam Fedus",
+        "short": "FEDUS",
+        "base": null,
+        "preferredBases": null
+      }
+    },
+    {
+      "slug": "barretzoph",
+      "assets": {
+        "bundle": {
+          "sha256": "a4a8e733dc716c880741856e474c35911d2d667938aaafa76ecd7b84534ee0ce",
+          "size": 1565108
+        },
+        "metadata": {
+          "sha256": "8d5f88c459c418f0918d6db357bfd2987f6d5afa1eabc325d71b22c5a39fbad0",
+          "size": 716
+        },
+        "portrait": {
+          "sha256": "8b953d25d0c1c4cf7c920851b2d862f209d1858a408afcd2fe0dee46111ed3f4",
+          "size": 1112829
+        },
+        "portraitTile": {
+          "sha256": "b802bb5ec725363acd669ede636bc85e4e7d83480754a8efdc4bfbe591a6304f",
+          "size": 12355
+        },
+        "portraitMedium": {
+          "sha256": "438d2df23ffa953f9c6cf4f0dba913de7715ac623246ab45d90c0d0756daac87",
+          "size": 72980
+        },
+        "ui": {
+          "sha256": "2ba8b16c4659e4dda9a20fd70e259bd0438c42a2820bb1b1f2967b48e9c2feab",
+          "size": 12852
+        },
+        "announcer": {
+          "sha256": "80d12294a9bfbefa50cda81ba15ca738d590db260ca271ceb130f89267c420b6",
+          "size": 81814
+        }
+      },
+      "variants": [
+        "captain",
+        "fox",
+        "kirby",
+        "link",
+        "luigi",
+        "mario",
+        "ness",
+        "pikachu",
+        "purin",
+        "samus"
+      ],
+      "metadata": {
+        "display": "Barret Zoph",
+        "nameFull": "Barret Zoph",
+        "short": "ZOPH",
+        "base": null,
+        "preferredBases": null
+      }
+    },
+    {
+      "slug": "caseyaylward",
+      "assets": {
+        "bundle": {
+          "sha256": "75a87c230e1e1038be051c2d80e04241f0d97941da45e3a7e899f9510d266dd3",
+          "size": 1573332
+        },
+        "metadata": {
+          "sha256": "b308941c759d3d3ed7396d6447106c0ae5b7422a61681fbf54c60ccf7b49561f",
+          "size": 741
+        },
+        "portrait": {
+          "sha256": "c239f2bd66af9e3d3e37e1cbb1fd4bc551d12a6c2772b65040746dd859f2fe17",
+          "size": 1017264
+        },
+        "portraitTile": {
+          "sha256": "0b0a3388dd6a04e87e275340a8bb002a5a993701c5fdc8f8f19d5f53975ce047",
+          "size": 12351
+        },
+        "portraitMedium": {
+          "sha256": "f8983343a8afc8d91137709b646ecdb590fb16aa1d8ccb40e29df03921a0d207",
+          "size": 77111
+        },
+        "ui": {
+          "sha256": "4fc2efb8dbcb8f6f2d60b76739bf1180c228f913e52c08547758572a5a576172",
+          "size": 12852
+        },
+        "announcer": {
+          "sha256": "4b321ddad4cad0e821dad6807080b9e68002fd914c3a59af9ea364edb96ead1c",
+          "size": 81814
+        }
+      },
+      "variants": [
+        "captain",
+        "fox",
+        "kirby",
+        "link",
+        "luigi",
+        "mario",
+        "ness",
+        "pikachu",
+        "purin",
+        "samus"
+      ],
+      "metadata": {
+        "display": "Casey Aylward",
+        "nameFull": "Casey Aylward",
+        "short": "CASEY",
+        "base": null,
+        "preferredBases": null
+      }
+    },
+    {
+      "slug": "thomasdimson",
+      "assets": {
+        "bundle": {
+          "sha256": "1fa198e221feb8500e722fc8d515ec03fba71b054bcfbc16de568d07bc57e2ad",
+          "size": 1576776
+        },
+        "metadata": {
+          "sha256": "5c1f72b00f6dbafe37a74980c418f4ffdbe90c1671c5e417181455b8d11e4db7",
+          "size": 706
+        },
+        "portrait": {
+          "sha256": "f6fe09865ab250662c78830b4e1719019572e42a7c120db44f4e4ef09d6e588e",
+          "size": 1138249
+        },
+        "portraitTile": {
+          "sha256": "466d5d9dd4b747677fde7c1253868035e9ea34735bb85483d76470c22da94873",
+          "size": 13900
+        },
+        "portraitMedium": {
+          "sha256": "d19874240e09226100b6dd464702515599b0c57ff8ced3ae85eccde794b57301",
+          "size": 85081
+        },
+        "ui": {
+          "sha256": "0436c0e19482af5726ae3840e5a439308e15ec47a6c2baaf6cabfb67a2d4c002",
+          "size": 12852
+        },
+        "announcer": {
+          "sha256": "b31d138de47d4984122d6c345f9a397b1a9fae6ad2e8f4fc9a568f8df161d5ef",
+          "size": 87014
+        }
+      },
+      "variants": [
+        "captain",
+        "fox",
+        "kirby",
+        "link",
+        "luigi",
+        "mario",
+        "ness",
+        "pikachu",
+        "purin",
+        "samus"
+      ],
+      "metadata": {
+        "display": "Thomas Dimson",
+        "nameFull": "Thomas Dimson",
+        "short": "DIMSON",
+        "base": null,
+        "preferredBases": null
+      }
+    },
+    {
+      "slug": "roon",
+      "assets": {
+        "bundle": {
+          "sha256": "2669648fcab56434bef8398dc17552df68029cf3db7374f9bb5fe1da322320de",
+          "size": 1565884
+        },
+        "metadata": {
+          "sha256": "525d80909b2f9a17a385eb7c3513c66c0fce807c10df2f39901c408de1f2f060",
+          "size": 737
+        },
+        "portrait": {
+          "sha256": "744069e0ffb72d2bdfae08fe568119d783519305db2f2516d9055c83a4d19c46",
+          "size": 934560
+        },
+        "portraitTile": {
+          "sha256": "1f8e5eed56804e138e0c822c79a923f1291ce4cc89dca619a2301916f7551760",
+          "size": 13829
+        },
+        "portraitMedium": {
+          "sha256": "74aabfbc395150fac29f0cfc0841e199de3355353af64e8af5f6430067cb67b9",
+          "size": 80843
+        },
+        "ui": {
+          "sha256": "78ee03d32741dcb543b788bb7360da7e00ef6a54365f580aedd473d2ce4a4534",
+          "size": 12852
+        },
+        "announcer": {
+          "sha256": "2133af19bbc461ef67792cb03d720cd0ebfe3f09bb2f6584e38b803527663c98",
+          "size": 59522
+        }
+      },
+      "variants": [
+        "captain",
+        "fox",
+        "kirby",
+        "link",
+        "luigi",
+        "mario",
+        "ness",
+        "pikachu",
+        "purin",
+        "samus"
+      ],
+      "metadata": {
+        "display": "Roon",
+        "nameFull": "Roon",
+        "short": "ROON",
+        "base": null,
+        "preferredBases": null
+      }
+    },
+    {
+      "slug": "kache",
+      "assets": {
+        "bundle": {
+          "sha256": "bf4b6eb0d80863a4bfef86d9d7becd2e8b50c963b6b30c3ed98598fe17ee9a79",
+          "size": 1599708
+        },
+        "metadata": {
+          "sha256": "957442c0dfe137f57b14406e4c8a761eb8cf76f170c5de650fbd7273380ae4e7",
+          "size": 721
+        },
+        "portrait": {
+          "sha256": "2683f562c6af3d7570896f8ce8eb9bc6a846c83f5f9b6822c6a292944ba6547b",
+          "size": 1057731
+        },
+        "portraitTile": {
+          "sha256": "d4433a8b2b5db85d47b6005fab77da4c3550ebe85b79d54f5bf1291c69a84983",
+          "size": 12039
+        },
+        "portraitMedium": {
+          "sha256": "84a8beb1949b3a07ac8aeac4a964ac1d26fb6e3c4939fc0e54812fefac7eb332",
+          "size": 71167
+        },
+        "ui": {
+          "sha256": "794fe5b9b3100f07ec07419ce11a1a52cdd3528e3a587e5b3d345a71eaeb0116",
+          "size": 12852
+        },
+        "announcer": {
+          "sha256": "1920c5812873e5cbccfd40061aa65a3833a063d59cfc673e8e50acfb6290ebcb",
+          "size": 49120
+        }
+      },
+      "variants": [
+        "captain",
+        "fox",
+        "kirby",
+        "link",
+        "luigi",
+        "mario",
+        "ness",
+        "pikachu",
+        "purin",
+        "samus"
+      ],
+      "metadata": {
+        "display": "Kache",
+        "nameFull": "Kache",
+        "short": "KACHE",
+        "base": null,
+        "preferredBases": null
+      }
+    },
+    {
+      "slug": "growingdaniel",
+      "assets": {
+        "bundle": {
+          "sha256": "390cb1ebc9474e154c6f3431e37456f0a4fb69e97759123705bb047fdd62901a",
+          "size": 1548684
+        },
+        "metadata": {
+          "sha256": "4587eea38ef4be7b62690ed475e4fa35e260797aa67d18ccb184c2412e50ef07",
+          "size": 737
+        },
+        "portrait": {
+          "sha256": "250319687b3d5d1f3379a094f0cf3c51269e283488c2a8a74eb286a69d16a53b",
+          "size": 1014402
+        },
+        "portraitTile": {
+          "sha256": "1de999567ee29333892bee778c85f0f37d567769a523cee831ebf4b4886ceb68",
+          "size": 13051
+        },
+        "portraitMedium": {
+          "sha256": "13f5af50e1430baeff615b8475cc1ccf425e7cdeb813a0a8a60d930355aad95d",
+          "size": 77809
+        },
+        "ui": {
+          "sha256": "900ad9380d67cc5dc5953ac1e9790d43b3d12ae4b4d50398ed53dd7b94808cc4",
+          "size": 12852
+        },
+        "announcer": {
+          "sha256": "486c0048fe89d53da4b74bb706b6ed7ae6399ba0a5e5746ada5520e3694c83d4",
+          "size": 90028
+        }
+      },
+      "variants": [
+        "captain",
+        "fox",
+        "kirby",
+        "link",
+        "luigi",
+        "mario",
+        "ness",
+        "pikachu",
+        "purin",
+        "samus"
+      ],
+      "metadata": {
+        "display": "growing_daniel",
+        "nameFull": "growing_daniel",
+        "short": "DANIEL",
+        "base": null,
+        "preferredBases": null
+      }
+    },
+    {
       "slug": "cleopatra",
       "assets": {
         "bundle": {
@@ -29769,27 +30133,27 @@
       "slug": "marcandreessen",
       "assets": {
         "bundle": {
-          "sha256": "5fb745a40ee9a57158d68a270a3f58f2626ca50bdfbce72fe58e2fa63f106742",
-          "size": 1593700
+          "sha256": "4c147dfbe329cb2ff58762fdf24dc18233e4670c8f1bad45ebfefff1a15dc066",
+          "size": 1543156
         },
         "metadata": {
-          "sha256": "594de58d44ff344166b89b03344f2caa761ca19ccb8519d1279a6c47a69005a5",
-          "size": 604
+          "sha256": "2c06ed5a411d756d681ba17e8536e0a26d09e4604110c15c6cfbed51295fa204",
+          "size": 703
         },
         "portrait": {
-          "sha256": "125c07ce23fc9a141135ed06768d1725e8242ee665c5c3744b550e0c74d6925b",
-          "size": 960207
+          "sha256": "305a4bfd71d7c85635d6dfab1afff55d0be127b1db5524e337ecb682a5a521d7",
+          "size": 1110390
         },
         "portraitTile": {
-          "sha256": "dec9e7d5f2b90c9d9f3751812b603fed9e1c6205b0d2cbcaa44cf0f15b600693",
-          "size": 12731
+          "sha256": "a925d1d307b29f291031dd53f89b8fbbbc107189a41ee2716e5e7e6a32ee504b",
+          "size": 12366
         },
         "portraitMedium": {
-          "sha256": "4d4757cf0d64d2440016ded31181ddc520eb6670c34e9d2d604e2a1606227d96",
-          "size": 76745
+          "sha256": "f20583f40415bccd593bb8ef049049b9f65f2d202612061aae562255585054e9",
+          "size": 73385
         },
         "ui": {
-          "sha256": "ba2d65e8ae514d34b81a85e197080c11fb05d6a17f564c28d394cd01cddc1c8c",
+          "sha256": "f6d0e166939e039c6e8695e789bb4930c1ca77c015b1adeed98b00f5604edebe",
           "size": 12852
         },
         "announcer": {
@@ -29811,7 +30175,7 @@
       ],
       "metadata": {
         "display": "Marc Andreessen",
-        "nameFull": null,
+        "nameFull": "Marc Andreessen",
         "short": "ANDREESSEN",
         "base": null,
         "preferredBases": null
