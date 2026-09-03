@@ -50,6 +50,9 @@ WIN_POSE = {8: "2", 9: "2", 10: "1"}
 # results pose can settle: Luigi's Win1 is still mid-motion at 100 and
 # identical from 130 on; nothing else changes between 100 and 130.
 DEFAULT_FRAME = 130
+# Kirby's Win2 faces the camera only around frames 100-120 (it turns away
+# and settles backwards after 150), so that body shoots early.
+FRAME_POSE = {8: 110}
 
 
 def boot(fkind, bundle, fill, frames, shots, win=(0, 40)):
@@ -200,7 +203,7 @@ def main():
     ap.add_argument("slugs", nargs="+")
     ap.add_argument("--fkind", type=int, default=None, help="base fighter kind (single slug); else from --api")
     ap.add_argument("--api", default="http://localhost:4181", help="dev server for slug -> fkind lookup")
-    ap.add_argument("--frame", type=int, default=DEFAULT_FRAME, help="global frame to shoot (card is held open)")
+    ap.add_argument("--frame", type=int, default=None, help="global frame to shoot (default per body kind; card is held open)")
     ap.add_argument("--out", default=None, help="output PNG (single slug)")
     ap.add_argument("--keep", default=None, help="keep raw captures in this dir (single slug)")
     ap.add_argument("--force", action="store_true", help="re-bake existing sprites")
@@ -221,7 +224,8 @@ def main():
             continue
         try:
             win = tuple(int(v) for v in a.win.split(","))
-            bbox = bake(slug, fkinds[slug], a.frame, out, a.keep, win)
+            frame = a.frame if a.frame is not None else FRAME_POSE.get(fkinds[slug], DEFAULT_FRAME)
+            bbox = bake(slug, fkinds[slug], frame, out, a.keep, win)
             print(f"{slug}: fkind={fkinds[slug]} bbox={bbox[0]}x{bbox[1]} -> {os.path.relpath(out, PIPELINE_ROOT)}")
         except Exception as e:  # noqa: BLE001
             print(f"{slug}: FAILED {e}")
