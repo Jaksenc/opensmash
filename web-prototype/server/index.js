@@ -69,6 +69,10 @@ function securityHeaders(pathname) {
   return pathname.startsWith("/engine/") ? ENGINE_SECURITY_HEADERS : APP_SECURITY_HEADERS;
 }
 const PIPELINE_PLAY_ROOT = path.join(PIPELINE_PROJECT_ROOT, "play");
+const OG_SPRITE_SCRIPT = path.join(PIPELINE_PROJECT_ROOT, "pipeline", "og_sprite.py");
+const OG_SPRITE_ENGINE = process.env.OG_SPRITE_ENGINE
+  || path.join(PIPELINE_PROJECT_ROOT, "..", "BattleShip", "build-us", "BattleShip");
+let ogSpriteQueue = Promise.resolve();
 const SITE_ASSETS_ROOT = path.join(APP_ROOT, "visual", "assets");
 const CHARACTERS_CONFIG = path.join(APP_ROOT, "config", "characters.json");
 const BAKED_ASSETS_MANIFEST = path.join(APP_ROOT, "config", "baked-assets.json");
@@ -812,6 +816,56 @@ async function handleRequest(req, res, vite) {
       await unlink(finishedPath).catch(() => {});
       return json(res, 500, { error: error.message || "Could not save trailer capture." });
     }
+  }
+
+  // Open Graph studio, dev only: in-engine fighter cutout rendered by the
+  // native build (pipeline/og_sprite.py boots the VS card twice over chroma
+  // clears and difference-mattes). Cached on disk per slug+body; boots are
+  // serialised because each one owns the game window.
+  if (req.method === "GET" && pathname === "/api/og-sprite") {
+    const slug = url.searchParams.get("slug") || "";
+    const fkind = Number(url.searchParams.get("fkind"));
+    if (!/^[a-z0-9]+$/.test(slug) || !Number.isInteger(fkind) || fkind < 0 || fkind > 11) {
+      return json(res, 400, { error: "slug and fkind (0-11) required" });
+    }
+    if (!(await bakedRoster()).slugs.has(slug)) return json(res, 404, { error: "Unknown fighter" });
+    const out = path.join(PIPELINE_UI_ROOT, slug, `og_sprite_fk${fkind}.png`);
+    if (url.searchParams.get("force") === "1") await unlink(out).catch(() => {});
+    try {
+      await access(out);
+    } catch {
+      try {
+        await access(OG_SPRITE_ENGINE);
+      } catch {
+        return json(res, 404, { error: "In-engine renders need the native BattleShip build on this machine" });
+      }
+      const run = () => new Promise((resolve, reject) => {
+        const child = spawn("python3", [OG_SPRITE_SCRIPT, slug, "--fkind", String(fkind), "--out", out], {
+          cwd: PIPELINE_PROJECT_ROOT,
+          env: { ...process.env, EVAL_BUILD: path.dirname(OG_SPRITE_ENGINE) },
+          stdio: ["ignore", "pipe", "pipe"],
+        });
+        let log = "";
+        child.stdout.on("data", (chunk) => { log += chunk; });
+        child.stderr.on("data", (chunk) => { log += chunk; });
+        const timer = setTimeout(() => child.kill("SIGKILL"), 180000);
+        child.on("error", reject);
+        child.on("close", (code) => {
+          clearTimeout(timer);
+          if (code === 0) resolve();
+          else reject(new Error(`og_sprite.py exited ${code}: ${log.trim().split("\n").pop()}`));
+        });
+      });
+      const turn = ogSpriteQueue.then(run, run);
+      ogSpriteQueue = turn.catch(() => {});
+      try {
+        await turn;
+      } catch (error) {
+        return json(res, 500, { error: error.message });
+      }
+    }
+    if (await serveFile(req, res, out, "no-store")) return;
+    return json(res, 500, { error: "Sprite missing after render" });
   }
 
   if (req.method === "GET" && pathname === "/api/characters") {

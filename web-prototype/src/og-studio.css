@@ -127,6 +127,8 @@
 .og-reset-framing:hover { color: #db8a72; }
 .og-logo-help { margin: -2px 0 17px; color: #8e847d; font-size: 9px; line-height: 1.65; }
 
+.og-scene-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+.og-scene-help { margin: 10px 0 0; color: #766e68; font-size: 8px; line-height: 1.5; }
 .og-export-controls { display: grid; gap: 13px; }
 .og-export-controls p { margin: 5px 0 0; color: #766e68; font-size: 8px; line-height: 1.5; }
 .og-save-button { width: 100%; min-height: 46px; }

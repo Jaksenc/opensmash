@@ -27,6 +27,25 @@ const MAX_OFFSET_Y = 15;
 const LOGO_MIN_WIDTH = 140;
 const LOGO_MAX_WIDTH = 1000;
 const DEFAULT_LOGO_PLACEMENT = Object.freeze({ x: 420, y: 18, width: 360 });
+// backdrop: "sky" = the game's pre-battle sky; "band" = title-screen style
+// giant green band on cream. renderer: "engine" = native VS-card capture via
+// /api/og-sprite (dev machine only; falls back per fighter), "preview" =
+// the three.js bind-pose render.
+const DEFAULT_SCENE = Object.freeze({ backdrop: "sky", renderer: "engine" });
+const BACKDROPS = Object.freeze([
+  { value: "sky", label: "Pre-battle sky" },
+  { value: "band", label: "Title green band" },
+]);
+const RENDERERS = Object.freeze([
+  { value: "engine", label: "In-engine (VS-card pose)" },
+  { value: "preview", label: "Quick preview (bind pose)" },
+]);
+function validScene(value) {
+  return {
+    backdrop: BACKDROPS.some((option) => option.value === value?.backdrop) ? value.backdrop : DEFAULT_SCENE.backdrop,
+    renderer: RENDERERS.some((option) => option.value === value?.renderer) ? value.renderer : DEFAULT_SCENE.renderer,
+  };
+}
 const imageCache = new Map();
 
 function clamp(value, minimum, maximum) {
@@ -40,7 +59,10 @@ function loadImage(url) {
     const image = new Image();
     image.crossOrigin = "anonymous";
     image.onload = () => resolve(image);
-    image.onerror = () => reject(new Error(`Could not load ${url}`));
+    image.onerror = () => {
+      imageCache.delete(url);
+      reject(new Error(`Could not load ${url}`));
+    };
     image.src = url;
   });
   imageCache.set(url, promise);
@@ -94,7 +116,7 @@ function restoreComposition(characters) {
         offsetY: Number.isFinite(value.offsetY) ? clamp(value.offsetY, -MAX_OFFSET_Y, MAX_OFFSET_Y) : 0,
       };
     });
-    return { placements, logoPlacement: validLogoPlacement(saved.logoPlacement) };
+    return { placements, logoPlacement: validLogoPlacement(saved.logoPlacement), scene: validScene(saved.scene) };
   } catch {
     return null;
   }
@@ -131,7 +153,20 @@ function drawFighter(context, image, slot, placement) {
   context.restore();
 }
 
-function drawBackdrop(context, image) {
+function drawBackdrop(context, image, backdrop = "sky") {
+  if (backdrop === "band") {
+    // Smash 64 title-screen treatment: cream field, one giant green band
+    // the crew stands on, with a darker lip along its bottom edge.
+    context.fillStyle = "#f4efe4";
+    context.fillRect(0, 0, OG_IMAGE_WIDTH, OG_IMAGE_HEIGHT);
+    context.fillStyle = "#33b24a";
+    context.fillRect(0, 118, OG_IMAGE_WIDTH, 486);
+    context.fillStyle = "#238c39";
+    context.fillRect(0, 588, OG_IMAGE_WIDTH, 16);
+    context.fillStyle = "#6fd07f";
+    context.fillRect(0, 118, OG_IMAGE_WIDTH, 5);
+    return;
+  }
   context.fillStyle = "#9ccde6";
   context.fillRect(0, 0, OG_IMAGE_WIDTH, OG_IMAGE_HEIGHT);
 
@@ -212,28 +247,45 @@ function drawSelection(context, frame) {
   context.restore();
 }
 
+function fighterImage(character, fkind, scene) {
+  const preview = () => renderInGameFighter({ ...character, fkind }).catch(() => null);
+  if (scene.renderer !== "engine") return preview();
+  // Native VS-card capture (pipeline/og_sprite.py via the dev server): real
+  // pose and light rig. Anything that can't render that way (production,
+  // no native build) quietly falls back to the three.js preview.
+  const url = `/api/og-sprite?slug=${encodeURIComponent(character.slug)}&fkind=${fkind}`;
+  return loadImage(url).catch(preview);
+}
+
 async function renderArtwork(canvas, {
   placements,
   charactersBySlug,
   logoPlacement,
+  scene = DEFAULT_SCENE,
   selectedIndex = -1,
   selectedTarget = null,
+  onProgress = null,
 }) {
   const context = canvas.getContext("2d");
   context.clearRect(0, 0, OG_IMAGE_WIDTH, OG_IMAGE_HEIGHT);
 
+  let ready = 0;
   const fighterPromises = placements.map((placement) => {
     const character = charactersBySlug.get(placement.slug);
-    return character
-      ? renderInGameFighter({ ...character, fkind: placement.fkind ?? character.fkind }).catch(() => null)
-      : null;
+    if (!character) return null;
+    const fkind = placement.fkind ?? character.fkind;
+    return fighterImage(character, fkind, scene).then((image) => {
+      ready += 1;
+      onProgress?.(ready);
+      return image;
+    });
   });
   const [background, logo, ...fighters] = await Promise.all([
     loadImage(prebattleSkyUrl).catch(() => null),
     renderGameLogo().catch(() => loadImage(logoFallbackUrl).catch(() => null)),
     ...fighterPromises,
   ]);
-  drawBackdrop(context, background);
+  drawBackdrop(context, background, scene.backdrop);
   placements.forEach((placement, index) => {
     if (fighters[index]) drawFighterShadow(context, OG_ROSTER_SLOTS[index], placement);
   });
@@ -370,6 +422,8 @@ export default function OgStudio() {
   const [characters, setCharacters] = useState([]);
   const [placements, setPlacements] = useState([]);
   const [logoPlacement, setLogoPlacement] = useState({ ...DEFAULT_LOGO_PLACEMENT });
+  const [scene, setScene] = useState({ ...DEFAULT_SCENE });
+  const [renderProgress, setRenderProgress] = useState(0);
   const [selectedIndex, setSelectedIndex] = useState(OG_ROSTER_SLOTS.length - 1);
   const [selectedTarget, setSelectedTarget] = useState("fighter");
   const [status, setStatus] = useState("Loading your roster…");
@@ -401,6 +455,7 @@ export default function OgStudio() {
         setCharacters(roster);
         setPlacements(restored?.placements || freshPlacements(roster));
         setLogoPlacement(restored?.logoPlacement || { ...DEFAULT_LOGO_PLACEMENT });
+        setScene(restored?.scene || { ...DEFAULT_SCENE });
         setStatus(roster.length ? "" : "No generated fighters are available yet.");
       })
       .catch((error) => {
@@ -413,6 +468,7 @@ export default function OgStudio() {
     if (!placements.length || !canvasRef.current) return;
     const version = ++renderVersionRef.current;
     setModelsLoading(true);
+    setRenderProgress(0);
     Promise.resolve(document.fonts?.ready).then(async () => {
       if (version !== renderVersionRef.current) return;
       const buffer = document.createElement("canvas");
@@ -422,8 +478,12 @@ export default function OgStudio() {
         placements,
         charactersBySlug,
         logoPlacement,
+        scene,
         selectedIndex,
         selectedTarget,
+        onProgress: (ready) => {
+          if (version === renderVersionRef.current) setRenderProgress(ready);
+        },
       });
       if (version !== renderVersionRef.current || !canvasRef.current) return;
       const context = canvasRef.current.getContext("2d");
@@ -435,12 +495,12 @@ export default function OgStudio() {
       setModelsLoading(false);
       setStatus(error.message || "Could not render the in-game fighters.");
     });
-  }, [placements, charactersBySlug, logoPlacement, selectedIndex, selectedTarget]);
+  }, [placements, charactersBySlug, logoPlacement, scene, selectedIndex, selectedTarget]);
 
   useEffect(() => {
     if (!placements.length) return;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ placements, logoPlacement }));
-  }, [placements, logoPlacement]);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ placements, logoPlacement, scene }));
+  }, [placements, logoPlacement, scene]);
 
   function updateSelected(changes) {
     setPlacements((current) => current.map((placement, index) => (
@@ -464,7 +524,7 @@ export default function OgStudio() {
       const canvas = document.createElement("canvas");
       canvas.width = OG_IMAGE_WIDTH;
       canvas.height = OG_IMAGE_HEIGHT;
-      await renderArtwork(canvas, { placements, charactersBySlug, logoPlacement });
+      await renderArtwork(canvas, { placements, charactersBySlug, logoPlacement, scene });
       downloadCanvas(canvas);
       setStatus("Downloaded a 1200 × 630 PNG.");
     } catch (error) {
@@ -645,7 +705,11 @@ export default function OgStudio() {
       <div className="og-studio-layout">
         <section className="og-stage-panel" aria-label="Open Graph image preview">
           <div className="og-stage-toolbar">
-            <div><i className={modelsLoading ? "is-loading" : undefined} /> {modelsLoading ? "Rendering game models" : "Live composition"}</div>
+            <div><i className={modelsLoading ? "is-loading" : undefined} /> {modelsLoading
+              ? (scene.renderer === "engine"
+                ? `Rendering in engine · ${renderProgress}/${placements.filter((placement) => placement.slug).length}`
+                : "Rendering game models")
+              : "Live composition"}</div>
             <span>Drag to move · drag a corner to resize</span>
           </div>
           <div className="og-canvas-wrap">
@@ -765,6 +829,25 @@ export default function OgStudio() {
                 </button>
               </>
             )}
+          </section>
+
+          <section className="og-control-section">
+            <div className="og-section-kicker">Scene</div>
+            <div className="og-scene-controls">
+              <label className="og-field og-body-select">
+                <span>Backdrop</span>
+                <select value={scene.backdrop} onChange={(event) => setScene((current) => ({ ...current, backdrop: event.target.value }))}>
+                  {BACKDROPS.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}
+                </select>
+              </label>
+              <label className="og-field og-body-select">
+                <span>Fighters</span>
+                <select value={scene.renderer} onChange={(event) => setScene((current) => ({ ...current, renderer: event.target.value }))}>
+                  {RENDERERS.map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}
+                </select>
+              </label>
+            </div>
+            <p className="og-scene-help">In-engine renders boot the native game once per fighter (~15 s each, cached); anything it can't render falls back to the quick preview.</p>
           </section>
 
           <section className="og-control-section og-export-controls">
