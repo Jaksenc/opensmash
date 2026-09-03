@@ -53,7 +53,7 @@ assert_clean_source() {
 # if a file included by either Docker context could differ from a commit.
 assert_clean_source "$WORKSPACE_ROOT/pipeline" pipeline \
   web-prototype pipeline skels assets/portrait_style_refs assets/tpose_style_ref
-assert_clean_source "$BATTLESHIP_ROOT" BattleShip web scripts port/css_icons torch
+assert_clean_source "$BATTLESHIP_ROOT" BattleShip web scripts port/css_icons torch decomp
 
 # The engine package no longer ships the ROM-derived archive; the browser
 # builds it with Torch compiled to wasm (BattleShip/docs/web_rom_extraction.md).
@@ -65,6 +65,17 @@ if ! command -v emcmake >/dev/null 2>&1; then
   exit 2
 fi
 "$BATTLESHIP_ROOT/scripts/build_torch_wasm.sh"
+
+# Rebuild the engine itself before packaging. package_web.sh only copies
+# whatever build-wasm holds, so without this a deploy after a decomp bump
+# shipped whichever wasm was last built by hand (seen 2026-09-03: the VS card
+# change missed a deploy). The configured build tree is required; ninja is a
+# no-op when nothing changed.
+if [[ ! -f "$BATTLESHIP_ROOT/build-wasm/build.ninja" ]]; then
+  echo "BattleShip/build-wasm is not configured; see BattleShip/docs/web_dev_harness.md." >&2
+  exit 2
+fi
+ninja -C "$BATTLESHIP_ROOT/build-wasm" BattleShip.js
 
 # Always regenerate the complete engine package. package_web.sh derives one
 # version from every runtime input and preserves separately built bundles.
