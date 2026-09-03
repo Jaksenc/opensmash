@@ -1034,6 +1034,9 @@ export default function App() {
         return;
       }
       if (event.data?.type === ENGINE_ASSET_ERROR_MESSAGE) {
+        // A frame we already closed (fast click on Close/another launch) can
+        // still post as its aborted fetches reject. Only the live engine counts.
+        if (event.source !== engineRef.current?.contentWindow) return;
         reportEngineAssetError(new Error(String(event.data.message || "unknown error")));
       }
     }
