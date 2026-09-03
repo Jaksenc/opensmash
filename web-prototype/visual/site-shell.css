@@ -2,10 +2,12 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { min-height: 100%; }
   @media (hover: hover) and (pointer: fine) {
-    /* Hide the native cursor only while the glove is actually standing in for
-       it; when the glove is poofed away the browser cursor is the fallback. */
-    html.is-custom-cursor-ready:not(.is-glove-hidden),
-    html.is-custom-cursor-ready:not(.is-glove-hidden) * { cursor: none !important; }
+    /* Static on purpose: any rule keyed on a toggling root class forces a
+       style recalc of every roster tile (~25ms) on each poof. While the glove
+       is poofed away, site-hardware.js hands the browser cursor back with an
+       inline style on just the element under the pointer. */
+    html.is-custom-cursor-ready,
+    html.is-custom-cursor-ready * { cursor: none !important; }
     html.is-custom-cursor-ready .launch-flow-rom-copy { cursor: pointer !important; }
   }
   html { background: #000; }
@@ -650,7 +652,6 @@
     image-rendering: auto;
   }
   body.is-launch-flow-open { overflow: hidden; }
-  body.is-launch-flow-open #glove-canvas { z-index: 1800; }
   .launch-flow-overlay {
     position: fixed;
     inset: 0;
@@ -1303,7 +1304,10 @@
     position: fixed; inset: 0;
     width: 100%; height: 100%;
     pointer-events: none;
-    z-index: 1000;
+    /* The glove is the cursor, so it must never sit under a modal, overlay,
+       or error surface; while it is hidden behind one the page still hides
+       the native cursor. Keep it above every other fixed layer. */
+    z-index: 9000;
   }
   #crt-viewport-canvas {
     position: fixed;

@@ -712,6 +712,7 @@ let glovePresence = 1;        // 0 = poofed away, 1 = fully present
 let glovePresenceVel = 0;
 let glovePresenceTarget = 1;
 let gloveHidden = false;
+const PRESENCE_FLOOR = 0.002;
 const PUFF_COUNT = 7;
 const PUFF_LIFE = 0.42;
 const puffGeometry = new THREE.CircleGeometry(1, 10);
@@ -756,17 +757,59 @@ function updatePoof(dt) {
   const K = 320, D = gloveHidden ? 34 : 22;
   glovePresenceVel += ((glovePresenceTarget - glovePresence) * K - glovePresenceVel * D) * dt;
   glovePresence = Math.max(0, glovePresence + glovePresenceVel * dt);
-  if (gloveBaseScale) glove.scale.setScalar(gloveBaseScale * glovePresence);
+  // Never let the glove's world scale approach zero asymptotically. The
+  // skinned hand re-inverts its world matrix every frame, and a denormal
+  // determinant overflows that inverse into NaN, which then feeds the
+  // fingertip pin and poisons the rig permanently. Snap to exactly zero
+  // once the poof is done, hide the hand, and keep the scale off zero.
+  if (glovePresenceTarget === 0 && glovePresence < PRESENCE_FLOOR) {
+    glovePresence = 0;
+    glovePresenceVel = 0;
+  }
+  hand.visible = glovePresence > 0;
+  if (gloveBaseScale) {
+    glove.scale.setScalar(gloveBaseScale * Math.max(glovePresence, PRESENCE_FLOOR));
+  }
 }
 
-function setGloveHidden(hidden, { silent = false } = {}) {
+// Ring buffer of the last hidden/shown transitions with their trigger, for
+// field diagnosis: dump window.__dbg.gloveLog when the cursor goes missing.
+const gloveLog = [];
+function logGloveTransition(hidden, reason) {
+  gloveLog.push({
+    t: Math.round(performance.now()), hidden, reason,
+    x: lastPointer.x, y: lastPointer.y, inside: lastPointer.inside,
+    scrollY: window.scrollY, body: document.body.className,
+    presence: Number(glovePresence.toFixed(2)),
+  });
+  if (gloveLog.length > 40) gloveLog.shift();
+}
+
+// While the glove is poofed away the user still needs a cursor. The
+// stylesheet hides the native one everywhere (static rules, see
+// site-shell.css), so the fallback is an inline override on just the element
+// under the pointer: one style write, no document-wide recalc.
+let fallbackCursorEl = null;
+function setFallbackCursor(el) {
+  if (el === fallbackCursorEl) return;
+  if (fallbackCursorEl) fallbackCursorEl.style.removeProperty('cursor');
+  fallbackCursorEl = el instanceof HTMLElement || el instanceof SVGElement ? el : null;
+  if (fallbackCursorEl) fallbackCursorEl.style.setProperty('cursor', 'auto', 'important');
+}
+function syncFallbackCursor(target) {
+  if (!gloveHidden || !lastPointer.inside) { setFallbackCursor(null); return; }
+  if (target === undefined && Number.isFinite(lastPointer.x)) {
+    target = document.elementFromPoint(lastPointer.x, lastPointer.y);
+  }
+  setFallbackCursor(target || null);
+}
+
+function setGloveHidden(hidden, { silent = false, reason = 'unspecified', target } = {}) {
   if (hidden === gloveHidden) return;
+  logGloveTransition(hidden, reason);
   gloveHidden = hidden;
   glovePresenceTarget = hidden ? 0 : 1;
-  // The native cursor is suppressed only while the glove stands in for it.
-  // If the glove is poofed away (or its state is ever stale), the page falls
-  // back to the browser cursor instead of leaving the user with nothing.
-  document.documentElement.classList.toggle('is-glove-hidden', hidden);
+  syncFallbackCursor(target);
   const snap = prefersReducedMotion || silent;
   if (glove.visible && !snap) spawnPoof(mouse.x, mouse.y);
   if (snap) { glovePresence = glovePresenceTarget; glovePresenceVel = 0; }
@@ -786,18 +829,24 @@ function pointerShouldPoof(target, clientX, clientY) {
 // all change the answer without producing a pointer move, so each of those
 // re-runs the same decision against the last position.
 const lastPointer = { x: NaN, y: NaN, inside: false };
-function syncGloveHidden() {
+function syncGloveHidden(reason = 'sync') {
   const present = lastPointer.inside &&
     Number.isFinite(lastPointer.x) && Number.isFinite(lastPointer.y);
-  if (!present) { setGloveHidden(true); return; }
+  if (!present) { setGloveHidden(true, { reason: `${reason}:pointer-outside` }); return; }
   const target = document.elementFromPoint(lastPointer.x, lastPointer.y);
-  setGloveHidden(pointerShouldPoof(target, lastPointer.x, lastPointer.y));
+  const label = target ? `${target.tagName.toLowerCase()}${target.id ? '#' + target.id : ''}` : 'null';
+  setGloveHidden(pointerShouldPoof(target, lastPointer.x, lastPointer.y),
+    { reason: `${reason}:${label}`, target });
+  syncFallbackCursor(target);
 }
 let gloveSyncQueued = false;
-function scheduleGloveSync() {
+let gloveSyncReason = 'sync';
+function scheduleGloveSync(eventOrReason) {
+  gloveSyncReason = typeof eventOrReason === 'string' ? eventOrReason
+    : eventOrReason?.type || (Array.isArray(eventOrReason) ? 'mutation' : 'sync');
   if (gloveSyncQueued) return;
   gloveSyncQueued = true;
-  requestAnimationFrame(() => { gloveSyncQueued = false; syncGloveHidden(); });
+  requestAnimationFrame(() => { gloveSyncQueued = false; syncGloveHidden(gloveSyncReason); });
 }
 
 function syncCustomCursorAvailability() {
@@ -2014,7 +2063,9 @@ new GLTFLoader().load(cursorModelUrl, (gltf) => {
   syncCustomCursorAvailability();
 });
 
-window.__dbg = { scene, camera, rt, renderer, bones, rigs, hand, wrist, glove,
+window.__dbg = { scene, camera, rt, renderer, bones, rigs, hand, wrist, glove, gloveLog,
+  gloveState: () => ({ hidden: gloveHidden, presence: glovePresence, inside: lastPointer.inside,
+    fallback: fallbackCursorEl?.tagName }),
   qPoint, qGrab, capsules, cartridgeRig, cartridgeVisual,
   consoleRig, consoleVisual, funLetterMaterials };
 
@@ -2311,7 +2362,7 @@ function updateTargetFromEmbeddedGame(event) {
   lastPointer.inside = true;
   if (data.kind === 'down') setHandCursorPressed(true);
   if (data.kind === 'move' && Number(data.buttons) === 0) setHandCursorPressed(false);
-  setGloveHidden(true);
+  setGloveHidden(true, { reason: `game-frame:${data.kind}` });
 }
 
 function updateCursorFromPageEvent(event) {
@@ -2322,14 +2373,19 @@ function updateCursorFromPageEvent(event) {
     if (event.relatedTarget === null) {
       lastPointer.inside = false;
       setHandCursorPressed(false);
-      syncGloveHidden();
+      syncGloveHidden(`${event.type}:${event.target?.tagName?.toLowerCase() || '?'}`);
     }
     return;
   }
   lastPointer.inside = true;
   if (event.type === 'pointerover' || event.type === 'pointermove' ||
       event.type === 'mouseover' || event.type === 'mousemove') {
-    setGloveHidden(pointerShouldPoof(event.target, event.clientX, event.clientY));
+    const target = event.target;
+    setGloveHidden(pointerShouldPoof(target, event.clientX, event.clientY), {
+      reason: `${event.type}:${target?.tagName?.toLowerCase() || '?'}${target?.id ? '#' + target.id : ''}`,
+      target,
+    });
+    if (gloveHidden) syncFallbackCursor(target);
   }
   if (event.type === 'pointerdown' || event.type === 'mousedown') {
     setHandCursorPressed(true);
@@ -2362,9 +2418,9 @@ document.addEventListener('visibilitychange', () => {
     // Frames stop while hidden, so snap away without a puff; the return
     // re-derives the state and pops the glove back in where the pointer is.
     setHandCursorPressed(false);
-    setGloveHidden(true, { silent: true });
+    setGloveHidden(true, { silent: true, reason: 'visibilitychange:hidden' });
   } else {
-    syncGloveHidden();
+    syncGloveHidden('visibilitychange:visible');
   }
 });
 // Layout and mode changes move the "should poof" boundary under a still pointer.
@@ -2548,8 +2604,26 @@ function healMotionState() {
   for (const f of rigs) {
     if (!Number.isFinite(f.jig.a) || !Number.isFinite(f.jig.v)) healthy = false;
   }
-  if (healthy) return;
+  // The skinned mesh carries its own state: the fingertip pin offset and the
+  // per-frame inverse bind matrix. Either going non-finite hides the hand
+  // while every other value looks fine.
+  const rigPoisoned = Boolean(mesh) && (
+    !Number.isFinite(mesh.position.x) || !Number.isFinite(mesh.position.y) ||
+    !Number.isFinite(mesh.position.z) ||
+    !mesh.bindMatrixInverse.elements.every(Number.isFinite) ||
+    !glove.scale.x || !Number.isFinite(glove.scale.x));
+  if (healthy && !rigPoisoned) return;
   console.warn('[hand-cursor] non-finite motion state; resetting the rig');
+  if (mesh) {
+    mesh.position.set(0, 0, 0);
+    if (gloveBaseScale) {
+      glove.scale.setScalar(gloveBaseScale * Math.max(glovePresenceTarget, PRESENCE_FLOOR));
+    } else {
+      glove.scale.setScalar(1);
+    }
+    glove.updateMatrixWorld(true);
+    pinPointerTip();
+  }
   if (!Number.isFinite(mouse.x) || !Number.isFinite(mouse.y)) mouse.set(0, 0);
   resetPointerMotion();
   rot.x = rot.y = rot.z = rot.vx = rot.vy = rot.vz = 0;

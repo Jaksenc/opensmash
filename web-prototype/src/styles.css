@@ -228,7 +228,6 @@ main { width: min(1600px, calc(100% - 40px)); margin: 0 auto; }
   overscroll-behavior: contain;
 }
 body.is-create-experience-open { overflow: hidden; }
-body.is-create-experience-open #glove-canvas { z-index: 1800; }
 .retro-home .create-experience-backdrop,
 .retro-home .create-experience-backdrop button,
 .retro-home .create-experience-backdrop input,
@@ -1163,8 +1162,6 @@ body.retro-home::before {
   filter: none;
   -webkit-font-smoothing: none;
 }
-body.is-about-open #glove-canvas,
-body.is-creation-paused-open #glove-canvas { z-index: 1800; }
 .retro-home .about-overlay,
 .retro-home .about-overlay button,
 .retro-home .creation-paused-overlay,
@@ -1177,7 +1174,6 @@ body.is-creation-paused-open #glove-canvas { z-index: 1800; }
 .retro-home .advanced-overlay button,
 .retro-home .advanced-overlay input,
 .retro-home .advanced-overlay select,
-body.is-advanced-open #glove-canvas { z-index: 1800; }
 
 /* Touch controls stay mounted with the game but appear only on mobile-sized
    or coarse-pointer devices. Every interactive target meets the 44px minimum. */
@@ -1215,7 +1211,6 @@ body.is-trailer-cinematic .arena-surface {
 }
 body.is-trailer-mode .game-fullscreen-control { display: none; }
 body.is-trailer-mode.is-launch-flow-open .launch-flow-overlay { z-index: 3000; }
-body.is-trailer-mode.is-launch-flow-open #glove-canvas { z-index: 3200; }
 .trailer-cinematic-control {
   position: fixed;
   z-index: 2600;
