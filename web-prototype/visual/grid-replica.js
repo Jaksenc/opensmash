@@ -37,6 +37,22 @@ const GRID_COLUMN_BREAKPOINTS = Object.freeze([
   { minWidth: 0, columns: 4 }
 ]);
 const RASTER_SCALE = 2;
+
+// `::search-text:current` (the active find-in-page match) can't live in
+// site-shell.css: Lightning CSS refuses the selector and fails the build.
+// Insert it through the CSSOM instead, which browsers without the feature
+// simply reject.
+function installFindCurrentRule() {
+  try {
+    const sheet = new CSSStyleSheet();
+    sheet.insertRule('.replica-find-word::search-text:current { background-color: rgba(255, 128, 44, .7); }');
+    document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
+  } catch {
+    // No ::search-text:current support (or no constructable sheets): the
+    // plain ::search-text highlight still applies.
+  }
+}
+installFindCurrentRule();
 const STONE_BACKGROUND_SEED = 3075641479;
 const STATIC_BLEND = 0x30 / 255;
 const CAPTION_CHARS = /[^A-Z. ]/g;
