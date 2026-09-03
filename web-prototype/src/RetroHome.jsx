@@ -6,6 +6,7 @@ import ModalPage from "./ModalPage.jsx";
 import {
   controlEmbeddedTrailer,
   disableEmbeddedTrailerCaptions,
+  subscribeEmbeddedTrailer,
   TRAILER_EMBED_URL,
 } from "./embedded-trailer.js";
 import { startHomeRuntime } from "./visual-runtime.js";
@@ -222,6 +223,7 @@ export default function RetroHome({
   onCreate,
   onFullscreen,
   onTrailerControl,
+  audioUnlocked = false,
   onResetRom,
   onSignOut,
   pageError,
@@ -236,7 +238,7 @@ export default function RetroHome({
 }) {
   const aboutCancelRef = useRef(null);
   const introVideoRef = useRef(null);
-  const trailerInteractedRef = useRef(false);
+  const [trailerPlayerReady, setTrailerPlayerReady] = useState(false);
   const moreMenuRef = useRef(null);
   const gameSurfaceRef = useRef(null);
   const cinematicFirstRectRef = useRef(null);
@@ -329,37 +331,33 @@ export default function RetroHome({
     return () => document.body.classList.remove("is-game-running");
   }, [engine]);
 
-  useEffect(() => {
-    const player = introVideoRef.current;
-    if (!player) return;
-    controlEmbeddedTrailer(player, launchFlowOpen || engine ? "pauseVideo" : "playVideo");
-  }, [engine, launchFlowOpen]);
-
-  // Muted autoplay is reliable; when sound is enabled, retry unmuting on the
-  // next user gesture so the YouTube player satisfies browser autoplay rules.
+  // The YouTube iframe ignores API commands until its player reports ready,
+  // which happens after the iframe's own load event. Subscribe to its events
+  // and only drive it once ready (re-sent on every reload of the iframe).
   useEffect(() => {
     const player = introVideoRef.current;
     if (!player) return undefined;
-    if (!soundOn) {
-      controlEmbeddedTrailer(player, "mute");
-      return undefined;
-    }
-    const gestureEvents = ["pointerdown", "keydown", "touchstart"];
-    const removeGestureListeners = () => {
-      for (const type of gestureEvents) document.removeEventListener(type, unmuteOnGesture, true);
+    const onMessage = (event) => {
+      if (event.source !== player.contentWindow) return;
+      let data;
+      try { data = typeof event.data === "string" ? JSON.parse(event.data) : event.data; }
+      catch { return; }
+      if (data?.event === "onReady") setTrailerPlayerReady(true);
     };
-    function unmuteOnGesture() {
-      trailerInteractedRef.current = true;
-      removeGestureListeners();
-      controlEmbeddedTrailer(player, "unMute");
-      if (!engine) controlEmbeddedTrailer(player, "playVideo");
-    }
-    if (trailerInteractedRef.current) {
-      controlEmbeddedTrailer(player, "unMute");
-    }
-    for (const type of gestureEvents) document.addEventListener(type, unmuteOnGesture, true);
-    return removeGestureListeners;
-  }, [engine, soundOn]);
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, []);
+
+  // Desired trailer state is a pure function of: player ready, game running,
+  // launch overlay open, sound preference, and whether the page has had its
+  // first user gesture (audible playback needs one; muted autoplay does not).
+  useEffect(() => {
+    const player = introVideoRef.current;
+    if (!player || !trailerPlayerReady) return;
+    const audible = soundOn && audioUnlocked;
+    controlEmbeddedTrailer(player, audible ? "unMute" : "mute");
+    controlEmbeddedTrailer(player, launchFlowOpen || engine ? "pauseVideo" : "playVideo");
+  }, [audioUnlocked, engine, launchFlowOpen, soundOn, trailerPlayerReady]);
 
   function toggleMobileControls(event) {
     if (!mobileLayout) return;
@@ -505,14 +503,9 @@ export default function RetroHome({
                 referrerPolicy="strict-origin-when-cross-origin"
                 allowFullScreen
                 onLoad={(event) => {
+                  setTrailerPlayerReady(false);
                   disableEmbeddedTrailerCaptions(event.currentTarget);
-                  controlEmbeddedTrailer(
-                    event.currentTarget,
-                    soundOn && trailerInteractedRef.current ? "unMute" : "mute",
-                  );
-                  if (!engine && !launchFlowOpen) {
-                    controlEmbeddedTrailer(event.currentTarget, "playVideo");
-                  }
+                  subscribeEmbeddedTrailer(event.currentTarget);
                 }}
               />
               <img className="intro-video-rule-layer" alt="" aria-hidden="true" />

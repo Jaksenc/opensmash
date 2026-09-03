@@ -341,6 +341,12 @@ export default function App() {
   const [trailerEngineReady, setTrailerEngineReady] = useState(false);
   const [trailerEngineStarted, setTrailerEngineStarted] = useState(false);
   const [soundOn, setSoundOn] = useState(() => localStorage.getItem("opensmash-sound") !== "off");
+  // Browsers only allow audible playback after a user gesture. Track the very
+  // first one at the document level (capture phase, so nothing can swallow it)
+  // and fan it out to every audio source: trailer iframe, flow music, engine
+  // AudioContext. The sound preference stays the single override.
+  const [audioUnlocked, setAudioUnlocked] = useState(false);
+  const firstGestureTargetRef = useRef(null);
   const [crtOn, setCrtOn] = useState(readCrtEnabled);
   const [advancedOptions, setAdvancedOptions] = useState(loadAdvancedOptions);
   const gamepads = useGamepads();
@@ -407,6 +413,19 @@ export default function App() {
     return () => window.clearTimeout(timer);
   }, [pageErrorToast]);
   useUiSounds(soundOn);
+
+  useEffect(() => {
+    const gestureEvents = ["pointerdown", "keydown", "touchstart"];
+    function markGesture(event) {
+      firstGestureTargetRef.current = event.target;
+      setAudioUnlocked(true);
+      for (const type of gestureEvents) document.removeEventListener(type, markGesture, true);
+    }
+    for (const type of gestureEvents) document.addEventListener(type, markGesture, true);
+    return () => {
+      for (const type of gestureEvents) document.removeEventListener(type, markGesture, true);
+    };
+  }, []);
   // The launch flow, About, and Settings overlays share one music bed.
   const overlayMusicActive = flowMusicActive || advancedOpen || aboutOpen;
   const startFlowMusic = useFlowMusic(overlayMusicActive && !engine, soundOn);
@@ -648,7 +667,7 @@ export default function App() {
       cancelled = true;
       window.clearTimeout(retry);
     };
-  }, [engine, soundOn]);
+  }, [audioUnlocked, engine, soundOn]);
 
   // Re-plan the running game's ports when the controller settings change;
   // the shell (window.controllerPorts) handles hot-plug on its own.
@@ -1048,7 +1067,17 @@ export default function App() {
     });
   }
 
-  function toggleSound() {
+  // When sound is already "on" but the page has not been interacted with yet,
+  // the first press on the sound button unlocks audio rather than flipping the
+  // preference off. Detect that by checking whether the page's first gesture
+  // landed on this very button.
+  function toggleSound(event) {
+    const firstTarget = firstGestureTargetRef.current;
+    if (soundOn && firstTarget && event?.currentTarget?.contains?.(firstTarget)) {
+      firstGestureTargetRef.current = null;
+      return;
+    }
+    firstGestureTargetRef.current = null;
     setSoundPreference((current) => !current);
   }
 
@@ -1204,6 +1233,7 @@ export default function App() {
           onSignOut={signOutUser}
           pageError={pageError}
           ready={!loadingCharacters}
+          audioUnlocked={audioUnlocked}
           soundOn={soundOn}
           trailerCinematic={trailerCinematic}
           trailerEngineReady={trailerEngineReady}
@@ -1273,7 +1303,7 @@ export default function App() {
             data-ui-sound-toggle
             onClick={toggleSound}
           >
-            <i /> Sound {soundOn ? "on" : "off"}
+            <i /> {soundOn ? (audioUnlocked ? "Sound on" : "Enable sound") : "Sound off"}
           </button>
           <button
             className={`advanced-button ${hasAdvancedOverrides(advancedOptions) ? "is-active" : ""}`}

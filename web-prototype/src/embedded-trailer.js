@@ -20,3 +20,11 @@ export function disableEmbeddedTrailerCaptions(player) {
   controlEmbeddedTrailer(player, "setOption", ["captions", "track", {}]);
   controlEmbeddedTrailer(player, "unloadModule", ["captions"]);
 }
+
+/** Ask the player to stream state events (onReady, infoDelivery) to this window. */
+export function subscribeEmbeddedTrailer(player) {
+  player?.contentWindow?.postMessage(JSON.stringify({
+    event: "listening",
+    id: player.id || "intro-video",
+  }), YOUTUBE_ORIGIN);
+}
