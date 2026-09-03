@@ -40,8 +40,11 @@ import {
   createFullBootIntroConfig,
 } from "./launch-options.js";
 import {
+  DEMO_CPU_LEVEL,
+  DEMO_STAGE,
   TRAILER_CPU_LEVEL,
   TRAILER_STAGE,
+  createDemoMatchAction,
   createTrailerIntroAction,
   createTrailerMatchAction,
 } from "./trailer-preset.js";
@@ -322,6 +325,13 @@ export default function App() {
   const [trailerMode] = useState(() => (
     !isCreatePage && new URLSearchParams(window.location.search).get("trailer") === "1"
   ));
+  // `?demo=1`: fixed funny opponents on every pick, T hands off to the trailer.
+  const [demoMode] = useState(() => (
+    !isCreatePage && new URLSearchParams(window.location.search).get("demo") === "1"
+  ));
+  const [demoTrailer, setDemoTrailer] = useState(false);
+  // Demo background music (M toggles); always stops when a match starts.
+  const [demoMusic, setDemoMusic] = useState(false);
   const [trailerRecording] = useState(() => (
     new URLSearchParams(window.location.search).get("record") === "1"
   ));
@@ -377,6 +387,8 @@ export default function App() {
   const previousFighterJobStatusesRef = useRef(new Map());
   const trailerBootStartedRef = useRef(false);
   const setPageError = useCallback((value) => {
+    // Live demos stay clean: no error/status toasts over the show.
+    if (demoMode && value) return;
     setPageErrorToast((current) => {
       const currentMessage = current?.message || "";
       const message = typeof value === "function" ? value(currentMessage) : value;
@@ -384,13 +396,13 @@ export default function App() {
         ? { message: String(message), id: (current?.id || 0) + 1 }
         : null;
     });
-  }, []);
+  }, [demoMode]);
   const pageError = pageErrorToast?.message || "";
 
   useLayoutEffect(() => {
-    if (!trailerMode || !window.location.search) return;
+    if (!(trailerMode || demoMode) || !window.location.search) return;
     window.history.replaceState(null, "", window.location.pathname + window.location.hash);
-  }, [trailerMode]);
+  }, [demoMode, trailerMode]);
 
   // A handoff QR opens the receiver directly, then removes the one-time code
   // from the URL so a reload cannot consume it twice. Keep the code in state
@@ -459,7 +471,20 @@ export default function App() {
   }, []);
   // The launch flow, About, and Settings overlays share one music bed.
   const overlayMusicActive = flowMusicActive || advancedOpen || aboutOpen || Boolean(detailsJobId);
-  const startFlowMusic = useFlowMusic(overlayMusicActive && !engine, soundOn && pageVisible);
+  const startFlowMusic = useFlowMusic(
+    (overlayMusicActive || (demoMode && demoMusic)) && !engine,
+    soundOn && pageVisible,
+  );
+  useEffect(() => {
+    if (engine) setDemoMusic(false);
+  }, [engine]);
+  function toggleDemoMusic() {
+    if (engine) return;
+    setDemoMusic((active) => {
+      if (!active) startFlowMusic();
+      return !active;
+    });
+  }
   useEffect(() => {
     const syncFlowMusic = (event) => {
       const open = Boolean(event.detail?.open);
@@ -736,6 +761,10 @@ export default function App() {
     function syncFullscreenState() {
       const fullscreenElement = document.fullscreenElement || document.webkitFullscreenElement;
       setIsFullscreen(Boolean(fullscreenElement) && fullscreenElement === fullscreenTarget());
+      if (!fullscreenElement) setDemoTrailer((active) => {
+        if (active) setTrailerCinematic(false);
+        return false;
+      });
     }
 
     document.addEventListener("fullscreenchange", syncFullscreenState);
@@ -756,6 +785,14 @@ export default function App() {
         bootMode: "free-for-all",
         stage: TRAILER_STAGE,
         opponentLevel: TRAILER_CPU_LEVEL,
+      };
+    }
+    if (demoMode && action.type === "character") {
+      return {
+        ...advancedOptions,
+        bootMode: "free-for-all",
+        stage: DEMO_STAGE,
+        opponentLevel: DEMO_CPU_LEVEL,
       };
     }
     return advancedOptions;
@@ -785,6 +822,9 @@ export default function App() {
     }
     if (trailerMode && action.type === "character") {
       return createTrailerMatchAction(action, characters);
+    }
+    if (demoMode && action.type === "character") {
+      return createDemoMatchAction(action, characters);
     }
     if (launchOptions.bootMode === "full-boot") {
       return {
@@ -1164,6 +1204,37 @@ export default function App() {
     }
   }
 
+  // Demo hand-off: the looping trailer takes the whole screen over the live
+  // match, then the engine is torn down once the video is covering it.
+  async function toggleDemoTrailer() {
+    const target = fullscreenTarget();
+    if (!target) return;
+    if (demoTrailer) {
+      const fullscreenElement = document.fullscreenElement || document.webkitFullscreenElement;
+      if (fullscreenElement) {
+        try {
+          const exitFullscreen = document.exitFullscreen || document.webkitExitFullscreen;
+          await exitFullscreen.call(document);
+        } catch {
+          // Fall through to the in-page release.
+        }
+      }
+      setDemoTrailer(false);
+      setTrailerCinematic(false);
+      return;
+    }
+    setDemoTrailer(true);
+    setTrailerCinematic(true);
+    try {
+      const requestFullscreen = target.requestFullscreen || target.webkitRequestFullscreen;
+      await requestFullscreen.call(target, { navigationUI: "hide" });
+    } catch {
+      // No element fullscreen (iPhone Safari): the fixed cinematic shell is enough.
+    }
+    // Let the video cover the match before the engine (and its audio) go away.
+    window.setTimeout(() => setEngine(null), 1100);
+  }
+
   async function runTrailerControl() {
     const target = fullscreenTarget();
     if (!target) return;
@@ -1280,6 +1351,11 @@ export default function App() {
           onCreate={openCreateExperience}
           onFullscreen={toggleFullscreen}
           onTrailerControl={runTrailerControl}
+          demoMode={demoMode}
+          demoMusic={demoMusic}
+          onDemoMusic={toggleDemoMusic}
+          demoTrailer={demoTrailer}
+          onDemoTrailer={toggleDemoTrailer}
           onResetRom={clearVerification}
           onSignOut={signOutUser}
           pageError={pageError}

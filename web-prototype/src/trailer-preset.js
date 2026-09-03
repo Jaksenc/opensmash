@@ -1,5 +1,6 @@
 import { CHARACTER_MESHES, FULL_BOOT_INTRO_CARDS } from "./launch-options.js";
 import trailerConfig from "../config/trailer.js";
+import demoConfig from "../config/demo.js";
 
 export const TRAILER_CONFIG = trailerConfig;
 export const TRAILER_INTRO_SLUGS = trailerConfig.introFighters;
@@ -63,13 +64,13 @@ export function createTrailerIntroAction(action, characters) {
   };
 }
 
-export function createTrailerMatchAction(action, characters) {
+export function createTrailerMatchAction(action, characters, opponentSlugs = TRAILER_OPPONENT_SLUGS) {
   const selectedSlugs = new Set([
     action.character?.slug,
     ...(action.picks || []).map((pick) => pick?.slug),
   ].filter(Boolean));
   const opponentCount = Math.max(0, 4 - selectedSlugs.size);
-  const configuredSlugs = TRAILER_OPPONENT_SLUGS
+  const configuredSlugs = opponentSlugs
     .filter((slug) => !selectedSlugs.has(slug))
     .slice(0, opponentCount);
   const opponents = configuredSlugs.map((slug) => characterBySlug(characters, slug));
@@ -85,4 +86,32 @@ export function createTrailerMatchAction(action, characters) {
     ...action,
     opponents: opponents.map((opponent) => ({ type: "character", character: opponent })),
   };
+}
+
+// `?demo=1`: same deterministic-match path as the trailer, own opponent pool.
+export const DEMO_CONFIG = demoConfig;
+export const DEMO_STAGE = demoConfig.match.stage;
+export const DEMO_CPU_LEVEL = demoConfig.match.cpuLevel;
+export const DEMO_TRAILER_HOTKEY = demoConfig.trailerHotkey;
+export const DEMO_MUSIC_HOTKEY = demoConfig.musicHotkey;
+
+export function createDemoMatchAction(action, characters) {
+  const selectedSlugs = new Set([
+    action.character?.slug,
+    ...(action.picks || []).map((pick) => pick?.slug),
+  ].filter(Boolean));
+  const opponentCount = Math.max(0, 4 - selectedSlugs.size);
+  const opponents = demoConfig.match.opponents
+    .filter((entry) => typeof entry !== "string" || !selectedSlugs.has(entry))
+    .slice(0, opponentCount)
+    .map((entry) => {
+      if (typeof entry !== "string") return { type: "vanilla", fkind: entry.vanilla };
+      const character = characterBySlug(characters, entry);
+      if (!character) throw new Error(`Demo opponent is unavailable: ${entry}`);
+      return { type: "character", character };
+    });
+  if (opponents.length !== opponentCount) {
+    throw new Error(`Demo config needs ${opponentCount} available opponents outside the current picks.`);
+  }
+  return { ...action, opponents };
 }

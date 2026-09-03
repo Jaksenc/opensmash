@@ -9,6 +9,7 @@ import {
   subscribeEmbeddedTrailer,
   TRAILER_EMBED_URL,
 } from "./embedded-trailer.js";
+import { DEMO_MUSIC_HOTKEY, DEMO_TRAILER_HOTKEY } from "./trailer-preset.js";
 import { startHomeRuntime } from "./visual-runtime.js";
 
 const MOBILE_CONTROLS_MEDIA = "(hover: none) and (pointer: coarse)";
@@ -225,6 +226,11 @@ export default function RetroHome({
   onCreate,
   onFullscreen,
   onTrailerControl,
+  demoMode = false,
+  demoMusic = false,
+  onDemoMusic,
+  demoTrailer = false,
+  onDemoTrailer,
   audioActive = false,
   onResetRom,
   onSignOut,
@@ -241,6 +247,8 @@ export default function RetroHome({
   const aboutCancelRef = useRef(null);
   const introVideoRef = useRef(null);
   const [trailerPlayerReady, setTrailerPlayerReady] = useState(false);
+  // Last mute/pause state pushed to the YouTube player; reset per player load.
+  const trailerCommandRef = useRef({ audible: null, paused: null });
   const moreMenuRef = useRef(null);
   const gameSurfaceRef = useRef(null);
   const cinematicFirstRectRef = useRef(null);
@@ -282,11 +290,12 @@ export default function RetroHome({
 
   useLayoutEffect(() => {
     document.body.classList.toggle("is-trailer-mode", trailerMode);
-    document.body.classList.toggle("is-trailer-cinematic", trailerMode && trailerCinematic);
+    document.body.classList.toggle("is-demo-mode", demoMode);
+    document.body.classList.toggle("is-trailer-cinematic", (trailerMode || demoMode) && trailerCinematic);
     return () => {
-      document.body.classList.remove("is-trailer-mode", "is-trailer-cinematic");
+      document.body.classList.remove("is-trailer-mode", "is-demo-mode", "is-trailer-cinematic");
     };
-  }, [trailerCinematic, trailerMode]);
+  }, [demoMode, trailerCinematic, trailerMode]);
 
   useLayoutEffect(() => {
     const first = cinematicFirstRectRef.current;
@@ -323,6 +332,50 @@ export default function RetroHome({
     onTrailerControl?.();
   }
 
+  // Demo hotkey (T): from a running match, FLIP the shell to fullscreen with
+  // the trailer restarted and audible on top; T again (or Esc) releases it.
+  // The engine iframe is same-origin and owns keyboard focus during play, so
+  // listen inside it as well as on the page.
+  const demoHotkeyRef = useRef(null);
+  demoHotkeyRef.current = () => {
+    if (!demoMode || !onDemoTrailer) return;
+    if (!engine && !demoTrailer) return;
+    const surface = gameSurfaceRef.current;
+    if (surface) cinematicFirstRectRef.current = surface.getBoundingClientRect();
+    if (!demoTrailer) {
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      controlEmbeddedTrailer(introVideoRef.current, "seekTo", [0, true]);
+    }
+    onDemoTrailer();
+  };
+  useEffect(() => {
+    if (!demoMode) return undefined;
+    const onKey = (event) => {
+      const key = event.key?.toLowerCase();
+      if ((key !== DEMO_TRAILER_HOTKEY && key !== DEMO_MUSIC_HOTKEY) || event.repeat) return;
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      const tag = event.target?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || event.target?.isContentEditable) return;
+      if (key === DEMO_MUSIC_HOTKEY) onDemoMusic?.();
+      else demoHotkeyRef.current?.();
+    };
+    const frame = engineRef.current;
+    // The iframe's inner Window is replaced on every navigation, so re-attach
+    // on each load (addEventListener is idempotent per listener/window).
+    const frameWindow = () => {
+      try { return frame?.contentWindow?.document ? frame.contentWindow : null; } catch { return null; }
+    };
+    const attachFrame = () => frameWindow()?.addEventListener("keydown", onKey, true);
+    window.addEventListener("keydown", onKey, true);
+    attachFrame();
+    frame?.addEventListener("load", attachFrame);
+    return () => {
+      window.removeEventListener("keydown", onKey, true);
+      frameWindow()?.removeEventListener("keydown", onKey, true);
+      frame?.removeEventListener("load", attachFrame);
+    };
+  }, [demoMode, engine, engineRef, onDemoMusic]);
+
   useEffect(() => {
     if (!ready) return;
     startHomeRuntime().catch((error) => window.openSmashReactBridge?.reportError?.(error));
@@ -356,10 +409,16 @@ export default function RetroHome({
   useEffect(() => {
     const player = introVideoRef.current;
     if (!player || !trailerPlayerReady) return;
-    const audible = soundOn && audioActive;
-    controlEmbeddedTrailer(player, audible ? "unMute" : "mute");
-    controlEmbeddedTrailer(player, launchFlowOpen || engine ? "pauseVideo" : "playVideo");
-  }, [audioActive, engine, launchFlowOpen, soundOn, trailerPlayerReady]);
+    // Demo music owns the audio bed while it plays; the trailer stays silent.
+    const audible = demoTrailer || (soundOn && audioActive && !(demoMode && demoMusic));
+    const paused = Boolean(!demoTrailer && (launchFlowOpen || engine));
+    // Only send commands for state that actually changed: a redundant
+    // playVideo would restart a trailer the viewer paused by hand.
+    const previous = trailerCommandRef.current;
+    if (previous.audible !== audible) controlEmbeddedTrailer(player, audible ? "unMute" : "mute");
+    if (previous.paused !== paused) controlEmbeddedTrailer(player, paused ? "pauseVideo" : "playVideo");
+    trailerCommandRef.current = { audible, paused };
+  }, [audioActive, demoMode, demoMusic, demoTrailer, engine, launchFlowOpen, soundOn, trailerPlayerReady]);
 
   function closeMoreMenu() {
     moreMenuRef.current?.removeAttribute("open");
@@ -487,7 +546,7 @@ export default function RetroHome({
         <section className="intro-video-stage" aria-label="Intro video">
           <div
             ref={gameSurfaceRef}
-            className={`game-surface-shell ${mobileControlsVisible ? "has-mobile-control-deck" : ""} ${immersive ? "is-immersive" : ""} ${trailerCinematic ? "is-cinematic" : ""}`}
+            className={`game-surface-shell ${mobileControlsVisible ? "has-mobile-control-deck" : ""} ${immersive ? "is-immersive" : ""} ${trailerCinematic ? "is-cinematic" : ""} ${demoTrailer ? "is-demo-trailer" : ""}`}
           >
             <div
               className={`intro-video-frame ${engine ? "is-game-running" : ""}`}
@@ -504,6 +563,7 @@ export default function RetroHome({
                 allowFullScreen
                 onLoad={(event) => {
                   setTrailerPlayerReady(false);
+                  trailerCommandRef.current = { audible: null, paused: null };
                   disableEmbeddedTrailerCaptions(event.currentTarget);
                   subscribeEmbeddedTrailer(event.currentTarget);
                 }}

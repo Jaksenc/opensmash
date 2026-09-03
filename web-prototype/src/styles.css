@@ -1210,6 +1210,28 @@ body.is-trailer-cinematic .arena-surface {
   filter: brightness(.35) blur(8px);
 }
 body.is-trailer-mode .game-fullscreen-control { display: none; }
+
+/* `?demo=1` hand-off (T): the looping trailer rises over the live match
+   inside the same fixed cinematic shell, then the engine goes away. */
+body.is-demo-mode .retro-site-header,
+body.is-demo-mode .arena-surface {
+  transition: opacity 620ms ease 180ms, filter 620ms ease 180ms;
+}
+.game-surface-shell.is-demo-trailer .intro-video-frame .intro-video {
+  z-index: 3;
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 700ms ease 250ms;
+}
+/* YouTube only shows its control bar while the pointer is over the player,
+   and its hide timer can't be tuned; in a demo the mouse never reaches it.
+   M / T / the header sound toggle are the controls instead. */
+body.is-demo-mode .intro-video { pointer-events: none; }
+.game-surface-shell.is-demo-trailer .intro-video-frame .intro-game-frame {
+  opacity: 0;
+  transition: opacity 700ms ease 250ms;
+}
+.game-surface-shell.is-demo-trailer .game-fullscreen-control { display: none; }
 body.is-trailer-mode.is-launch-flow-open .launch-flow-overlay { z-index: 3000; }
 .trailer-cinematic-control {
   position: fixed;
