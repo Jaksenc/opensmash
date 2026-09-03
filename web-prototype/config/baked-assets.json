@@ -54794,6 +54794,162 @@
         "base": null,
         "preferredBases": null
       }
+    },
+    {
+      "slug": "willdepue",
+      "assets": {
+        "bundle": {
+          "sha256": "45ff9f8a4906e277d5a0c37a04553a0b321fd927003535ea28ab98242d67513c",
+          "size": 1520720
+        },
+        "metadata": {
+          "sha256": "68c0626fab720a7fd6b085e249fc807125a5b9b2b2821ef8ebdfc9b2b6c17d55",
+          "size": 769
+        },
+        "portrait": {
+          "sha256": "09b256f9d334f2c913439bd79f66e0fe8d78c87266444f1fc173c805d16d8993",
+          "size": 1009756
+        },
+        "portraitTile": {
+          "sha256": "e54e86dca57f33859c9663e3c412eb2e462a92249250192d7f73b31494ddbae7",
+          "size": 12065
+        },
+        "portraitMedium": {
+          "sha256": "ad5a8eb3d31adb038d171f44a51f5eb8e749c096523b2ac31bb17f82daa06c23",
+          "size": 67614
+        },
+        "ui": {
+          "sha256": "e3b64639143dd0ed8951e4ec5f7b0afb31afc7c9cbbdca4ff54661ffd189da19",
+          "size": 12852
+        },
+        "announcer": {
+          "sha256": "7933faeaac74b7759bac494fdf287d46e3d2eda689da8f9260b2311a672d3a31",
+          "size": 75868
+        }
+      },
+      "variants": [
+        "captain",
+        "fox",
+        "kirby",
+        "link",
+        "luigi",
+        "mario",
+        "ness",
+        "pikachu",
+        "purin",
+        "samus"
+      ],
+      "metadata": {
+        "display": "Will DePue",
+        "nameFull": "Will DePue",
+        "short": "DEPUE",
+        "base": null,
+        "preferredBases": null
+      }
+    },
+    {
+      "slug": "davidholz",
+      "assets": {
+        "bundle": {
+          "sha256": "5badbd1bd3c671dc2d74acba5d1460580379a1939f158aac2663e22c8e45a104",
+          "size": 1581364
+        },
+        "metadata": {
+          "sha256": "d147cd1c22aa83053cebf5c86ce990420bfd4fbfa3b78d1a908bfadf1094bccf",
+          "size": 724
+        },
+        "portrait": {
+          "sha256": "367633547365a93f2a70ed2d8b78118aed1a527474ba1dd2a948e7bc12ebc5a2",
+          "size": 974087
+        },
+        "portraitTile": {
+          "sha256": "ac78d0ace147ea217a90fa41eff17091fae4e970e69159cad59da28f53ffdd0c",
+          "size": 13185
+        },
+        "portraitMedium": {
+          "sha256": "41a05f6167c4b105b7327d5e6e4ef570a79d8686b63debe0e42435a7a19aab4c",
+          "size": 81038
+        },
+        "ui": {
+          "sha256": "61071f727d32c150ed68f9bd17071b18ab18ff38bfc80921ce14f6fcae06731c",
+          "size": 12852
+        },
+        "announcer": {
+          "sha256": "345694eee9138c920413cb51df6bf46d73406c5f79655a407c7b5d0a6f3a32b3",
+          "size": 73640
+        }
+      },
+      "variants": [
+        "captain",
+        "fox",
+        "kirby",
+        "link",
+        "luigi",
+        "mario",
+        "ness",
+        "pikachu",
+        "purin",
+        "samus"
+      ],
+      "metadata": {
+        "display": "David Holz",
+        "nameFull": "David Holz",
+        "short": "HOLZ",
+        "base": null,
+        "preferredBases": null
+      }
+    },
+    {
+      "slug": "nikitabier",
+      "assets": {
+        "bundle": {
+          "sha256": "c5b848141d093a0a45564fdddba62056c5a07ee990f3170d814bcb736dff53e8",
+          "size": 1500516
+        },
+        "metadata": {
+          "sha256": "e821373aec6c32a12c6198046119648893427021b7a7731327913a1770924795",
+          "size": 734
+        },
+        "portrait": {
+          "sha256": "c0125ee150e112779fd1b41d751163d0ec646529a0ae98966fef2825b2587f31",
+          "size": 1003849
+        },
+        "portraitTile": {
+          "sha256": "58a5070ad668c5b4cfcb1cbcccbe6f17b4f830349cd3f16e0e263ac456f1ba1d",
+          "size": 12438
+        },
+        "portraitMedium": {
+          "sha256": "75249618a0c4c2e96122bd0fe2109172778b3a101392fcf9f6aa5e09a8e5710a",
+          "size": 76765
+        },
+        "ui": {
+          "sha256": "7cf3be77df7582de5aa6c4f723c0ea2f3101cc8a487aa4058c52e000fc2ddb7f",
+          "size": 12852
+        },
+        "announcer": {
+          "sha256": "7c63f2d90f1ceed9297b839153d1e38152f4da8b6b3e9db8e9ceb92cacf5d1c8",
+          "size": 73640
+        }
+      },
+      "variants": [
+        "captain",
+        "fox",
+        "kirby",
+        "link",
+        "luigi",
+        "mario",
+        "ness",
+        "pikachu",
+        "purin",
+        "samus"
+      ],
+      "metadata": {
+        "display": "Nikita Bier",
+        "nameFull": "Nikita Bier",
+        "short": "BIER",
+        "base": null,
+        "preferredBases": null
+      }
     }
   ]
 }
