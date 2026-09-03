@@ -2940,6 +2940,59 @@ def main():
     if _cur:
         print(f"post-claim weight smoothing: claim boundaries re-diffused"
               + (f", {n_purged2} cross-side verts re-purged" if n_purged2 else ""))
+    # ---- arm-leak prune (general, 2026-09-03): the diffusion above (and
+    # the provider rig before it) leaves a few percent of SHOULDER/arm
+    # weight on torso verts down to waist height — the arm hangs beside
+    # the body in the rest pose, so proximity leaks. Invisible on mild
+    # swings, but any pose that raises the arm past ~90deg (Samus's Win
+    # poses, up-tilt, up-smash) turns 5-30% of a 150deg lever into tens
+    # of units between neighbouring verts: torn shirt side, pants patch
+    # riding up the torso. Mirror of the engine's inject-time wdamp: a
+    # torso-dominant vert (arm weight < 0.5) keeps an arm influence only
+    # near the ROOT end of that influence's own bone (radial keep 1 within
+    # 0.35 bone lengths, gone by 0.7; along-bone keep 1 to t=0.35, gone by
+    # 0.8; smoothstepped, so no new cliffs). --no-armprune disables.
+    if "--no-armprune" not in sys.argv:
+        _segs = {}
+        for _pref in (posx, negx):
+            for _seg0, _seg1 in ((_pref + "Arm", _pref + "ForeArm"),
+                                 (_pref + "ForeArm", _pref + "Hand")):
+                if _seg0 in name_idx and _seg1 in name_idx and _seg0 in bone_map:
+                    _segs[bone_map[_seg0][0]] = (jpos[name_idx[_seg0]], jpos[name_idx[_seg1]])
+            if _pref + "Hand" in name_idx and _pref + "ForeArm" in name_idx and _pref + "Hand" in bone_map:
+                _h = jpos[name_idx[_pref + "Hand"]]; _f = jpos[name_idx[_pref + "ForeArm"]]
+                _segs[bone_map[_pref + "Hand"][0]] = (_h, [2 * _h[k] - _f[k] for k in range(3)])
+        def _sstep(x):
+            x = 0.0 if x < 0.0 else (1.0 if x > 1.0 else x)
+            return x * x * (3.0 - 2.0 * x)
+        n_pruned = 0
+        for _i in range(len(world)):
+            vw = vweights[_i]
+            _asum = sum(w for p, w in vw.items() if p in _segs)
+            if _asum <= 0.0 or _asum >= 0.5:
+                continue
+            _pos = world[_i]
+            vw2 = dict(vw)
+            for p, w in vw.items():
+                if p not in _segs:
+                    continue
+                _a, _b = _segs[p]
+                _ab = [_b[k] - _a[k] for k in range(3)]
+                _L2 = sum(c * c for c in _ab) or 1e-9
+                _ap = [_pos[k] - _a[k] for k in range(3)]
+                _t = sum(_ap[k] * _ab[k] for k in range(3)) / _L2
+                _tc = 0.0 if _t < 0.0 else (1.0 if _t > 1.0 else _t)
+                _r = (sum((_ap[k] - _tc * _ab[k]) ** 2 for k in range(3)) / _L2) ** 0.5
+                _keep = (1.0 - _sstep((_r - 0.35) / 0.35)) * (1.0 - _sstep((_t - 0.35) / 0.45))
+                if _keep < 0.999:
+                    vw2[p] = w * _keep
+                    n_pruned += 1
+            vw2 = {p: w for p, w in vw2.items() if w > 0.02}
+            tot = sum(vw2.values()) or 1.0
+            vweights[_i] = {p: w / tot for p, w in vw2.items()}
+            vpart[_i] = max(vweights[_i], key=vweights[_i].get)
+        if n_pruned:
+            print(f"arm-leak prune: {n_pruned} leaked arm influences damped on torso verts")
     # profile tune "rigid_legs": collapse each leg chain (calf/foot -> thigh
     # part) so the whole leg rides ONE joint. Crush-class targets (pikachu)
     # give thigh/calf/foot wildly disagreeing transforms; blending across

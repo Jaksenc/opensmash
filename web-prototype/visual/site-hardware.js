@@ -759,12 +759,17 @@ function updatePoof(dt) {
   if (gloveBaseScale) glove.scale.setScalar(gloveBaseScale * glovePresence);
 }
 
-function setGloveHidden(hidden) {
+function setGloveHidden(hidden, { silent = false } = {}) {
   if (hidden === gloveHidden) return;
   gloveHidden = hidden;
   glovePresenceTarget = hidden ? 0 : 1;
-  if (glove.visible && !prefersReducedMotion) spawnPoof(mouse.x, mouse.y);
-  if (prefersReducedMotion) { glovePresence = glovePresenceTarget; glovePresenceVel = 0; }
+  // The native cursor is suppressed only while the glove stands in for it.
+  // If the glove is poofed away (or its state is ever stale), the page falls
+  // back to the browser cursor instead of leaving the user with nothing.
+  document.documentElement.classList.toggle('is-glove-hidden', hidden);
+  const snap = prefersReducedMotion || silent;
+  if (glove.visible && !snap) spawnPoof(mouse.x, mouse.y);
+  if (snap) { glovePresence = glovePresenceTarget; glovePresenceVel = 0; }
 }
 
 const heroFrame = document.querySelector('.intro-video-frame');
@@ -773,6 +778,26 @@ function pointerShouldPoof(target, clientX, clientY) {
   if (!heroFrame?.classList.contains('is-game-running')) return false;
   const r = heroFrame.getBoundingClientRect();
   return clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom;
+}
+
+// The hidden state is derived from the last known pointer, not only from
+// whichever pointer event happened to fire last. A tab switch, a focus change,
+// the game starting or stopping, a resize, or the pointer leaving the window
+// all change the answer without producing a pointer move, so each of those
+// re-runs the same decision against the last position.
+const lastPointer = { x: NaN, y: NaN, inside: false };
+function syncGloveHidden() {
+  const present = lastPointer.inside &&
+    Number.isFinite(lastPointer.x) && Number.isFinite(lastPointer.y);
+  if (!present) { setGloveHidden(true); return; }
+  const target = document.elementFromPoint(lastPointer.x, lastPointer.y);
+  setGloveHidden(pointerShouldPoof(target, lastPointer.x, lastPointer.y));
+}
+let gloveSyncQueued = false;
+function scheduleGloveSync() {
+  if (gloveSyncQueued) return;
+  gloveSyncQueued = true;
+  requestAnimationFrame(() => { gloveSyncQueued = false; syncGloveHidden(); });
 }
 
 function syncCustomCursorAvailability() {
@@ -2251,12 +2276,18 @@ function updateHardwareTargets() {
 }
 
 function updateTargetFromEvent(e) {
+  // A synthetic event without coordinates would feed NaN into every spring
+  // downstream and never recover; ignore it rather than poison the rig.
+  if (!Number.isFinite(e.clientX) || !Number.isFinite(e.clientY)) return false;
+  lastPointer.x = e.clientX;
+  lastPointer.y = e.clientY;
   ndc.set((e.clientX / window.innerWidth) * 2 - 1, -(e.clientY / window.innerHeight) * 2 + 1);
   raycaster.setFromCamera(ndc, camera);
   raycaster.ray.intersectPlane(rayPlane, worldPt);
   mouse.set(worldPt.x, worldPt.y);
   customCursorHasPosition = true;
   syncCustomCursorAvailability();
+  return true;
 }
 
 function updateTargetFromEmbeddedGame(event) {
@@ -2273,17 +2304,29 @@ function updateTargetFromEmbeddedGame(event) {
   const frameRect = embeddedGameFrame.getBoundingClientRect();
   const sourceWidth = Math.max(1, Number(data.viewportWidth) || frameRect.width);
   const sourceHeight = Math.max(1, Number(data.viewportHeight) || frameRect.height);
-  updateTargetFromEvent({
+  if (!updateTargetFromEvent({
     clientX: frameRect.left + Number(data.x || 0) * frameRect.width / sourceWidth,
     clientY: frameRect.top + Number(data.y || 0) * frameRect.height / sourceHeight,
-  });
+  })) return;
+  lastPointer.inside = true;
   if (data.kind === 'down') setHandCursorPressed(true);
   if (data.kind === 'move' && Number(data.buttons) === 0) setHandCursorPressed(false);
   setGloveHidden(true);
 }
 
 function updateCursorFromPageEvent(event) {
-  updateTargetFromEvent(event);
+  if (!updateTargetFromEvent(event)) return;
+  if (event.type === 'pointerout' || event.type === 'mouseout') {
+    // No relatedTarget means the pointer left the window (or moved onto the
+    // browser's own chrome): poof out rather than freezing at the edge.
+    if (event.relatedTarget === null) {
+      lastPointer.inside = false;
+      setHandCursorPressed(false);
+      syncGloveHidden();
+    }
+    return;
+  }
+  lastPointer.inside = true;
   if (event.type === 'pointerover' || event.type === 'pointermove' ||
       event.type === 'mouseover' || event.type === 'mousemove') {
     setGloveHidden(pointerShouldPoof(event.target, event.clientX, event.clientY));
@@ -2304,8 +2347,8 @@ function updateCursorFromPageEvent(event) {
 }
 
 for (const eventType of [
-  'pointerover', 'pointermove', 'pointerdown', 'pointerup', 'pointercancel',
-  'mouseover', 'mousemove', 'mousedown', 'mouseup',
+  'pointerover', 'pointerout', 'pointermove', 'pointerdown', 'pointerup', 'pointercancel',
+  'mouseover', 'mouseout', 'mousemove', 'mousedown', 'mouseup',
 ]) {
   window.addEventListener(eventType, updateCursorFromPageEvent, {
     capture: true,
@@ -2313,9 +2356,26 @@ for (const eventType of [
   });
 }
 window.addEventListener('blur', () => { setHandCursorPressed(false); });
+window.addEventListener('focus', scheduleGloveSync);
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden) setHandCursorPressed(false);
+  if (document.hidden) {
+    // Frames stop while hidden, so snap away without a puff; the return
+    // re-derives the state and pops the glove back in where the pointer is.
+    setHandCursorPressed(false);
+    setGloveHidden(true, { silent: true });
+  } else {
+    syncGloveHidden();
+  }
 });
+// Layout and mode changes move the "should poof" boundary under a still pointer.
+document.addEventListener('fullscreenchange', scheduleGloveSync);
+window.addEventListener('resize', scheduleGloveSync);
+window.addEventListener('scroll', scheduleGloveSync, { passive: true });
+const gloveModeObserver = new MutationObserver(scheduleGloveSync);
+gloveModeObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+if (heroFrame) {
+  gloveModeObserver.observe(heroFrame, { attributes: true, attributeFilter: ['class'] });
+}
 window.addEventListener('message', updateTargetFromEmbeddedGame);
 
 // The emulator does not use mouse input, but it still needs keyboard focus.
@@ -2463,6 +2523,43 @@ function updateFunLights(now) {
 }
 
 const clock = new THREE.Clock();
+
+// Frames pause while the tab is hidden or the main thread stalls; the pointer
+// can be anywhere by the time they resume. Restart the motion derivatives from
+// the current position so the jump does not kick the wrist/finger springs.
+function resetPointerMotion() {
+  pos.set(mouse.x, mouse.y, 0);
+  vel.set(0, 0, 0);
+  prevVel.set(0, 0, 0);
+  accelSmooth.set(0, 0, 0);
+}
+
+// Every spring here integrates its own previous state, so a single non-finite
+// value (a NaN coordinate, an Infinity from a zero-size viewport) would stick
+// forever and leave the hand invisible while the puffs keep working. Check
+// once per frame and reset to rest rather than trust the state stays clean.
+function healMotionState() {
+  const values = [
+    mouse.x, mouse.y, pos.x, pos.y, vel.x, vel.y, prevVel.x, prevVel.y,
+    accelSmooth.x, accelSmooth.y, rot.x, rot.y, rot.z, rot.vx, rot.vy, rot.vz,
+    grabAmount, gripAmount, glovePresence, glovePresenceVel, gloveBaseScale,
+  ];
+  let healthy = values.every(Number.isFinite);
+  for (const f of rigs) {
+    if (!Number.isFinite(f.jig.a) || !Number.isFinite(f.jig.v)) healthy = false;
+  }
+  if (healthy) return;
+  console.warn('[hand-cursor] non-finite motion state; resetting the rig');
+  if (!Number.isFinite(mouse.x) || !Number.isFinite(mouse.y)) mouse.set(0, 0);
+  resetPointerMotion();
+  rot.x = rot.y = rot.z = rot.vx = rot.vy = rot.vz = 0;
+  grabAmount = grabbing ? 1 : 0;
+  gripAmount = gripTarget;
+  glovePresence = glovePresenceTarget;
+  glovePresenceVel = 0;
+  for (const f of rigs) { f.jig.a = 0; f.jig.v = 0; }
+  if (!Number.isFinite(gloveBaseScale)) { gloveBaseScale = 0; resize(); }
+}
 const DBG = location.hash;
 if (!CARTRIDGE_INTRO_ENABLED || DBG.includes('skipboot')) {
   startStarterVideoPlayback();
@@ -2474,7 +2571,10 @@ if (!CARTRIDGE_INTRO_ENABLED || DBG.includes('skipboot')) {
 function tick() {
   requestAnimationFrame(tick);
   if (window.innerWidth && renderer.domElement.width !== window.innerWidth) resize();
-  const dt = Math.min(clock.getDelta(), 1 / 30);
+  const rawDt = clock.getDelta();
+  const dt = Math.min(rawDt, 1 / 30);
+  if (rawDt > 0.25) resetPointerMotion();
+  healMotionState();
   const gameRunning = document.body.classList.contains('is-game-running');
   const mobileGame = gameRunning &&
     document.body.classList.contains('uses-mobile-controls');
