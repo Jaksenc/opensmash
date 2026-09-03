@@ -43,7 +43,7 @@ FIT = 0.92           # fighter height as a fraction of the canvas (three.js used
 CHROMA = ("ff00ff", "00ff00")
 
 
-def boot(fkind, bundle, fill, frames, shots):
+def boot(fkind, bundle, fill, frames, shots, win=(0, 40)):
     """One native boot; returns {frame: (w, h, bgra bytes)}."""
     os.makedirs(shots, exist_ok=True)
     env = dict(os.environ)
@@ -63,9 +63,11 @@ def boot(fkind, bundle, fill, frames, shots):
     cfg_path = os.path.join(BUILD, "BattleShip.cfg.json")
     try:
         cfg = json.load(open(cfg_path))
+        # Parallel boots each pin their own window position: macOS throttles
+        # a fully occluded window, so tiles must at least partially show.
         cfg.setdefault("Window", {}).update({"Width": 1280, "Height": 960,
-                                             "PositionX": int(os.environ.get("EVAL_WINX", 0)),
-                                             "PositionY": int(os.environ.get("EVAL_WINY", 40)),
+                                             "PositionX": int(win[0]),
+                                             "PositionY": int(win[1]),
                                              "Fullscreen": {"Enabled": False}})
         json.dump(cfg, open(cfg_path, "w"), indent=1)
     except Exception as e:  # noqa: BLE001
@@ -138,20 +140,26 @@ def fit_sprite(rgb, alpha, w):
     return canvas, (bw, bh)
 
 
-def bake(slug, fkind, frame, out_path, keep_dir=None):
+def bake(slug, fkind, frame, out_path, keep_dir=None, win=(0, 40)):
     bundle = os.path.join(PIPELINE_ROOT, "play", f"{slug}.osb6")
     if not os.path.isfile(bundle):
         raise FileNotFoundError(bundle)
     work = keep_dir or tempfile.mkdtemp(prefix=f"og-{slug}-")
-    caps = []
-    for fill in CHROMA:
+
+    # The two chroma passes are independent boots: run them side by side.
+    def one(index, fill):
         shots = os.path.join(work, fill)
-        got = boot(fkind, bundle, fill, [frame], shots)
+        got = boot(fkind, bundle, fill, [frame], shots, (win[0] + index * 660, win[1]))
         if frame not in got:
             raise RuntimeError(f"{slug}: frame {frame} not captured (got {sorted(got)})")
-        caps.append(got[frame])
         if keep_dir:
             Image.fromarray(to_rgb(got[frame]).astype(np.uint8)).save(os.path.join(work, f"raw-{fill}.png"))
+        return got[frame]
+
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        futures = [pool.submit(one, index, fill) for index, fill in enumerate(CHROMA)]
+        caps = [future.result() for future in futures]
     w = caps[0][0]
     rgb, alpha = matte(to_rgb(caps[0]), to_rgb(caps[1]), hex_rgb(CHROMA[0]), hex_rgb(CHROMA[1]))
     canvas, bbox = fit_sprite(rgb, alpha, w)
@@ -178,6 +186,7 @@ def main():
     ap.add_argument("--out", default=None, help="output PNG (single slug)")
     ap.add_argument("--keep", default=None, help="keep raw captures in this dir (single slug)")
     ap.add_argument("--force", action="store_true", help="re-bake existing sprites")
+    ap.add_argument("--win", default="0,40", help="window origin x,y for this job's game windows (parallel jobs tile)")
     a = ap.parse_args()
     if (a.out or a.keep or a.fkind is not None) and len(a.slugs) != 1:
         ap.error("--out/--keep/--fkind take exactly one slug")
@@ -193,7 +202,8 @@ def main():
             failed.append(slug)
             continue
         try:
-            bbox = bake(slug, fkinds[slug], a.frame, out, a.keep)
+            win = tuple(int(v) for v in a.win.split(","))
+            bbox = bake(slug, fkinds[slug], a.frame, out, a.keep, win)
             print(f"{slug}: fkind={fkinds[slug]} bbox={bbox[0]}x{bbox[1]} -> {os.path.relpath(out, PIPELINE_ROOT)}")
         except Exception as e:  # noqa: BLE001
             print(f"{slug}: FAILED {e}")

@@ -72,7 +72,24 @@ const PIPELINE_PLAY_ROOT = path.join(PIPELINE_PROJECT_ROOT, "play");
 const OG_SPRITE_SCRIPT = path.join(PIPELINE_PROJECT_ROOT, "pipeline", "og_sprite.py");
 const OG_SPRITE_ENGINE = process.env.OG_SPRITE_ENGINE
   || path.join(PIPELINE_PROJECT_ROOT, "..", "BattleShip", "build-us", "BattleShip");
-let ogSpriteQueue = Promise.resolve();
+// Boots run in parallel up to this many fighters (x2 chroma windows each);
+// every job gets its own window tile so none is fully occluded (macOS
+// throttles hidden windows and the frame-100 capture would crawl).
+const OG_SPRITE_PARALLEL = Math.max(1, Number(process.env.OG_SPRITE_PARALLEL) || 3);
+const ogSpriteSlots = Array.from({ length: OG_SPRITE_PARALLEL }, (_, index) => index);
+const ogSpriteWaiters = [];
+async function withOgSpriteSlot(task) {
+  const slot = ogSpriteSlots.length
+    ? ogSpriteSlots.shift()
+    : await new Promise((resolve) => ogSpriteWaiters.push(resolve));
+  try {
+    return await task(slot);
+  } finally {
+    const next = ogSpriteWaiters.shift();
+    if (next) next(slot);
+    else ogSpriteSlots.push(slot);
+  }
+}
 const SITE_ASSETS_ROOT = path.join(APP_ROOT, "visual", "assets");
 const CHARACTERS_CONFIG = path.join(APP_ROOT, "config", "characters.json");
 const BAKED_ASSETS_MANIFEST = path.join(APP_ROOT, "config", "baked-assets.json");
@@ -839,8 +856,9 @@ async function handleRequest(req, res, vite) {
       } catch {
         return json(res, 404, { error: "In-engine renders need the native BattleShip build on this machine" });
       }
-      const run = () => new Promise((resolve, reject) => {
-        const child = spawn("python3", [OG_SPRITE_SCRIPT, slug, "--fkind", String(fkind), "--out", out], {
+      const run = (slot) => new Promise((resolve, reject) => {
+        const win = `${(slot % 2) * 120 + 20},${40 + slot * 300}`;
+        const child = spawn("python3", [OG_SPRITE_SCRIPT, slug, "--fkind", String(fkind), "--out", out, "--win", win], {
           cwd: PIPELINE_PROJECT_ROOT,
           env: { ...process.env, EVAL_BUILD: path.dirname(OG_SPRITE_ENGINE) },
           stdio: ["ignore", "pipe", "pipe"],
@@ -856,10 +874,8 @@ async function handleRequest(req, res, vite) {
           else reject(new Error(`og_sprite.py exited ${code}: ${log.trim().split("\n").pop()}`));
         });
       });
-      const turn = ogSpriteQueue.then(run, run);
-      ogSpriteQueue = turn.catch(() => {});
       try {
-        await turn;
+        await withOgSpriteSlot(run);
       } catch (error) {
         return json(res, 500, { error: error.message });
       }
