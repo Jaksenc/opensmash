@@ -122,35 +122,12 @@ function restoreComposition(characters) {
   }
 }
 
-function drawFighterShadow(context, slot, placement) {
-  const frame = fighterFrame(slot, placement);
-  const centerX = frame.x + frame.width / 2;
-  const floorY = frame.y + frame.height * .965;
-  context.save();
-  context.translate(centerX, floorY);
-  context.scale(1, .28);
-  const shadowRadius = frame.width * .36;
-  const shadow = context.createRadialGradient(0, 0, 2, 0, 0, shadowRadius);
-  shadow.addColorStop(0, "rgba(0,0,0,.62)");
-  shadow.addColorStop(1, "rgba(0,0,0,0)");
-  context.fillStyle = shadow;
-  context.beginPath();
-  context.arc(0, 0, shadowRadius, 0, Math.PI * 2);
-  context.fill();
-  context.restore();
-}
-
 function drawFighter(context, image, slot, placement) {
   if (!image) return;
   const sourceWidth = image.naturalWidth || image.width;
   const sourceHeight = image.naturalHeight || image.height;
   const frame = fighterFrame(slot, placement, sourceWidth, sourceHeight);
-  context.save();
-  context.shadowColor = "rgba(0,0,0,.58)";
-  context.shadowBlur = 15;
-  context.shadowOffsetY = 8;
   context.drawImage(image, frame.x, frame.y, frame.width, frame.height);
-  context.restore();
 }
 
 function drawBackdrop(context, image, backdrop = "sky") {
@@ -286,9 +263,6 @@ async function renderArtwork(canvas, {
     ...fighterPromises,
   ]);
   drawBackdrop(context, background, scene.backdrop);
-  placements.forEach((placement, index) => {
-    if (fighters[index]) drawFighterShadow(context, OG_ROSTER_SLOTS[index], placement);
-  });
   placements.forEach((placement, index) => {
     drawFighter(context, fighters[index], OG_ROSTER_SLOTS[index], placement);
   });
