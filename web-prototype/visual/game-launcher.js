@@ -11,6 +11,7 @@ import {
   controlsRoadblockRequired,
   postRomUploadGate,
 } from './controls-roadblock.js?v=20260901-upload-flow1';
+import { hasShortcutModifier } from '../shared/keyboard-input.js';
 import { lockPageScroll } from '../shared/page-scroll-lock.js';
 
 import { holdScreenAwake, isHandoffSupported, receiveRomHandoff } from '../src/rom-handoff-client.js';
@@ -2238,7 +2239,7 @@ function resetControlCheck() {
 
 function registerControlKey(event) {
   if (!overlay || overlay.hidden || overlay.dataset.step !== 'controller' ||
-      controlCheckComplete) return false;
+      controlCheckComplete || hasShortcutModifier(event)) return false;
   const key = event.key.toLowerCase();
   if (!REQUIRED_CONTROL_KEYS.includes(key)) return false;
   event.preventDefault();
