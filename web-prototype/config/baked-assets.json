@@ -109,24 +109,24 @@
       "slug": "caseyaylward",
       "assets": {
         "bundle": {
-          "sha256": "75a87c230e1e1038be051c2d80e04241f0d97941da45e3a7e899f9510d266dd3",
-          "size": 1573332
+          "sha256": "241e756376c39bbfde281c677451e4b3289193de261b66b7de49c115e1cf97ad",
+          "size": 1535468
         },
         "metadata": {
           "sha256": "b308941c759d3d3ed7396d6447106c0ae5b7422a61681fbf54c60ccf7b49561f",
           "size": 741
         },
         "portrait": {
-          "sha256": "c239f2bd66af9e3d3e37e1cbb1fd4bc551d12a6c2772b65040746dd859f2fe17",
-          "size": 1017264
+          "sha256": "1cb23e83ced36e0c249d79709f65c599fdce828ce9e92710cdf2189ef23910f3",
+          "size": 954524
         },
         "portraitTile": {
-          "sha256": "0b0a3388dd6a04e87e275340a8bb002a5a993701c5fdc8f8f19d5f53975ce047",
-          "size": 12351
+          "sha256": "a76517185c6a452f028c9dc41337007ab08db22e5d79159d7c4ce1a0829e8d77",
+          "size": 12399
         },
         "portraitMedium": {
-          "sha256": "f8983343a8afc8d91137709b646ecdb590fb16aa1d8ccb40e29df03921a0d207",
-          "size": 77111
+          "sha256": "2e38f5dce4ad4db0261f69a3f0112363a19945b96ee5fc3902af9d6766e3046a",
+          "size": 76429
         },
         "ui": {
           "sha256": "4fc2efb8dbcb8f6f2d60b76739bf1180c228f913e52c08547758572a5a576172",
@@ -265,24 +265,24 @@
       "slug": "kache",
       "assets": {
         "bundle": {
-          "sha256": "bf4b6eb0d80863a4bfef86d9d7becd2e8b50c963b6b30c3ed98598fe17ee9a79",
-          "size": 1599708
+          "sha256": "6ba26af8e964511a856d0c5020f46d7347be93921e1ca2e6c66f43d44c18d05a",
+          "size": 1650368
         },
         "metadata": {
           "sha256": "957442c0dfe137f57b14406e4c8a761eb8cf76f170c5de650fbd7273380ae4e7",
           "size": 721
         },
         "portrait": {
-          "sha256": "2683f562c6af3d7570896f8ce8eb9bc6a846c83f5f9b6822c6a292944ba6547b",
-          "size": 1057731
+          "sha256": "d2b47d56aa8d7f968a0f2a83b14b7e0175c19b2976f0013df2023683305787b2",
+          "size": 1071352
         },
         "portraitTile": {
-          "sha256": "d4433a8b2b5db85d47b6005fab77da4c3550ebe85b79d54f5bf1291c69a84983",
-          "size": 12039
+          "sha256": "a4c3cddbdd65e60074574f7a09d87eaefe157fc414c28cdd09da6a7f7f66e6c4",
+          "size": 12505
         },
         "portraitMedium": {
-          "sha256": "84a8beb1949b3a07ac8aeac4a964ac1d26fb6e3c4939fc0e54812fefac7eb332",
-          "size": 71167
+          "sha256": "5c1fd717efa35e52f4a3cde44d9bc07fa97f02fb4ebafcad08360a55d698afce",
+          "size": 74265
         },
         "ui": {
           "sha256": "794fe5b9b3100f07ec07419ce11a1a52cdd3528e3a587e5b3d345a71eaeb0116",
