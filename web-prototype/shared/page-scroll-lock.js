@@ -1,5 +1,6 @@
 let activeLockCount = 0;
 let lockedPageState = null;
+const unlockListeners = new Set();
 
 const ROOT_LOCK_STYLES = Object.freeze({
   "overflow-x": "hidden",
@@ -93,5 +94,15 @@ export function lockPageScroll() {
     const pageState = lockedPageState;
     lockedPageState = null;
     unlockPage(pageState);
+    unlockListeners.forEach((listener) => listener());
   };
+}
+
+export function isPageScrollLocked() {
+  return activeLockCount > 0;
+}
+
+export function onPageScrollUnlock(listener) {
+  unlockListeners.add(listener);
+  return () => unlockListeners.delete(listener);
 }

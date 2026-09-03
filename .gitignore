@@ -61,6 +61,7 @@ artifacts/accessory-stow/
 artifacts/item-mvp/
 artifacts/portrait-reference-ab/
 artifacts/portrait-style-study/
+artifacts/trailer-captures/
 
 # Experiment meshes/bundles under artifacts/experiments are local-only (were LFS).
 artifacts/experiments/*.glb

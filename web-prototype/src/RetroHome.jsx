@@ -248,9 +248,9 @@ export default function RetroHome({
   const [mobileLayout, setMobileLayout] = useState(() => (
     mobileControlsRequested() || window.matchMedia(MOBILE_CONTROLS_MEDIA).matches
   ));
-  const [mobileControlsPreview, setMobileControlsPreview] = useState(false);
-  const previewMobileControls = !engine && mobileLayout && mobileControlsPreview;
-  const mobileControlsVisible = mobileLayout && (Boolean(engine) || previewMobileControls);
+  const mobileControlsVisible = mobileLayout && Boolean(engine);
+  const hasResetRomAction = developmentMode && authorized;
+  const keepSingleTouchActionVisible = mobileLayout && !hasResetRomAction;
 
   useEffect(() => {
     const showNativeCursor = new URLSearchParams(window.location.search).has("showCursor");
@@ -361,12 +361,6 @@ export default function RetroHome({
     controlEmbeddedTrailer(player, launchFlowOpen || engine ? "pauseVideo" : "playVideo");
   }, [audioActive, engine, launchFlowOpen, soundOn, trailerPlayerReady]);
 
-  function toggleMobileControls(event) {
-    if (!mobileLayout) return;
-    event.stopPropagation();
-    if (!engine) setMobileControlsPreview((visible) => !visible);
-  }
-
   function closeMoreMenu() {
     moreMenuRef.current?.removeAttribute("open");
   }
@@ -395,7 +389,10 @@ export default function RetroHome({
             <img className="hero-logo-fallback" src={logoFallbackUrl} alt="Smash.fun" draggable="false" />
             <canvas id="hero-logo-canvas" className="hero-logo-canvas" aria-hidden="true" />
           </div>
-          <nav className="retro-site-nav" aria-label="Site information and settings">
+          <nav
+            className={`retro-site-nav ${keepSingleTouchActionVisible ? "has-single-collapsible-action" : ""}`}
+            aria-label="Site information and settings"
+          >
             {gamepadCount > 0 && (
               <button
                 className="retro-site-link retro-site-pads"
@@ -423,30 +420,31 @@ export default function RetroHome({
             >
               About
             </button>
-            <button
-              id="controls-menu-button"
-              className={`retro-site-link ${mobileLayout && mobileControlsVisible ? "is-active" : ""}`}
-              type="button"
-              aria-haspopup={mobileLayout ? undefined : "dialog"}
-              aria-controls={mobileLayout ? "touch-control-deck" : "launch-flow-controller-step"}
-              aria-expanded={mobileLayout ? mobileControlsVisible : undefined}
-              aria-pressed={mobileLayout ? mobileControlsVisible : undefined}
-              onClickCapture={toggleMobileControls}
-            >
-              Controls
-            </button>
+            {!mobileLayout && (
+              <button
+                id="controls-menu-button"
+                className="retro-site-link"
+                type="button"
+                aria-haspopup="dialog"
+                aria-controls="launch-flow-controller-step"
+              >
+                Controls
+              </button>
+            )}
             <button className={`retro-site-link retro-site-advanced-button ${advancedActive ? "is-active" : ""}`} type="button" aria-haspopup="dialog" onClick={onAdvanced}>Settings</button>
             <details className="retro-site-more" ref={moreMenuRef}>
               <summary className="retro-site-link">More</summary>
               <div className="retro-site-more-menu" role="menu">
-                <button className="retro-site-link" type="button" role="menuitem" onClick={openControlsFromMore}>Controls</button>
+                {!mobileLayout && (
+                  <button className="retro-site-link" type="button" role="menuitem" onClick={openControlsFromMore}>Controls</button>
+                )}
                 <button className={`retro-site-link ${advancedActive ? "is-active" : ""}`} type="button" role="menuitem" onClick={openAdvancedFromMore}>Settings</button>
-                {developmentMode && authorized && (
+                {hasResetRomAction && (
                   <button className="retro-site-link retro-site-dev-link" type="button" role="menuitem" onClick={resetRomFromMore}>Reset ROM</button>
                 )}
               </div>
             </details>
-            {developmentMode && authorized && (
+            {hasResetRomAction && (
               <button
                 className="retro-site-link retro-site-dev-link"
                 type="button"
@@ -551,7 +549,6 @@ export default function RetroHome({
             <MobileControls
               active={mobileControlsVisible}
               frameRef={engineRef}
-              preview={previewMobileControls}
             />
           </div>
         </section>

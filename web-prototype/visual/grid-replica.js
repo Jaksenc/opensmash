@@ -9,6 +9,7 @@ import {
   rosterGridDimensions,
 } from '../shared/roster-layout.js';
 import { formatFighterJobCellError } from '../shared/fighter-job-ui.js';
+import { isPageScrollLocked } from '../shared/page-scroll-lock.js';
 
 const ACTION_ICON_ASSETS = import.meta.glob('./assets/ui/*.png', {
   eager: true,
@@ -884,6 +885,11 @@ function rulesForBoard(width, height, columns, cellCount) {
 // most of the roster; a thousand tiles with lazy portraits lay out fine.
 function updateMountedCellWindow() {
   cellWindowFrame = 0;
+  // Fixed-body modal scroll locks temporarily move the document through an
+  // intermediate scroll position on mobile browsers. Keep the current cells
+  // mounted until the saved page position has been restored, otherwise this
+  // pass can empty the visible roster for a frame.
+  if (isPageScrollLocked()) return;
   if (!currentGridLayout || !currentVisibleCells.length) return;
 
   const desiredCells = new Set(actionCells);
