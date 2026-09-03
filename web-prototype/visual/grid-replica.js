@@ -87,7 +87,26 @@ function liveRosterCharacter(character) {
     source: character.generated ? 'generated' : 'live',
     fkind: character.fkind,
     bundle: character.bundle,
+    visibility: character.visibility || 'public',
   };
+}
+
+// Private fighters (visible only to their uploader) get a small padlock badge
+// so the owner can tell them apart from the public roster at a glance.
+function setCellVisibility(button, visibility) {
+  const isPrivate = visibility === 'private';
+  let badge = button.querySelector('.replica-private-badge');
+  if (isPrivate && !badge) {
+    badge = document.createElement('span');
+    badge.className = 'replica-private-badge';
+    badge.title = 'Private: only you can see this fighter';
+    badge.setAttribute('aria-hidden', 'true');
+    button.append(badge);
+  } else if (!isPrivate && badge) {
+    badge.remove();
+  }
+  if (isPrivate) button.dataset.visibility = 'private';
+  else delete button.dataset.visibility;
 }
 const LIVE_ROSTER = Object.freeze((APP_BRIDGE?.characters || []).map(liveRosterCharacter));
 const INITIAL_FIGHTER_JOBS = APP_BRIDGE?.fighterJobs || [];
@@ -1162,7 +1181,10 @@ async function syncCharacters(characters = []) {
     button.dataset.fkind = String(character.fkind ?? 0);
     if (character.bundle) button.dataset.bundle = character.bundle;
     else delete button.dataset.bundle;
-    button.setAttribute('aria-label', character.name);
+    setCellVisibility(button, character.visibility);
+    button.setAttribute('aria-label', character.visibility === 'private'
+      ? `${character.name}, private`
+      : character.name);
 
     setNativePortrait(button, character);
   }
@@ -1209,6 +1231,7 @@ function createJobCell(job) {
   button.dataset.portrait = '';
   button.dataset.displayName = job.name;
   button.dataset.fkind = '0';
+  setCellVisibility(button, job.visibility);
   button.setAttribute('role', 'gridcell');
   button.setAttribute('aria-pressed', 'false');
   button.setAttribute('aria-disabled', 'true');
@@ -1293,8 +1316,9 @@ async function updateJobCell(job) {
   failureElement.querySelector('strong').textContent = failed
     ? formatFighterJobCellError(job)
     : '';
+  setCellVisibility(button, job.visibility);
   button.setAttribute('aria-label', complete
-    ? `${job.character.name}, ready to fight`
+    ? `${job.character.name}, ready to fight${job.visibility === 'private' ? ', private' : ''}`
     : failed
       ? `${job.name}, ${formatFighterJobCellError(job)}. Open error details.`
       : `${job.name}, ${job.stageLabel || job.status}, ${progress}% complete. Open generation details.`);

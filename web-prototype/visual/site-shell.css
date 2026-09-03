@@ -230,6 +230,24 @@
     background-size: 9px 11px, 13px 15px, 100% 100%;
   }
   .replica-cell.is-search { cursor: text; }
+  /* Private fighters: a small padlock in the bottom-right corner of the tile
+     (the caption owns the top edge; generating tiles lift it above the
+     status line and progress bar). */
+  .replica-private-badge {
+    position: absolute;
+    bottom: 7%;
+    right: 6%;
+    z-index: 4;
+    width: clamp(8px, 1.1vw, 14px);
+    height: clamp(8px, 1.1vw, 14px);
+    background:
+      url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12"><path d="M3 5V4a3 3 0 0 1 6 0v1" fill="none" stroke="%23f2d9a6" stroke-width="1.6"/><rect x="2" y="5" width="8" height="6" rx="1" fill="%23f2d9a6"/><rect x="5.3" y="7" width="1.4" height="2" fill="%231a0a00"/></svg>')
+      center / contain no-repeat;
+    filter: drop-shadow(0 1px 0 #1a0a00) drop-shadow(0 0 2px rgba(0, 0, 0, .9));
+    pointer-events: none;
+  }
+  .fighter-job-cell.is-generating .replica-private-badge,
+  .fighter-job-cell.is-failed .replica-private-badge { bottom: 32%; }
   .replica-search-input {
     position: absolute;
     left: 8.9%;
