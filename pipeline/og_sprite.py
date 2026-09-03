@@ -41,6 +41,11 @@ P1_X1 = VIEW_L + (VIEW_R - VIEW_L - VS_W) // 2
 OUT_W, OUT_H = 480, 640
 FIT = 0.92           # fighter height as a fraction of the canvas (three.js used 1/1.08)
 CHROMA = ("ff00ff", "00ff00")
+# Results pose per body kind (SSB64_VSINTRO_WIN, scvsintro.c). The card's own
+# "selected" poses bow the chibi Kirby (8) and Purin (10) bodies into the
+# camera, which reads as a squashed head on a card; Kirby's Win2 is an upright
+# face and Purin's Win1 tilts least. Other kinds keep the card default.
+WIN_POSE = {8: "2", 10: "1"}
 
 
 def boot(fkind, bundle, fill, frames, shots, win=(0, 40)):
@@ -60,6 +65,8 @@ def boot(fkind, bundle, fill, frames, shots, win=(0, 40)):
         "SSB64_MAX_FRAMES": str(max(frames) + 4),
         "SSB64_MUTE": "1",
     })
+    if fkind in WIN_POSE and "SSB64_VSINTRO_WIN" not in os.environ:
+        env["SSB64_VSINTRO_WIN"] = WIN_POSE[fkind]
     cfg_path = os.path.join(BUILD, "BattleShip.cfg.json")
     try:
         cfg = json.load(open(cfg_path))
@@ -107,13 +114,16 @@ def hex_rgb(s):
     return (int(s[0:2], 16), int(s[2:4], 16), int(s[4:6], 16))
 
 
-def fit_sprite(rgb, alpha, w):
+def fit_sprite(rgb, alpha, w, h):
     """Crop to the P1 slice, then to the alpha bbox, and fit onto OUT_WxOUT_H."""
-    sx = w / 320.0
+    # The window is pinned 4:3, but macOS shrinks a window that would hang
+    # off the screen, so the capture can be any size: map the 320x240 design
+    # space per axis and re-square the pixels below.
+    sx, sy = w / 320.0, h / 240.0
     # inset 2 design px: the scissor edge leaves a column of the neighbouring
     # camera's clear (black VS gap) inside the slice bounds
     x0, x1 = int((P1_X0 + 2) * sx), int((P1_X1 - 2) * sx)
-    y0, y1 = int((VIEW_T + 2) * sx), int((VIEW_B - 2) * sx)
+    y0, y1 = int((VIEW_T + 2) * sy), int((VIEW_B - 2) * sy)
     rgb, alpha = rgb[y0:y1, x0:x1], alpha[y0:y1, x0:x1]
     # kill chroma-clear speckle: anything under 1.5% alpha is background
     alpha = np.where(alpha < 0.015, 0.0, alpha)
@@ -133,8 +143,9 @@ def fit_sprite(rgb, alpha, w):
     rgba = np.dstack([rgb, alpha * 255.0]).astype(np.uint8)[by0:by1, bx0:bx1]
     sprite = Image.fromarray(rgba, "RGBA")
     bw, bh = sprite.size
-    scale = min(OUT_H * FIT / bh, OUT_W * FIT / bw)
-    sprite = sprite.resize((max(1, round(bw * scale)), max(1, round(bh * scale))), Image.LANCZOS)
+    bh_square = bh * sx / sy  # height in the capture's horizontal pixel units
+    scale = min(OUT_H * FIT / bh_square, OUT_W * FIT / bw)
+    sprite = sprite.resize((max(1, round(bw * scale)), max(1, round(bh_square * scale))), Image.LANCZOS)
     canvas = Image.new("RGBA", (OUT_W, OUT_H), (0, 0, 0, 0))
     canvas.paste(sprite, ((OUT_W - sprite.width) // 2, (OUT_H - sprite.height) // 2), sprite)
     return canvas, (bw, bh)
@@ -160,9 +171,11 @@ def bake(slug, fkind, frame, out_path, keep_dir=None, win=(0, 40)):
     with ThreadPoolExecutor(max_workers=2) as pool:
         futures = [pool.submit(one, index, fill) for index, fill in enumerate(CHROMA)]
         caps = [future.result() for future in futures]
-    w = caps[0][0]
+    w, h = caps[0][0], caps[0][1]
+    if (caps[1][0], caps[1][1]) != (w, h):
+        raise RuntimeError(f"{slug}: chroma passes captured different sizes ({w}x{h} vs {caps[1][0]}x{caps[1][1]})")
     rgb, alpha = matte(to_rgb(caps[0]), to_rgb(caps[1]), hex_rgb(CHROMA[0]), hex_rgb(CHROMA[1]))
-    canvas, bbox = fit_sprite(rgb, alpha, w)
+    canvas, bbox = fit_sprite(rgb, alpha, w, h)
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     canvas.save(out_path, optimize=True)
     if not keep_dir:

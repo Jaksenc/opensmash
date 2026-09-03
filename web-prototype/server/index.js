@@ -857,7 +857,9 @@ async function handleRequest(req, res, vite) {
         return json(res, 404, { error: "In-engine renders need the native BattleShip build on this machine" });
       }
       const run = (slot) => new Promise((resolve, reject) => {
-        const win = `${(slot % 2) * 120 + 20},${40 + slot * 300}`;
+        // Stagger inside the screen: a window pushed off the bottom gets
+        // shrunk by macOS and the capture stops being 4:3.
+        const win = `${20 + slot * 90},${40 + slot * 70}`;
         const child = spawn("python3", [OG_SPRITE_SCRIPT, slug, "--fkind", String(fkind), "--out", out, "--win", win], {
           cwd: PIPELINE_PROJECT_ROOT,
           env: { ...process.env, EVAL_BUILD: path.dirname(OG_SPRITE_ENGINE) },
