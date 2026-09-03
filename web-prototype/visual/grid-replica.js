@@ -88,6 +88,9 @@ function liveRosterCharacter(character) {
     fkind: character.fkind,
     bundle: character.bundle,
     visibility: character.visibility || 'public',
+    // The viewer's own fighters (their jobs, or private ones only they can
+    // see) sort to the top of the roster.
+    mine: Boolean(character.mine || character.visibility === 'private'),
   };
 }
 
@@ -824,7 +827,8 @@ function visibleCellsInDisplayOrder() {
     ...visible.filter(button => button.dataset.kind === 'create'),
     ...visible.filter(button => button.dataset.kind === 'job'),
     ...visible.filter(button => button.dataset.kind === 'creation'),
-    ...visible.filter(button => button.dataset.kind === 'fighter'),
+    ...visible.filter(button => button.dataset.kind === 'fighter' && button.dataset.mine),
+    ...visible.filter(button => button.dataset.kind === 'fighter' && !button.dataset.mine),
   ];
 }
 
@@ -1182,6 +1186,8 @@ async function syncCharacters(characters = []) {
     if (character.bundle) button.dataset.bundle = character.bundle;
     else delete button.dataset.bundle;
     setCellVisibility(button, character.visibility);
+    if (character.mine) button.dataset.mine = 'true';
+    else delete button.dataset.mine;
     button.setAttribute('aria-label', character.visibility === 'private'
       ? `${character.name}, private`
       : character.name);

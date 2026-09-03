@@ -1,5 +1,119 @@
 [
   {
+    "slug": "donaldtrump"
+  },
+  {
+    "slug": "guyfieri"
+  },
+  {
+    "slug": "stevejobs"
+  },
+  {
+    "slug": "justinbieber"
+  },
+  {
+    "slug": "jesuschrist"
+  },
+  {
+    "slug": "ludwigvanbeethov"
+  },
+  {
+    "slug": "roon"
+  },
+  {
+    "slug": "keanureeves"
+  },
+  {
+    "slug": "arnoldschwarzene"
+  },
+  {
+    "slug": "sylvesterstallon"
+  },
+  {
+    "slug": "johncena"
+  },
+  {
+    "slug": "popefrancis"
+  },
+  {
+    "slug": "kimjongun"
+  },
+  {
+    "slug": "thelochnessmonst"
+  },
+  {
+    "slug": "bobross"
+  },
+  {
+    "slug": "gordonramsay"
+  },
+  {
+    "slug": "dannydevito"
+  },
+  {
+    "slug": "judgejudy"
+  },
+  {
+    "slug": "cthulhu"
+  },
+  {
+    "slug": "mrbeast"
+  },
+  {
+    "slug": "cleopatra"
+  },
+  {
+    "slug": "snoopdogg"
+  },
+  {
+    "slug": "nicolascage"
+  },
+  {
+    "slug": "dalailama"
+  },
+  {
+    "slug": "genghiskhan"
+  },
+  {
+    "slug": "dollyparton"
+  },
+  {
+    "slug": "colonelsanders"
+  },
+  {
+    "slug": "shaquilleoneal"
+  },
+  {
+    "slug": "thegrimreaper"
+  },
+  {
+    "slug": "ishowspeed"
+  },
+  {
+    "slug": "queenelizabethth"
+  },
+  {
+    "slug": "bigfoot"
+  },
+  {
+    "slug": "weirdalyankovic"
+  },
+  {
+    "slug": "steveirwin"
+  },
+  {
+    "slug": "monalisa"
+  },
+  {
+    "slug": "mrt"
+  },
+  {
+    "slug": "babayaga"
+  },
+  {
+    "slug": "ilyasutskever"
+  },
+  {
     "slug": "liamfedus"
   },
   {
@@ -12,28 +126,16 @@
     "slug": "thomasdimson"
   },
   {
-    "slug": "roon"
-  },
-  {
     "slug": "kache"
   },
   {
     "slug": "growingdaniel"
   },
   {
-    "slug": "cleopatra"
-  },
-  {
     "slug": "kinghenrytheeigh"
   },
   {
-    "slug": "donaldtrump"
-  },
-  {
     "slug": "winstonchurchill"
-  },
-  {
-    "slug": "popefrancis"
   },
   {
     "slug": "alberteinstein"
@@ -60,22 +162,13 @@
     "slug": "anthonybourdain"
   },
   {
-    "slug": "dollyparton"
-  },
-  {
     "slug": "tupacshakur"
   },
   {
     "slug": "conormcgregor"
   },
   {
-    "slug": "ishowspeed"
-  },
-  {
     "slug": "darioamodei"
-  },
-  {
-    "slug": "thelochnessmonst"
   },
   {
     "slug": "donquixote"
@@ -90,9 +183,6 @@
     "slug": "elonmusk"
   },
   {
-    "slug": "sylvesterstallon"
-  },
-  {
     "slug": "victorwembanyama"
   },
   {
@@ -100,9 +190,6 @@
   },
   {
     "slug": "blackbeard"
-  },
-  {
-    "slug": "kimjongun"
   },
   {
     "slug": "santaclaus"
@@ -135,12 +222,6 @@
     "slug": "ladygaga"
   },
   {
-    "slug": "keanureeves"
-  },
-  {
-    "slug": "jesuschrist"
-  },
-  {
     "slug": "napoleon"
   },
   {
@@ -162,9 +243,6 @@
     "slug": "friedrichnietzsc"
   },
   {
-    "slug": "ludwigvanbeethov"
-  },
-  {
     "slug": "gabenewell"
   },
   {
@@ -177,31 +255,13 @@
     "slug": "eminem"
   },
   {
-    "slug": "johncena"
-  },
-  {
-    "slug": "mrbeast"
-  },
-  {
     "slug": "samaltman"
-  },
-  {
-    "slug": "bigfoot"
   },
   {
     "slug": "sherlockholmes"
   },
   {
-    "slug": "monalisa"
-  },
-  {
     "slug": "bettyboop"
-  },
-  {
-    "slug": "stevejobs"
-  },
-  {
-    "slug": "arnoldschwarzene"
   },
   {
     "slug": "michaeljordan"
@@ -237,22 +297,13 @@
     "slug": "billieeilish"
   },
   {
-    "slug": "nicolascage"
-  },
-  {
     "slug": "juliuscaesar"
-  },
-  {
-    "slug": "queenelizabethth"
   },
   {
     "slug": "theodoreroosevel"
   },
   {
     "slug": "borisjohnson"
-  },
-  {
-    "slug": "dalailama"
   },
   {
     "slug": "sigmundfreud"
@@ -276,9 +327,6 @@
     "slug": "jimcarrey"
   },
   {
-    "slug": "gordonramsay"
-  },
-  {
     "slug": "madonna"
   },
   {
@@ -291,12 +339,6 @@
     "slug": "khabylame"
   },
   {
-    "slug": "ilyasutskever"
-  },
-  {
-    "slug": "cthulhu"
-  },
-  {
     "slug": "terracottawarrio"
   },
   {
@@ -304,12 +346,6 @@
   },
   {
     "slug": "brucelee"
-  },
-  {
-    "slug": "shaquilleoneal"
-  },
-  {
-    "slug": "thegrimreaper"
   },
   {
     "slug": "sunwukongthemonk"
@@ -337,9 +373,6 @@
   },
   {
     "slug": "buddha"
-  },
-  {
-    "slug": "genghiskhan"
   },
   {
     "slug": "abrahamlincoln"
@@ -373,9 +406,6 @@
   },
   {
     "slug": "elvispresley"
-  },
-  {
-    "slug": "snoopdogg"
   },
   {
     "slug": "khabibnurmagomed"
@@ -453,9 +483,6 @@
     "slug": "rowanatkinson"
   },
   {
-    "slug": "steveirwin"
-  },
-  {
     "slug": "freddiemercury"
   },
   {
@@ -478,9 +505,6 @@
   },
   {
     "slug": "tintin"
-  },
-  {
-    "slug": "colonelsanders"
   },
   {
     "slug": "jackiechan"
@@ -511,9 +535,6 @@
   },
   {
     "slug": "joanofarc"
-  },
-  {
-    "slug": "bobross"
   },
   {
     "slug": "masahirosakurai"
@@ -573,9 +594,6 @@
     "slug": "bettywhite"
   },
   {
-    "slug": "weirdalyankovic"
-  },
-  {
     "slug": "rupaul"
   },
   {
@@ -615,9 +633,6 @@
     "slug": "peeweeherman"
   },
   {
-    "slug": "judgejudy"
-  },
-  {
     "slug": "cher"
   },
   {
@@ -628,9 +643,6 @@
   },
   {
     "slug": "frankensteinsmon"
-  },
-  {
-    "slug": "mrt"
   },
   {
     "slug": "samuelljackson"
@@ -684,16 +696,10 @@
     "slug": "quasimodo"
   },
   {
-    "slug": "dannydevito"
-  },
-  {
     "slug": "davidhasselhoff"
   },
   {
     "slug": "cheechmarin"
-  },
-  {
-    "slug": "guyfieri"
   },
   {
     "slug": "kurtcobain"
@@ -871,9 +877,6 @@
   },
   {
     "slug": "novakdjokovic"
-  },
-  {
-    "slug": "babayaga"
   },
   {
     "slug": "odysseus"
@@ -1768,9 +1771,6 @@
   },
   {
     "slug": "chowyunfat"
-  },
-  {
-    "slug": "justinbieber"
   },
   {
     "slug": "calvinharris"

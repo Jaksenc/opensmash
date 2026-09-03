@@ -1164,7 +1164,12 @@ export function createFighterJobs({
       return [...jobs.values()]
         .filter((job) => job.visibility !== "private" || job.ownerId === ownerId)
         .sort((left, right) => right.createdAt.localeCompare(left.createdAt))
-        .map(publicJob);
+        .map((job) => ({
+          ...publicJob(job),
+          // Lets the roster float the viewer's own fighters to the top
+          // without exposing the owner id itself.
+          mine: Boolean(ownerId && job.ownerId === ownerId),
+        }));
     },
     get(id, ownerId = null) {
       const job = ownedJob(id, ownerId);

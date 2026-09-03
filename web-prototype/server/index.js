@@ -453,10 +453,18 @@ async function readJsonBody(req, limit = MAX_JSON_BODY) {
 
 async function configuredCharacters(query = "", user = null) {
   const result = [...(await bakedRoster()).characters];
-  const configuredSlugs = new Set(result.map((character) => character.slug));
+  const configuredSlugs = new Map(result.map((character, index) => [character.slug, index]));
   for (const job of fighterJobs.listVisible(user?.uid)) {
-    if (job.status !== "complete" || !job.character || configuredSlugs.has(job.slug)) continue;
-    result.push({ ...job.character, generated: true });
+    if (job.status !== "complete" || !job.character) continue;
+    if (configuredSlugs.has(job.slug)) {
+      // A baked fighter the viewer generated still counts as theirs.
+      if (job.mine) {
+        const index = configuredSlugs.get(job.slug);
+        result[index] = { ...result[index], mine: true };
+      }
+      continue;
+    }
+    result.push({ ...job.character, generated: true, mine: Boolean(job.mine) });
   }
 
   return result.filter((character) => matchesCharacterSearch(character, query));
