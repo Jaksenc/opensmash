@@ -13,6 +13,7 @@ import {
 const CHARACTER = {
   slug: "testfighter",
   name: "Test Fighter",
+  short: "TEST",
   fkind: 0,
   base: "mario",
   // One OSB6 per character; `variants` lists the skeleton targets built into it.
@@ -32,6 +33,7 @@ test("default launches start a free-for-all", () => {
   const characterQuery = queryFor({ type: "character", character: CHARACTER });
   assert.equal(characterQuery.get("inject"), "bundles/testfighter.osb6");
   assert.equal(characterQuery.get("inject_name"), "Test Fighter");
+  assert.equal(characterQuery.get("inject_short"), "TEST");
   assert.equal(characterQuery.get("inject_ui"), null);
   assert.equal(characterQuery.get("inject_voice"), null);
   assert.match(characterQuery.get("SSB64_BOOT_BATTLE"), /^0,\d+,\d+,1,\d+,\d+$/);

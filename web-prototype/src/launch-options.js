@@ -354,6 +354,7 @@ export function engineUrl(action, advancedOptions, gamepads = []) {
     params.set("fkind", String(character.fkind));
     params.set("player", "0");
     if (character.name) params.set("inject_name", character.name);
+    if (character.short) params.set("inject_short", character.short);
     if (options.characterMesh !== "auto") {
       params.set("base", `${character.slug}:${options.characterMesh}`);
     }
