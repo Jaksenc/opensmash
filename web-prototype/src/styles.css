@@ -1129,6 +1129,13 @@ body.retro-home::before {
 .about-copy p + p,
 .creation-paused-copy p + p { margin-top: 12px; }
 .about-legal { opacity: .82; }
+.about-link {
+  color: #ed4b25;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.about-link:hover,
+.about-link:focus-visible { color: #ff7a52; }
 .about-cancel,
 .creation-paused-cancel {
   box-sizing: border-box;

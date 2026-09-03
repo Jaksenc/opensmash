@@ -1341,8 +1341,8 @@ export default function App() {
         />
       )}
       <header className="site-header">
-        <a className="wordmark" href="/" aria-label="OpenSmash home">
-          OPEN<span>SMASH</span>
+        <a className="wordmark" href="/" aria-label="Smash.fun home">
+          SMASH<span>.FUN</span>
         </a>
         <div className="header-tools">
           <a className="create-link" href={isCreatePage ? "/" : "/create"}>
@@ -1390,7 +1390,7 @@ export default function App() {
             <iframe
               ref={engineRef}
               src={engine.src}
-              title="OpenSmash game engine"
+              title="Smash.fun game engine"
               allow="autoplay; gamepad; fullscreen"
             />
           ) : (
@@ -1502,7 +1502,7 @@ export default function App() {
       </section>}
 
       <footer>
-        <span>OpenSmash web</span>
+        <span>Smash.fun</span>
         <span>React · Node · WASM on demand</span>
       </footer>
 

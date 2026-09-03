@@ -1,6 +1,6 @@
 {
-  "name": "OpenSmash",
-  "short_name": "OpenSmash",
+  "name": "Smash.fun",
+  "short_name": "Smash.fun",
   "description": "Super Smash Bros. 64 in the browser with generated fighters.",
   "start_url": "/",
   "display": "fullscreen",

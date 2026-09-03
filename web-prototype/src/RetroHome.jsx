@@ -80,7 +80,7 @@ export function LaunchFlow() {
     <div id="launch-flow-overlay" className="launch-flow-overlay" data-step="upload" data-mode="launch" hidden>
       <canvas id="launch-flow-canvas" className="launch-flow-canvas" aria-hidden="true" />
       <section className="launch-flow-step launch-flow-upload" role="dialog" aria-modal="true" aria-labelledby="launch-flow-title" aria-describedby="launch-flow-copy rom-filename-hint">
-        <h2 id="launch-flow-title" className="visually-hidden">Play Smash the Weights</h2>
+        <h2 id="launch-flow-title" className="visually-hidden">Play Smash.fun</h2>
         <p id="launch-flow-copy" className="launch-flow-copy">
           To play, choose your legally obtained USA-release Super Smash Bros. 64 ROM. It never leaves your device.
         </p>
@@ -387,7 +387,7 @@ export default function RetroHome({
   return (
     <>
       {pageError && <p className="retro-page-error" role="alert">{pageError}</p>}
-      <main className="arena-shell" aria-label="OpenSmash character grid">
+      <main className="arena-shell" aria-label="Smash.fun character grid">
         <header className="retro-site-header">
           <div id="hero-logo-stage" className="retro-site-logo" aria-label="Smash.fun">
             <img className="hero-logo-fallback" src={logoFallbackUrl} alt="Smash.fun" draggable="false" />
@@ -460,7 +460,7 @@ export default function RetroHome({
                 href="https://github.com/turtlesoupy/opensmash"
                 target="_blank"
                 rel="noreferrer"
-                aria-label="View OpenSmash on GitHub"
+                aria-label="View the source on GitHub"
                 title="GitHub"
               >
                 <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -473,7 +473,7 @@ export default function RetroHome({
                 href="https://discord.gg/qYBbGmwBhr"
                 target="_blank"
                 rel="noreferrer"
-                aria-label="Join the OpenSmash community on Discord"
+                aria-label="Join the Smash.fun community on Discord"
                 title="Discord"
               >
                 <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -509,7 +509,7 @@ export default function RetroHome({
                 }}
               />
               <img className="intro-video-rule-layer" alt="" aria-hidden="true" />
-              <iframe ref={engineRef} id="intro-game-frame" className="intro-game-frame" src={engine?.src || "about:blank"} title={engine ? "OpenSmash game engine" : "Super Weights Bros game"} allow="autoplay; gamepad; fullscreen" />
+              <iframe ref={engineRef} id="intro-game-frame" className="intro-game-frame" src={engine?.src || "about:blank"} title={engine ? "Smash.fun game engine" : "Smash.fun game"} allow="autoplay; gamepad; fullscreen" />
               {engine && <button
                 className="game-fullscreen-control"
                 type="button"
@@ -578,13 +578,19 @@ export default function RetroHome({
               <h2 id="about-title" className="launch-flow-title about-title">About</h2>
               <div id="about-copy" className="about-copy">
                 <p className="launch-flow-copy">
-                  OpenSmash is a fan-made browser port of Super Smash Bros. for the Nintendo 64 which allows you to
+                  Smash.fun is a fan-made browser port of Super Smash Bros. for the Nintendo 64 which allows you to
                   create custom fighters and play them inside the original game.
                 </p>
                 <p className="launch-flow-copy">You must supply a legally obtained copy of the game ROM to play.</p>
                 <p className="launch-flow-copy">Your ROM and its assets stay on your device. Nothing is uploaded.</p>
+                <p className="launch-flow-copy">
+                  The source is open at{" "}
+                  <a className="about-link" href="https://github.com/turtlesoupy/opensmash" target="_blank" rel="noreferrer">
+                    github.com/turtlesoupy/opensmash
+                  </a>.
+                </p>
                 <p className="launch-flow-copy about-legal">
-                  OpenSmash is not affiliated with, endorsed by, or sponsored by Nintendo. Super Smash Bros., Nintendo
+                  Smash.fun is not affiliated with, endorsed by, or sponsored by Nintendo. Super Smash Bros., Nintendo
                   64, and all related characters, names, and marks are trademarks of Nintendo and their respective
                   owners.
                 </p>

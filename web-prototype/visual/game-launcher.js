@@ -2395,7 +2395,7 @@ function showLaunchFlow(fighter, { create = false } = {}) {
   createUploadMode = create;
   resetRomPrompt();
   resetControlCheck();
-  if (flowTitle) flowTitle.textContent = create ? 'Create a fighter' : 'Play Smash the Weights';
+  if (flowTitle) flowTitle.textContent = create ? 'Create a fighter' : 'Play Smash.fun';
   if (flowCopy) {
     flowCopy.textContent = create
       ? 'To create a fighter, choose your legally obtained USA-release Super Smash Bros. 64 ROM. It never leaves your device.'
