@@ -232,6 +232,7 @@ export default function RetroHome({
   demoTrailer = false,
   onDemoTrailer,
   audioActive = false,
+  trailerSoundOptIn = false,
   onResetRom,
   onSignOut,
   pageError,
@@ -410,7 +411,8 @@ export default function RetroHome({
     const player = introVideoRef.current;
     if (!player || !trailerPlayerReady) return;
     // Demo music owns the audio bed while it plays; the trailer stays silent.
-    const audible = demoTrailer || (soundOn && audioActive && !(demoMode && demoMusic));
+    const audible = demoTrailer
+      || (soundOn && audioActive && trailerSoundOptIn && !(demoMode && demoMusic));
     const paused = Boolean(!demoTrailer && (launchFlowOpen || engine));
     // Only send commands for state that actually changed: a redundant
     // playVideo would restart a trailer the viewer paused by hand.
@@ -418,7 +420,7 @@ export default function RetroHome({
     if (previous.audible !== audible) controlEmbeddedTrailer(player, audible ? "unMute" : "mute");
     if (previous.paused !== paused) controlEmbeddedTrailer(player, paused ? "pauseVideo" : "playVideo");
     trailerCommandRef.current = { audible, paused };
-  }, [audioActive, demoMode, demoMusic, demoTrailer, engine, launchFlowOpen, soundOn, trailerPlayerReady]);
+  }, [audioActive, demoMode, demoMusic, demoTrailer, engine, launchFlowOpen, soundOn, trailerPlayerReady, trailerSoundOptIn]);
 
   function closeMoreMenu() {
     moreMenuRef.current?.removeAttribute("open");

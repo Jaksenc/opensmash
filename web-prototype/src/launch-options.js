@@ -245,30 +245,20 @@ export function selectDirectBattleOpponents(
   ownedCharacters = [],
   random = Math.random,
 ) {
+  // The viewer's own (private) fighters get no special treatment: they sit in
+  // the pool like any other roster entry. They used to be forced into every
+  // battle, which read as "my private fighter shows up even when I didn't
+  // pick it".
   const selectedSlug = selectedCharacter?.slug;
-  const uniqueGrid = uniqueCharacters(gridCharacters);
-  const availableGrid = uniqueGrid.filter((character) => character.slug !== selectedSlug);
-  const availableOwned = uniqueCharacters(ownedCharacters)
+  const pool = uniqueCharacters([...gridCharacters, ...ownedCharacters])
     .filter((character) => character.slug !== selectedSlug);
-  const ownedSlugs = new Set(availableOwned.map((character) => character.slug));
-  const nonOwnedGrid = availableGrid.filter((character) => !ownedSlugs.has(character.slug));
-  const gridCharacter = randomItem(
-    nonOwnedGrid.length ? nonOwnedGrid : (availableGrid.length ? availableGrid : uniqueGrid),
-    random,
-  );
-  const ownedCharacter = randomItem(
-    availableOwned.filter((character) => character.slug !== gridCharacter?.slug),
-    random,
-  );
-  const fallbackCharacter = ownedCharacter || randomItem(
-    availableGrid.filter((character) => character.slug !== gridCharacter?.slug),
-    random,
-  ) || gridCharacter;
+  const first = randomItem(pool, random);
+  const second = randomItem(pool.filter((character) => character.slug !== first?.slug), random) || first;
 
   return [
     { type: "vanilla", fkind: Math.floor(random() * 12) },
-    ...(gridCharacter ? [{ type: "character", character: gridCharacter }] : []),
-    ...(fallbackCharacter ? [{ type: "character", character: fallbackCharacter }] : []),
+    ...(first ? [{ type: "character", character: first }] : []),
+    ...(second ? [{ type: "character", character: second }] : []),
   ];
 }
 

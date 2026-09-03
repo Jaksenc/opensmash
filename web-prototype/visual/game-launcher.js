@@ -437,7 +437,7 @@ function launch(fighter) {
     clearPicks();
   }
   controlEmbeddedTrailer(introVideo, 'pauseVideo');
-  gameFrame.title = `${fighter.displayName} — Super Weights Bros`;
+  gameFrame.title = `${fighter.displayName} — Smash.fun`;
   const source = APP_BRIDGE?.launch
     ? APP_BRIDGE.launch({ type: fighter.actionType || 'character', slug: fighter.slug, picks: picks.map(pick => pick.slug) })
     : engineUrl(fighter);
@@ -460,7 +460,7 @@ function closeGame() {
   if (!gameFrame || !videoFrame) return;
   APP_BRIDGE?.closeGame?.();
   gameFrame.src = 'about:blank';
-  gameFrame.title = 'Super Weights Bros game';
+  gameFrame.title = 'Smash.fun game';
   videoFrame.classList.remove('is-game-running');
   if (introVideo) {
     controlEmbeddedTrailer(introVideo, 'seekTo', [0, true]);

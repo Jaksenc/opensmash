@@ -164,6 +164,15 @@ export default function SettingsModal({
                 <span>Get ROM from another device</span>
               </button>
             )}
+            {authorized && (
+              <button
+                className="launch-flow-action settings-menu-button reset-rom-button"
+                type="button"
+                onClick={() => close(onResetRom)}
+              >
+                <span>Clear ROM from this device</span>
+              </button>
+            )}
             <button
               className="launch-flow-action settings-menu-button"
               type="button"

@@ -9,7 +9,7 @@ import {
   rosterGridDimensions,
 } from '../shared/roster-layout.js';
 import { formatFighterJobCellError } from '../shared/fighter-job-ui.js';
-import { isPageScrollLocked } from '../shared/page-scroll-lock.js';
+import { isPageScrollLocked, onPageScrollUnlock } from '../shared/page-scroll-lock.js';
 
 const ACTION_ICON_ASSETS = import.meta.glob('./assets/ui/*.png', {
   eager: true,
@@ -1016,6 +1016,9 @@ function applyGridLayout(columns = columnsForContainer(), force = false) {
 }
 
 applyGridLayout();
+// A grid change that lands while a scroll-locking overlay is open (job
+// completion, roster poll, resize) bails out above; re-run it once the lock lifts.
+onPageScrollUnlock(scheduleMountedCellWindowUpdate);
 
 let resizeSettleTimer = 0;
 function syncLayoutToVideoWidth() {

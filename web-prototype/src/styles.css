@@ -228,10 +228,6 @@ main { width: min(1600px, calc(100% - 40px)); margin: 0 auto; }
   overscroll-behavior: contain;
 }
 body.is-create-experience-open { overflow: hidden; }
-.retro-home .create-experience-backdrop,
-.retro-home .create-experience-backdrop button,
-.retro-home .create-experience-backdrop input,
-.retro-home .create-experience-backdrop select,
 .create-experience {
   position: relative;
   width: min(1100px, 100%);
@@ -1162,19 +1158,7 @@ body.retro-home::before {
   filter: none;
   -webkit-font-smoothing: none;
 }
-.retro-home .about-overlay,
-.retro-home .about-overlay button,
-.retro-home .creation-paused-overlay,
 .retro-home .modal-backdrop { z-index: 2100; }
-.retro-home .modal,
-.retro-home .modal button,
-.retro-home .modal input,
-.retro-home .modal select,
-.retro-home .advanced-overlay,
-.retro-home .advanced-overlay button,
-.retro-home .advanced-overlay input,
-.retro-home .advanced-overlay select,
-
 /* Touch controls stay mounted with the game but appear only on mobile-sized
    or coarse-pointer devices. Every interactive target meets the 44px minimum. */
 .game-surface-shell { width: 100%; }

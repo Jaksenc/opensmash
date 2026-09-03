@@ -357,6 +357,11 @@ export default function App() {
   // and fan it out to every audio source: trailer iframe, flow music, engine
   // AudioContext. The sound preference stays the single override.
   const [audioUnlocked, setAudioUnlocked] = useState(false);
+  // The home-page trailer only goes audible after the viewer explicitly turns
+  // sound on through the site's own toggle (or unmutes the player itself). A
+  // random first click/keypress used to unmute it, which felt like the page
+  // deciding to blast audio on its own.
+  const [trailerSoundOptIn, setTrailerSoundOptIn] = useState(false);
   const firstGestureTargetRef = useRef(null);
   // Audio is only ever audible while the page is in the foreground. A hidden
   // tab / backgrounded iPhone throttles the engine's setTimeout pacer to ~1fps,
@@ -1164,10 +1169,14 @@ export default function App() {
   function toggleSound(event) {
     const firstTarget = firstGestureTargetRef.current;
     if (soundOn && firstTarget && event?.currentTarget?.contains?.(firstTarget)) {
+      // First gesture landed on the sound button itself: that is an explicit
+      // "enable sound", not a request to turn it off.
       firstGestureTargetRef.current = null;
+      setTrailerSoundOptIn(true);
       return;
     }
     firstGestureTargetRef.current = null;
+    if (!soundOn) setTrailerSoundOptIn(true);
     setSoundPreference((current) => !current);
   }
 
@@ -1361,6 +1370,7 @@ export default function App() {
           pageError={pageError}
           ready={!loadingCharacters}
           audioActive={audioActive}
+          trailerSoundOptIn={trailerSoundOptIn}
           soundOn={soundOn}
           trailerCinematic={trailerCinematic}
           trailerEngineReady={trailerEngineReady}
@@ -1473,7 +1483,7 @@ export default function App() {
             <div className="engine-placeholder">
               <img
                 src={viewportLogoUrl}
-                alt="Super Weights Bros"
+                alt="Smash.fun"
               />
               <div>
                 <p className="eyebrow">WASM game viewport</p>

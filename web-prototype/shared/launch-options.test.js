@@ -55,7 +55,7 @@ test("launches request only character extras that actually exist", () => {
   assert.equal(query.get("inject_voice"), "/character-assets/testfighter/announcer.wav");
 });
 
-test("character launches mix one vanilla, one grid, and one unused owned opponent", () => {
+test("character launches mix one vanilla and two distinct roster fighters; own fighters are not forced in", () => {
   const grid = [
     CHARACTER,
     { ...CHARACTER, slug: "gridfighter", name: "Grid Fighter", short: "GRID", fkind: 5, bundle: "gridfighter-link.osb" },
@@ -65,17 +65,18 @@ test("character launches mix one vanilla, one grid, and one unused owned opponen
     CHARACTER,
     { ...CHARACTER, slug: "myfighter", name: "My Fighter", short: "MINE", fkind: 3, bundleUrl: "/api/fighters/mine/assets/bundle" },
   ];
-  const opponents = selectDirectBattleOpponents(CHARACTER, [owned[1], ...grid], owned, () => 0);
+  const opponents = selectDirectBattleOpponents(CHARACTER, grid, owned, () => 0);
   assert.deepEqual(opponents.map((opponent) => opponent.type), ["vanilla", "character", "character"]);
   assert.equal(opponents[0].fkind, 0);
   assert.equal(opponents[1].character.slug, "gridfighter");
-  assert.equal(opponents[2].character.slug, "myfighter");
+  assert.equal(opponents[2].character.slug, "fallback");
+  assert.ok(!opponents.some((opponent) => opponent.character?.slug === "myfighter"));
 
   const query = queryFor(
     { type: "character", character: CHARACTER, opponents },
     { ...DEFAULT_ADVANCED_OPTIONS, stage: "0" },
   );
-  assert.equal(query.get("SSB64_BOOT_BATTLE"), "0,0,0,1,5,3");
+  assert.equal(query.get("SSB64_BOOT_BATTLE"), "0,0,0,1,5,8");
   assert.deepEqual(
     query.getAll("inject_player").map((entry) => JSON.parse(entry)),
     [
@@ -92,11 +93,11 @@ test("character launches mix one vanilla, one grid, and one unused owned opponen
       },
       {
         player: 3,
-        slug: "myfighter",
-        fkind: 3,
-        short: "MINE",
-        name: "My Fighter",
-        bundleUrl: "/api/fighters/mine/assets/bundle",
+        slug: "fallback",
+        fkind: 8,
+        short: "FALL",
+        name: "Fallback",
+        bundleUrl: "bundles/fallback-kirby.osb",
         uiUrl: null,
         voiceUrl: null,
         portraitUrl: null,
@@ -105,7 +106,7 @@ test("character launches mix one vanilla, one grid, and one unused owned opponen
   );
 });
 
-test("owned-opponent slot falls back to another unused grid fighter", () => {
+test("opponent slots are filled from distinct grid fighters", () => {
   const grid = [
     CHARACTER,
     { ...CHARACTER, slug: "second", fkind: 1, bundle: "second-fox.osb" },
@@ -130,7 +131,7 @@ test("duplicate roster records never cause duplicate fighters when unique choice
   const customSlugs = opponents
     .filter((opponent) => opponent.type === "character")
     .map((opponent) => opponent.character.slug);
-  assert.deepEqual(customSlugs, ["third", "second"]);
+  assert.deepEqual(customSlugs, ["second", "third"]);
   assert.equal(new Set([CHARACTER.slug, ...customSlugs]).size, 3);
 });
 
