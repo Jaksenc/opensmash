@@ -233,6 +233,7 @@ export default function RetroHome({
   onDemoTrailer,
   audioActive = false,
   trailerSoundOptIn = false,
+  onTrailerSoundChange,
   onResetRom,
   onSignOut,
   pageError,
@@ -249,7 +250,9 @@ export default function RetroHome({
   const introVideoRef = useRef(null);
   const [trailerPlayerReady, setTrailerPlayerReady] = useState(false);
   // Last mute/pause state pushed to the YouTube player; reset per player load.
-  const trailerCommandRef = useRef({ audible: null, paused: null });
+  const trailerCommandRef = useRef({ audible: null, paused: null, sentAt: 0 });
+  const onTrailerSoundChangeRef = useRef(onTrailerSoundChange);
+  useEffect(() => { onTrailerSoundChangeRef.current = onTrailerSoundChange; }, [onTrailerSoundChange]);
   const moreMenuRef = useRef(null);
   const gameSurfaceRef = useRef(null);
   const cinematicFirstRectRef = useRef(null);
@@ -399,6 +402,17 @@ export default function RetroHome({
       try { data = typeof event.data === "string" ? JSON.parse(event.data) : event.data; }
       catch { return; }
       if (data?.event === "onReady") setTrailerPlayerReady(true);
+      // The player's own speaker button is the other way to (un)mute. Mirror
+      // it into site state so "Sound" and the trailer never disagree. Reports
+      // that arrive right after one of our own mute/unMute commands are the
+      // player echoing that command, not the viewer.
+      if (data?.event === "infoDelivery" && typeof data.info?.muted === "boolean") {
+        const expected = trailerCommandRef.current.audible;
+        if (expected === null) return;
+        if (performance.now() - trailerCommandRef.current.sentAt < 1500) return;
+        const playerAudible = !data.info.muted;
+        if (playerAudible !== expected) onTrailerSoundChangeRef.current?.(playerAudible);
+      }
     };
     window.addEventListener("message", onMessage);
     return () => window.removeEventListener("message", onMessage);
@@ -416,10 +430,12 @@ export default function RetroHome({
     const paused = Boolean(!demoTrailer && (launchFlowOpen || engine));
     // Only send commands for state that actually changed: a redundant
     // playVideo would restart a trailer the viewer paused by hand.
+    // mute/unMute are idempotent, so they are re-sent on every state change:
+    // the viewer may have flipped the player's own speaker button meanwhile.
     const previous = trailerCommandRef.current;
-    if (previous.audible !== audible) controlEmbeddedTrailer(player, audible ? "unMute" : "mute");
+    controlEmbeddedTrailer(player, audible ? "unMute" : "mute");
     if (previous.paused !== paused) controlEmbeddedTrailer(player, paused ? "pauseVideo" : "playVideo");
-    trailerCommandRef.current = { audible, paused };
+    trailerCommandRef.current = { audible, paused, sentAt: performance.now() };
   }, [audioActive, demoMode, demoMusic, demoTrailer, engine, launchFlowOpen, soundOn, trailerPlayerReady, trailerSoundOptIn]);
 
   function closeMoreMenu() {
@@ -565,7 +581,7 @@ export default function RetroHome({
                 allowFullScreen
                 onLoad={(event) => {
                   setTrailerPlayerReady(false);
-                  trailerCommandRef.current = { audible: null, paused: null };
+                  trailerCommandRef.current = { audible: null, paused: null, sentAt: 0 };
                   disableEmbeddedTrailerCaptions(event.currentTarget);
                   subscribeEmbeddedTrailer(event.currentTarget);
                 }}

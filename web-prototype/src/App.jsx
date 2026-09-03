@@ -1166,6 +1166,14 @@ export default function App() {
   // the first press on the sound button unlocks audio rather than flipping the
   // preference off. Detect that by checking whether the page's first gesture
   // landed on this very button.
+  // The viewer used the YouTube player's own speaker button. Unmuting there
+  // is the same opt-in as the site toggle (and implies sound on); muting there
+  // just drops the trailer opt-in and leaves game/UI sound alone.
+  function trailerSoundChangedByPlayer(audible) {
+    setTrailerSoundOptIn(audible);
+    if (audible) setSoundPreference(true);
+  }
+
   function toggleSound(event) {
     const firstTarget = firstGestureTargetRef.current;
     if (soundOn && firstTarget && event?.currentTarget?.contains?.(firstTarget)) {
@@ -1371,6 +1379,7 @@ export default function App() {
           ready={!loadingCharacters}
           audioActive={audioActive}
           trailerSoundOptIn={trailerSoundOptIn}
+          onTrailerSoundChange={trailerSoundChangedByPlayer}
           soundOn={soundOn}
           trailerCinematic={trailerCinematic}
           trailerEngineReady={trailerEngineReady}
