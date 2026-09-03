@@ -46,13 +46,15 @@ CHROMA = ("ff00ff", "00ff00")
 # camera, which reads as a squashed head on a card; Kirby's Win2 is an upright
 # face and Purin's Win1 tilts least. Other kinds keep the card default.
 WIN_POSE = {8: "2", 9: "2", 10: "1"}
-# Global frame to shoot. The card is held open (SSB64_VSINTRO_HOLD) so a
-# results pose can settle: Luigi's Win1 is still mid-motion at 100 and
-# identical from 130 on; nothing else changes between 100 and 130.
-DEFAULT_FRAME = 130
-# Kirby's Win2 faces the camera only around frames 100-120 (it turns away
-# and settles backwards after 150), so that body shoots early.
-FRAME_POSE = {8: 110}
+# The card is held open (SSB64_VSINTRO_HOLD) and the pose animation is
+# frozen N card tics in (SSB64_VSINTRO_FREEZE_TIC), then shot well after.
+# Global frame numbers drift with load time, so the freeze tic is what
+# selects the pose, not the shot frame. 120: every results pose has settled
+# (Luigi Win1 is the slowest). Kirby's Win2 spins and faces the camera
+# only at tics ~100-115.
+DEFAULT_FRAME = 250
+DEFAULT_FREEZE_TIC = 120
+FREEZE_POSE = {8: 108}
 
 
 def boot(fkind, bundle, fill, frames, shots, win=(0, 40)):
@@ -73,6 +75,7 @@ def boot(fkind, bundle, fill, frames, shots, win=(0, 40)):
         "SSB64_MUTE": "1",
         "SSB64_VSINTRO_HOLD": "1",
     })
+    env.setdefault("SSB64_VSINTRO_FREEZE_TIC", str(FREEZE_POSE.get(fkind, DEFAULT_FREEZE_TIC)))
     if fkind in WIN_POSE and "SSB64_VSINTRO_WIN" not in os.environ:
         env["SSB64_VSINTRO_WIN"] = WIN_POSE[fkind]
     cfg_path = os.path.join(BUILD, "BattleShip.cfg.json")
@@ -203,7 +206,7 @@ def main():
     ap.add_argument("slugs", nargs="+")
     ap.add_argument("--fkind", type=int, default=None, help="base fighter kind (single slug); else from --api")
     ap.add_argument("--api", default="http://localhost:4181", help="dev server for slug -> fkind lookup")
-    ap.add_argument("--frame", type=int, default=None, help="global frame to shoot (default per body kind; card is held open)")
+    ap.add_argument("--frame", type=int, default=None, help="global frame to shoot (after the freeze tic; card is held open)")
     ap.add_argument("--out", default=None, help="output PNG (single slug)")
     ap.add_argument("--keep", default=None, help="keep raw captures in this dir (single slug)")
     ap.add_argument("--force", action="store_true", help="re-bake existing sprites")
@@ -224,7 +227,7 @@ def main():
             continue
         try:
             win = tuple(int(v) for v in a.win.split(","))
-            frame = a.frame if a.frame is not None else FRAME_POSE.get(fkinds[slug], DEFAULT_FRAME)
+            frame = a.frame if a.frame is not None else DEFAULT_FRAME
             bbox = bake(slug, fkinds[slug], frame, out, a.keep, win)
             print(f"{slug}: fkind={fkinds[slug]} bbox={bbox[0]}x{bbox[1]} -> {os.path.relpath(out, PIPELINE_ROOT)}")
         except Exception as e:  # noqa: BLE001
