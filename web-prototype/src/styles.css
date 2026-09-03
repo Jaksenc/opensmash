@@ -233,7 +233,6 @@ body.is-create-experience-open #glove-canvas { z-index: 1800; }
 .retro-home .create-experience-backdrop button,
 .retro-home .create-experience-backdrop input,
 .retro-home .create-experience-backdrop select,
-.retro-home .create-experience-backdrop label { cursor: none; }
 .create-experience {
   position: relative;
   width: min(1100px, 100%);
@@ -1019,7 +1018,6 @@ body.retro-home {
   background: #000;
   color: #e9dfcf;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  cursor: none;
 }
 body.retro-home::before {
   z-index: 0;
@@ -1044,7 +1042,6 @@ body.retro-home::before {
   border: 0;
   background: transparent;
   color: #fff;
-  cursor: none;
   transition: filter 120ms linear, transform 120ms ease;
 }
 .game-fullscreen-control:hover,
@@ -1164,18 +1161,15 @@ body.is-creation-paused-open #glove-canvas { z-index: 1800; }
 .retro-home .about-overlay,
 .retro-home .about-overlay button,
 .retro-home .creation-paused-overlay,
-.retro-home .creation-paused-overlay button { cursor: none; }
-.retro-home .modal-backdrop { z-index: 2100; cursor: none; }
+.retro-home .modal-backdrop { z-index: 2100; }
 .retro-home .modal,
 .retro-home .modal button,
 .retro-home .modal input,
 .retro-home .modal select,
-.retro-home .modal label { cursor: none; }
 .retro-home .advanced-overlay,
 .retro-home .advanced-overlay button,
 .retro-home .advanced-overlay input,
 .retro-home .advanced-overlay select,
-.retro-home .advanced-overlay label { cursor: none; }
 body.is-advanced-open #glove-canvas { z-index: 1800; }
 
 /* Touch controls stay mounted with the game but appear only on mobile-sized
@@ -1229,7 +1223,6 @@ body.is-trailer-mode.is-launch-flow-open #glove-canvas { z-index: 3200; }
   letter-spacing: .08em;
   text-transform: uppercase;
   opacity: .82;
-  cursor: none;
   transition: opacity 120ms linear, filter 120ms linear;
 }
 .trailer-cinematic-control:hover,
@@ -1329,7 +1322,6 @@ body.is-immersive { overflow: hidden; }
     line-height: 1;
     text-align: center;
     text-shadow: 0 2px 0 rgba(0, 0, 0, .75);
-    cursor: none;
     pointer-events: auto;
     touch-action: none;
     -webkit-tap-highlight-color: transparent;
