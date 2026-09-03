@@ -5,6 +5,7 @@ import AuthGate from "./AuthGate.jsx";
 import CreateVisualShell from "./CreateVisualShell.jsx";
 import CreationPaused from "./CreationPaused.jsx";
 import FighterCreator from "./FighterCreator.jsx";
+import FighterJobModal from "./FighterJobModal.jsx";
 import ModalPage from "./ModalPage.jsx";
 import RetroHome from "./RetroHome.jsx";
 import SettingsModal from "./SettingsModal.jsx";
@@ -359,6 +360,8 @@ export default function App() {
   const gamepads = useGamepads();
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
+  // Fighter job whose generation details modal is open (null = closed).
+  const [detailsJobId, setDetailsJobId] = useState(null);
   const [createStage, setCreateStage] = useState(null);
   // Server killswitch (CREATION_ENABLED). Assumed on until /api/session
   // answers; the value is re-read on every create click, so a flip takes
@@ -455,7 +458,7 @@ export default function App() {
     };
   }, []);
   // The launch flow, About, and Settings overlays share one music bed.
-  const overlayMusicActive = flowMusicActive || advancedOpen || aboutOpen;
+  const overlayMusicActive = flowMusicActive || advancedOpen || aboutOpen || Boolean(detailsJobId);
   const startFlowMusic = useFlowMusic(overlayMusicActive && !engine, soundOn && pageVisible);
   useEffect(() => {
     const syncFlowMusic = (event) => {
@@ -598,10 +601,26 @@ export default function App() {
       nextStatuses.set(job.id, job.status);
       if (job.status === "failed" && previousStatuses.get(job.id) !== "failed") {
         setPageError(formatFighterJobError(job));
+        // A toast alone is easy to miss and says nothing about why; open the
+        // details modal so the player sees the stage, error and retry.
+        if (previousStatuses.has(job.id)) setDetailsJobId(job.id);
       }
     }
     previousFighterJobStatusesRef.current = nextStatuses;
   }, [fighterJobs, setPageError]);
+
+  const detailsJob = detailsJobId ? fighterJobs.find((job) => job.id === detailsJobId) || null : null;
+  useEffect(() => {
+    if (detailsJobId && !detailsJob) setDetailsJobId(null);
+  }, [detailsJobId, detailsJob]);
+
+  const retryFighterJob = useCallback(async (job) => {
+    const response = await fetch(`/api/fighters/${encodeURIComponent(job.id)}/retry`, { method: "POST" });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.error || "Could not retry this fighter.");
+    if (result.job) recordFighterJob(result.job);
+    return result.job;
+  }, [recordFighterJob]);
 
   const activeFighterJobKey = fighterJobs
     .filter((job) => ACTIVE_FIGHTER_JOB_STATUSES.has(job.status))
@@ -1236,6 +1255,7 @@ export default function App() {
       },
       reportError(error) { setPageError(error.message || "Could not load the visual experience."); },
       reportGenerationError(job) { setPageError(formatFighterJobError(job)); },
+      showGenerationDetails(job) { if (job?.id) setDetailsJobId(job.id); },
       validateCreateRom: validateCreateVisualRom,
       validateRom: validateVisualRom,
     });
@@ -1282,6 +1302,12 @@ export default function App() {
           user={user}
         />
         <CreationPaused open={createStage === "paused"} onClose={() => setCreateStage(null)} />
+        <FighterJobModal
+          job={detailsJob}
+          open={Boolean(detailsJob)}
+          onClose={() => setDetailsJobId(null)}
+          onRetry={retryFighterJob}
+        />
         <SettingsModal
           accountConnected={Boolean(user)}
           authorized={authorized}

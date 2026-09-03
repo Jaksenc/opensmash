@@ -2,8 +2,10 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { min-height: 100%; }
   @media (hover: hover) and (pointer: fine) {
-    html.is-custom-cursor-ready,
-    html.is-custom-cursor-ready * { cursor: none !important; }
+    /* Hide the native cursor only while the glove is actually standing in for
+       it; when the glove is poofed away the browser cursor is the fallback. */
+    html.is-custom-cursor-ready:not(.is-glove-hidden),
+    html.is-custom-cursor-ready:not(.is-glove-hidden) * { cursor: none !important; }
     html.is-custom-cursor-ready .launch-flow-rom-copy { cursor: pointer !important; }
   }
   html { background: #000; }
@@ -295,6 +297,26 @@
     filter: drop-shadow(0 0 7px rgba(255, 128, 44, .62));
     transform: translate(-50%, -50%);
     animation: fighter-job-spin 850ms steps(8, end) infinite;
+    pointer-events: none;
+  }
+  .fighter-job-status {
+    position: absolute;
+    right: 5%;
+    bottom: 15%;
+    left: 5%;
+    z-index: 5;
+    overflow: hidden;
+    color: #f2d9a6;
+    font-family: "Kanit", sans-serif;
+    font-size: clamp(6px, .7vw, 9px);
+    font-weight: 600;
+    letter-spacing: .03em;
+    line-height: 1.1;
+    text-align: center;
+    text-overflow: ellipsis;
+    text-shadow: 0 1px 0 #1a0a00, 1px 0 0 #1a0a00, -1px 0 0 #1a0a00;
+    text-transform: uppercase;
+    white-space: nowrap;
     pointer-events: none;
   }
   .fighter-job-progress {

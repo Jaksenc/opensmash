@@ -1636,3 +1636,167 @@ body.retro-home.show-native-cursor * {
   .advanced-debug-actions { grid-template-columns: 1fr; }
   .game-fullscreen-control { bottom: 6px; right: 6px; }
 }
+
+/* Fighter job details modal: opened from a generating/failed roster tile. */
+.fighter-job-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1500;
+  overflow: auto;
+  overscroll-behavior: none;
+  background: #000;
+  color: #fff2d6;
+}
+.fighter-job-screen {
+  width: 100%;
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  font-family: "Kanit", sans-serif;
+  text-align: center;
+}
+.fighter-job-content {
+  --launch-control-width: clamp(210px, 23vw, 300px);
+  display: flex;
+  width: min(640px, 100%);
+  flex-direction: column;
+  align-items: center;
+}
+.fighter-job-title { margin: 0; }
+.fighter-job-headline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 0;
+  color: #ffd27a;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.fighter-job-screen.is-failed .fighter-job-headline { color: #ff947a; }
+.fighter-job-headline-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ff8b3d;
+  box-shadow: 0 0 8px rgba(255, 139, 61, .8);
+  animation: fighter-job-headline-blink 1s steps(2, end) infinite;
+}
+@keyframes fighter-job-headline-blink { 50% { opacity: .2; } }
+.fighter-job-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px 14px;
+  width: 100%;
+  margin: 16px 0 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 210, 122, .28);
+  background: rgba(30, 14, 4, .7);
+}
+.fighter-job-facts div { min-width: 0; }
+.fighter-job-facts dt {
+  color: #c9a86a;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.fighter-job-facts dd {
+  margin: 2px 0 0;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+  font-weight: 700;
+}
+.fighter-job-bar {
+  width: 100%;
+  height: 6px;
+  margin-top: 10px;
+  overflow: hidden;
+  background: rgba(7, 3, 2, .82);
+  box-shadow: 0 0 0 1px rgba(255, 240, 181, .25);
+}
+.fighter-job-bar i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #b52e18, #ff8b3d 58%, #fff0b5);
+  transition: width 380ms steps(6, end);
+}
+.fighter-job-screen.is-failed .fighter-job-bar i { background: #8e2319; }
+.fighter-job-copy { margin-top: 14px; }
+.fighter-job-copy p { margin: 0; }
+.fighter-job-copy p + p { margin-top: 10px; }
+.fighter-job-raw-error {
+  color: #ffb8a3;
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 11px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.fighter-job-raw-error span {
+  margin-right: 6px;
+  color: #ff947a;
+  font-family: "Kanit", sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.fighter-job-log { width: 100%; margin-top: 14px; }
+.fighter-job-log-toggle {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #c9a86a;
+  font: 600 10px/1.4 "Kanit", sans-serif;
+  letter-spacing: .1em;
+  text-decoration: underline;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.fighter-job-log pre {
+  box-sizing: border-box;
+  width: 100%;
+  max-height: min(260px, 38svh);
+  margin: 8px 0 0;
+  padding: 10px 12px;
+  overflow: auto;
+  border: 1px solid rgba(255, 210, 122, .18);
+  background: #0a0605;
+  color: #e8d8b8;
+  font: 10px/1.5 ui-monospace, Menlo, monospace;
+  text-align: left;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.fighter-job-retry-error { margin: 12px 0 0; color: #ff947a; font-size: 11px; }
+.fighter-job-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 11px;
+  margin-top: 22px;
+}
+.fighter-job-retry,
+.fighter-job-cancel {
+  box-sizing: border-box;
+  width: clamp(210px, 23vw, 300px);
+  min-width: clamp(210px, 23vw, 300px);
+  min-height: 48px;
+  background: #050303;
+}
+.fighter-job-retry[disabled] { opacity: .6; cursor: default; }
+.fighter-job-title,
+.fighter-job-headline,
+.fighter-job-facts,
+.fighter-job-copy,
+.fighter-job-retry,
+.fighter-job-cancel {
+  filter: none;
+  -webkit-font-smoothing: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .fighter-job-headline-dot { animation: none; }
+  .fighter-job-bar i { transition: none; }
+}

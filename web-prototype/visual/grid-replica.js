@@ -731,6 +731,10 @@ function paintIntroVideoRule() {
   const frameRect = introVideoFrame.getBoundingClientRect();
   const gridWidth = grid.getBoundingClientRect().width || window.innerWidth;
   const rosterScale = gridWidth / currentGridLayout.width;
+  // A zero-size viewport (hidden pane, background load) would make these
+  // NaN/Infinity and throw out of module evaluation, taking every runtime
+  // module that follows this one (including the hand cursor) down with it.
+  if (!Number.isFinite(rosterScale) || rosterScale <= 0) return;
   const width = Math.max(RULE * 2 + 1, Math.round(frameRect.width / rosterScale));
   const height = Math.max(RULE * 2 + 1, Math.round(frameRect.height / rosterScale));
   const signature = `${width}x${height}`;
@@ -1162,6 +1166,32 @@ async function syncCharacters(characters = []) {
   return cells;
 }
 
+// Server stage labels that read as sentences get a one-word tile version.
+const SHORT_STAGE_LABELS = Object.freeze({
+  'generation worker scheduled': 'Scheduled',
+  'queued to resume': 'Queued',
+  'waiting for the current fighter': 'In line',
+  'recovered after server restart': 'Restarting',
+  'starting the fighter pipeline': 'Starting',
+  'preparing the reference photo': 'Prepping photo',
+  'describing the character': 'Describing',
+});
+
+// The tile is ~1/9 of the grid wide, so the server's stage label is squeezed
+// to a couple of words; the full label lives in the details modal.
+function shortStageLabel(job) {
+  const label = String(job.stageLabel || '').trim();
+  const status = job.status === 'retrying' ? 'Retrying' : job.status === 'queued' ? 'Queued' : 'Working';
+  if (!label) return status;
+  const known = SHORT_STAGE_LABELS[label.toLowerCase()];
+  if (known) return known;
+  const short = label
+    .replace(/^(Generation worker|Generation|Worker)\s+/i, '')
+    .replace(/^(Starting|Preparing|Waiting for|Recovered after)\s+the\s+/i, '$1 ')
+    .replace(/\s+the\s+/g, ' ');
+  return (short.length > 22 ? `${short.slice(0, 21).trimEnd()}…` : short) || status;
+}
+
 function createJobCell(job) {
   const id = jobCellId(job.id);
   const button = document.createElement('button');
@@ -1194,6 +1224,11 @@ function createJobCell(job) {
   progress.append(fill);
   button.append(progress);
 
+  const status = document.createElement('small');
+  status.className = 'fighter-job-status';
+  status.hidden = true;
+  button.append(status);
+
   const failure = document.createElement('span');
   failure.className = 'fighter-job-error';
   failure.hidden = true;
@@ -1205,8 +1240,11 @@ function createJobCell(job) {
 
   button.addEventListener('click', () => {
     const currentJob = jobDetails.get(job.id);
-    if (currentJob?.status === 'failed') {
-      APP_BRIDGE?.reportGenerationError?.(currentJob);
+    if (currentJob && currentJob.status !== 'complete') {
+      // Generating and failed tiles open the job details modal (stage,
+      // elapsed time, pipeline log, retry) instead of selecting a fighter.
+      if (APP_BRIDGE?.showGenerationDetails) APP_BRIDGE.showGenerationDetails(currentJob);
+      else if (currentJob.status === 'failed') APP_BRIDGE?.reportGenerationError?.(currentJob);
       return;
     }
     if (button.dataset.kind === 'fighter' || button.dataset.kind === 'creation') {
@@ -1242,6 +1280,9 @@ async function updateJobCell(job) {
   progressElement.setAttribute('aria-valuenow', String(progress));
   progressElement.setAttribute('aria-label', `${job.name} generation ${progress}% complete`);
   progressElement.querySelector('i').style.width = `${progress}%`;
+  const statusElement = button.querySelector('.fighter-job-status');
+  statusElement.hidden = !active;
+  statusElement.textContent = active ? shortStageLabel(job) : '';
   const failureElement = button.querySelector('.fighter-job-error');
   failureElement.hidden = !failed;
   failureElement.querySelector('strong').textContent = failed
@@ -1251,8 +1292,8 @@ async function updateJobCell(job) {
     ? `${job.character.name}, ready to fight`
     : failed
       ? `${job.name}, ${formatFighterJobCellError(job)}. Open error details.`
-      : `${job.name}, ${job.stageLabel || job.status}, ${progress}% complete`);
-  button.setAttribute('aria-disabled', String(!complete && !failed));
+      : `${job.name}, ${job.stageLabel || job.status}, ${progress}% complete. Open generation details.`);
+  button.setAttribute('aria-disabled', 'false');
 
   if (complete) {
     const character = liveRosterCharacter(job.character);

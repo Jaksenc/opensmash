@@ -95,7 +95,15 @@ def token_cost(model, usage):
 
 
 MESHY = "https://api.meshy.ai/openapi"
-MESHY_HDR = {"Authorization": f"Bearer {ENV['MESHY_API_KEY']}"}
+
+
+def meshy_hdr():
+    """Meshy auth header, resolved on first use so a deployment without a
+    Meshy key (Tripo-only prod worker) can still import this module."""
+    key = ENV.get("MESHY_API_KEY")
+    if not key:
+        raise RuntimeError("MESHY_API_KEY is not set; Meshy commands are unavailable")
+    return {"Authorization": f"Bearer {key}"}
 
 
 def cmd_text3d(args):
@@ -107,7 +115,7 @@ def cmd_text3d(args):
         "target_polycount": args.polycount,
         "should_remesh": True,
     }
-    out = http(f"{MESHY}/v2/text-to-3d", "POST", MESHY_HDR, body)
+    out = http(f"{MESHY}/v2/text-to-3d", "POST", meshy_hdr(), body)
     print(json.dumps(out))
 
 
@@ -122,7 +130,7 @@ def cmd_img3d(args):
         "should_texture": True,
         "enable_pbr": False,
     }
-    out = http(f"{MESHY}/v1/image-to-3d", "POST", MESHY_HDR, body)
+    out = http(f"{MESHY}/v1/image-to-3d", "POST", meshy_hdr(), body)
     print(json.dumps(out))
 
 
@@ -132,13 +140,13 @@ def meshy_task_url(task_id, kind):
 
 
 def cmd_status(args):
-    out = http(meshy_task_url(args.task_id, args.kind), "GET", MESHY_HDR)
+    out = http(meshy_task_url(args.task_id, args.kind), "GET", meshy_hdr())
     print(json.dumps({k: out.get(k) for k in
                       ("id", "status", "progress", "task_error", "model_urls", "thumbnail_url")}))
 
 
 def cmd_download(args):
-    out = http(meshy_task_url(args.task_id, args.kind), "GET", MESHY_HDR)
+    out = http(meshy_task_url(args.task_id, args.kind), "GET", meshy_hdr())
     url = (out.get("model_urls") or {}).get("glb")
     if not url:
         print(json.dumps({"error": "no glb url", "status": out.get("status")}))
@@ -152,18 +160,18 @@ def cmd_rig(args):
         data_uri = ("data:model/gltf-binary;base64,"
                     + base64.b64encode(f.read()).decode())
     body = {"model_url": data_uri, "height_meters": args.height}
-    out = http(f"{MESHY}/v1/rigging", "POST", MESHY_HDR, body, timeout=300)
+    out = http(f"{MESHY}/v1/rigging", "POST", meshy_hdr(), body, timeout=300)
     print(json.dumps(out))
 
 
 def cmd_rigstatus(args):
-    out = http(f"{MESHY}/v1/rigging/{args.task_id}", "GET", MESHY_HDR)
+    out = http(f"{MESHY}/v1/rigging/{args.task_id}", "GET", meshy_hdr())
     print(json.dumps({k: out.get(k) for k in
                       ("id", "status", "progress", "task_error", "result")}))
 
 
 def cmd_rigdownload(args):
-    out = http(f"{MESHY}/v1/rigging/{args.task_id}", "GET", MESHY_HDR)
+    out = http(f"{MESHY}/v1/rigging/{args.task_id}", "GET", meshy_hdr())
     url = (out.get("result") or {}).get("rigged_character_glb_url")
     if not url:
         print(json.dumps({"error": "no rigged glb url", "status": out.get("status")}))
