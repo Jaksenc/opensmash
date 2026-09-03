@@ -11,8 +11,14 @@ export function engineCacheControl(relative, searchParams) {
   return ENGINE_REVALIDATE_CACHE_CONTROL;
 }
 
+// Development serves everything no-store so edits show up on reload — except
+// build-versioned engine files. Their URL carries the package hash (and the
+// server rejects any other hash), so a stale copy can never be served, and
+// caching them lets Chrome keep the compiled 7.5 MB wasm between launches
+// instead of re-tiering it during the first seconds of every match.
 export function cacheControlForEnvironment(productionPolicy, isProduction) {
-  return isProduction ? productionPolicy : DEVELOPMENT_CACHE_CONTROL;
+  if (isProduction || productionPolicy === ENGINE_IMMUTABLE_CACHE_CONTROL) return productionPolicy;
+  return DEVELOPMENT_CACHE_CONTROL;
 }
 
 export function edgeCacheHeaders(productionPolicy, isProduction) {

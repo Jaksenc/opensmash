@@ -8,12 +8,19 @@ import {
 
 test("development responses are never stored by the browser or an edge cache", () => {
   assert.equal(
-    cacheControlForEnvironment("public, max-age=31536000, immutable", false),
+    cacheControlForEnvironment("public, max-age=300", false),
     "no-store",
   );
   assert.deepEqual(
     edgeCacheHeaders("public, max-age=300", false),
     {},
+  );
+});
+
+test("build-versioned engine files stay cacheable in development", () => {
+  assert.equal(
+    cacheControlForEnvironment("public, max-age=31536000, immutable", false),
+    "public, max-age=31536000, immutable",
   );
 });
 
