@@ -33,16 +33,18 @@ function ControllerCallouts() {
             <kbd className="controller-keycap" data-control-key={key} key={key}>{key.toUpperCase()}</kbd>
           ))}
         </span>
+        <span className="controller-key-alt" data-control-alt="stick" aria-hidden="true">or arrow keys</span>
       </div>
       {[
-        ['a', 'j', 'J: A button'],
-        ['b', 'k', 'K: B button'],
-        ['z', 'l', 'L: Z button'],
-        ['left-bumper', 'i', 'I: left bumper'],
-        ['right-bumper', 'o', 'O: right bumper'],
-      ].map(([control, key, label]) => (
+        ['a', 'j', 'J or Ctrl: A button', 'or Ctrl'],
+        ['b', 'k', 'K or Alt: B button', 'or Alt'],
+        ['z', 'l', 'L or Shift: Z button', 'or Shift'],
+        ['left-bumper', 'i', 'I: left bumper', ''],
+        ['right-bumper', 'o', 'O: right bumper', ''],
+      ].map(([control, key, label, alt]) => (
         <div className="controller-callout" data-control-callout={control} aria-label={label} key={control}>
           <kbd className="controller-keycap" data-control-key={key} aria-hidden="true">{key.toUpperCase()}</kbd>
+          {alt && <span className="controller-key-alt" data-control-alt={key} aria-hidden="true">{alt}</span>}
         </div>
       ))}
     </div>

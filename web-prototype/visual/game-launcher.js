@@ -12,6 +12,9 @@ import {
   postRomUploadGate,
 } from './controls-roadblock.js?v=20260901-upload-flow1';
 import { hasShortcutModifier } from '../shared/keyboard-input.js';
+import {
+  CONTROL_KEYS, CONTROL_ALT_LABELS, controlForEvent, isControlChord, keycapLabels,
+} from '../shared/keyboard-map.js';
 import { lockPageScroll } from '../shared/page-scroll-lock.js';
 
 import { holdScreenAwake, isHandoffSupported, receiveRomHandoff } from '../src/rom-handoff-client.js';
@@ -79,8 +82,12 @@ const CONSOLE_CARTRIDGE_FIT_SCALE = 0.44;
 const CONSOLE_CARTRIDGE_READY_CLEARANCE = 0.34;
 const CONSOLE_DOCK_FRONT_YAW = Math.PI * 1.5;
 const CONSOLE_DOCK_FRONT_PITCH = 0.18;
-// The engine's keyboard map (libultraship defaults): J=A, K=B, L=Z, I=L, O=R.
-const REQUIRED_CONTROL_KEYS = Object.freeze(['w', 'a', 's', 'd', 'j', 'k', 'l', 'i', 'o']);
+// The engine's keyboard map (shared/keyboard-map.js): physical J=A, K=B,
+// L=Z, I=L, O=R, WASD stick; arrows/Ctrl/Alt/Shift are accepted aliases.
+// Keycaps show what the viewer's layout prints on those positions.
+const REQUIRED_CONTROL_KEYS = CONTROL_KEYS;
+let keyboardLabels = null;
+let keyboardLabelsLoad = null;
 // Gamepad (standard layout) -> the same control ids the keyboard tutorial
 // uses, so a pad player lights up the very same callouts: A, B, LT=Z,
 // LB=L, RB/RT=R, left stick = W A S D.
@@ -270,10 +277,21 @@ function padControlLabels() {
 // The callouts show keycaps for the keyboard; with a pad connected they
 // show that pad's button names instead (same positions, same checks).
 function applyControlLabels() {
-  const labels = hasGamepad() ? padControlLabels() : null;
+  const pad = hasGamepad();
+  const labels = pad ? padControlLabels() : keyboardLabels;
   controlKeycaps.forEach(keycap => {
     if (keycap.dataset.keyLabel === undefined) keycap.dataset.keyLabel = keycap.textContent;
     keycap.textContent = labels?.[keycap.dataset.controlKey] ?? keycap.dataset.keyLabel;
+  });
+  if (!pad && !keyboardLabelsLoad) {
+    keyboardLabelsLoad = keycapLabels().then(result => {
+      keyboardLabels = result;
+      applyControlLabels();
+    });
+  }
+  // "or Ctrl" style hints only make sense for the keyboard.
+  controllerCallouts?.querySelectorAll('[data-control-alt]').forEach(hint => {
+    hint.textContent = pad ? '' : (CONTROL_ALT_LABELS[hint.dataset.controlAlt] ?? '');
   });
 }
 
@@ -2240,9 +2258,9 @@ function resetControlCheck() {
 
 function registerControlKey(event) {
   if (!overlay || overlay.hidden || overlay.dataset.step !== 'controller' ||
-      controlCheckComplete || hasShortcutModifier(event)) return false;
-  const key = event.key.toLowerCase();
-  if (!REQUIRED_CONTROL_KEYS.includes(key)) return false;
+      controlCheckComplete || isControlChord(event)) return false;
+  const key = controlForEvent(event);
+  if (!key) return false;
   event.preventDefault();
   return registerControlInput(key, event.repeat);
 }
@@ -2726,7 +2744,7 @@ window.addEventListener('keydown', event => {
   }
 });
 window.addEventListener('keyup', event => {
-  releaseControlKey(event.key.toLowerCase());
+  releaseControlKey(controlForEvent(event) ?? event.key.toLowerCase());
 });
 window.addEventListener('gamepadconnected', () => {
   if (overlay && !overlay.hidden && overlay.dataset.step === 'controller') applyControlLabels();

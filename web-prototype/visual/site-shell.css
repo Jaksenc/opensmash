@@ -854,6 +854,15 @@
     transition: transform 70ms linear, color 100ms linear, background 100ms linear,
       border-color 100ms linear, box-shadow 100ms linear;
   }
+  .controller-key-alt {
+    margin-top: 3px;
+    color: rgba(255, 242, 214, .72);
+    font: 500 10px/1 "Kanit", sans-serif;
+    letter-spacing: .04em;
+    text-shadow: 0 1px 0 #260500;
+    white-space: nowrap;
+  }
+  .controller-key-alt:empty { display: none; }
   .controller-keycap.is-complete {
     border-color: #fff0b5;
     background: #fff2d6;
