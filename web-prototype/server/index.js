@@ -1109,7 +1109,14 @@ if (!IS_PRODUCTION) {
   vite = await createViteServer({
     root: APP_ROOT,
     appType: "spa",
-    server: { middlewareMode: true },
+    server: {
+      middlewareMode: true,
+      // Dev only: extra hostnames allowed to reach the Vite middleware, e.g.
+      // an ngrok tunnel for phone testing (VITE_ALLOWED_HOSTS=.ngrok-free.app).
+      ...(process.env.VITE_ALLOWED_HOSTS
+        ? { allowedHosts: process.env.VITE_ALLOWED_HOSTS.split(",").map((h) => h.trim()).filter(Boolean) }
+        : {}),
+    },
   });
 }
 

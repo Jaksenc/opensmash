@@ -307,6 +307,8 @@ test("stored settings are allow-listed and report active overrides", () => {
     stage: "4",
     opponentLevel: "3",
     bootMode: "free-for-all",
+    framePacing: "display",
+    renderResolution: "1280x960",
     ports: ["auto", "auto", "auto", "auto"],
   });
   assert.equal(hasAdvancedOverrides(DEFAULT_ADVANCED_OPTIONS), false);

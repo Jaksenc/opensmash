@@ -44,6 +44,7 @@ import {
   createTrailerIntroAction,
   createTrailerMatchAction,
 } from "./trailer-preset.js";
+import { readCrtEnabled, writeCrtEnabled } from "./crt-preference.js";
 
 const ADVANCED_OPTIONS_KEY = "opensmash-advanced-options";
 // Posted by BattleShip/web/index.html when the engine cannot obtain its assets.
@@ -254,7 +255,7 @@ function RomModal({ action, onCancel, onValidated, onPrewarmError }) {
             <input
               ref={inputRef}
               type="file"
-              accept=".z64,.n64,.v64,.rom,.zip"
+              accept=".z64,.n64,.v64,.rom,.zip,application/octet-stream,application/zip"
               onChange={(event) => {
                 setFile(event.target.files?.[0] || null);
                 setError("");
@@ -340,6 +341,7 @@ export default function App() {
   const [trailerEngineReady, setTrailerEngineReady] = useState(false);
   const [trailerEngineStarted, setTrailerEngineStarted] = useState(false);
   const [soundOn, setSoundOn] = useState(() => localStorage.getItem("opensmash-sound") !== "off");
+  const [crtOn, setCrtOn] = useState(readCrtEnabled);
   const [advancedOptions, setAdvancedOptions] = useState(loadAdvancedOptions);
   const gamepads = useGamepads();
   const [advancedOpen, setAdvancedOpen] = useState(false);
@@ -1024,6 +1026,14 @@ export default function App() {
     setAdvancedOpen(false);
   }
 
+  function toggleCrt() {
+    setCrtOn((current) => {
+      const next = !current;
+      writeCrtEnabled(next);
+      return next;
+    });
+  }
+
   function setSoundPreference(nextValue) {
     setSoundOn((current) => {
       const next = typeof nextValue === "function" ? nextValue(current) : Boolean(nextValue);
@@ -1219,6 +1229,8 @@ export default function App() {
           open={advancedOpen}
           options={advancedOptions}
           soundOn={soundOn}
+          crtOn={crtOn}
+          onCrt={toggleCrt}
           onAuthenticated={authenticatedFromSettings}
           onCancel={() => setAdvancedOpen(false)}
           onLogOut={signOutUser}
@@ -1415,6 +1427,8 @@ export default function App() {
         open={advancedOpen}
         options={advancedOptions}
         soundOn={soundOn}
+        crtOn={crtOn}
+        onCrt={toggleCrt}
         onAuthenticated={authenticatedFromSettings}
         onCancel={() => setAdvancedOpen(false)}
         onLogOut={signOutUser}

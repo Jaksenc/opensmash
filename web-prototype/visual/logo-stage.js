@@ -167,6 +167,11 @@ if (stage && canvas) {
   function renderLogo(now) {
     requestAnimationFrame(renderLogo);
     if (!stageVisible) return;
+    // Phones run the engine on this same main thread; re-rendering a static
+    // logo at 60Hz beside it only steals frame time (and audio callbacks).
+    // The canvas keeps its last frame while we skip.
+    if (document.body.classList.contains('is-game-running') &&
+        document.body.classList.contains('uses-mobile-controls')) return;
     resizeLogoRenderer();
     const seconds = now * 0.001;
     const dt = previousFrameTime

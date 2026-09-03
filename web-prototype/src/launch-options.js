@@ -54,11 +54,32 @@ export const BOOT_MODES = [
   { value: "full-boot", label: "Full Boot", description: "Start from the N64 boot sequence." },
 ];
 
+// Engine frame pacer (BattleShip/port/port.cpp). "display" yields on
+// requestAnimationFrame (the engine default; it fixed iPhone frame/audio
+// stutter). "timer" is the original setTimeout sleep (SSB64_RAF_PACER=0).
+export const FRAME_PACING = [
+  { value: "display", label: "Display sync (default)" },
+  { value: "timer", label: "Timer (legacy)" },
+];
+
+// GL render size of the game canvas (SSB64_RENDER_SIZE). The canvas is CSS
+// scaled to fit, so this is pure GPU/fill cost; 1280x960 matches the
+// packaged BattleShip.cfg.json and is what the engine uses when unset.
+export const RENDER_RESOLUTIONS = [
+  { value: "640x480", label: "640 x 480 (2x N64)" },
+  { value: "960x720", label: "960 x 720 (3x)" },
+  { value: "1280x960", label: "1280 x 960 (4x, default)" },
+  { value: "1920x1440", label: "1920 x 1440 (6x)" },
+  { value: "2560x1920", label: "2560 x 1920 (8x)" },
+];
+
 export const DEFAULT_ADVANCED_OPTIONS = Object.freeze({
   characterMesh: "auto",
   stage: "random",
   opponentLevel: "3",
   bootMode: "free-for-all",
+  framePacing: "display",
+  renderResolution: "1280x960",
   ports: Object.freeze(["auto", "auto", "auto", "auto"]),
 });
 
@@ -66,6 +87,8 @@ const VALID_MESHES = new Set(CHARACTER_MESHES.map(({ value }) => value));
 const VALID_STAGES = new Set(STAGES.map(({ value }) => value));
 const VALID_OPPONENT_LEVELS = new Set(OPPONENT_LEVELS.map(({ value }) => value));
 const VALID_BOOT_MODES = new Set(BOOT_MODES.map(({ value }) => value));
+const VALID_FRAME_PACING = new Set(FRAME_PACING.map(({ value }) => value));
+const VALID_RENDER_RESOLUTIONS = new Set(RENDER_RESOLUTIONS.map(({ value }) => value));
 
 export function normalizeAdvancedOptions(value) {
   return {
@@ -79,6 +102,12 @@ export function normalizeAdvancedOptions(value) {
     bootMode: VALID_BOOT_MODES.has(value?.bootMode)
       ? value.bootMode
       : DEFAULT_ADVANCED_OPTIONS.bootMode,
+    framePacing: VALID_FRAME_PACING.has(value?.framePacing)
+      ? value.framePacing
+      : DEFAULT_ADVANCED_OPTIONS.framePacing,
+    renderResolution: VALID_RENDER_RESOLUTIONS.has(value?.renderResolution)
+      ? value.renderResolution
+      : DEFAULT_ADVANCED_OPTIONS.renderResolution,
     ports: normalizePortChoices(value?.ports),
   };
 }
@@ -408,6 +437,10 @@ export function engineUrl(action, advancedOptions, gamepads = []) {
 
   if (params.has("SSB64_BOOT_BATTLE")) {
     params.set("SSB64_CPU_LEVEL", options.opponentLevel);
+  }
+  if (options.framePacing === "timer") params.set("SSB64_RAF_PACER", "0");
+  if (options.renderResolution !== DEFAULT_ADVANCED_OPTIONS.renderResolution) {
+    params.set("SSB64_RENDER_SIZE", options.renderResolution);
   }
 
   return `/engine/?${params}`;

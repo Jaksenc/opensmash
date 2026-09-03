@@ -8,7 +8,9 @@ import {
   BOOT_MODES,
   CHARACTER_MESHES,
   DEFAULT_ADVANCED_OPTIONS,
+  FRAME_PACING,
   OPPONENT_LEVELS,
+  RENDER_RESOLUTIONS,
   STAGES,
   controllerPlan,
   normalizeAdvancedOptions,
@@ -22,6 +24,7 @@ export default function SettingsModal({
   open,
   options,
   soundOn,
+  crtOn = true,
   onAuthenticated,
   onCancel,
   onLogOut,
@@ -31,6 +34,7 @@ export default function SettingsModal({
   onResetRom,
   onReceiveRom,
   onSound,
+  onCrt,
 }) {
   const [draft, setDraft] = useState(options);
   const [page, setPage] = useState("main");
@@ -127,6 +131,15 @@ export default function SettingsModal({
               onClick={onSound}
             >
               <span>Sound: {soundOn ? "On" : "Off"}</span>
+            </button>
+            <button
+              className="launch-flow-action settings-menu-button settings-sound-button"
+              type="button"
+              aria-label={`CRT effect ${crtOn ? "on" : "off"}. Turn CRT effect ${crtOn ? "off" : "on"}.`}
+              aria-pressed={crtOn}
+              onClick={onCrt}
+            >
+              <span>CRT Effect: {crtOn ? "On" : "Off"}</span>
             </button>
             <button className="launch-flow-action settings-menu-button" type="button" onClick={() => setPage("gameplay")}>
               <span>Gameplay Options</span>
@@ -236,6 +249,26 @@ export default function SettingsModal({
                   <select value={draft.bootMode} onChange={(event) => update("bootMode", event.target.value)}>
                     {BOOT_MODES.map((mode) => (
                       <option value={mode.value} key={mode.value}>{mode.label}</option>
+                    ))}
+                  </select>
+                </span>
+              </label>
+              <label className="advanced-field">
+                <span className="advanced-field-label">Frame Pacing</span>
+                <span className="advanced-select-shell advanced-cell-frame flame-bridge-cell">
+                  <select value={draft.framePacing} onChange={(event) => update("framePacing", event.target.value)}>
+                    {FRAME_PACING.map((mode) => (
+                      <option value={mode.value} key={mode.value}>{mode.label}</option>
+                    ))}
+                  </select>
+                </span>
+              </label>
+              <label className="advanced-field">
+                <span className="advanced-field-label">Render Resolution</span>
+                <span className="advanced-select-shell advanced-cell-frame flame-bridge-cell">
+                  <select value={draft.renderResolution} onChange={(event) => update("renderResolution", event.target.value)}>
+                    {RENDER_RESOLUTIONS.map((size) => (
+                      <option value={size.value} key={size.value}>{size.label}</option>
                     ))}
                   </select>
                 </span>
