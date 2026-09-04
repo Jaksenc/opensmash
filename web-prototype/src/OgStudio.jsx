@@ -262,6 +262,9 @@ async function renderArtwork(canvas, {
 }) {
   const context = canvas.getContext("2d");
   context.clearRect(0, 0, OG_IMAGE_WIDTH, OG_IMAGE_HEIGHT);
+  // Engine cutouts are 2x the drawn size; resample them properly.
+  context.imageSmoothingEnabled = true;
+  context.imageSmoothingQuality = "high";
 
   let ready = 0;
   const fighterPromises = placements.map((placement) => {

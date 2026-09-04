@@ -38,7 +38,13 @@ VIEW_L, VIEW_R, VIEW_T, VIEW_B, VS_W = 10, 310, 10, 230, 50
 P1_X0 = VIEW_L
 P1_X1 = VIEW_L + (VIEW_R - VIEW_L - VS_W) // 2
 
-OUT_W, OUT_H = 480, 640
+# 2x the studio's three.js preview canvas so the retina capture's detail
+# survives: front-row slots draw fighters ~500 px tall on the 1200x630 card.
+OUT_W, OUT_H = 960, 1280
+# The pinned 1280x960 window captures at 2560x1920 on a retina display;
+# anything smaller means the window was not honoured and the sprite would
+# come out soft, so refuse rather than cache a bad one.
+MIN_CAPTURE_WIDTH = 2560
 FIT = 0.92           # fighter height as a fraction of the canvas (three.js used 1/1.08)
 CHROMA = ("ff00ff", "00ff00")
 # Results pose per body kind (SSB64_VSINTRO_WIN, scvsintro.c). The card's own
@@ -183,6 +189,9 @@ def bake(slug, fkind, frame, out_path, keep_dir=None, win=(0, 40)):
         futures = [pool.submit(one, index, fill) for index, fill in enumerate(CHROMA)]
         caps = [future.result() for future in futures]
     w, h = caps[0][0], caps[0][1]
+    if w < MIN_CAPTURE_WIDTH:
+        raise RuntimeError(f"{slug}: capture is {w}x{h}, expected >= {MIN_CAPTURE_WIDTH} wide "
+                           "(game window not at 1280x960 on a retina display?)")
     if (caps[1][0], caps[1][1]) != (w, h):
         raise RuntimeError(f"{slug}: chroma passes captured different sizes ({w}x{h} vs {caps[1][0]}x{caps[1][1]})")
     rgb, alpha = matte(to_rgb(caps[0]), to_rgb(caps[1]), hex_rgb(CHROMA[0]), hex_rgb(CHROMA[1]))
