@@ -1,0 +1,3326 @@
+[
+  {
+    "pos": 1,
+    "handle": "ridd_design",
+    "name": "Ridd",
+    "nick": "THE COMMISSIONER",
+    "title": "Design Leader",
+    "desc": "Runs Dive, hosts Dive Radio, and is building Inflight. Thinks best with a football in his hands — the good ideas arrive mid-toss.",
+    "org": "Dive",
+    "url": "https://backyarddesigners.club/roster/ridd_design/",
+    "img": "https://backyarddesigners.club/roster-art/ridd_design-sprite.webp",
+    "sameAs": [
+      "https://x.com/ridd_design"
+    ]
+  },
+  {
+    "pos": 2,
+    "handle": "designertom",
+    "name": "Tommy Geoco",
+    "nick": "THE LOREKEEPER",
+    "title": "Design Leader",
+    "desc": "Films other people’s design teams for a living, burns AI tokens like spell slots, and DMs on weekends. The mustache is load-bearing. Roll initiative.",
+    "org": "Enjoyers Media",
+    "url": "https://backyarddesigners.club/roster/designertom/",
+    "img": "https://backyarddesigners.club/roster-art/designertom-sprite.webp",
+    "sameAs": [
+      "https://x.com/designertom"
+    ]
+  },
+  {
+    "pos": 3,
+    "handle": "jasonyuan",
+    "name": "Jason Yuan",
+    "nick": "THE FUTURIST",
+    "title": "Product Designer",
+    "desc": "Designed MercuryOS which landed him a role at everybody's favorite fruit company. Now he's building an AI gossip product called Hivemind.",
+    "org": "Hivemind",
+    "url": "https://backyarddesigners.club/roster/jasonyuan/",
+    "img": "https://backyarddesigners.club/roster-art/jasonyuan-sprite.webp",
+    "sameAs": [
+      "https://x.com/jasonyuan",
+      "https://jasonyuan.design/"
+    ]
+  },
+  {
+    "pos": 4,
+    "handle": "iniabiodun",
+    "name": "ÌníOlúwa Abíódún",
+    "nick": "THE COUNSELOR",
+    "title": "Product Designer",
+    "desc": "Lawyer-turned-product designer at AirOps making interfaces behave in court. Previously at Intercom, Fin, and Norton, and recently spun up Palmwine Wireless, an AI‑powered radio project.",
+    "org": "AirOps",
+    "url": "https://backyarddesigners.club/roster/iniabiodun/",
+    "img": "https://backyarddesigners.club/roster-art/iniabiodun-sprite.webp",
+    "sameAs": [
+      "https://x.com/IniAbiodun",
+      "https://www.iniabiodun.com"
+    ]
+  },
+  {
+    "pos": 5,
+    "handle": "merycodes",
+    "name": "Mery Kaftar",
+    "nick": "DRAG HANDLE",
+    "title": "Design Engineer",
+    "desc": "Design engineer at Vercel who redesigned the dashboard navigation everyone's been resizing since February. Previously at Hypermode and Clerk, building AI agent interfaces and onboarding flows developers actually finish.",
+    "org": "Vercel",
+    "url": "https://backyarddesigners.club/roster/merycodes/",
+    "img": "https://backyarddesigners.club/roster-art/merycodes-sprite.webp",
+    "sameAs": [
+      "https://x.com/merycodes",
+      "https://www.mery.codes/"
+    ]
+  },
+  {
+    "pos": 6,
+    "handle": "lil_dill",
+    "name": "Katie Dill",
+    "nick": "THE PILOT",
+    "title": "Design Leader",
+    "desc": "Head of Design at Stripe, from checkout flows to the Stripe Press hardcovers on your shelf. Previously Lyft, Airbnb and Frog. A licensed pilot, who says flying made her a better design leader.",
+    "org": "Stripe",
+    "url": "https://backyarddesigners.club/roster/lil_dill/",
+    "img": "https://backyarddesigners.club/roster-art/lil_dill-sprite.webp",
+    "sameAs": [
+      "https://x.com/lil_dill"
+    ]
+  },
+  {
+    "pos": 7,
+    "handle": "evilrabbit_",
+    "name": "Evil Rabbit",
+    "nick": "THE MINIMALIST",
+    "title": "Design Leader",
+    "desc": "Vercel's founding designer since 2016 and now its creative studio director, which makes that severe black-and-white aesthetic something of a personal signature. Buenos Aires by way of San Francisco.",
+    "org": "Vercel",
+    "url": "https://backyarddesigners.club/roster/evilrabbit_/",
+    "img": "https://backyarddesigners.club/roster-art/evilrabbit_-sprite.webp",
+    "sameAs": [
+      "https://x.com/evilrabbit_",
+      "https://evilrabbit.com"
+    ]
+  },
+  {
+    "pos": 8,
+    "handle": "mschwaibold",
+    "name": "Marvin Schwaibold",
+    "nick": "THE MERCHANT",
+    "title": "Design Leader",
+    "desc": "Co-founded Molly, sold it to Shopify, and the whole team became the in-house Product Design Studio. Now on a single question: what commerce looks like rebuilt from the ground up.",
+    "org": "Shopify",
+    "url": "https://backyarddesigners.club/roster/mschwaibold/",
+    "img": "https://backyarddesigners.club/roster-art/mschwaibold-sprite.webp",
+    "sameAs": [
+      "https://x.com/MSchwaibold",
+      "https://marvinschwaibold.com"
+    ]
+  },
+  {
+    "pos": 9,
+    "handle": "joshpuckett",
+    "name": "Josh Puckett",
+    "nick": "THE TOOLMAKER",
+    "title": "Design Leader",
+    "desc": "Led design at Dropbox, Wealthfront and Groupon before co-founding Iteration. Also responsible for a small arsenal of tools other designers quietly depend on — DialKit, Pica, Interface Craft.",
+    "org": "Iteration",
+    "url": "https://backyarddesigners.club/roster/joshpuckett/",
+    "img": "https://backyarddesigners.club/roster-art/joshpuckett-sprite.webp",
+    "sameAs": [
+      "https://x.com/joshpuckett",
+      "https://joshpuckett.me"
+    ]
+  },
+  {
+    "pos": 10,
+    "handle": "krispuckett",
+    "name": "Kris Puckett",
+    "nick": "THE BOOKBINDER",
+    "title": "Design Leader",
+    "desc": "Design manager at Stripe, previously Mercury and Dropbox. Built Epilogue, an ambient reading app, almost entirely by talking to Claude Code with no Figma involved, and now teaches other people to do the same through Neuma.",
+    "org": "Stripe",
+    "url": "https://backyarddesigners.club/roster/krispuckett/",
+    "img": "https://backyarddesigners.club/roster-art/krispuckett-sprite.webp",
+    "sameAs": [
+      "https://x.com/krispuckett",
+      "https://krispuckett.com"
+    ]
+  },
+  {
+    "pos": 11,
+    "handle": "msllrs",
+    "name": "Matt Sellers",
+    "nick": "THE INTERFACE ALCHEMIST",
+    "title": "Product Designer",
+    "desc": "Twenty years deep in design systems and custom iconography, now doing interface work at Lovable and Reshaped. Previously made complicated things legible at Reuters and Ripcord.",
+    "org": "Lovable",
+    "url": "https://backyarddesigners.club/roster/msllrs/",
+    "img": "https://backyarddesigners.club/roster-art/msllrs-sprite.webp",
+    "sameAs": [
+      "https://x.com/msllrs",
+      "https://lfs.gd"
+    ]
+  },
+  {
+    "pos": 12,
+    "handle": "romatesla",
+    "name": "Roman Tesliuk",
+    "nick": "THE SERIAL SHIPPER",
+    "title": "Product Designer",
+    "desc": "Designs at ElevenLabs out of Berlin and apparently cannot stop shipping side projects: Daily Dispatch, Portal, App Stacks, and Droppable at last count.",
+    "org": "ElevenLabs",
+    "url": "https://backyarddesigners.club/roster/romatesla/",
+    "img": "https://backyarddesigners.club/roster-art/romatesla-sprite.webp",
+    "sameAs": [
+      "https://x.com/RomaTesla",
+      "https://pixelwrld.co"
+    ]
+  },
+  {
+    "pos": 13,
+    "handle": "gabrielvaldivia",
+    "name": "Gabriel Valdivia",
+    "nick": "THE HIRED GUN",
+    "title": "Product Designer",
+    "desc": "Bills himself as 'design co-founder as a service,' embedding with startups like Daylight and Slingshot AI. Previously VR and storytelling at Facebook, Daydream at Google, and the Patreon app.",
+    "org": "Independent",
+    "url": "https://backyarddesigners.club/roster/gabrielvaldivia/",
+    "img": "https://backyarddesigners.club/roster-art/gabrielvaldivia-sprite.webp",
+    "sameAs": [
+      "https://x.com/gabrielvaldivia",
+      "https://valdivia.works"
+    ]
+  },
+  {
+    "pos": 14,
+    "handle": "jameygannon",
+    "name": "Jamey Gannon",
+    "nick": "THE SPRINTER",
+    "title": "Brand Designer",
+    "desc": "Brand designer running rapid-fire sprints for early-stage tech and CPG out of Brooklyn, posting all the while as 'techbimbo.' Also founded a sleep supplement company, for reasons entirely his own.",
+    "org": "Independent",
+    "url": "https://backyarddesigners.club/roster/jameygannon/",
+    "img": "https://backyarddesigners.club/roster-art/jameygannon-sprite.webp",
+    "sameAs": [
+      "https://x.com/jameygannon",
+      "https://jameygannon.com"
+    ]
+  },
+  {
+    "pos": 15,
+    "handle": "nadonomy",
+    "name": "Nad Chishtie",
+    "nick": "THE MULTIPLAYER",
+    "title": "Design Leader",
+    "desc": "Founding designer and now head of design at Lovable. Got there by way of decentralized chat at Element, design tokens at Haiku, and multiplayer 3D games that reached fifty million people.",
+    "org": "Lovable",
+    "url": "https://backyarddesigners.club/roster/nadonomy/",
+    "img": "https://backyarddesigners.club/roster-art/nadonomy-sprite.webp",
+    "sameAs": [
+      "https://x.com/nadonomy",
+      "https://nad.is"
+    ]
+  },
+  {
+    "pos": 16,
+    "handle": "kevintwohy",
+    "name": "Kevin Twohy",
+    "nick": "THE FIRST HIRE",
+    "title": "Product Designer",
+    "desc": "Runs a one-man studio doing zero-to-one work for, in his words, 'ambitious toys and serious business.' The range checks out: the NYT audio app, MIRROR's home gym, Milk Bar, and the National Park Service.",
+    "org": "Twohy Design Works",
+    "url": "https://backyarddesigners.club/roster/kevintwohy/",
+    "img": "https://backyarddesigners.club/roster-art/kevintwohy-sprite.webp",
+    "sameAs": [
+      "https://x.com/kevintwohy",
+      "https://twohydesign.works"
+    ]
+  },
+  {
+    "pos": 17,
+    "handle": "ryolu_",
+    "name": "Ryo Lu",
+    "nick": "THE IDOL",
+    "title": "Product Designer",
+    "desc": "Designs at Cursor after early stints at Notion and Stripe, working toward a world where anyone can make software. Also lists 'aspiring k-pop idol' in his bio, which we are choosing to believe.",
+    "org": "Cursor",
+    "url": "https://backyarddesigners.club/roster/ryolu_/",
+    "img": "https://backyarddesigners.club/roster-art/ryolu_-sprite.webp",
+    "sameAs": [
+      "https://x.com/ryolu_",
+      "https://ryo.lu"
+    ]
+  },
+  {
+    "pos": 18,
+    "handle": "jenny_wen",
+    "name": "Jenny Wen",
+    "nick": "THE FREE AGENT",
+    "title": "Design Leader",
+    "desc": "Redesigned Claude and set the vision for Cowork at Anthropic, then left this July to run design at Cursor. Before that she brought FigJam to market as a director at Figma.",
+    "org": "Cursor",
+    "url": "https://backyarddesigners.club/roster/jenny_wen/",
+    "img": "https://backyarddesigners.club/roster-art/jenny_wen-sprite.webp",
+    "sameAs": [
+      "https://x.com/jenny_wen",
+      "https://jennywen.ca"
+    ]
+  },
+  {
+    "pos": 19,
+    "handle": "raunofreiberg",
+    "name": "Rauno Freiberg",
+    "nick": "THE DETAILER",
+    "title": "Product Designer",
+    "desc": "Designer at Vercel and author of Devouring Details, an obsessive catalogue of interface micro-craft that has quietly become required reading. Estonian, and unusually serious about the things most people never notice.",
+    "org": "Vercel",
+    "url": "https://backyarddesigners.club/roster/raunofreiberg/",
+    "img": "https://backyarddesigners.club/roster-art/raunofreiberg-sprite.webp",
+    "sameAs": [
+      "https://x.com/raunofreiberg",
+      "https://rauno.me"
+    ]
+  },
+  {
+    "pos": 20,
+    "handle": "ammaar",
+    "name": "Ammaar Reshi",
+    "nick": "THE BROADCASTER",
+    "title": "Design Leader",
+    "desc": "Leads product and design for Google AI Studio, where he rebuilt the thing from the ground up and shipped its vibe-coding experience. Posts a running live commentary on every major AI launch, his own included.",
+    "org": "Google",
+    "url": "https://backyarddesigners.club/roster/ammaar/",
+    "img": "https://backyarddesigners.club/roster-art/ammaar-sprite.webp",
+    "sameAs": [
+      "https://x.com/ammaar",
+      "https://ammaar.com"
+    ]
+  },
+  {
+    "pos": 21,
+    "handle": "pranathiperii",
+    "name": "Pranathi Peri",
+    "nick": "THE TERMINAL",
+    "title": "Product Designer",
+    "desc": "Designs Claude Code at Anthropic, which means designing a terminal, which is a genuinely strange brief. Previously at v0, Vercel, and Graphite.",
+    "org": "Anthropic",
+    "url": "https://backyarddesigners.club/roster/pranathiperii/",
+    "img": "https://backyarddesigners.club/roster-art/pranathiperii-sprite.webp",
+    "sameAs": [
+      "https://x.com/pranathiperii",
+      "https://pranathiperi.com"
+    ]
+  },
+  {
+    "pos": 22,
+    "handle": "apostraphi",
+    "name": "Phi Hoang",
+    "nick": "THE FIGURE-OUTER",
+    "title": "Brand Designer",
+    "desc": "Runs the creative studio at Perplexity and is a large part of why the brand got so much attention from designers. Calls himself a professional figure-outer, which is either very modest or exactly right.",
+    "org": "Perplexity",
+    "url": "https://backyarddesigners.club/roster/apostraphi/",
+    "img": "https://backyarddesigners.club/roster-art/apostraphi-sprite.webp",
+    "sameAs": [
+      "https://x.com/apostraphi"
+    ]
+  },
+  {
+    "pos": 23,
+    "handle": "mrncst",
+    "name": "Mariana Castilho",
+    "nick": "THE DOUBLE THREAT",
+    "title": "Product Designer",
+    "desc": "Does software design and code at poolside, previously Vercel, v0, and Pierre. Firmly in the camp of designers who ship the implementation too.",
+    "org": "Poolside",
+    "url": "https://backyarddesigners.club/roster/mrncst/",
+    "img": "https://backyarddesigners.club/roster-art/mrncst-sprite.webp",
+    "sameAs": [
+      "https://x.com/mrncst"
+    ]
+  },
+  {
+    "pos": 24,
+    "handle": "gavmn",
+    "name": "Gavin Nelson",
+    "nick": "THE WAYFINDER",
+    "title": "Product Designer",
+    "desc": "Interaction designer at OpenAI working on ChatGPT voice and CarPlay. Before that he shaped a lot of what Linear looks like, including navigation, search, documents, and the mobile app.",
+    "org": "OpenAI",
+    "url": "https://backyarddesigners.club/roster/gavmn/",
+    "img": "https://backyarddesigners.club/roster-art/gavmn-sprite.webp",
+    "sameAs": [
+      "https://x.com/Gavmn",
+      "https://nelson.co"
+    ]
+  },
+  {
+    "pos": 25,
+    "handle": "mappletons",
+    "name": "Maggie Appleton",
+    "nick": "THE ANTHROPOLOGIST",
+    "title": "Design Engineer",
+    "desc": "Staff research engineer at GitHub Next who describes herself as 'actually a designer.' Writes hand-illustrated essays at the intersection of design, programming, and anthropology.",
+    "org": "GitHub Next",
+    "url": "https://backyarddesigners.club/roster/mappletons/",
+    "img": "https://backyarddesigners.club/roster-art/mappletons-sprite.webp",
+    "sameAs": [
+      "https://x.com/Mappletons",
+      "https://maggieappleton.com"
+    ]
+  },
+  {
+    "pos": 26,
+    "handle": "rogie",
+    "name": "Rogie King",
+    "nick": "THE CHAOS ANIMAL",
+    "title": "Product Designer",
+    "desc": "Product designer at Figma behind Draw and Shaders, plus a prolific run of plugins that do things Figma never planned for. Self-describes as a chaos animal; the dither tool supports this.",
+    "org": "Figma",
+    "url": "https://backyarddesigners.club/roster/rogie/",
+    "img": "https://backyarddesigners.club/roster-art/rogie-sprite.webp",
+    "sameAs": [
+      "https://x.com/rogie",
+      "https://rog.ie"
+    ]
+  },
+  {
+    "pos": 27,
+    "handle": "jamesm",
+    "name": "James McDonald",
+    "nick": "THE QUICK DRAW",
+    "title": "Web Designer",
+    "desc": "Runs Wireframe, a studio promising world-class visual design in weeks rather than months, after staff design stints at Clerk and Tailwind. Draws icons, builds a camera app, and co-hosts Shape.fm on the side.",
+    "org": "Wireframe",
+    "url": "https://backyarddesigners.club/roster/jamesm/",
+    "img": "https://backyarddesigners.club/roster-art/jamesm-sprite.webp",
+    "sameAs": [
+      "https://x.com/jamesm",
+      "https://wireframe.co"
+    ]
+  },
+  {
+    "pos": 28,
+    "handle": "brian_lovin",
+    "name": "Brian Lovin",
+    "nick": "THE TWO-TIME",
+    "title": "Product Designer",
+    "desc": "Two-time founder now designing AI products at Notion. Co-hosted Design Details for nine years, so most designers knew his voice before they knew his work.",
+    "org": "Notion",
+    "url": "https://backyarddesigners.club/roster/brian_lovin/",
+    "img": "https://backyarddesigners.club/roster-art/brian_lovin-sprite.webp",
+    "sameAs": [
+      "https://x.com/brian_lovin",
+      "https://brianlovin.com"
+    ]
+  },
+  {
+    "pos": 29,
+    "handle": "graceongrid",
+    "name": "Grace Walker",
+    "nick": "THE FREELANCER",
+    "title": "Design Leader",
+    "desc": "Creative director at Spellbook after years as a Webflow-wielding independent in Calgary. No longer taking client work, having instead written Fast Forward Freelance, a course on surviving year one on your own.",
+    "org": "Spellbook",
+    "url": "https://backyarddesigners.club/roster/graceongrid/",
+    "img": "https://backyarddesigners.club/roster-art/graceongrid-sprite.webp",
+    "sameAs": [
+      "https://x.com/graceongrid",
+      "https://gracewalker.ca"
+    ]
+  },
+  {
+    "pos": 30,
+    "handle": "fonsmans",
+    "name": "Fons Mans",
+    "nick": "THE HEADLINER",
+    "title": "Brand Designer",
+    "desc": "Founded Offgrid, a Dutch brand studio whose client list reads like a tour of your subscriptions: Lovable, Intercom, Ramp. Quietly the most-followed designer on this list.",
+    "org": "Studio Offgrid",
+    "url": "https://backyarddesigners.club/roster/fonsmans/",
+    "img": "https://backyarddesigners.club/roster-art/fonsmans-sprite.webp",
+    "sameAs": [
+      "https://x.com/FonsMans",
+      "https://fonsmans.com"
+    ]
+  },
+  {
+    "pos": 31,
+    "handle": "danhollick",
+    "name": "Dan Hollick",
+    "nick": "THE EXPLAINER",
+    "title": "Design Engineer",
+    "desc": "Design engineer at Cursor, previously Tailwind and Raycast. Writing Making Software, a book on how the machinery under your interface actually works — rendering, colour, compression.",
+    "org": "Cursor",
+    "url": "https://backyarddesigners.club/roster/danhollick/",
+    "img": "https://backyarddesigners.club/roster-art/danhollick-sprite.webp",
+    "sameAs": [
+      "https://x.com/DanHollick",
+      "https://makingsoftware.com"
+    ]
+  },
+  {
+    "pos": 32,
+    "handle": "brettfromdj",
+    "name": "Brett Williams",
+    "nick": "THE ONE-MAN BAND",
+    "title": "Product Designer",
+    "desc": "Built a one-man design studio past seven figures by charging a flat monthly fee and never hiring anyone. Started Designjoy in 2017 for the $29 a website template cost, and still runs the entire thing alone from Phoenix.",
+    "org": "Designjoy",
+    "url": "https://backyarddesigners.club/roster/brettfromdj/",
+    "img": "https://backyarddesigners.club/roster-art/brettfromdj-sprite.webp",
+    "sameAs": [
+      "https://x.com/BrettFromDJ",
+      "https://designjoy.co"
+    ]
+  },
+  {
+    "pos": 33,
+    "handle": "floguo",
+    "name": "Flora Guo",
+    "nick": "THE LOCALHOST",
+    "title": "Design Engineer",
+    "desc": "Founding design engineer at Paradigm, working on agentic interfaces and co-authoring the company's rebrand. Came by way of v0 at Vercel, writes a small library of essays on design engineering, and lists her location as localhost:3000.",
+    "org": "Paradigm",
+    "url": "https://backyarddesigners.club/roster/floguo/",
+    "img": "https://backyarddesigners.club/roster-art/floguo-sprite.webp",
+    "sameAs": [
+      "https://x.com/floguo",
+      "https://floguo.com"
+    ]
+  },
+  {
+    "pos": 34,
+    "handle": "pablostanley",
+    "name": "Pablo Stanley",
+    "nick": "THE ILLUSTRATOR",
+    "title": "Product Designer",
+    "desc": "Drew Humaaans and Open Peeps, the modular illustration libraries that ended up in half the startup landing pages on the internet. Now designs and codes on v0 at Vercel, having co-founded Blush and Lummi along the way.",
+    "org": "Vercel",
+    "url": "https://backyarddesigners.club/roster/pablostanley/",
+    "img": "https://backyarddesigners.club/roster-art/pablostanley-sprite.webp",
+    "sameAs": [
+      "https://x.com/pablostanley",
+      "https://hilos.sh"
+    ]
+  },
+  {
+    "pos": 35,
+    "handle": "benjitaylor",
+    "name": "Benji Taylor",
+    "nick": "THE FAMILY MAN",
+    "title": "Design Leader",
+    "desc": "Head of design at X, which makes him the man sanding down a decade of accumulated design debt one screen at a time. The rest of us are just hoping he gets to DMs before his boss gets distracted by another rocket.",
+    "org": "X",
+    "url": "https://backyarddesigners.club/roster/benjitaylor/",
+    "img": "https://backyarddesigners.club/roster-art/benjitaylor-sprite.webp",
+    "sameAs": [
+      "https://x.com/benjitaylor",
+      "https://benji.org"
+    ]
+  },
+  {
+    "pos": 36,
+    "handle": "loredanacrisan",
+    "name": "Loredana Crisan",
+    "nick": "THE PIANIST",
+    "title": "Design Leader",
+    "desc": "Started piano at seven in Bucharest, taught by her mother, and trained as a classical musician before design. Chief Design Officer at Figma now, after years running design for Messenger at Meta.",
+    "org": "Figma",
+    "url": "https://backyarddesigners.club/roster/loredanacrisan/",
+    "img": "https://backyarddesigners.club/roster-art/loredanacrisan-sprite.webp",
+    "sameAs": [
+      "https://x.com/loredanacrisan"
+    ]
+  },
+  {
+    "pos": 37,
+    "handle": "mirdhaaakanksha",
+    "name": "Aakanksha Mirdha",
+    "nick": "THE DRIVER",
+    "title": "Product Designer",
+    "desc": "Designed for Uber and Cruise before Playground AI, and now works independently as design lead for early-stage startups. Ships small plugins and apps on the side, apparently unable to stop.",
+    "org": "Independent",
+    "url": "https://backyarddesigners.club/roster/mirdhaaakanksha/",
+    "img": "https://backyarddesigners.club/roster-art/mirdhaaakanksha-sprite.webp",
+    "sameAs": [
+      "https://x.com/mirdhaaakanksha",
+      "https://aakankshamirdha.com"
+    ]
+  },
+  {
+    "pos": 38,
+    "handle": "zendadddy",
+    "name": "Frank Bach",
+    "nick": "THE FRONTMAN",
+    "title": "Product Designer",
+    "desc": "Building at Anthropic, with Instagram, Headspace, DoorDash, and Red Bull behind him. Runs LA's design-and-dev meetup and screams in a band called Monk, which is more range than most portfolios contain.",
+    "org": "Anthropic",
+    "url": "https://backyarddesigners.club/roster/zendadddy/",
+    "img": "https://backyarddesigners.club/roster-art/zendadddy-sprite.webp",
+    "sameAs": [
+      "https://x.com/zendadddy",
+      "https://linktr.ee/frankbach"
+    ]
+  },
+  {
+    "pos": 39,
+    "handle": "hannah_ahn",
+    "name": "Hannah Ahn",
+    "nick": "THE MEDIC",
+    "title": "Design Leader",
+    "desc": "Head of design and media at Superpower, a title that bundles product design and content into one job most companies split in two.",
+    "org": "Superpower",
+    "url": "https://backyarddesigners.club/roster/hannah_ahn/",
+    "img": "https://backyarddesigners.club/roster-art/hannah_ahn-sprite.webp",
+    "sameAs": [
+      "https://x.com/hannah_ahn"
+    ]
+  },
+  {
+    "pos": 40,
+    "handle": "jh3yy",
+    "name": "Jhey Tompkins",
+    "nick": "THE SHOWMAN",
+    "title": "Design Engineer",
+    "desc": "Builds interfaces and then explains them, which he'll tell you is the rarer skill. Now in Shopify's brand design studio, still producing the CSS demos that taught a good chunk of the industry what a browser can actually do.",
+    "org": "Shopify",
+    "url": "https://backyarddesigners.club/roster/jh3yy/",
+    "img": "https://backyarddesigners.club/roster-art/jh3yy-sprite.webp",
+    "sameAs": [
+      "https://x.com/jh3yy",
+      "https://jhey.dev"
+    ]
+  },
+  {
+    "pos": 41,
+    "handle": "ingapng",
+    "name": "Inga Hampton",
+    "nick": "THE DONKEY MOM",
+    "title": "Brand Designer",
+    "desc": "Brand designer and illustrator at Raycast, working out of Belfast. Also, per her own bio, a donkey mom, which is the single best credential on this roster.",
+    "org": "Raycast",
+    "url": "https://backyarddesigners.club/roster/ingapng/",
+    "img": "https://backyarddesigners.club/roster-art/ingapng-sprite.webp",
+    "sameAs": [
+      "https://x.com/ingapng",
+      "https://ingahampton.com"
+    ]
+  },
+  {
+    "pos": 42,
+    "handle": "nateparrott",
+    "name": "Nate Parrott",
+    "nick": "THE LIBPOSTER",
+    "title": "Design Engineer",
+    "desc": "Designs at Anthropic after a stint at The Browser Company. Describes his current output as libposting until further notice, which tells you roughly everything.",
+    "org": "Anthropic",
+    "url": "https://backyarddesigners.club/roster/nateparrott/",
+    "img": "https://backyarddesigners.club/roster-art/nateparrott-sprite.webp",
+    "sameAs": [
+      "https://x.com/nateparrott",
+      "https://nateparrott.com"
+    ]
+  },
+  {
+    "pos": 43,
+    "handle": "johnphamous",
+    "name": "John Pham",
+    "nick": "THE ANGEL",
+    "title": "Design Engineer",
+    "desc": "At Vercel by day and an angel investor the rest of the time, working out of Seattle. Owns a domain pun he has fully committed to.",
+    "org": "Vercel",
+    "url": "https://backyarddesigners.club/roster/johnphamous/",
+    "img": "https://backyarddesigners.club/roster-art/johnphamous-sprite.webp",
+    "sameAs": [
+      "https://x.com/JohnPhamous",
+      "https://phamous.dev"
+    ]
+  },
+  {
+    "pos": 44,
+    "handle": "jmtrivedi",
+    "name": "Janum Trivedi",
+    "nick": "THE PROTOTYPER",
+    "title": "Design Engineer",
+    "desc": "Designer, prototyper, and engineer sitting at the OpenAI and LoveFrom intersection. Previously Airbnb, The Browser Company, Netflix, and SpringBoard at Apple, the team behind the iPhone home screen.",
+    "org": "OpenAI",
+    "url": "https://backyarddesigners.club/roster/jmtrivedi/",
+    "img": "https://backyarddesigners.club/roster-art/jmtrivedi-sprite.webp",
+    "sameAs": [
+      "https://x.com/jmtrivedi",
+      "https://janum.co"
+    ]
+  },
+  {
+    "pos": 45,
+    "handle": "adriankuleszo",
+    "name": "Adrian Kuleszo",
+    "nick": "THE AGENCY",
+    "title": "Product Designer",
+    "desc": "Runs Designme, a design-and-dev partner that has shipped for Cluely, Ethena, Lightdash, and a hundred-odd other startups. Writes books about how to do it, too. His PRs are half GitHub, half deadlift.",
+    "org": "Designme",
+    "url": "https://backyarddesigners.club/roster/adriankuleszo/",
+    "img": "https://backyarddesigners.club/roster-art/adriankuleszo-sprite.webp",
+    "sameAs": [
+      "https://x.com/adriankuleszo",
+      "https://designme.agency"
+    ]
+  },
+  {
+    "pos": 46,
+    "handle": "tcosta",
+    "name": "T. Costa",
+    "nick": "THE TICKER",
+    "title": "Product Designer",
+    "desc": "Co-founded Fey, an investing terminal handsome enough to make finance software feel designed, and sold it to Wealthsimple. Still working in the same register: dark, precise, faintly cinematic.",
+    "org": "Wealthsimple",
+    "url": "https://backyarddesigners.club/roster/tcosta/",
+    "img": "https://backyarddesigners.club/roster-art/tcosta-sprite.webp",
+    "sameAs": [
+      "https://x.com/tcosta",
+      "https://fey.com"
+    ]
+  },
+  {
+    "pos": 47,
+    "handle": "oguzyagizkara",
+    "name": "Oğuz Yağız Kara",
+    "nick": "THE PARTNER",
+    "title": "Product Designer",
+    "desc": "Co-founded Lue Studio, a practice working across product and brand. Turkish, prolific, and responsible for a lot of the interface work that circulates without a credit attached.",
+    "org": "Lue Studio",
+    "url": "https://backyarddesigners.club/roster/oguzyagizkara/",
+    "img": "https://backyarddesigners.club/roster-art/oguzyagizkara-sprite.webp",
+    "sameAs": [
+      "https://x.com/oguzyagizkara",
+      "https://lue.studio"
+    ]
+  },
+  {
+    "pos": 48,
+    "handle": "dannpetty",
+    "name": "Dann Petty",
+    "nick": "THE COACH",
+    "title": "Product Designer",
+    "desc": "Founding product designer at Quiver AI, and before that the freelancer's freelancer — Epicurrence, the design retreat, was his. Also coaches actual baseball, which on this particular roster ought to count for something.",
+    "org": "Quiver AI",
+    "url": "https://backyarddesigners.club/roster/dannpetty/",
+    "img": "https://backyarddesigners.club/roster-art/dannpetty-sprite.webp",
+    "sameAs": [
+      "https://x.com/DannPetty",
+      "https://dannpetty.com"
+    ]
+  },
+  {
+    "pos": 49,
+    "handle": "mds",
+    "name": "MDS",
+    "nick": "THE INSTRUCTOR",
+    "title": "Design Engineer",
+    "desc": "Runs Shift Nudge, the interface design course a striking number of working designers quietly credit for their eye. Design, code, and AI, in that order.",
+    "org": "Shift Nudge",
+    "url": "https://backyarddesigners.club/roster/mds/",
+    "img": "https://backyarddesigners.club/roster-art/mds-sprite.webp",
+    "sameAs": [
+      "https://x.com/mds",
+      "https://shiftnudge.com"
+    ]
+  },
+  {
+    "pos": 50,
+    "handle": "soleio",
+    "name": "Soleio",
+    "nick": "THE ELEMENT",
+    "title": "Design Leader",
+    "desc": "An early Facebook designer who went on to Dropbox, now an angel investor. Wrote The Keeper, a fable about bees who build themselves a protector and then live with what they made.",
+    "org": "Independent",
+    "url": "https://backyarddesigners.club/roster/soleio/",
+    "img": "https://backyarddesigners.club/roster-art/soleio-sprite.webp",
+    "sameAs": [
+      "https://x.com/soleio",
+      "https://soleio.me"
+    ]
+  },
+  {
+    "pos": 51,
+    "handle": "katarinabatina",
+    "name": "Katarina Batina",
+    "nick": "THE VP",
+    "title": "Design Leader",
+    "desc": "VP of Design at Shopify, which means the commerce surfaces a large slice of the internet checks out through eventually run past her.",
+    "org": "Shopify",
+    "url": "https://backyarddesigners.club/roster/katarinabatina/",
+    "img": "https://backyarddesigners.club/roster-art/katarinabatina-sprite.webp",
+    "sameAs": [
+      "https://x.com/katarinabatina"
+    ]
+  },
+  {
+    "pos": 52,
+    "handle": "meaghaneschoi",
+    "name": "Meaghan Choi",
+    "nick": "THE CONDUCTOR",
+    "title": "Design Leader",
+    "desc": "Leads design for Claude Code and Cowork at Anthropic — the agent surfaces, not the chat window. Based in New York.",
+    "org": "Anthropic",
+    "url": "https://backyarddesigners.club/roster/meaghaneschoi/",
+    "img": "https://backyarddesigners.club/roster-art/meaghaneschoi-sprite.webp",
+    "sameAs": [
+      "https://x.com/meaghaneschoi"
+    ]
+  },
+  {
+    "pos": 53,
+    "handle": "drewwilson",
+    "name": "Drew Wilson",
+    "nick": "THE IMPRESARIO",
+    "title": "Design Leader",
+    "desc": "Founder of Opacity and the person behind ValioCon, the conference. Previously head of design at Clerk and CEO of Letter and Plasso. Engineer and designer both, and wants to make movies next.",
+    "org": "Opacity",
+    "url": "https://backyarddesigners.club/roster/drewwilson/",
+    "img": "https://backyarddesigners.club/roster-art/drewwilson-sprite.webp",
+    "sameAs": [
+      "https://x.com/drewwilson",
+      "https://drew.co"
+    ]
+  },
+  {
+    "pos": 54,
+    "handle": "daniel__designs",
+    "name": "Daniel Destefanis",
+    "nick": "THE CLOCKMAKER",
+    "title": "Product Designer",
+    "desc": "Product designer at Anthropic by way of Figma and Discord, working out of Chicago. Building Clocks on the side, which is exactly what it sounds like and better than it needs to be.",
+    "org": "Anthropic",
+    "url": "https://backyarddesigners.club/roster/daniel__designs/",
+    "img": "https://backyarddesigners.club/roster-art/daniel__designs-sprite.webp",
+    "sameAs": [
+      "https://x.com/daniel__designs",
+      "https://danield.design"
+    ]
+  },
+  {
+    "pos": 55,
+    "handle": "mikesmith187",
+    "name": "Mike Smith",
+    "nick": "THE PHILLY",
+    "title": "Brand Designer",
+    "desc": "Runs Smith & Diction out of Philadelphia, a small studio with a big appetite for lettering and identity work. Opens his bio with give more than you take, and appears to mean it.",
+    "org": "Smith & Diction",
+    "url": "https://backyarddesigners.club/roster/mikesmith187/",
+    "img": "https://backyarddesigners.club/roster-art/mikesmith187-sprite.webp",
+    "sameAs": [
+      "https://x.com/mikesmith187",
+      "https://smith-diction.com"
+    ]
+  },
+  {
+    "pos": 56,
+    "handle": "iamdavidhill",
+    "name": "David Hill",
+    "nick": "THE LONG SHOT",
+    "title": "Design Leader",
+    "desc": "Head of design at opencode and Anomaly, working from London. Came by way of Terminal, the coffee company you order from over SSH, and Laravel before that.",
+    "org": "Anomaly",
+    "url": "https://backyarddesigners.club/roster/iamdavidhill/",
+    "img": "https://backyarddesigners.club/roster-art/iamdavidhill-sprite.webp",
+    "sameAs": [
+      "https://x.com/iamdavidhill"
+    ]
+  },
+  {
+    "pos": 57,
+    "handle": "chrstnerode",
+    "name": "Christine Røde",
+    "nick": "THE PUPPY",
+    "title": "Product Designer",
+    "desc": "Designs Dia at The Browser Company, having landed in London by way of Oslo and San Francisco. Lists her other role as easily excitable puppy, which is a rare thing to put in writing.",
+    "org": "The Browser Company",
+    "url": "https://backyarddesigners.club/roster/chrstnerode/",
+    "img": "https://backyarddesigners.club/roster-art/chrstnerode-sprite.webp",
+    "sameAs": [
+      "https://x.com/chrstnerode",
+      "https://røde.co"
+    ]
+  },
+  {
+    "pos": 58,
+    "handle": "jornvandijk",
+    "name": "Jorn van Dijk",
+    "nick": "THE FRAMER",
+    "title": "Design Leader",
+    "desc": "Co-founded Framer and still runs it, with Festina alongside. Dutch, and has been building design tools since well before that was a career path.",
+    "org": "Framer",
+    "url": "https://backyarddesigners.club/roster/jornvandijk/",
+    "img": "https://backyarddesigners.club/roster-art/jornvandijk-sprite.webp",
+    "sameAs": [
+      "https://x.com/jornvandijk",
+      "https://jornvandijk.com"
+    ]
+  },
+  {
+    "pos": 59,
+    "handle": "amyhoodlum",
+    "name": "Amy Hood",
+    "nick": "THE HYPERBOLIST",
+    "title": "Brand Designer",
+    "desc": "Co-founded Hoodzpah, doing brand identity and type design out of Anaheim, and co-wrote \"Freelance, and Business, and Stuff\" for everyone trying to make that work. Self-declared gross hyperbolist and Lakers fan.",
+    "org": "Hoodzpah",
+    "url": "https://backyarddesigners.club/roster/amyhoodlum/",
+    "img": "https://backyarddesigners.club/roster-art/amyhoodlum-sprite.webp",
+    "sameAs": [
+      "https://x.com/amyhoodlum",
+      "https://hoodzpahdesign.com"
+    ]
+  },
+  {
+    "pos": 60,
+    "handle": "daniela_muntyan",
+    "name": "Daniela Muntyan",
+    "nick": "THE TOKEN MASTER",
+    "title": "Product Designer",
+    "desc": "Product designer on Figma's Dev Mode team, by way of Craft Docs. Ukrainian, London-based, and keeps shipping her own tools — Token Master, a FigJam calendar widget, an AI voice memo app.",
+    "org": "Figma",
+    "url": "https://backyarddesigners.club/roster/daniela_muntyan/",
+    "img": "https://backyarddesigners.club/roster-art/daniela_muntyan-sprite.webp",
+    "sameAs": [
+      "https://x.com/daniela_muntyan",
+      "https://danielamuntyan.com"
+    ]
+  },
+  {
+    "pos": 61,
+    "handle": "disco_lu",
+    "name": "Luis Ouriach",
+    "nick": "THE BARISTA",
+    "title": "Product Designer",
+    "desc": "Ex-Figma, where he unveiled Variables on the Config main stage and has been quietly hoping that isn't the career peak. Curates the Milk, No Sugar newsletter and hosts more podcasts than seems advisable.",
+    "org": "Independent",
+    "url": "https://backyarddesigners.club/roster/disco_lu/",
+    "img": "https://backyarddesigners.club/roster-art/disco_lu-sprite.webp",
+    "sameAs": [
+      "https://x.com/disco_lu",
+      "https://milknosugar.substack.com"
+    ]
+  },
+  {
+    "pos": 62,
+    "handle": "adamwhitcroft",
+    "name": "Adam Whitcroft",
+    "nick": "THE ICONOGRAPHER",
+    "title": "Product Designer",
+    "desc": "Designs at Owner, but a generation of developers knows him for Climacons and Batch — the free icon sets that ended up in a decent slice of the web. South African, on an island off British Columbia.",
+    "org": "Owner",
+    "url": "https://backyarddesigners.club/roster/adamwhitcroft/",
+    "img": "https://backyarddesigners.club/roster-art/adamwhitcroft-sprite.webp",
+    "sameAs": [
+      "https://x.com/AdamWhitcroft",
+      "https://adamwhitcroft.com"
+    ]
+  },
+  {
+    "pos": 63,
+    "handle": "darrinhenein",
+    "name": "Darrin Henein",
+    "nick": "THE CHIEF",
+    "title": "Design Leader",
+    "desc": "Chief Design Officer at Owner, previously VP of Design at Shopify. Toronto-based, and one of two people on this roster who ended up at the same restaurant-software company.",
+    "org": "Owner",
+    "url": "https://backyarddesigners.club/roster/darrinhenein/",
+    "img": "https://backyarddesigners.club/roster-art/darrinhenein-sprite.webp",
+    "sameAs": [
+      "https://x.com/darrinhenein",
+      "https://darrinhenein.com"
+    ]
+  },
+  {
+    "pos": 64,
+    "handle": "pixeljanitor",
+    "name": "Derek Briggs",
+    "nick": "THE JANITOR",
+    "title": "Design Engineer",
+    "desc": "Design and code at Shopify, previously Clerk, and an angel investor on the side. Co-hosts Shape.fm, which means half this bench has been on his podcast.",
+    "org": "Shopify",
+    "url": "https://backyarddesigners.club/roster/pixeljanitor/",
+    "img": "https://backyarddesigners.club/roster-art/pixeljanitor-sprite.webp",
+    "sameAs": [
+      "https://x.com/PixelJanitor"
+    ]
+  },
+  {
+    "pos": 65,
+    "handle": "watilo",
+    "name": "Cory Watilo",
+    "nick": "THE WEBMASTER",
+    "title": "Product Designer",
+    "desc": "Lead designer at PostHog, where he owns the entire website and calls himself the webmaster without irony. Co-founded Preact and Brightback before that, and once ran the whole operation from an RV.",
+    "org": "PostHog",
+    "url": "https://backyarddesigners.club/roster/watilo/",
+    "img": "https://backyarddesigners.club/roster-art/watilo-sprite.webp",
+    "sameAs": [
+      "https://x.com/watilo",
+      "https://watilo.com"
+    ]
+  },
+  {
+    "pos": 66,
+    "handle": "iansilber",
+    "name": "Ian Silber",
+    "nick": "THE AMPLIFIER",
+    "title": "Design Leader",
+    "desc": "Head of Product Design at OpenAI after eight years shaping Instagram and a stint at the game studio OpenAI bought. Bio says 'design and loud music,' and his personal website is a fully playable air-hockey game, so believe him.",
+    "org": "OpenAI",
+    "url": "https://backyarddesigners.club/roster/iansilber/",
+    "img": "https://backyarddesigners.club/roster-art/iansilber-sprite.webp",
+    "sameAs": [
+      "https://x.com/iansilber",
+      "https://iansilber.com"
+    ]
+  },
+  {
+    "pos": 67,
+    "handle": "davidhoang",
+    "name": "David Hoang",
+    "nick": "THE PROOF",
+    "title": "Design Leader",
+    "desc": "VP of Design at Atlassian by way of Replit, Webflow, and One Medical. Trained as a painter, writes Proof of Concept every single week, and has angel checks in thirty-plus of the tools this bench uses daily.",
+    "org": "Atlassian",
+    "url": "https://backyarddesigners.club/roster/davidhoang/",
+    "img": "https://backyarddesigners.club/roster-art/davidhoang-sprite.webp",
+    "sameAs": [
+      "https://x.com/davidhoang",
+      "https://davidhoang.com"
+    ]
+  },
+  {
+    "pos": 68,
+    "handle": "diegozaks",
+    "name": "Diego Zaks",
+    "nick": "THE MONEYBALL",
+    "title": "Design Leader",
+    "desc": "Early Ramp hire turned VP of Design. Draft fast — he is already in someone's DMs poaching them, and it might be one of yours.",
+    "org": "Ramp",
+    "url": "https://backyarddesigners.club/roster/diegozaks/",
+    "img": "https://backyarddesigners.club/roster-art/diegozaks-sprite.webp",
+    "sameAs": [
+      "https://x.com/diegozaks"
+    ]
+  },
+  {
+    "pos": 69,
+    "handle": "round",
+    "name": "Maxim Leyzerovich",
+    "nick": "THE FACULTY",
+    "title": "Product Designer",
+    "desc": "Designs at Flora and teaches on SVA's MFA program, which makes him one of the few people here grading the next wave instead of just competing with it. Brooklyn.",
+    "org": "Flora",
+    "url": "https://backyarddesigners.club/roster/round/",
+    "img": "https://backyarddesigners.club/roster-art/round-sprite.webp",
+    "sameAs": [
+      "https://x.com/round",
+      "https://flora.ai"
+    ]
+  },
+  {
+    "pos": 70,
+    "handle": "mengto",
+    "name": "Meng To",
+    "nick": "THE TEACHER",
+    "title": "Design Engineer",
+    "desc": "Founded Design+Code, which has spent a decade teaching designers to code and developers to design. Also building aura.build and a screen recorder, so the teaching evidently wasn't filling the day.",
+    "org": "Design+Code",
+    "url": "https://backyarddesigners.club/roster/mengto/",
+    "img": "https://backyarddesigners.club/roster-art/mengto-sprite.webp",
+    "sameAs": [
+      "https://x.com/MengTo",
+      "https://designcode.io"
+    ]
+  },
+  {
+    "pos": 71,
+    "handle": "0xcharlota",
+    "name": "Charlota Blunarova",
+    "nick": "THE SPECIALIST",
+    "title": "Brand Designer",
+    "desc": "Brand designer for tech startups out of Prague, with a niche list specific enough to count as a personality: AI, creative tools, healthcare, kids' tech, robotics. Framer partner, previously IDEO.",
+    "org": "Independent",
+    "url": "https://backyarddesigners.club/roster/0xcharlota/",
+    "img": "https://backyarddesigners.club/roster-art/0xcharlota-sprite.webp",
+    "sameAs": [
+      "https://x.com/0xCharlota",
+      "https://blunarova.com"
+    ]
+  },
+  {
+    "pos": 72,
+    "handle": "sdw",
+    "name": "Sebastiaan de With",
+    "nick": "THE SHUTTER",
+    "title": "Product Designer",
+    "desc": "Co-founded Lux and designed Halide, the camera app that won an Apple Design Award by making a phone behave like a proper camera. Now at Apple itself. Dutchman in California, photographer, motorcyclist.",
+    "org": "Apple",
+    "url": "https://backyarddesigners.club/roster/sdw/",
+    "img": "https://backyarddesigners.club/roster-art/sdw-sprite.webp",
+    "sameAs": [
+      "https://x.com/sdw",
+      "https://sdw.space"
+    ]
+  },
+  {
+    "pos": 73,
+    "handle": "vanschneider",
+    "name": "Tobias van Schneider",
+    "nick": "THE GARDENER",
+    "title": "Brand Designer",
+    "desc": "Building mymind, a private digital garden for everything you meant to remember. Previously art directed at Spotify, and has been quietly shaping how designers present themselves ever since.",
+    "org": "mymind",
+    "url": "https://backyarddesigners.club/roster/vanschneider/",
+    "img": "https://backyarddesigners.club/roster-art/vanschneider-sprite.webp",
+    "sameAs": [
+      "https://x.com/vanschneider",
+      "https://vanschneider.com"
+    ]
+  },
+  {
+    "pos": 74,
+    "handle": "femkesvs",
+    "name": "Femke van Schoonhoven",
+    "nick": "LIKE AND SUBSCRIBE",
+    "title": "Product Designer",
+    "desc": "Design lead at Gusto, but better known for the YouTube channel she started in 2019 that has taught 70,000-odd subscribers how to be listened to in rooms where design usually isn't. Also co-hosts Design Life. Vancouver Island.",
+    "org": "Gusto",
+    "url": "https://backyarddesigners.club/roster/femkesvs/",
+    "img": "https://backyarddesigners.club/roster-art/femkesvs-sprite.webp",
+    "sameAs": [
+      "https://x.com/femkesvs",
+      "https://femke.design"
+    ]
+  },
+  {
+    "pos": 75,
+    "handle": "kylezantos",
+    "name": "Kyle Zantos",
+    "nick": "MR. LONG FORM",
+    "title": "Design Engineer",
+    "desc": "Designer, builder and self-described agentic engineer out of Seattle, shipping under the banner of software as a gift. Describes himself as a long form dude in a short form world, which on this roster is a stance.",
+    "org": "Independent",
+    "url": "https://backyarddesigners.club/roster/kylezantos/",
+    "img": "https://backyarddesigners.club/roster-art/kylezantos-sprite.webp",
+    "sameAs": [
+      "https://x.com/kylezantos",
+      "https://zantos.co"
+    ]
+  },
+  {
+    "pos": 76,
+    "handle": "charliedeets",
+    "name": "Charlie Deets",
+    "nick": "BREADMAKER",
+    "title": "Product Designer",
+    "desc": "Designs Dia at The Browser Company, having come through Apple, WhatsApp and Facebook first. Chicago-based, and one of two people here working on the same browser.",
+    "org": "The Browser Company",
+    "url": "https://backyarddesigners.club/roster/charliedeets/",
+    "img": "https://backyarddesigners.club/roster-art/charliedeets-sprite.webp",
+    "sameAs": [
+      "https://x.com/charliedeets",
+      "https://charliedeets.com"
+    ]
+  },
+  {
+    "pos": 77,
+    "handle": "jstrelioff",
+    "name": "Jessica Strelioff",
+    "nick": "THE GOOD SIDE",
+    "title": "Design Leader",
+    "desc": "Brand designer and creative director leading Goodside, the independent Austin studio working across strategy, identity, art direction, packaging, and digital. The name is the brief: meaningful ideas, made memorable.",
+    "org": "Goodside",
+    "url": "https://backyarddesigners.club/roster/jstrelioff/",
+    "img": "https://backyarddesigners.club/roster-art/jstrelioff-sprite.webp",
+    "sameAs": [
+      "https://x.com/jstrelioff",
+      "https://www.goodside.studio/"
+    ]
+  },
+  {
+    "pos": 78,
+    "handle": "reshusaur",
+    "name": "Resham Khanna",
+    "nick": "THE PRODUCTSAUR",
+    "title": "Product Designer",
+    "desc": "San Francisco product designer whose handle has been doing dinosaur duty since 2016. Asked to be put in the game with the only scouting report that matters: put me in, coach.",
+    "org": "Independent",
+    "url": "https://backyarddesigners.club/roster/reshusaur/",
+    "img": "https://backyarddesigners.club/roster-art/reshusaur-sprite.webp",
+    "sameAs": [
+      "https://x.com/Reshusaur",
+      "https://reshamkhanna.com/"
+    ]
+  },
+  {
+    "pos": 79,
+    "handle": "stevelauda_",
+    "name": "Steve Lauda",
+    "nick": "THE FULL STACK",
+    "title": "Design Leader",
+    "desc": "Runs Blissful Studio, doing full-stack design and development for early-stage companies from Singapore. The service menu starts at brand and product and keeps going until the thing is live.",
+    "org": "Blissful Studio",
+    "url": "https://backyarddesigners.club/roster/stevelauda_/",
+    "img": "https://backyarddesigners.club/roster-art/stevelauda_-sprite.webp",
+    "sameAs": [
+      "https://x.com/stevelauda_",
+      "https://blissful-studio.com/"
+    ]
+  },
+  {
+    "pos": 80,
+    "handle": "pau_wee_",
+    "name": "Pauline Wee",
+    "nick": "THE NEW INTERFACE",
+    "title": "Product Designer",
+    "desc": "New York designer-engineer and host of New Interfaces, a show about the people shaping how humans and computers meet. Her listed location is simply terminal, which checks out.",
+    "org": "New Interfaces",
+    "url": "https://backyarddesigners.club/roster/pau_wee_/",
+    "img": "https://backyarddesigners.club/roster-art/pau_wee_-sprite.webp",
+    "sameAs": [
+      "https://x.com/pau_wee_",
+      "https://www.paulinew.ee/"
+    ]
+  },
+  {
+    "pos": 81,
+    "handle": "wesleybancroft",
+    "name": "Wes Bancroft",
+    "nick": "THE BRAND DAD",
+    "title": "Design Leader",
+    "desc": "Runs the brand studio Lunour and talks about identity work alongside life as a dad of nine. That is either elite creative direction or the most demanding stakeholder group in Los Angeles.",
+    "org": "Lunour",
+    "url": "https://backyarddesigners.club/roster/wesleybancroft/",
+    "img": "https://backyarddesigners.club/roster-art/wesleybancroft-sprite.webp",
+    "sameAs": [
+      "https://x.com/WesleyBancroft",
+      "https://lunour.com/"
+    ]
+  },
+  {
+    "pos": 82,
+    "handle": "rileyj_s",
+    "name": "Riley Jones",
+    "nick": "THE NOURISHER",
+    "title": "Brand Designer",
+    "desc": "Freelance brand designer in Chattanooga, crafting and nourishing identities for startups. He asked to be put in, coach, so the scouting department has classified this as strong bench energy.",
+    "org": "Independent",
+    "url": "https://backyarddesigners.club/roster/rileyj_s/",
+    "img": "https://backyarddesigners.club/roster-art/rileyj_s-sprite.webp",
+    "sameAs": [
+      "https://x.com/rileyj_s",
+      "https://www.rileyjs.com/"
+    ]
+  },
+  {
+    "pos": 83,
+    "handle": "ninepixelgrid",
+    "name": "The Undesigner",
+    "nick": "THE UNDESIGNER",
+    "title": "Brand Designer",
+    "desc": "Full-stack designer who made the PostHog website and works with Watilo. Calls himself The Undesigner, which is an efficient way to make sure everyone asks about the design.",
+    "org": "Watilo",
+    "url": "https://backyarddesigners.club/roster/ninepixelgrid/",
+    "img": "https://backyarddesigners.club/roster-art/ninepixelgrid-sprite.webp",
+    "sameAs": [
+      "https://x.com/ninepixelgrid",
+      "https://watilo.com/"
+    ]
+  },
+  {
+    "pos": 84,
+    "handle": "jkane",
+    "name": "Jordan Jenkins",
+    "nick": "THE OUTLANDER",
+    "title": "Design Leader",
+    "desc": "Welsh designer and director, founder of Outland and builder of Tagteam. Raised a hand for the roster with two emoji and no wasted motion.",
+    "org": "Outland",
+    "url": "https://backyarddesigners.club/roster/jkane/",
+    "img": "https://backyarddesigners.club/roster-art/jkane-sprite.webp",
+    "sameAs": [
+      "https://x.com/jkane",
+      "https://jkane.co/"
+    ]
+  },
+  {
+    "pos": 85,
+    "handle": "jayrizpop",
+    "name": "Justin Rands",
+    "nick": "THE BRAND ENGINEER",
+    "title": "Brand Designer",
+    "desc": "Brand engineer at Clay, previously Intercom, Oyster, and Blend. Equal parts identity system and implementation detail, with enough FOMO to request an immediate call-up.",
+    "org": "Clay",
+    "url": "https://backyarddesigners.club/roster/jayrizpop/",
+    "img": "https://backyarddesigners.club/roster-art/jayrizpop-sprite.webp",
+    "sameAs": [
+      "https://x.com/jayrizpop",
+      "https://jrands.com/"
+    ]
+  },
+  {
+    "pos": 86,
+    "handle": "weirdowizard",
+    "name": "Darshan Gajara",
+    "nick": "THE WEIRDO WIZARD",
+    "title": "Product Designer",
+    "desc": "Berlin-and-Mumbai designer and maker behind Product Disrupt, With a View, and Beanpresso. Curious about design, side projects, travel, and coffee, which is enough inventory for several separate wizards.",
+    "org": "Independent",
+    "url": "https://backyarddesigners.club/roster/weirdowizard/",
+    "img": "https://backyarddesigners.club/roster-art/weirdowizard-sprite.webp",
+    "sameAs": [
+      "https://x.com/WeirdoWizard",
+      "https://darshan.design/"
+    ]
+  },
+  {
+    "pos": 87,
+    "handle": "andyorsow",
+    "name": "Andy Orsow",
+    "nick": "THE HYPE MAN",
+    "title": "Brand Designer",
+    "desc": "Makes hype videos at Framer and describes the job as a design-motion-marketing chimera. FOMO supplied the roster application before a scout even had to call.",
+    "org": "Framer",
+    "url": "https://backyarddesigners.club/roster/andyorsow/",
+    "img": "https://backyarddesigners.club/roster-art/andyorsow-sprite.webp",
+    "sameAs": [
+      "https://x.com/andyorsow",
+      "https://www.youtube.com/@andyorsow"
+    ]
+  },
+  {
+    "pos": 88,
+    "handle": "nickbakeddesign",
+    "name": "Nick Chella",
+    "nick": "THE BAKER",
+    "title": "Design Leader",
+    "desc": "Runs Baked, the product design agency for founders, after Meta, Netflix, and Expa. Noticed the roster had no Nicks and filed the gentlest possible correction.",
+    "org": "Baked",
+    "url": "https://backyarddesigners.club/roster/nickbakeddesign/",
+    "img": "https://backyarddesigners.club/roster-art/nickbakeddesign-sprite.webp",
+    "sameAs": [
+      "https://x.com/nickbakeddesign",
+      "https://baked.design/"
+    ]
+  },
+  {
+    "pos": 89,
+    "handle": "thenickpattison",
+    "name": "Nick Pattison",
+    "nick": "TWO-WEEK TURNAROUND",
+    "title": "Brand Designer",
+    "desc": "Runs Primary, where a rebrand takes two weeks rather than two quarters. Has put new faces on Lovable, Paper and Eight Sleep, and is already booking next year.",
+    "org": "Primary",
+    "url": "https://backyarddesigners.club/roster/thenickpattison/",
+    "img": "https://backyarddesigners.club/roster-art/thenickpattison-sprite.webp",
+    "sameAs": [
+      "https://x.com/thenickpattison",
+      "https://primary.studio"
+    ]
+  },
+  {
+    "pos": 90,
+    "handle": "kbarber",
+    "name": "Kyle Barber",
+    "nick": "SIXTH MAN",
+    "title": "Product Designer",
+    "desc": "Ridd's cofounder at Inflight, by way of Meta, Tinder and Airchat. Deadly from three, and holds a celebrity anecdote for every possible occasion.",
+    "org": "Inflight",
+    "url": "https://backyarddesigners.club/roster/kbarber/",
+    "img": "https://backyarddesigners.club/roster-art/kbarber-sprite.webp",
+    "sameAs": [
+      "https://x.com/kbarber"
+    ]
+  },
+  {
+    "pos": 91,
+    "handle": "nevflynn",
+    "name": "Nev Flynn",
+    "nick": "MOST COPIED",
+    "title": "Design Leader",
+    "desc": "Leads design and engineering at ElevenLabs, by way of Evervault, whose site designers kept reverse-engineering rather than just asking him how. Sold Wrap in '23. Would rather talk about music.",
+    "org": "ElevenLabs",
+    "url": "https://backyarddesigners.club/roster/nevflynn/",
+    "img": "https://backyarddesigners.club/roster-art/nevflynn-sprite.webp",
+    "sameAs": [
+      "https://x.com/NevFlynn",
+      "https://nevflynn.com"
+    ]
+  },
+  {
+    "pos": 92,
+    "handle": "flarup",
+    "name": "Michael Flarup",
+    "nick": "SQUIRCLE",
+    "title": "Brand Designer",
+    "desc": "Runs Northplay and Pixelresort out of Copenhagen, and drew a good share of the icons already on your home screen. Then spent four years making a book about them, purely because someone had to.",
+    "org": "Northplay",
+    "url": "https://backyarddesigners.club/roster/flarup/",
+    "img": "https://backyarddesigners.club/roster-art/flarup-sprite.webp",
+    "sameAs": [
+      "https://x.com/flarup",
+      "https://pixelresort.com"
+    ]
+  },
+  {
+    "pos": 93,
+    "handle": "imjesseshow",
+    "name": "Jesse Showalter",
+    "nick": "THE EDUCATOR",
+    "title": "Design Leader",
+    "desc": "Runs Good Fight Creative and Design Champs after teaching a generation of designers through hundreds of YouTube lessons. Austin based, self-taught, and still happiest explaining the work while making it.",
+    "org": "Good Fight Creative",
+    "url": "https://backyarddesigners.club/roster/imjesseshow/",
+    "img": "https://backyarddesigners.club/roster-art/imjesseshow-sprite.webp",
+    "sameAs": [
+      "https://x.com/imjesseshow",
+      "https://jesseshowalter.com"
+    ]
+  },
+  {
+    "pos": 94,
+    "handle": "ioana_teleanu",
+    "name": "Ioana Teleanu",
+    "nick": "THE AI CARTOGRAPHER",
+    "title": "Design Leader",
+    "desc": "Patent-holding AI and product designer documenting AI Design OS in public, after Miro and UiPath. Has carried the emerging discipline onto stages at SXSW and TED AI without losing the human-intent thread.",
+    "org": "AI Design OS",
+    "url": "https://backyarddesigners.club/roster/ioana_teleanu/",
+    "img": "https://backyarddesigners.club/roster-art/ioana_teleanu-sprite.webp",
+    "sameAs": [
+      "https://x.com/ioana_teleanu",
+      "https://aidesign-os.com"
+    ]
+  },
+  {
+    "pos": 95,
+    "handle": "eschadiol",
+    "name": "Escha",
+    "nick": "THE MIXTAPE",
+    "title": "Product Designer",
+    "desc": "Works across product and design at Perplexity and music and operations for Noalia, after Daylight, Descript, and OpenTable. A rare two-channel signal: interface systems on one side, the mixtape on the other.",
+    "org": "Perplexity",
+    "url": "https://backyarddesigners.club/roster/eschadiol/",
+    "img": "https://backyarddesigners.club/roster-art/eschadiol-sprite.webp",
+    "sameAs": [
+      "https://x.com/eschadiol",
+      "https://linktr.ee/noaliae"
+    ]
+  },
+  {
+    "pos": 96,
+    "handle": "gracepace_",
+    "name": "Grace Ling",
+    "nick": "THE PACESETTER",
+    "title": "Design Leader",
+    "desc": "Founder of Design Buddies, the global community she started as a student and grew past 150,000 members. Designer, illustrator, speaker, competitive runner, and committed maker of kawaii technology.",
+    "org": "Design Buddies",
+    "url": "https://backyarddesigners.club/roster/gracepace_/",
+    "img": "https://backyarddesigners.club/roster-art/gracepace_-sprite.webp",
+    "sameAs": [
+      "https://x.com/gracepace_",
+      "https://www.grace-ling.com"
+    ]
+  },
+  {
+    "pos": 97,
+    "handle": "sebcornelius",
+    "name": "Seb Cornelius",
+    "nick": "THE PANORAMA",
+    "title": "Design Leader",
+    "desc": "Independent London designer and creative director with more than a decade across product, identity, and digital work. Now building Pano, because apparently a normal-sized canvas was not enough room.",
+    "org": "Pano",
+    "url": "https://backyarddesigners.club/roster/sebcornelius/",
+    "img": "https://backyarddesigners.club/roster-art/sebcornelius-sprite.webp",
+    "sameAs": [
+      "https://x.com/SebCornelius",
+      "https://pano.app"
+    ]
+  },
+  {
+    "pos": 98,
+    "handle": "mrblackstudio",
+    "name": "Lee Black",
+    "nick": "THE TOOLBOX",
+    "title": "Design Leader",
+    "desc": "Düsseldorf designer with 25-plus years in the work, running 1042 Studio and a small constellation of tools, components, guidelines, and experiments. His current stack is Figma, Framer, Midjourney, and the refusal to stop pushing them.",
+    "org": "1042 Studio",
+    "url": "https://backyarddesigners.club/roster/mrblackstudio/",
+    "img": "https://backyarddesigners.club/roster-art/mrblackstudio-sprite.webp",
+    "sameAs": [
+      "https://x.com/mrblackstudio",
+      "https://www.1042.studio"
+    ]
+  },
+  {
+    "pos": 99,
+    "handle": "thefinnmckenty",
+    "name": "Finn McKenty",
+    "nick": "THE PUNK MBA",
+    "title": "Design Leader",
+    "desc": "Marketer, designer, and fractional CMO at Brotege after a 750,000-subscriber run as The Punk Rock MBA. Has worked from Febreze and Starbucks to Red Bull, and still carries hardcore into every positioning deck.",
+    "org": "Brotege",
+    "url": "https://backyarddesigners.club/roster/thefinnmckenty/",
+    "img": "https://backyarddesigners.club/roster-art/thefinnmckenty-sprite.webp",
+    "sameAs": [
+      "https://x.com/thefinnmckenty",
+      "https://finnmckenty.com"
+    ]
+  },
+  {
+    "pos": 100,
+    "handle": "asallen",
+    "name": "Andy Allen",
+    "nick": "THE MEDIUM",
+    "title": "Design Leader",
+    "desc": "Founded Not Boring Software to put play and craft back into everyday apps, after co-founding FiftyThree and helping make Paper. Works slowly on purpose, with software as the medium and delight as the business model.",
+    "org": "Not Boring Software",
+    "url": "https://backyarddesigners.club/roster/asallen/",
+    "img": "https://backyarddesigners.club/roster-art/asallen-sprite.webp",
+    "sameAs": [
+      "https://x.com/asallen",
+      "https://notbor.ing"
+    ]
+  },
+  {
+    "pos": 101,
+    "handle": "jayneil",
+    "name": "Jayneil Dalal",
+    "nick": "THE SNEAK PEEK",
+    "title": "Product Designer",
+    "desc": "Runs Sneak Peek, documenting the real workflows, files, and portfolio rituals behind top designers rather than settling for the polished final screenshot. The scouting department respects the tape study.",
+    "org": "Sneak Peek",
+    "url": "https://backyarddesigners.club/roster/jayneil/",
+    "img": "https://backyarddesigners.club/roster-art/jayneil-sprite.webp",
+    "sameAs": [
+      "https://x.com/jayneil",
+      "https://www.sneakpeek.design"
+    ]
+  },
+  {
+    "pos": 102,
+    "handle": "soren_iverson",
+    "name": "Soren Iverson",
+    "nick": "THE IDEA GUY",
+    "title": "Design Leader",
+    "desc": "Designer behind the daily unhinged app concepts and co-creator of Stompers, the step counter where friends can hit each other with cartoon baseball bats. Formerly Envoy, Square, and Cash App. Idea guy is the official title.",
+    "org": "Iverson",
+    "url": "https://backyarddesigners.club/roster/soren_iverson/",
+    "img": "https://backyarddesigners.club/roster-art/soren_iverson-sprite.webp",
+    "sameAs": [
+      "https://x.com/soren_iverson",
+      "https://soreniverson.com"
+    ]
+  },
+  {
+    "pos": 103,
+    "handle": "cherrilynnz",
+    "name": "Lele Zhang",
+    "nick": "THE WAHOO",
+    "title": "Product Designer",
+    "desc": "Product designer at Tolans after studying psychology at Berkeley and working with Every and Write with Parallel. Her public operating system is simpler than most: wahooing through life.",
+    "org": "Tolans",
+    "url": "https://backyarddesigners.club/roster/cherrilynnz/",
+    "img": "https://backyarddesigners.club/roster-art/cherrilynnz-sprite.webp",
+    "sameAs": [
+      "https://x.com/CherrilynnZ",
+      "https://lelezhang.design"
+    ]
+  },
+  {
+    "pos": 104,
+    "handle": "meshtimes_",
+    "name": "Marisa",
+    "nick": "THE SOUL",
+    "title": "Product Designer",
+    "desc": "Designs soulful technology and vlogs the whole process, with a particular weakness for little gadgets, disposable cameras, and making the conference hallway feel like part of the product launch.",
+    "org": "Independent",
+    "url": "https://backyarddesigners.club/roster/meshtimes_/",
+    "img": "https://backyarddesigners.club/roster-art/meshtimes_-sprite.webp",
+    "sameAs": [
+      "https://x.com/meshtimes_",
+      "https://www.instagram.com/meshtimes"
+    ]
+  },
+  {
+    "pos": 105,
+    "handle": "ciguleva",
+    "name": "Tatiana Tsiguleva",
+    "nick": "THE IMAGINARIUM",
+    "title": "Brand Designer",
+    "desc": "Perplexity's first creative ambassador and a prolific AI-art experimenter, turning curiosity into entire visual worlds. Also a mother of two, so the prompt queue is unlikely to be the busiest system she runs.",
+    "org": "Perplexity",
+    "url": "https://backyarddesigners.club/roster/ciguleva/",
+    "img": "https://backyarddesigners.club/roster-art/ciguleva-sprite.webp",
+    "sameAs": [
+      "https://x.com/ciguleva",
+      "https://mjpro.ai"
+    ]
+  },
+  {
+    "pos": 106,
+    "handle": "theshanelevine",
+    "name": "Shane Levine",
+    "nick": "THE TURBO",
+    "title": "Design Leader",
+    "desc": "Founder of Turbo, the Brooklyn product design studio that stays with startups for the long haul. Previously led design at Rally and worked at StockX; current client list includes Ramp, KICK, Whop, and fifty-plus others.",
+    "org": "Turbo",
+    "url": "https://backyarddesigners.club/roster/theshanelevine/",
+    "img": "https://backyarddesigners.club/roster-art/theshanelevine-sprite.webp",
+    "sameAs": [
+      "https://x.com/theShaneLevine",
+      "https://turbodesign.co"
+    ]
+  },
+  {
+    "pos": 107,
+    "handle": "alexaperios",
+    "name": "Alex Aperios",
+    "nick": "THE BRAND DOCTOR",
+    "title": "Design Leader",
+    "desc": "Creative director behind Aperios Design, giving founder-led companies the identity upgrade they need after the first one stops fitting. Fourteen years across brand and web, with more than $100M raised by recently rebranded clients.",
+    "org": "Aperios Design",
+    "url": "https://backyarddesigners.club/roster/alexaperios/",
+    "img": "https://backyarddesigners.club/roster-art/alexaperios-sprite.webp",
+    "sameAs": [
+      "https://x.com/AlexAperios",
+      "https://www.alexaperios.com"
+    ]
+  },
+  {
+    "pos": 108,
+    "handle": "willking",
+    "name": "Will King",
+    "nick": "THE HEAD COACH",
+    "title": "Product Designer",
+    "desc": "Design engineer at Snowflake and Head Coach at Terminal Shop. Alabama based, serious about software craft, and already carrying the one title this game was obliged to recognize.",
+    "org": "Snowflake",
+    "url": "https://backyarddesigners.club/roster/willking/",
+    "img": "https://backyarddesigners.club/roster-art/willking-sprite.webp",
+    "sameAs": [
+      "https://x.com/willking",
+      "https://wking.dev"
+    ]
+  },
+  {
+    "pos": 109,
+    "handle": "benfryc",
+    "name": "Ben Fryc",
+    "nick": "THE KNOB TURNER",
+    "title": "Brand Designer",
+    "desc": "3D artist, motion designer, and creative at Framer, with work for OpenAI, Figma, Google, Wealthsimple, and Loom. Turned the long-running Knob experiments into real hardware with Work Louder.",
+    "org": "Framer",
+    "url": "https://backyarddesigners.club/roster/benfryc/",
+    "img": "https://backyarddesigners.club/roster-art/benfryc-sprite.webp",
+    "sameAs": [
+      "https://x.com/benfryc",
+      "https://www.benfryc.com"
+    ]
+  },
+  {
+    "pos": 110,
+    "handle": "soulegit",
+    "name": "George Hastings",
+    "nick": "THE UNICORN",
+    "title": "Design Leader",
+    "desc": "Design engineer with fourteen-plus years across product and agency work at IDEO and AREA 17, now building Unicorn Studio and the color tool Khroma. Makes WebGL magic available to people who did not bring a shader compiler.",
+    "org": "Unicorn Studio",
+    "url": "https://backyarddesigners.club/roster/soulegit/",
+    "img": "https://backyarddesigners.club/roster-art/soulegit-sprite.webp",
+    "sameAs": [
+      "https://x.com/soulegit",
+      "https://georgehastings.com"
+    ]
+  },
+  {
+    "pos": 111,
+    "handle": "jshguo",
+    "name": "Joshua Guo",
+    "nick": "THE TINY MECHA",
+    "title": "Product Designer",
+    "desc": "Design engineer and V2SPACE founder building design systems, visualizations, Figma tools, and Framer components. A v0 ambassador and Blissful partner whose project list runs from vector blending to hydrogen orbitals.",
+    "org": "V2SPACE",
+    "url": "https://backyarddesigners.club/roster/jshguo/",
+    "img": "https://backyarddesigners.club/roster-art/jshguo-sprite.webp",
+    "sameAs": [
+      "https://x.com/jshguo",
+      "https://v2space.net"
+    ]
+  },
+  {
+    "pos": 112,
+    "handle": "tomjohndesign",
+    "name": "Tom Johnson",
+    "nick": "THE DITHER DAD",
+    "title": "Product Designer",
+    "desc": "Staff product designer on v0 at Vercel after founding design at Basedash. Lives on the road with his family, collects 90s hardware, and dreams in dither strongly enough to keep building tools for it.",
+    "org": "Vercel",
+    "url": "https://backyarddesigners.club/roster/tomjohndesign/",
+    "img": "https://backyarddesigners.club/roster-art/tomjohndesign-sprite.webp",
+    "sameAs": [
+      "https://x.com/tomjohndesign",
+      "https://www.tomjohn.design"
+    ]
+  },
+  {
+    "pos": 113,
+    "handle": "erondu",
+    "name": "Jared Erondu",
+    "nick": "HIGH RESOLUTION",
+    "title": "Design Leader",
+    "desc": "Heads design at Span, after running design and marketing at Lattice. Spent 25 episodes of High Resolution interviewing nearly every design leader worth interviewing, then quietly became one.",
+    "org": "Span",
+    "url": "https://backyarddesigners.club/roster/erondu/",
+    "img": "https://backyarddesigners.club/roster-art/erondu-sprite.webp",
+    "sameAs": [
+      "https://x.com/erondu",
+      "https://erondu.com"
+    ]
+  },
+  {
+    "pos": 114,
+    "handle": "rsms",
+    "name": "Rasmus Andersson",
+    "nick": "SET IN INTER",
+    "title": "Product Designer",
+    "desc": "Designed Inter, so a good share of the interfaces you looked at today were set in his typeface. Figma, Spotify and Facebook before that; now building Playbit.",
+    "org": "Playbit",
+    "url": "https://backyarddesigners.club/roster/rsms/",
+    "img": "https://backyarddesigners.club/roster-art/rsms-sprite.webp",
+    "sameAs": [
+      "https://x.com/rsms",
+      "https://rsms.me"
+    ]
+  },
+  {
+    "pos": 115,
+    "handle": "aleksliving",
+    "name": "Aleks",
+    "nick": "OUTPUT ONLY",
+    "title": "Product Designer",
+    "desc": "Works on AI at Figma, and holds that the only thing that matters is the output — sorry, process bros. Also convinced they can learn anything in two weeks, which may not be a superpower.",
+    "org": "Figma",
+    "url": "https://backyarddesigners.club/roster/aleksliving/",
+    "img": "https://backyarddesigners.club/roster-art/aleksliving-sprite.webp",
+    "sameAs": [
+      "https://x.com/aleksliving"
+    ]
+  },
+  {
+    "pos": 116,
+    "handle": "alvishbaldha",
+    "name": "Alvish Baldha",
+    "nick": "FIRST HIRE",
+    "title": "Product Designer",
+    "desc": "Founding designer at Operate, by way of Clerk and Kosh Money. Being the first designer in the building is less a job than a specialty at this point. Signs his name with a wizard, unexplained.",
+    "org": "Operate",
+    "url": "https://backyarddesigners.club/roster/alvishbaldha/",
+    "img": "https://backyarddesigners.club/roster-art/alvishbaldha-sprite.webp",
+    "sameAs": [
+      "https://x.com/alvishbaldha",
+      "https://alvi.sh"
+    ]
+  },
+  {
+    "pos": 117,
+    "handle": "stephenhaney",
+    "name": "Stephen Haney",
+    "nick": "BLANK PAGE",
+    "title": "Design Engineer",
+    "desc": "CEO of Paper, where the canvas is real HTML and CSS instead of a picture of it. Co-founded Radix UI before that, so a fair share of your components are already his.",
+    "org": "Paper",
+    "url": "https://backyarddesigners.club/roster/stephenhaney/",
+    "img": "https://backyarddesigners.club/roster-art/stephenhaney-sprite.webp",
+    "sameAs": [
+      "https://x.com/stephenhaney",
+      "https://paper.design"
+    ]
+  },
+  {
+    "pos": 118,
+    "handle": "gennydee",
+    "name": "Genny Dee",
+    "nick": "QUIET CAR",
+    "title": "Brand Designer",
+    "desc": "Leads design and brand at Railway, by way of Vercel and GitHub. A self-described introvert and freckle face who meditates, which on this roster counts as a competitive advantage.",
+    "org": "Railway",
+    "url": "https://backyarddesigners.club/roster/gennydee/",
+    "img": "https://backyarddesigners.club/roster-art/gennydee-sprite.webp",
+    "sameAs": [
+      "https://x.com/gennydee"
+    ]
+  },
+  {
+    "pos": 119,
+    "handle": "raphaelschaad",
+    "name": "Raphael Schaad",
+    "nick": "CRON JOB",
+    "title": "Product Designer",
+    "desc": "Swiss designer and MIT engineer who built Cron and sold it to Notion. Now a visiting partner at YC. Runs through forests, which is a more specific hobby than most people manage.",
+    "org": "Y Combinator",
+    "url": "https://backyarddesigners.club/roster/raphaelschaad/",
+    "img": "https://backyarddesigners.club/roster-art/raphaelschaad-sprite.webp",
+    "sameAs": [
+      "https://x.com/raphaelschaad",
+      "https://raphaelschaad.com"
+    ]
+  },
+  {
+    "pos": 120,
+    "handle": "joeyabanks",
+    "name": "Joey Banks",
+    "nick": "SOURCE OF TRUTH",
+    "title": "Product Designer",
+    "desc": "Builds design systems at Baseline for the teams shipping what's next. If your component library has a single source of truth, odds are it is shaped a little like theirs.",
+    "org": "Baseline",
+    "url": "https://backyarddesigners.club/roster/joeyabanks/",
+    "img": "https://backyarddesigners.club/roster-art/joeyabanks-sprite.webp",
+    "sameAs": [
+      "https://x.com/joeyabanks",
+      "https://baselinedesign.com"
+    ]
+  },
+  {
+    "pos": 121,
+    "handle": "joebell_",
+    "name": "Joe Bell",
+    "nick": "SIDE QUEST",
+    "title": "Design Engineer",
+    "desc": "Design engineer at Operate, where the job title he lists is defence against the dark arts. Also runs a studio on the side, where “sometimes building” is doing a lot of heavy lifting.",
+    "org": "Operate",
+    "url": "https://backyarddesigners.club/roster/joebell_/",
+    "img": "https://backyarddesigners.club/roster-art/joebell_-sprite.webp",
+    "sameAs": [
+      "https://x.com/joebell_",
+      "https://joebell.studio"
+    ]
+  },
+  {
+    "pos": 122,
+    "handle": "saturday",
+    "name": "Mackey Saturday",
+    "nick": "WORDMARK",
+    "title": "Brand Designer",
+    "desc": "Identity design out of New York, for the world — which is the whole of his bio and, honestly, enough. The kind of logo work you have looked at ten thousand times without once noticing.",
+    "org": "Independent",
+    "url": "https://backyarddesigners.club/roster/saturday/",
+    "img": "https://backyarddesigners.club/roster-art/saturday-sprite.webp",
+    "sameAs": [
+      "https://x.com/saturday",
+      "https://mackeysaturday.com"
+    ]
+  },
+  {
+    "pos": 123,
+    "handle": "jaytel",
+    "name": "Jaytel",
+    "nick": "STUDIO PASS",
+    "title": "Product Designer",
+    "desc": "Design Studio at Shopify, after co-founding a company Shopify bought and doing design at Apple before that. A career of joining the place that just acquired you.",
+    "org": "Shopify",
+    "url": "https://backyarddesigners.club/roster/jaytel/",
+    "img": "https://backyarddesigners.club/roster-art/jaytel-sprite.webp",
+    "sameAs": [
+      "https://x.com/Jaytel",
+      "https://jay.tel"
+    ]
+  },
+  {
+    "pos": 124,
+    "handle": "bnj",
+    "name": "Ben South",
+    "nick": "REDACTED",
+    "title": "Product Designer",
+    "desc": "Building Variant, after a VP run at Postmates and two companies that got acquired. Nobody on this project could establish what he actually looks like, so this is the best anyone could do.",
+    "org": "Variant",
+    "url": "https://backyarddesigners.club/roster/bnj/",
+    "img": "https://backyarddesigners.club/roster-art/bnj-sprite.webp",
+    "sameAs": [
+      "https://x.com/bnj",
+      "https://bensouth.com"
+    ]
+  },
+  {
+    "pos": 125,
+    "handle": "robhope",
+    "name": "Rob Hope",
+    "nick": "ABOVE THE FOLD",
+    "title": "Web Designer",
+    "desc": "Runs One Page Love, a long-running archive of every good single-page site on the web, plus the Yo podcast. Surfs, ships, and stays an optimist about the internet, from South Africa.",
+    "org": "One Page Love",
+    "url": "https://backyarddesigners.club/roster/robhope/",
+    "img": "https://backyarddesigners.club/roster-art/robhope-sprite.webp",
+    "sameAs": [
+      "https://x.com/robhope",
+      "https://robhope.com"
+    ]
+  },
+  {
+    "pos": 126,
+    "handle": "mackenziechild",
+    "name": "Mackenzie Child",
+    "nick": "FLOWMINGO",
+    "title": "Web Designer",
+    "desc": "Designer by way of Webflow, Gumroad and Podia, and the man behind Flowmingo — the Webflow course whose pink flamingo mascot taught a generation of designers to build their own sites.",
+    "org": "Independent",
+    "url": "https://backyarddesigners.club/roster/mackenziechild/",
+    "img": "https://backyarddesigners.club/roster-art/mackenziechild-sprite.webp",
+    "sameAs": [
+      "https://x.com/mackenziechild",
+      "https://mackenziechild.me"
+    ]
+  },
+  {
+    "pos": 127,
+    "handle": "sravienna",
+    "name": "Sara Vienna",
+    "nick": "THE TASTE COACH",
+    "title": "Design Leader",
+    "desc": "Chief Design Officer at MetaLab, leading research, strategy, product, and brand teams behind products from Slack to Midjourney and Windsurf. Hawaii based, serious about quiet taste and mentorship, and happiest when the work leaves room for sunshine and salt water.",
+    "org": "MetaLab",
+    "url": "https://backyarddesigners.club/roster/sravienna/",
+    "img": "https://backyarddesigners.club/roster-art/sravienna-sprite.webp",
+    "sameAs": [
+      "https://x.com/sravienna",
+      "https://www.metalab.com"
+    ]
+  },
+  {
+    "pos": 128,
+    "handle": "adrianmg",
+    "name": "Adrián Mato",
+    "nick": "EIGHT ARMS",
+    "title": "Design Leader",
+    "desc": "Design director on Copilot at GitHub, by way of Spain, the UK and the US. Makes 3D art on the side and signs everything with an octopus, which stops needing an explanation after a while.",
+    "org": "GitHub",
+    "url": "https://backyarddesigners.club/roster/adrianmg/",
+    "img": "https://backyarddesigners.club/roster-art/adrianmg-sprite.webp",
+    "sameAs": [
+      "https://x.com/adrianmg",
+      "https://adrianmato.com"
+    ]
+  },
+  {
+    "pos": 129,
+    "handle": "maheen_sohail",
+    "name": "Maheen Sohail",
+    "nick": "COURSE CORRECTION",
+    "title": "Product Designer",
+    "desc": "Works on AI at Instagram, after Meta's Super Intelligence Labs, and teaches a course on becoming an AI product designer — a job title that did not exist a couple of years ago.",
+    "org": "Instagram",
+    "url": "https://backyarddesigners.club/roster/maheen_sohail/",
+    "img": "https://backyarddesigners.club/roster-art/maheen_sohail-sprite.webp",
+    "sameAs": [
+      "https://x.com/maheen_sohail",
+      "https://www.maheensohail.com"
+    ]
+  },
+  {
+    "pos": 130,
+    "handle": "justinmfarrugia",
+    "name": "Justin Farrugia",
+    "nick": "CURATED",
+    "title": "Product Designer",
+    "desc": "Designer behind Curated Supply and CMD Supply, which between them amount to a standing argument that taste is a thing you can ship rather than just have.",
+    "org": "Curated Supply",
+    "url": "https://backyarddesigners.club/roster/justinmfarrugia/",
+    "img": "https://backyarddesigners.club/roster-art/justinmfarrugia-sprite.webp",
+    "sameAs": [
+      "https://x.com/justinmfarrugia",
+      "https://jus.design"
+    ]
+  },
+  {
+    "pos": 131,
+    "handle": "nlevin",
+    "name": "Noah Levin",
+    "nick": "MISSION CONTROL",
+    "title": "Design Leader",
+    "desc": "VP of design at Figma, by way of Google and ClassPass. Built a digital assistant for astronauts at NASA first, which is a hard opening act to follow.",
+    "org": "Figma",
+    "url": "https://backyarddesigners.club/roster/nlevin/",
+    "img": "https://backyarddesigners.club/roster-art/nlevin-sprite.webp",
+    "sameAs": [
+      "https://x.com/nlevin",
+      "https://nlevin.com"
+    ]
+  },
+  {
+    "pos": 132,
+    "handle": "henrymodis",
+    "name": "Henry Modisett",
+    "nick": "RETICULATING",
+    "title": "Design Leader",
+    "desc": "Former VP of design at Perplexity, and its founding designer. What he does next is the most closely watched open question in design right now — and his X bio still just reads “reticulating splines”.",
+    "org": "TBD",
+    "url": "https://backyarddesigners.club/roster/henrymodis/",
+    "img": "https://backyarddesigners.club/roster-art/henrymodis-sprite.webp",
+    "sameAs": [
+      "https://x.com/henrymodis",
+      "https://autumngarage.com"
+    ]
+  },
+  {
+    "pos": 133,
+    "handle": "stammy",
+    "name": "Paul Stamatiou",
+    "nick": "THE LONG READ",
+    "title": "Design Leader",
+    "desc": "Head of Design at Sesame after nine years drawing Twitter’s camera, composer and threads, with a stop co-founding Limitless before Meta bought it. Writes the kind of build log where the footnotes have footnotes.",
+    "org": "Sesame",
+    "url": "https://backyarddesigners.club/roster/stammy/",
+    "img": "https://backyarddesigners.club/roster-art/stammy-sprite.webp",
+    "sameAs": [
+      "https://x.com/Stammy",
+      "https://paulstamatiou.com"
+    ]
+  },
+  {
+    "pos": 134,
+    "handle": "zehf",
+    "name": "Zeh Fernandes",
+    "nick": "GENCUP",
+    "title": "Design Engineer",
+    "desc": "Hands-on head of design at Resend, and four World Cups deep into turning match data into generative posters — chrono-grids, brush strokes and gravity fields where the bar charts should be.",
+    "org": "Resend",
+    "url": "https://backyarddesigners.club/roster/zehf/",
+    "img": "https://backyarddesigners.club/roster-art/zehf-sprite.webp",
+    "sameAs": [
+      "https://x.com/zehf",
+      "https://zehfernandes.com"
+    ]
+  },
+  {
+    "pos": 135,
+    "handle": "eve_bouff",
+    "name": "Eve Bouffard",
+    "nick": "HEAD OF FUN",
+    "title": "Design Leader",
+    "desc": "Head of design at Y Combinator — or head of fun, going by the X bio, which is the kind of edit only someone genuinely good at the first job gets to make. Canadian.",
+    "org": "Y Combinator",
+    "url": "https://backyarddesigners.club/roster/eve_bouff/",
+    "img": "https://backyarddesigners.club/roster-art/eve_bouff-sprite.webp",
+    "sameAs": [
+      "https://x.com/eve_bouff",
+      "https://evebouffard.com"
+    ]
+  },
+  {
+    "pos": 136,
+    "handle": "ben_issen",
+    "name": "Beni Issen",
+    "nick": "MACHINIST",
+    "title": "Product Designer",
+    "desc": "Founding designer at Rox, and a self-described designer of machines — which is a more honest job title than most of the ones on this bench.",
+    "org": "Rox",
+    "url": "https://backyarddesigners.club/roster/ben_issen/",
+    "img": "https://backyarddesigners.club/roster-art/ben_issen-sprite.webp",
+    "sameAs": [
+      "https://x.com/ben_issen",
+      "https://benissen.com"
+    ]
+  },
+  {
+    "pos": 137,
+    "handle": "jsngr",
+    "name": "Jordan Singer",
+    "nick": "SHIP OF THESEUS",
+    "title": "Product Designer",
+    "desc": "Co-founder and CEO of Mainframe, after Figma, Square and Diagram, which Figma bought. Posts a finished-looking prototype of an idea about as often as most people post an opinion.",
+    "org": "Mainframe",
+    "url": "https://backyarddesigners.club/roster/jsngr/",
+    "img": "https://backyarddesigners.club/roster-art/jsngr-sprite.webp",
+    "sameAs": [
+      "https://x.com/jsngr",
+      "https://ibuildmyideas.com"
+    ]
+  },
+  {
+    "pos": 138,
+    "handle": "bradleyziffer",
+    "name": "Bradley Ziffer",
+    "nick": "OLD MONEY",
+    "title": "Product Designer",
+    "desc": "Building at Ramp, after Antimetal, Daylight and Acorns — a clean sweep of everywhere your money goes. Dresses for a different century and is entirely right to.",
+    "org": "Ramp",
+    "url": "https://backyarddesigners.club/roster/bradleyziffer/",
+    "img": "https://backyarddesigners.club/roster-art/bradleyziffer-sprite.webp",
+    "sameAs": [
+      "https://x.com/bradleyziffer"
+    ]
+  },
+  {
+    "pos": 139,
+    "handle": "greghuntoon",
+    "name": "Greg Huntoon",
+    "nick": "MOSTLY PLANTS",
+    "title": "Product Designer",
+    "desc": "Runs advocacy for Figma across North America, eats mostly plants, and is Ridd's arch nemesis in fantasy football — a rivalry that has outlasted several of the companies on this bench.",
+    "org": "Figma",
+    "url": "https://backyarddesigners.club/roster/greghuntoon/",
+    "img": "https://backyarddesigners.club/roster-art/greghuntoon-sprite.webp",
+    "sameAs": [
+      "https://x.com/GregHuntoon",
+      "https://bento.me/greghuntoon"
+    ]
+  },
+  {
+    "pos": 140,
+    "handle": "efedorenko",
+    "name": "Eugene Fedorenko",
+    "nick": "FIGMALION",
+    "title": "Product Designer",
+    "desc": "Writes Figmalion, the newsletter an alarming number of designers use as their actual Figma release notes. Head of design at Textla by day, after Wildbit and Postmark.",
+    "org": "Textla",
+    "url": "https://backyarddesigners.club/roster/efedorenko/",
+    "img": "https://backyarddesigners.club/roster-art/efedorenko-sprite.webp",
+    "sameAs": [
+      "https://x.com/efedorenko",
+      "https://efedorenko.com"
+    ]
+  },
+  {
+    "pos": 141,
+    "handle": "_joelmllr",
+    "name": "Joel Miller",
+    "nick": "TAKES NOTES",
+    "title": "Product Designer",
+    "desc": "Product designer at Granola, after Figma — which means he now designs the thing that remembers your meeting so you are free to not listen to it.",
+    "org": "Granola",
+    "url": "https://backyarddesigners.club/roster/_joelmllr/",
+    "img": "https://backyarddesigners.club/roster-art/_joelmllr-sprite.webp",
+    "sameAs": [
+      "https://x.com/_joelmllr"
+    ]
+  },
+  {
+    "pos": 142,
+    "handle": "maxvoltar",
+    "name": "Tim Van Damme",
+    "nick": "KEYCAP",
+    "title": "Product Designer",
+    "desc": "Software designer at Figma, by way of Instagram, Dropbox and Gowalla. Designs keycaps in his spare time, which is what happens when the day job stops being fiddly enough.",
+    "org": "Figma",
+    "url": "https://backyarddesigners.club/roster/maxvoltar/",
+    "img": "https://backyarddesigners.club/roster-art/maxvoltar-sprite.webp",
+    "sameAs": [
+      "https://x.com/maxvoltar",
+      "https://maxvoltar.com"
+    ]
+  },
+  {
+    "pos": 143,
+    "handle": "claudioguglieri",
+    "name": "Claudio Guglieri",
+    "nick": "FLUENT",
+    "title": "Brand Designer",
+    "desc": "Independent now, after art-directing Fluent at Microsoft and a long run at Fantasy. Keeps the kind of portfolio site that makes other designers quietly close their own tab.",
+    "org": "Independent",
+    "url": "https://backyarddesigners.club/roster/claudioguglieri/",
+    "img": "https://backyarddesigners.club/roster-art/claudioguglieri-sprite.webp",
+    "sameAs": [
+      "https://x.com/claudioguglieri",
+      "https://guglieri.com"
+    ]
+  },
+  {
+    "pos": 144,
+    "handle": "pizzaboy",
+    "name": "Dan Holdsworth",
+    "nick": "PIZZA BOY",
+    "title": "Brand Designer",
+    "desc": "Brand identity and design systems for dev tools and AI startups — CodeRabbit, Zed, Hacktron. Human crafted, veteran owned, and operating under the handle pizzaboy.",
+    "org": "Happy Pizza Studio",
+    "url": "https://backyarddesigners.club/roster/pizzaboy/",
+    "img": "https://backyarddesigners.club/roster-art/pizzaboy-sprite.webp",
+    "sameAs": [
+      "https://x.com/pizzaboy",
+      "https://happypizza.studio"
+    ]
+  },
+  {
+    "pos": 145,
+    "handle": "danmall",
+    "name": "Dan Mall",
+    "nick": "SUPERFRIENDLY",
+    "title": "Design Leader",
+    "desc": "Ran the design-systems consultancy SuperFriendly for a decade and sold it, wrote the book on making systems scale, and now teaches agency owners to make a million dollars in thirty-three steps.",
+    "org": "Design System University",
+    "url": "https://backyarddesigners.club/roster/danmall/",
+    "img": "https://backyarddesigners.club/roster-art/danmall-sprite.webp",
+    "sameAs": [
+      "https://x.com/danmall",
+      "https://danmall.com"
+    ]
+  },
+  {
+    "pos": 146,
+    "handle": "kumailnanji",
+    "name": "Kumail Nanji",
+    "nick": "MONOGRAM",
+    "title": "Product Designer",
+    "desc": "Designs at Monogram after a run at Airbnb — a fairly direct route from the world's most photographed spare rooms to whatever AI is doing this week.",
+    "org": "Monogram",
+    "url": "https://backyarddesigners.club/roster/kumailnanji/",
+    "img": "https://backyarddesigners.club/roster-art/kumailnanji-sprite.webp",
+    "sameAs": [
+      "https://x.com/kumailnanji",
+      "https://kumailnanji.com"
+    ]
+  },
+  {
+    "pos": 147,
+    "handle": "lochieaxon",
+    "name": "Lochie Axon",
+    "nick": "ONCHAIN",
+    "title": "Design Engineer",
+    "desc": "Design engineer at Aave and Family, previously Honk. Makes crypto interfaces that look like software rather than a hostage negotiation, which is rarer than it should be.",
+    "org": "Aave",
+    "url": "https://backyarddesigners.club/roster/lochieaxon/",
+    "img": "https://backyarddesigners.club/roster-art/lochieaxon-sprite.webp",
+    "sameAs": [
+      "https://x.com/lochieaxon",
+      "https://lochie.me"
+    ]
+  },
+  {
+    "pos": 148,
+    "handle": "lucas__crespo",
+    "name": "Lucas Crespo",
+    "nick": "LIPSTICK",
+    "title": "Brand Designer",
+    "desc": "Describes the job as putting lipstick on capitalism, which after creative directing at Every, VML and BBDO New York he has more than earned the right to say.",
+    "org": "Independent",
+    "url": "https://backyarddesigners.club/roster/lucas__crespo/",
+    "img": "https://backyarddesigners.club/roster-art/lucas__crespo-sprite.webp",
+    "sameAs": [
+      "https://x.com/lucas__crespo",
+      "https://www.lucascrespo.com"
+    ]
+  },
+  {
+    "pos": 149,
+    "handle": "ryry__mimi",
+    "name": "Ryan Miyoshi",
+    "nick": "LEDGER",
+    "title": "Design Leader",
+    "desc": "Head of design at Column, a bank built for developers — which means the interface has to stay completely calm while it moves other people's money.",
+    "org": "Column",
+    "url": "https://backyarddesigners.club/roster/ryry__mimi/",
+    "img": "https://backyarddesigners.club/roster-art/ryry__mimi-sprite.webp",
+    "sameAs": [
+      "https://x.com/ryry__mimi",
+      "https://ryry.io"
+    ]
+  },
+  {
+    "pos": 150,
+    "handle": "pollyinthedart",
+    "name": "Polly D'Arcy",
+    "nick": "FIELD PROMOTION",
+    "title": "Design Leader",
+    "desc": "VP of design at Wealthsimple, having gone from individual contributor to VP without ever changing companies — an arc rare enough that Dive made a whole episode about how it happened.",
+    "org": "Wealthsimple",
+    "url": "https://backyarddesigners.club/roster/pollyinthedart/",
+    "img": "https://backyarddesigners.club/roster-art/pollyinthedart-sprite.webp",
+    "sameAs": [
+      "https://x.com/pollyinthedart"
+    ]
+  },
+  {
+    "pos": 151,
+    "handle": "laurenloprete",
+    "name": "Lauren LoPrete",
+    "nick": "REBLOG",
+    "title": "Brand Designer",
+    "desc": "Head of design foundations at Mercury, after leading design systems at Dropbox and Cash App. Also a self-described tumblr has-been, which on a roster this online reads as a service record.",
+    "org": "Mercury",
+    "url": "https://backyarddesigners.club/roster/laurenloprete/",
+    "img": "https://backyarddesigners.club/roster-art/laurenloprete-sprite.webp",
+    "sameAs": [
+      "https://x.com/laurenloprete",
+      "https://laurenloprete.design"
+    ]
+  },
+  {
+    "pos": 152,
+    "handle": "griveau",
+    "name": "Adrien Griveau",
+    "nick": "KEYBOARD FIRST",
+    "title": "Product Designer",
+    "desc": "Founding designer at Linear, a product arranged entirely around never touching your mouse — and a house style a good share of the tools you use have since quietly borrowed.",
+    "org": "Linear",
+    "url": "https://backyarddesigners.club/roster/griveau/",
+    "img": "https://backyarddesigners.club/roster-art/griveau-sprite.webp",
+    "sameAs": [
+      "https://x.com/Griveau",
+      "https://www.adriengriveau.com"
+    ]
+  },
+  {
+    "pos": 153,
+    "handle": "amylimabean",
+    "name": "Amy Lima",
+    "nick": "COMEBACK",
+    "title": "Product Designer",
+    "desc": "Designer advocate at Figma, by way of Duolingo, Amazon Music and Pinterest, and founder of Diversify Design. Turned a layoff into a dream job, which Dive got a whole episode out of.",
+    "org": "Figma",
+    "url": "https://backyarddesigners.club/roster/amylimabean/",
+    "img": "https://backyarddesigners.club/roster-art/amylimabean-sprite.webp",
+    "sameAs": [
+      "https://x.com/amylimabean",
+      "https://www.amylimabean.com"
+    ]
+  },
+  {
+    "pos": 154,
+    "handle": "levidjones",
+    "name": "Levi Jones",
+    "nick": "COMING SOON",
+    "title": "Product Designer",
+    "desc": "Designer in Pasadena, a decade into shaping product from the idea down to the last detail, and currently too busy shipping client work at Iverson to finish his own site.",
+    "org": "Iverson",
+    "url": "https://backyarddesigners.club/roster/levidjones/",
+    "img": "https://backyarddesigners.club/roster-art/levidjones-sprite.webp",
+    "sameAs": [
+      "https://x.com/Levidjones",
+      "https://levidjones.com"
+    ]
+  },
+  {
+    "pos": 155,
+    "handle": "tuhin",
+    "name": "Tuhin Kumar",
+    "nick": "PAST LIVES",
+    "title": "Product Designer",
+    "desc": "Apple, Airbnb, Facebook, Clara and Luma Labs — all filed under “past lives” on his own profile. Currently listed as dreaming, which is either a sabbatical or a very good tease.",
+    "org": "Independent",
+    "url": "https://backyarddesigners.club/roster/tuhin/",
+    "img": "https://backyarddesigners.club/roster-art/tuhin-sprite.webp",
+    "sameAs": [
+      "https://x.com/tuhin",
+      "https://tuhinkumar.com"
+    ]
+  },
+  {
+    "pos": 156,
+    "handle": "joellewenstein",
+    "name": "Joel Lewenstein",
+    "nick": "CONSTITUTIONAL",
+    "title": "Design Leader",
+    "desc": "Head of design at Anthropic, which means owning the interface a great many people now talk to more often than they talk to some of their friends.",
+    "org": "Anthropic",
+    "url": "https://backyarddesigners.club/roster/joellewenstein/",
+    "img": "https://backyarddesigners.club/roster-art/joellewenstein-sprite.webp",
+    "sameAs": [
+      "https://x.com/joellewenstein",
+      "https://www.joellewenstein.com"
+    ]
+  },
+  {
+    "pos": 157,
+    "handle": "miggi",
+    "name": "Miggi",
+    "nick": "PROFESSOR FIGMA",
+    "title": "Product Designer",
+    "desc": "Figma's advocate for education, better known as professor figma — teaching the tool to the people who will be taking all of these jobs in about four years.",
+    "org": "Figma",
+    "url": "https://backyarddesigners.club/roster/miggi/",
+    "img": "https://backyarddesigners.club/roster-art/miggi-sprite.webp",
+    "sameAs": [
+      "https://x.com/miggi",
+      "https://www.instagram.com/instamiggi"
+    ]
+  },
+  {
+    "pos": 158,
+    "handle": "nikolasklein",
+    "name": "Nikolas Klein",
+    "nick": "DEFECTOR",
+    "title": "Product Designer",
+    "desc": "Designed at Figma and then defected to product management, a betrayal this bench has collectively decided to forgive, because we do still love him. At least he's done wrangling noodles.",
+    "org": "Figma",
+    "url": "https://backyarddesigners.club/roster/nikolasklein/",
+    "img": "https://backyarddesigners.club/roster-art/nikolasklein-sprite.webp",
+    "sameAs": [
+      "https://x.com/nikolasklein",
+      "https://nikolasklein.de"
+    ]
+  },
+  {
+    "pos": 159,
+    "handle": "falcone_design",
+    "name": "John Falcone",
+    "nick": "DESIGN DON",
+    "title": "Product Designer",
+    "desc": "Double Diamond makes John the designer mob boss of NYC: he sits down with the city's sharpest designers, asks what they actually think, and makes them an offer they can't redesign.",
+    "org": "Double Diamond",
+    "url": "https://backyarddesigners.club/roster/falcone_design/",
+    "img": "https://backyarddesigners.club/roster-art/falcone_design-sprite.webp",
+    "sameAs": [
+      "https://x.com/falcone_design",
+      "https://www.falcone.design"
+    ]
+  },
+  {
+    "pos": 160,
+    "handle": "brad_frost",
+    "name": "Brad Frost",
+    "nick": "ATOMIC",
+    "title": "Design Engineer",
+    "desc": "Wrote Atomic Design, which is why your components are called atoms and molecules and why someone on your team is still arguing about what counts as an organism.",
+    "org": "Independent",
+    "url": "https://backyarddesigners.club/roster/brad_frost/",
+    "img": "https://backyarddesigners.club/roster-art/brad_frost-sprite.webp",
+    "sameAs": [
+      "https://x.com/brad_frost",
+      "https://bradfrost.com"
+    ]
+  },
+  {
+    "pos": 161,
+    "handle": "guiseiz",
+    "name": "Gui Seiz",
+    "nick": "CALM SAD BOI",
+    "title": "Design Leader",
+    "desc": "Design director for AI at Figma, Portuguese, and self-described as calm sad boi tinkering — which is the most honest job description anywhere on this bench.",
+    "org": "Figma",
+    "url": "https://backyarddesigners.club/roster/guiseiz/",
+    "img": "https://backyarddesigners.club/roster-art/guiseiz-sprite.webp",
+    "sameAs": [
+      "https://x.com/guiseiz",
+      "https://seiz.design"
+    ]
+  },
+  {
+    "pos": 162,
+    "handle": "sheherenow_",
+    "name": "Jem Gold",
+    "nick": "SHAPESHIFTER",
+    "title": "Design Engineer",
+    "desc": "Forward-deployed R&D shapeshifter, and currently looking. The OGs remember react-sketchapp — rendering React components straight into Sketch, years before that was a normal thing to want.",
+    "org": "Looking",
+    "url": "https://backyarddesigners.club/roster/sheherenow_/",
+    "img": "https://backyarddesigners.club/roster-art/sheherenow_-sprite.webp",
+    "sameAs": [
+      "https://x.com/sheherenow_",
+      "https://jem.computer"
+    ]
+  },
+  {
+    "pos": 163,
+    "handle": "rachelhxw",
+    "name": "Rachel How",
+    "nick": "PLAY BUTTON",
+    "title": "Product Designer",
+    "desc": "Designer and builder making tech feel more human, with 270,000 YouTube subscribers watching her do it — many times the audience she has here. Also runs video at Mobbin.",
+    "org": "Mobbin",
+    "url": "https://backyarddesigners.club/roster/rachelhxw/",
+    "img": "https://backyarddesigners.club/roster-art/rachelhxw-sprite.webp",
+    "sameAs": [
+      "https://x.com/rachelhxw",
+      "https://www.rachelhow.com"
+    ]
+  },
+  {
+    "pos": 164,
+    "handle": "anthonymenecola",
+    "name": "Anthony Menecola",
+    "nick": "GUS",
+    "title": "Product Designer",
+    "desc": "Design at Owner, after Shopify and Pivotal Labs. Otherwise found on a bike or behind a camera, raising two tiny humans and a fur baby named Gus, who gets top billing here.",
+    "org": "Owner",
+    "url": "https://backyarddesigners.club/roster/anthonymenecola/",
+    "img": "https://backyarddesigners.club/roster-art/anthonymenecola-sprite.webp",
+    "sameAs": [
+      "https://x.com/AnthonyMenecola",
+      "https://www.anthonymenecola.com"
+    ]
+  },
+  {
+    "pos": 165,
+    "handle": "joulee",
+    "name": "Julie Zhuo",
+    "nick": "LOOKING GLASS",
+    "title": "Design Leader",
+    "desc": "Went from intern to VP of design at Facebook across thirteen years, then wrote the book most new managers get handed. Now co-founding Sundial, and still obsessed with systems.",
+    "org": "Sundial",
+    "url": "https://backyarddesigners.club/roster/joulee/",
+    "img": "https://backyarddesigners.club/roster-art/joulee-sprite.webp",
+    "sameAs": [
+      "https://x.com/joulee",
+      "https://www.juliezhuo.com"
+    ]
+  },
+  {
+    "pos": 166,
+    "handle": "rjgilbert",
+    "name": "Ryan Gilbert",
+    "nick": "THE WINDOW SEAT",
+    "title": "Design Leader",
+    "desc": "Creator of Workspaces, the weekly archive that has opened more than 500 real home offices to the internet — and photographed a surprising amount of this bench at their desks. Days at beehiiv; nights still belong to the Saturday edition.",
+    "org": "beehiiv",
+    "url": "https://backyarddesigners.club/roster/rjgilbert/",
+    "img": "https://backyarddesigners.club/roster-art/rjgilbert-sprite.webp",
+    "sameAs": [
+      "https://x.com/rjgilbert",
+      "https://www.workspaces.xyz"
+    ]
+  },
+  {
+    "pos": 167,
+    "handle": "dtrinh",
+    "name": "Danny Trinh",
+    "nick": "FIRST IMPRESSION",
+    "title": "Design Leader",
+    "desc": "Director of product design at Meta, after building social products at Snap, Zenly, Sensei, Free, Path, and Digg. He has been making tiny interactions tell the whole story since Path's plus button.",
+    "org": "Meta",
+    "url": "https://backyarddesigners.club/roster/dtrinh/",
+    "img": "https://backyarddesigners.club/roster-art/dtrinh-sprite.webp",
+    "sameAs": [
+      "https://x.com/dtrinh",
+      "https://dannytrinh.com"
+    ]
+  },
+  {
+    "pos": 168,
+    "handle": "adxnna",
+    "name": "Adanna O.",
+    "nick": "THE JOY MAKER",
+    "title": "Product Designer",
+    "desc": "Toronto product designer, illustrator, and icon designer with more than a decade in illustration and a special affection for design systems. Her work spans RBCx and Dr.Bill, Figma collaborations, a Paris billboard, and tiny movements added purely because software should have more joy.",
+    "org": "Independent",
+    "url": "https://backyarddesigners.club/roster/adxnna/",
+    "img": "https://backyarddesigners.club/roster-art/adxnna-sprite.webp",
+    "sameAs": [
+      "https://x.com/Adxnna",
+      "https://www.adxnna.design"
+    ]
+  },
+  {
+    "pos": 169,
+    "handle": "vinvan",
+    "name": "Vincent van der Meulen",
+    "nick": "THE NIGHT SHIFT",
+    "title": "Design Engineer",
+    "desc": "Dutch-born design engineer and Mainframe co-founder turning agent work into watchable video recaps. Previously helped Diagram and Figma blur design and engineering, went cowboy mode on Figma's AI-powered visual search, and still finds time to run and buy books he swears he'll read.",
+    "org": "Mainframe",
+    "url": "https://backyarddesigners.club/roster/vinvan/",
+    "img": "https://backyarddesigners.club/roster-art/vinvan-sprite.webp",
+    "sameAs": [
+      "https://x.com/vinvan",
+      "https://mainframe.app"
+    ]
+  },
+  {
+    "pos": 170,
+    "handle": "poojadav",
+    "name": "Pooja Jadav",
+    "nick": "THE MOTION MAKER",
+    "title": "Brand Designer",
+    "desc": "Mumbai-born visual designer and product illustrator in Berlin, currently looking for her next opportunity. She makes brands feel alive through illustration, micro-animation, and living systems, after work with Aampe and Stark — and once turned a Framer contest deadline into her first portfolio in a few days.",
+    "org": "Looking",
+    "url": "https://backyarddesigners.club/roster/poojadav/",
+    "img": "https://backyarddesigners.club/roster-art/poojadav-sprite.webp",
+    "sameAs": [
+      "https://x.com/poojadav",
+      "https://dribbble.com/poojadav"
+    ]
+  },
+  {
+    "pos": 171,
+    "handle": "itsiddharth_",
+    "name": "Siddharth",
+    "nick": "MOM'S FAVORITE",
+    "title": "Product Designer",
+    "desc": "Landed at Superpower through the Dive Talent Network after product work on Robinhood Gold and three and a half years at CRED. India-born, NYC-based, MICA '25, and still proudly his mom's favorite designer.",
+    "org": "Superpower",
+    "url": "https://backyarddesigners.club/roster/itsiddharth_/",
+    "img": "https://backyarddesigners.club/roster-art/itsiddharth_-sprite.webp",
+    "sameAs": [
+      "https://x.com/itsiddharth_",
+      "https://itsiddharth.design"
+    ]
+  },
+  {
+    "pos": 172,
+    "handle": "elou",
+    "name": "Emily Campbell",
+    "nick": "THE WAYFINDER",
+    "title": "Design Leader",
+    "desc": "VP of Design at HackerRank and creator of Shape of AI, the living catalog that names the patterns behind human-centered AI. She studies hundreds of products so designers can build trust, agency, and better meeting places between people and models.",
+    "org": "HackerRank",
+    "url": "https://backyarddesigners.club/roster/elou/",
+    "img": "https://backyarddesigners.club/roster-art/elou-sprite.webp",
+    "sameAs": [
+      "https://x.com/elou",
+      "https://emilycampbell.co"
+    ]
+  },
+  {
+    "pos": 173,
+    "handle": "kvwong",
+    "name": "Kevin Wong",
+    "nick": "THE NORTH STAR",
+    "title": "Design Leader",
+    "desc": "VP of Design at Webflow, steering its AI-native web vision after leading design at Messenger and Airbnb. A dad, triathlete, and infinite optimist who uses north stars, prototypes, and design systems to turn ambition into alignment.",
+    "org": "Webflow",
+    "url": "https://backyarddesigners.club/roster/kvwong/",
+    "img": "https://backyarddesigners.club/roster-art/kvwong-sprite.webp",
+    "sameAs": [
+      "https://x.com/kvwong",
+      "https://www.kvwong.com/"
+    ]
+  },
+  {
+    "pos": 174,
+    "handle": "liammatteson",
+    "name": "Liam Matteson",
+    "nick": "THE ITERATOR",
+    "title": "Product Designer",
+    "desc": "Design lead at Browserbase building Director, after product work at Copilot Money, Vanta, Upperstudy, and Halftone Digital. He treats code as a design medium and gets to the useful version through relentless iteration and meticulous detail.",
+    "org": "Browserbase",
+    "url": "https://backyarddesigners.club/roster/liammatteson/",
+    "img": "https://backyarddesigners.club/roster-art/liammatteson-sprite.webp",
+    "sameAs": [
+      "https://x.com/liammatteson",
+      "https://www.liam.cv"
+    ]
+  },
+  {
+    "pos": 175,
+    "handle": "darasoba",
+    "name": "dára sobaloju",
+    "nick": "TODO",
+    "title": "Wildcard",
+    "desc": "designer • #1 beamer @pewbeam_ai",
+    "org": "TODO",
+    "url": "https://backyarddesigners.club/roster/darasoba/",
+    "img": "https://backyarddesigners.club/roster-art/darasoba-sprite.webp",
+    "sameAs": [
+      "https://x.com/darasoba"
+    ]
+  },
+  {
+    "pos": 176,
+    "handle": "_jshmllr",
+    "name": "Josh Miller",
+    "nick": "TODO",
+    "title": "Wildcard",
+    "desc": "Product designer who ships 0-1 work inside enterprise & legacy systems. Healthcare • live entertainment • events.",
+    "org": "TODO",
+    "url": "https://backyarddesigners.club/roster/_jshmllr/",
+    "img": "https://backyarddesigners.club/roster-art/_jshmllr-sprite.webp",
+    "sameAs": [
+      "https://x.com/_jshmllr"
+    ]
+  },
+  {
+    "pos": 177,
+    "handle": "chloepark",
+    "name": "Chloe Park",
+    "nick": "TODO",
+    "title": "Wildcard",
+    "desc": "head of product & design @MagicPathAI • pre-AI and not gen z @vectorDAO previously Coinbase, Lyft, Facebook, OpenTable",
+    "org": "TODO",
+    "url": "https://backyarddesigners.club/roster/chloepark/",
+    "img": "https://backyarddesigners.club/roster-art/chloepark-sprite.webp",
+    "sameAs": [
+      "https://x.com/chloepark"
+    ]
+  },
+  {
+    "pos": 178,
+    "handle": "yannglt",
+    "name": "Yann-Edern Gillet",
+    "nick": "THE SYSTEM BUILDER",
+    "title": "Product Designer",
+    "desc": "Software designer at Linear in Paris, shaping product UI, systems, and developer experience. He documents the craft in Thunderstorm, a living personal site that treats a portfolio like a place to explore.",
+    "org": "Linear",
+    "url": "https://backyarddesigners.club/roster/yannglt/",
+    "img": "https://backyarddesigners.club/roster-art/yannglt-sprite.webp",
+    "sameAs": [
+      "https://x.com/yannglt",
+      "https://yannglt.com/"
+    ]
+  },
+  {
+    "pos": 179,
+    "handle": "rafahari",
+    "name": "Rafa",
+    "nick": "THE APP MAKER",
+    "title": "Product Designer",
+    "desc": "Design Engineer at Retro and longtime designer-maker of small, joyful apps. He built Hand Mirror in a weekend so people could check their camera before a call, then kept polishing it into a beloved Mac utility.",
+    "org": "Retro",
+    "url": "https://backyarddesigners.club/roster/rafahari/",
+    "img": "https://backyarddesigners.club/roster-art/rafahari-sprite.webp",
+    "sameAs": [
+      "https://x.com/rafahari",
+      "https://rafa.design/"
+    ]
+  },
+  {
+    "pos": 180,
+    "handle": "linuz90",
+    "name": "Fabrizio Rinaldi",
+    "nick": "THE COMPOSER",
+    "title": "Design Leader",
+    "desc": "Co-founder and designer of Typefully, the writing and scheduling workspace used by more than 220,000 creators. He is building the product toward $2M ARR with tools for composing, publishing, and growing across social platforms.",
+    "org": "Typefully",
+    "url": "https://backyarddesigners.club/roster/linuz90/",
+    "img": "https://backyarddesigners.club/roster-art/linuz90-sprite.webp",
+    "sameAs": [
+      "https://x.com/linuz90",
+      "https://www.fabrizio.so/"
+    ]
+  },
+  {
+    "pos": 181,
+    "handle": "yescynfria",
+    "name": "Cynthia Chen",
+    "nick": "THE WHIMSY MAKER",
+    "title": "Product Designer",
+    "desc": "Creative and product designer at Block exploring how design, technology, and whimsy can intersect. Previously Notion, Stripe, Airbnb, Siberia, and AKQA; after hours she makes playful experiments, from Dog-e-dex and tiny web toys to hand-punched rugs inspired by Asian snacks.",
+    "org": "Block",
+    "url": "https://backyarddesigners.club/roster/yescynfria/",
+    "img": "https://backyarddesigners.club/roster-art/yescynfria-sprite.webp",
+    "sameAs": [
+      "https://x.com/yescynfria",
+      "https://hellothisis.cc/"
+    ]
+  },
+  {
+    "pos": 182,
+    "handle": "clodoan",
+    "name": "Claudio Angrigiani",
+    "nick": "THE HYBRID",
+    "title": "Product Designer",
+    "desc": "Designer and engineer building at SpaceXAI after more than a decade shaping products as a product designer, full-stack builder, and startup founder. Previously Footprint, MainStreet, Dorothy, and Banco Galicia, where his work ranged from design systems to an ID scan flow that lifted conversion from 70% to 96%.",
+    "org": "SpaceXAI",
+    "url": "https://backyarddesigners.club/roster/clodoan/",
+    "img": "https://backyarddesigners.club/roster-art/clodoan-sprite.webp",
+    "sameAs": [
+      "https://x.com/clodoan",
+      "https://claudio.land/resume"
+    ]
+  },
+  {
+    "pos": 183,
+    "handle": "wwwjim",
+    "name": "Jimmy Lee",
+    "nick": "THE INTERNET JANITOR",
+    "title": "Design Leader",
+    "desc": "Designer, builder, investor, and self-described internet janitor who makes websites and friends. He advises Internet Development Studio, partners at Mana, designs at VMAX AI, and keeps durable web projects like Reading Supply and the terminal-flavored Sacred Computer alive and improving.",
+    "org": "Internet Development Studio",
+    "url": "https://backyarddesigners.club/roster/wwwjim/",
+    "img": "https://backyarddesigners.club/roster-art/wwwjim-sprite.webp",
+    "sameAs": [
+      "https://x.com/wwwjim",
+      "https://jimmyl.ee/"
+    ]
+  },
+  {
+    "pos": 184,
+    "handle": "tinathetechie",
+    "name": "Christina Cook",
+    "nick": "THE SIDEQUESTER",
+    "title": "Design Leader",
+    "desc": "Founding designer and design engineer at Browserbase, working across product, brand, and observability tools from the company's earliest days through its Series B and rebrand. Previously designed at Mux, Stream Club, Cameo, and Upperstudy; outside work she hosts design film nights and pursues a daily sidequest.",
+    "org": "Browserbase",
+    "url": "https://backyarddesigners.club/roster/tinathetechie/",
+    "img": "https://backyarddesigners.club/roster-art/tinathetechie-sprite.webp",
+    "sameAs": [
+      "https://x.com/tinathetechie",
+      "https://christinacook.me/"
+    ]
+  },
+  {
+    "pos": 185,
+    "handle": "alexabraham",
+    "name": "Alex Abraham",
+    "nick": "THE BRIDGE",
+    "title": "Product Designer",
+    "desc": "Designer at X/SpaceXAI who builds brands, products, and experiences, bridging designer and developer, artist and engineer, maker and manager. Previously lead designer at Lightspark and digital product lead at ROOM, with earlier work spanning Rolling Stone, WWD, Reebok, the NBA, and Rolls-Royce.",
+    "org": "X/SpaceXAI",
+    "url": "https://backyarddesigners.club/roster/alexabraham/",
+    "img": "https://backyarddesigners.club/roster-art/alexabraham-sprite.webp",
+    "sameAs": [
+      "https://x.com/alexabraham",
+      "https://alexvictorabraham.com/"
+    ]
+  },
+  {
+    "pos": 186,
+    "handle": "marcofyi",
+    "name": "Marco Cornacchia",
+    "nick": "THE BENTO BREAKER",
+    "title": "Design Leader",
+    "desc": "Cofounder of Turf, a sports prediction market, after founding design at Diagram and helping take it through Figma's acquisition. Previously at v0 and Vercel, he still makes interfaces feel like an event.",
+    "org": "Turf",
+    "url": "https://backyarddesigners.club/roster/marcofyi/",
+    "img": "https://backyarddesigners.club/roster-art/marcofyi-sprite.webp",
+    "sameAs": [
+      "https://x.com/marcofyi",
+      "https://marco.fyi/"
+    ]
+  },
+  {
+    "pos": 187,
+    "handle": "notdetails",
+    "name": "Joel Califa",
+    "nick": "THE PROBLEM SOLVER",
+    "title": "Design Leader",
+    "desc": "VP of Design at Unify, where he is rebuilding GTM workflows after leading design at Heap, GitHub, and DigitalOcean. A designer who codes and a self-described professional problem solver, he has spent more than sixteen years turning complex technical products into tools people can actually use.",
+    "org": "Unify",
+    "url": "https://backyarddesigners.club/roster/notdetails/",
+    "img": "https://backyarddesigners.club/roster-art/notdetails-sprite.webp",
+    "sameAs": [
+      "https://x.com/notdetails",
+      "https://joelcalifa.com/"
+    ]
+  },
+  {
+    "pos": 188,
+    "handle": "anaarsonist",
+    "name": "Ana Howard",
+    "nick": "THE GLASSBENDER",
+    "title": "Product Designer",
+    "desc": "Design engineer at Aave working across product design and code, including the design direction for its cross-browser glass interface system. Previously designed Cyfrin's developer education and security products; outside work she runs Bagel Fund microgrants and builds a deeply personal corner of the web at ana.sh.",
+    "org": "Aave",
+    "url": "https://backyarddesigners.club/roster/anaarsonist/",
+    "img": "https://backyarddesigners.club/roster-art/anaarsonist-sprite.webp",
+    "sameAs": [
+      "https://x.com/AnaArsonist",
+      "https://ana.sh/"
+    ]
+  },
+  {
+    "pos": 189,
+    "handle": "benblumenrose",
+    "name": "Ben Blumenrose",
+    "nick": "THE BACKER",
+    "title": "Design Leader",
+    "desc": "Co-founder and managing partner of Designer Fund, backing founders who use design to build better products and services for people and the planet. Previously Facebook's fifth product designer and a design lead and manager there, he has spent more than a decade helping design-driven startups grow.",
+    "org": "Designer Fund",
+    "url": "https://backyarddesigners.club/roster/benblumenrose/",
+    "img": "https://backyarddesigners.club/roster-art/benblumenrose-sprite.webp",
+    "sameAs": [
+      "https://x.com/benblumenrose",
+      "https://www.blumenrose.com/ben"
+    ]
+  },
+  {
+    "pos": 190,
+    "handle": "lichinlin",
+    "name": "Lichin Lin",
+    "nick": "THE HAPPY HACKER",
+    "title": "Product Designer",
+    "desc": "Design Engineer on GitHub Copilot, where he brings product craft directly into production interfaces after engineering roles at Intercom and PicCollage. He also writes Design Tips Today and builds playful Figma plugins that make the creative process more joyful.",
+    "org": "GitHub",
+    "url": "https://backyarddesigners.club/roster/lichinlin/",
+    "img": "https://backyarddesigners.club/roster-art/lichinlin-sprite.webp",
+    "sameAs": [
+      "https://x.com/lichinlin",
+      "https://designtips.today/"
+    ]
+  },
+  {
+    "pos": 191,
+    "handle": "syswarren",
+    "name": "Julie Chabin",
+    "nick": "THE FIRST VERSION",
+    "title": "Design Leader",
+    "desc": "Product design leader building AI products at Pearl after leading design at Product Hunt and working across AngelList, Deezer, and other early-stage teams. She partners with founders to turn ideas into thoughtful first versions, shape strategy and brand, raise funds, and keep learning after launch.",
+    "org": "Pearl",
+    "url": "https://backyarddesigners.club/roster/syswarren/",
+    "img": "https://backyarddesigners.club/roster-art/syswarren-sprite.webp",
+    "sameAs": [
+      "https://x.com/syswarren",
+      "https://julie.design/"
+    ]
+  },
+  {
+    "pos": 192,
+    "handle": "andyweirdesign",
+    "name": "Andy Weir",
+    "nick": "THE PRODUCT BUILDER",
+    "title": "Product Designer",
+    "desc": "Product designer and design engineer at Navattic with more than fourteen years working where visual craft meets production code. Previously the founding designer at Feathr, he ships systems and features end to end and builds experiments ranging from accessible design tools to RecipeVault, a recipe manager made for his wife's real kitchen problem.",
+    "org": "Navattic",
+    "url": "https://backyarddesigners.club/roster/andyweirdesign/",
+    "img": "https://backyarddesigners.club/roster-art/andyweirdesign-sprite.webp",
+    "sameAs": [
+      "https://x.com/andyweirdesign",
+      "https://www.andyryanweir.com/"
+    ]
+  },
+  {
+    "pos": 193,
+    "handle": "karrisaarinen",
+    "name": "Karri Saarinen",
+    "nick": "THE FOCUS FOUNDER",
+    "title": "Design Leader",
+    "desc": "Co-founder and CEO of Linear, the product development system known for speed, focus, and exceptional craft. Previously Airbnb's principal designer and design-systems lead, he created Coinbase's founding design and earlier co-founded Kippt and Rails Girls.",
+    "org": "Linear",
+    "url": "https://backyarddesigners.club/roster/karrisaarinen/",
+    "img": "https://backyarddesigners.club/roster-art/karrisaarinen-sprite.webp",
+    "sameAs": [
+      "https://x.com/karrisaarinen",
+      "https://karrisaarinen.com/"
+    ]
+  },
+  {
+    "pos": 194,
+    "handle": "mike_matas",
+    "name": "Mike Matas",
+    "nick": "THE DIRECT MANIPULATOR",
+    "title": "Design Leader",
+    "desc": "Entrepreneur and interface designer at LoveFrom whose work helped define the original iPhone and iPad, Nest, Facebook Paper, and other landmark products. He also founded Delicious Library, Push Pop Press, and the visual machine-learning tool Lobe, bringing direct manipulation and playful physicality to every screen he touches.",
+    "org": "LoveFrom",
+    "url": "https://backyarddesigners.club/roster/mike_matas/",
+    "img": "https://backyarddesigners.club/roster-art/mike_matas-sprite.webp",
+    "sameAs": [
+      "https://x.com/mike_matas",
+      "https://mikematas.com/"
+    ]
+  },
+  {
+    "pos": 195,
+    "handle": "eddiejiao_obj",
+    "name": "Eddie Jiao",
+    "nick": "THE SENTIENT SURFACE",
+    "title": "Design Leader",
+    "desc": "Co-founder of Common Knowledge and builder of Flipbook, an early diffusion-based generative interface where every pixel can adapt in real time. Previously built novel interfaces at Humane and worked on Slack's desktop and iOS clients after studying computer science at Brown.",
+    "org": "Common Knowledge",
+    "url": "https://backyarddesigners.club/roster/eddiejiao_obj/",
+    "img": "https://backyarddesigners.club/roster-art/eddiejiao_obj-sprite.webp",
+    "sameAs": [
+      "https://x.com/eddiejiao_obj",
+      "https://eddiejiao.com/"
+    ]
+  },
+  {
+    "pos": 196,
+    "handle": "dankuntz",
+    "name": "Daniel Kuntz",
+    "nick": "THE WORKOUT STORYTELLER",
+    "title": "Design Leader",
+    "desc": "Engineer and co-founder behind Any Distance, the workout tracker and story designer that won Apple's 2023 Design Award for Visuals and Graphics. He also builds music tools and playful hardware experiments, from BlueNote and Impulse to LILGUY's STARBOY.",
+    "org": "Any Distance",
+    "url": "https://backyarddesigners.club/roster/dankuntz/",
+    "img": "https://backyarddesigners.club/roster-art/dankuntz-sprite.webp",
+    "sameAs": [
+      "https://x.com/dankuntz",
+      "https://kuntz.io/"
+    ]
+  },
+  {
+    "pos": 197,
+    "handle": "jasonmarder",
+    "name": "Jason Marder",
+    "nick": "THE PIXEL PORTER",
+    "title": "Design Leader",
+    "desc": "Founder and principal designer of J-Train Studio, an independent practice creating brands, websites, systems, spaces, and motion for ambitious companies. Previously a design lead at Stripe and Gusto, he also advises and invests in early-stage teams.",
+    "org": "J-Train Studio",
+    "url": "https://backyarddesigners.club/roster/jasonmarder/",
+    "img": "https://backyarddesigners.club/roster-art/jasonmarder-sprite.webp",
+    "sameAs": [
+      "https://x.com/JasonMarder",
+      "https://www.jasonmarder.com/"
+    ]
+  },
+  {
+    "pos": 198,
+    "handle": "jacobybrandon",
+    "name": "Brandon Jacoby",
+    "nick": "THE BOUNDLESS",
+    "title": "Design Leader",
+    "desc": "Founder of Kainoa, an independent multidisciplinary practice spanning product, brand, identity, web, and motion. Previously designed and led teams at X/xAI, Capital, and Cash App.",
+    "org": "Kainoa",
+    "url": "https://backyarddesigners.club/roster/jacobybrandon/",
+    "img": "https://backyarddesigners.club/roster-art/jacobybrandon-sprite.webp",
+    "sameAs": [
+      "https://x.com/JacobyBrandon",
+      "https://www.kainoa.studio/"
+    ]
+  },
+  {
+    "pos": 199,
+    "handle": "jeffinvenice",
+    "name": "Jeff",
+    "nick": "THE DESIGN DOCTOR",
+    "title": "Design Leader",
+    "desc": "Founder of Venice Inc., a full-service studio helping teams from OpenAI to emerging startups with brand, product, GTM, web, motion, and design engineering. His practice pairs deep product thinking with unusually fast execution.",
+    "org": "Venice Inc.",
+    "url": "https://backyarddesigners.club/roster/jeffinvenice/",
+    "img": "https://backyarddesigners.club/roster-art/jeffinvenice-sprite.webp",
+    "sameAs": [
+      "https://x.com/jeffinvenice",
+      "https://www.venice.inc/"
+    ]
+  },
+  {
+    "pos": 200,
+    "handle": "novikoff",
+    "name": "Dmitry Novikov",
+    "nick": "THE ZERO PROCESSOR",
+    "title": "Design Leader",
+    "desc": "Co-founder and designer of Zerocam, the pocket camera built around zero processing and fewer distractions. His design-engineering work also spans Rive, Sketch, CleanMyMac, Setapp, Luminar, Restream, and Hiveon OS.",
+    "org": "Zerocam",
+    "url": "https://backyarddesigners.club/roster/novikoff/",
+    "img": "https://backyarddesigners.club/roster-art/novikoff-sprite.webp",
+    "sameAs": [
+      "https://x.com/novikoff",
+      "https://zerocam.app/"
+    ]
+  },
+  {
+    "pos": 201,
+    "handle": "doctorbaytas",
+    "name": "Mehmet Aydın Baytaş",
+    "nick": "THE PHD IS IN",
+    "title": "Design Leader",
+    "desc": "Designer, engineer, and scholar with a PhD in human-computer interaction design who runs Design Discipline, an independent design-research publication and podcast. He hosts long-form conversations with designers, artists, founders, and researchers, alongside masterclasses and talks that connect theory to the practice of making interfaces.",
+    "org": "Design Discipline",
+    "url": "https://backyarddesigners.club/roster/doctorbaytas/",
+    "img": "https://backyarddesigners.club/roster-art/doctorbaytas-sprite.webp",
+    "sameAs": [
+      "https://x.com/doctorbaytas",
+      "https://www.baytas.net/"
+    ]
+  },
+  {
+    "pos": 202,
+    "handle": "steve_hayes",
+    "name": "Steve Hayes",
+    "nick": "THE SYSTEMS FINISHER",
+    "title": "Product Designer",
+    "desc": "Product designer at Clerk who stays hands-on from interaction details through production code. Over more than a decade he has designed and shipped systems for early-stage startups and products used by millions, including previous work at Shopify and GitHub.",
+    "org": "Clerk",
+    "url": "https://backyarddesigners.club/roster/steve_hayes/",
+    "img": "https://backyarddesigners.club/roster-art/steve_hayes-sprite.webp",
+    "sameAs": [
+      "https://x.com/steve_hayes",
+      "https://www.stevehay.es/"
+    ]
+  },
+  {
+    "pos": 203,
+    "handle": "hannah_hearth",
+    "name": "Hannah Hearth",
+    "nick": "THE GOALKEEPER",
+    "title": "Design Leader",
+    "desc": "Design leader at Anthropic after heading product design at Vercel and directing design teams at Webflow and HashiCorp. She writes candidly about hands-on leadership, design craft, developer tooling, and helping teams find the right problem before they race to ship the polished answer.",
+    "org": "Anthropic",
+    "url": "https://backyarddesigners.club/roster/hannah_hearth/",
+    "img": "https://backyarddesigners.club/roster-art/hannah_hearth-sprite.webp",
+    "sameAs": [
+      "https://x.com/hannah_hearth",
+      "https://www.hannahhearth.com/"
+    ]
+  },
+  {
+    "pos": 204,
+    "handle": "pqoqubbw",
+    "name": "Dmytro",
+    "nick": "THE DETAIL ENGINEER",
+    "title": "Design Engineer",
+    "desc": "Design engineer at Mintlify creating polished interface systems and teaching the invisible details that make products feel right. He also builds open-source UI experiments and animated icons.",
+    "org": "Mintlify",
+    "url": "https://backyarddesigners.club/roster/pqoqubbw/",
+    "img": "https://backyarddesigners.club/roster-art/pqoqubbw-sprite.webp",
+    "sameAs": [
+      "https://x.com/pqoqubbw",
+      "https://pqoqubbw.dev/"
+    ]
+  },
+  {
+    "pos": 205,
+    "handle": "eyal_zuri",
+    "name": "Eyal Zuri",
+    "nick": "THE INSPIRATION ENGINE",
+    "title": "Design Leader",
+    "desc": "Co-founder and creative director at Muzli, the design-inspiration hub that turns a new browser tab into a daily feed of standout product, web, brand, and visual work for creative people.",
+    "org": "Muzli",
+    "url": "https://backyarddesigners.club/roster/eyal_zuri/",
+    "img": "https://backyarddesigners.club/roster-art/eyal_zuri-sprite.webp",
+    "sameAs": [
+      "https://x.com/eyal_zuri",
+      "https://me.muz.li/eyalzuri"
+    ]
+  },
+  {
+    "pos": 206,
+    "handle": "natkohasic",
+    "name": "Natko Hasić",
+    "nick": "THE MOTION MAKER",
+    "title": "Product Designer",
+    "desc": "Senior designer in Rijeka building Someday, crafting thoughtful interfaces, systems, and motion. He pairs technical vision with hands-on prototypes and polished interaction details that give products a little more soul.",
+    "org": "Someday",
+    "url": "https://backyarddesigners.club/roster/natkohasic/",
+    "img": "https://backyarddesigners.club/roster-art/natkohasic-sprite.webp",
+    "sameAs": [
+      "https://x.com/natkohasic",
+      "https://natko.com/"
+    ]
+  },
+  {
+    "pos": 207,
+    "handle": "bra_logan",
+    "name": "Logan Brannen",
+    "nick": "THE SYSTEMS DRIVER",
+    "title": "Product Designer",
+    "desc": "Interaction designer at Ford and a designer-builder and art director working across interface, interaction, and identity systems. Previously Perigon's founding designer, he shaped product, brand, and storytelling from zero to one.",
+    "org": "Ford",
+    "url": "https://backyarddesigners.club/roster/bra_logan/",
+    "img": "https://backyarddesigners.club/roster-art/bra_logan-sprite.webp",
+    "sameAs": [
+      "https://x.com/bra_logan",
+      "https://loganbrannen.com/"
+    ]
+  },
+  {
+    "pos": 208,
+    "handle": "anainsomnia",
+    "name": "Ana Malai",
+    "nick": "THE SHAPE SHIFTER",
+    "title": "Product Designer",
+    "desc": "Independent multidisciplinary designer making expressive identity, web, motion, and interaction work. Her visual practice is built from gradients, strange geometric forms, film photography, and playful collage experiments that make digital surfaces feel physical.",
+    "org": "Independent",
+    "url": "https://backyarddesigners.club/roster/anainsomnia/",
+    "img": "https://backyarddesigners.club/roster-art/anainsomnia-sprite.webp",
+    "sameAs": [
+      "https://x.com/anainsomnia",
+      "https://www.anainsomnia.com/"
+    ]
+  },
+  {
+    "pos": 209,
+    "handle": "faydesignsstuff",
+    "name": "Fay Dakrouri",
+    "nick": "THE SHARP SWITCH",
+    "title": "Product Designer",
+    "desc": "Product designer at Mintlify, previously at Laravel, who pairs sharp visual judgment with careful product thinking. She shares the real wins and hiccups behind her work, from tables and code-block systems to compact theme-switch interactions and playful tools she builds herself.",
+    "org": "Mintlify",
+    "url": "https://backyarddesigners.club/roster/faydesignsstuff/",
+    "img": "https://backyarddesigners.club/roster-art/faydesignsstuff-sprite.webp",
+    "sameAs": [
+      "https://x.com/faydesignsstuff",
+      "https://faydakrouri.com/"
+    ]
+  },
+  {
+    "pos": 210,
+    "handle": "reijowrites",
+    "name": "Reijo Palmiste",
+    "nick": "THE DIORAMA COOK",
+    "title": "Product Designer",
+    "desc": "Tallinn-based product and web designer and 3D illustrator with more than a decade in design, most recently as Senior Product Designer at Gelt. His independent work turns tiny machines, strange objects, food trucks, and whole imaginary landscapes into richly detailed Blender dioramas.",
+    "org": "Independent",
+    "url": "https://backyarddesigners.club/roster/reijowrites/",
+    "img": "https://backyarddesigners.club/roster-art/reijowrites-sprite.webp",
+    "sameAs": [
+      "https://x.com/reijowrites",
+      "https://reijo.ee/"
+    ]
+  },
+  {
+    "pos": 211,
+    "handle": "_heyana",
+    "name": "Ana Moreno",
+    "nick": "THE CHARACTER BUILDER",
+    "title": "Product Designer",
+    "desc": "Creative software designer and co-founder of Character, where she helps startups build distinctive products, brands, and digital experiences. Previously a partner at POLYGON and senior product designer at Pipe, she has also designed work for Owner, Attio, Retool, Segment, V7 Labs, and Oxide.",
+    "org": "Character",
+    "url": "https://backyarddesigners.club/roster/_heyana/",
+    "img": "https://backyarddesigners.club/roster-art/_heyana-sprite.webp",
+    "sameAs": [
+      "https://x.com/_heyana",
+      "https://www.heyana.co/"
+    ]
+  },
+  {
+    "pos": 212,
+    "handle": "kulpritt",
+    "name": "Jesse Kulp",
+    "nick": "THE AGENT ARCHITECT",
+    "title": "Product Designer",
+    "desc": "Human Interface designer at Apple focused on the shift from apps to agents. Previously at Google DeepMind, he led UX for Google AI Studio as its original sole 0-to-1 designer and helped shape the Gemini API developer platform.",
+    "org": "Apple",
+    "url": "https://backyarddesigners.club/roster/kulpritt/",
+    "img": "https://backyarddesigners.club/roster-art/kulpritt-sprite.webp",
+    "sameAs": [
+      "https://x.com/kulpritt",
+      "https://www.kulpritt.com/"
+    ]
+  },
+  {
+    "pos": 213,
+    "handle": "radbar_1",
+    "name": "Bartek Radziejewski",
+    "nick": "THE MOMENT MAKER",
+    "title": "Design Engineer",
+    "desc": "Independent designer and Rive Ambassador who designs and builds expressive interactions for apps and websites. His work turns transitions, product flows, interface details, and playful motion systems into memorable moments that feel responsive and rewarding.",
+    "org": "Independent",
+    "url": "https://backyarddesigners.club/roster/radbar_1/",
+    "img": "https://backyarddesigners.club/roster-art/radbar_1-sprite.webp",
+    "sameAs": [
+      "https://x.com/radbar_1",
+      "https://www.radbar.studio/"
+    ]
+  },
+  {
+    "pos": 214,
+    "handle": "adhivdhar",
+    "name": "Adhiv Dhar",
+    "nick": "THE LAPTOP LUTHIER",
+    "title": "Design Engineer",
+    "desc": "Brooklyn-based music producer and design engineer building playful tools for making music. He created Laurie, a browser instrument that turns a laptop keyboard and trackpad into an expressive way to compose, strum, and play ideas directly into a DAW.",
+    "org": "Laurie",
+    "url": "https://backyarddesigners.club/roster/adhivdhar/",
+    "img": "https://backyarddesigners.club/roster-art/adhivdhar-sprite.webp",
+    "sameAs": [
+      "https://x.com/adhivdhar",
+      "https://adhiv.com/"
+    ]
+  },
+  {
+    "pos": 215,
+    "handle": "its_sslvr",
+    "name": "Sha",
+    "nick": "THE PIXEL ALCHEMIST",
+    "title": "Design Engineer",
+    "desc": "Accountant turned web designer and developer exploring WebGL shaders, creative coding, design systems, and experimental interface frameworks. Through Shader Labs and daily studies, Sha turns pixels, trails, pinball physics, and layout systems into expressive digital material.",
+    "org": "Shader Labs",
+    "url": "https://backyarddesigners.club/roster/its_sslvr/",
+    "img": "https://backyarddesigners.club/roster-art/its_sslvr-sprite.webp",
+    "sameAs": [
+      "https://x.com/its_sslvr",
+      "https://shaderlabs.io/"
+    ]
+  },
+  {
+    "pos": 216,
+    "handle": "ruchitalodha",
+    "name": "Ruchita Lodha",
+    "nick": "THE FRAME UNTANGLER",
+    "title": "Product Designer",
+    "desc": "Engineer turned product designer building creative tools for artists at Pixar Animation Studios. Previously at Blizzard Entertainment, she designed platform tools and systems that untangle complex technical workflows for expert creative teams.",
+    "org": "Pixar",
+    "url": "https://backyarddesigners.club/roster/ruchitalodha/",
+    "img": "https://backyarddesigners.club/roster-art/ruchitalodha-sprite.webp",
+    "sameAs": [
+      "https://x.com/ruchitalodha",
+      "https://www.ruchitalodha.com/"
+    ]
+  },
+  {
+    "pos": 217,
+    "handle": "mrdavenport",
+    "name": "Zack Davenport",
+    "nick": "THE FOCUS FLIPPER",
+    "title": "Design Leader",
+    "desc": "Senior Director of Design at Brilliant, shaping interactive learning and game feel for hard subjects. Previously the founding designer of the kids’ interactive-video platform Hellosaurus, acquired by Brilliant, with earlier product and brand work at Vimeo, Foursquare, and Vine.",
+    "org": "Brilliant",
+    "url": "https://backyarddesigners.club/roster/mrdavenport/",
+    "img": "https://backyarddesigners.club/roster-art/mrdavenport-sprite.webp",
+    "sameAs": [
+      "https://x.com/mrdavenport",
+      "https://www.mrdavenport.co/"
+    ]
+  },
+  {
+    "pos": 218,
+    "handle": "alexvanderzon",
+    "name": "Alex Vanderzon",
+    "nick": "THE GLASSMAKER",
+    "title": "Design Leader",
+    "desc": "VP of Design at Aave Labs, making decentralized finance feel clear, polished, and approachable. He previously led design at Los Feliz Engineering across Family and Honk, and co-founded Dip to build tools for interface excellence.",
+    "org": "Aave",
+    "url": "https://backyarddesigners.club/roster/alexvanderzon/",
+    "img": "https://backyarddesigners.club/roster-art/alexvanderzon-sprite.webp",
+    "sameAs": [
+      "https://x.com/alexvanderzon",
+      "https://www.alexvanderzon.com/"
+    ]
+  },
+  {
+    "pos": 219,
+    "handle": "lucas_martinic",
+    "name": "Lucas Martinic",
+    "nick": "THE REALITY REMIXER",
+    "title": "Design Engineer",
+    "desc": "Berlin-based XR creative technologist and developer building Polyfork’s remixable 3D assets, mixed-reality interaction experiments, and immersive tools where code, sound, and shared experience meet. He also co-founded the spatial-computing studio Present Futures.",
+    "org": "Polyfork",
+    "url": "https://backyarddesigners.club/roster/lucas_martinic/",
+    "img": "https://backyarddesigners.club/roster-art/lucas_martinic-sprite.webp",
+    "sameAs": [
+      "https://x.com/lucas_martinic",
+      "https://lucasmartinic.com/"
+    ]
+  },
+  {
+    "pos": 220,
+    "handle": "patricia_klein_",
+    "name": "Patricia Klein",
+    "nick": "THE SIGNAL PATCHER",
+    "title": "Artistic Director",
+    "desc": "Independent art director and designer translating complex ideas into precise identities and visual systems. Her practice is rooted in the visual language of science and space exploration, including Emblems of Space, an ongoing archive of mission-patch designs.",
+    "org": "Independent",
+    "url": "https://backyarddesigners.club/roster/patricia_klein_/",
+    "img": "https://backyarddesigners.club/roster-art/patricia_klein_-sprite.webp",
+    "sameAs": [
+      "https://x.com/patricia_klein_",
+      "https://patriciaklein.de/"
+    ]
+  },
+  {
+    "pos": 221,
+    "handle": "laurieesc",
+    "name": "Laura Escobar",
+    "nick": "THE PATTERN FLIPPER",
+    "title": "Product Designer",
+    "desc": "El Salvador-based product designer, builder, and storyteller building AI-powered product feedback at onBeacon and a photography community at Foto. Across 13+ years and 40+ shipped products, she has also made playful experiments including Flicker’s flip-dot spinner builder and the Zone real-time dithering camera.",
+    "org": "onBeacon / Foto",
+    "url": "https://backyarddesigners.club/roster/laurieesc/",
+    "img": "https://backyarddesigners.club/roster-art/laurieesc-sprite.webp",
+    "sameAs": [
+      "https://x.com/laurieesc",
+      "https://laurie.fyi/"
+    ]
+  },
+  {
+    "pos": 222,
+    "handle": "itsjackiehu",
+    "name": "Jackie Hu",
+    "nick": "THE DELIGHT GRIDDER",
+    "title": "Product Designer",
+    "desc": "Paris-based product designer who makes thoughtful interactions playful, clear, and delightful. She is currently building The Little Things, a guided self-reflection app with personal AI insights; previous work includes Zenly at Snap, JUST, Drigmo, and an HCI master’s at Carnegie Mellon.",
+    "org": "The Little Things",
+    "url": "https://backyarddesigners.club/roster/itsjackiehu/",
+    "img": "https://backyarddesigners.club/roster-art/itsjackiehu-sprite.webp",
+    "sameAs": [
+      "https://x.com/itsjackiehu",
+      "https://jackiehu.design/"
+    ]
+  },
+  {
+    "pos": 223,
+    "handle": "marina_uiux",
+    "name": "Marina Budarina",
+    "nick": "THE LAUNCH SPARK",
+    "title": "Design Leader",
+    "desc": "Founder of Budarina Studio, where she leads full-cycle product, web, brand, 3D, motion, and no-code design for tech and AI startups. She also teaches more than 10,000 design students and shares playful visual experiments and practical tutorials with a 100K-plus community.",
+    "org": "Budarina Studio",
+    "url": "https://backyarddesigners.club/roster/marina_uiux/",
+    "img": "https://backyarddesigners.club/roster-art/marina_uiux-sprite.webp",
+    "sameAs": [
+      "https://x.com/marina_uiux",
+      "https://budarina.studio/"
+    ]
+  }
+]

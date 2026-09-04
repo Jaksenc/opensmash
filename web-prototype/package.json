@@ -10,7 +10,10 @@
     "build": "vite build",
     "start": "NODE_ENV=production node server/index.js",
     "worker": "NODE_ENV=production node server/worker.js",
-    "test": "node --test server/*.test.js shared/*.test.js"
+    "test": "node --test server/*.test.js shared/*.test.js",
+    "backyard:fetch": "python3 ../scripts/fetch_backyard_roster.py --starter-only",
+    "backyard:mock": "python3 ../scripts/mock_backyard_fighter.py --all",
+    "backyard:dev": "NODE_ENV=development FIGHTER_WORKER_DISABLED=1 node server/index.js"
   },
   "dependencies": {
     "@google-cloud/firestore": "^9.0.0",

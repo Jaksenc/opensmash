@@ -1,0 +1,105 @@
+.byd-board {
+  margin: 28px 0 8px;
+  padding: 20px;
+  border: 2px solid #2b2620;
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 85% 0%, rgba(255, 209, 102, .12), transparent 22rem),
+    linear-gradient(#141110, #0e0c0b);
+}
+.byd-head { display: flex; justify-content: space-between; gap: 18px; flex-wrap: wrap; }
+.byd-eyebrow {
+  margin: 0 0 6px;
+  color: #ffd166;
+  font-size: 11px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+.byd-board h2 { margin: 0; font: 900 30px/1 "Barlow Condensed", sans-serif; letter-spacing: -.02em; }
+.byd-sub { margin: 8px 0 0; max-width: 62ch; color: #a79d90; font-size: 12px; }
+.byd-cap {
+  min-width: 220px;
+  padding: 12px 14px;
+  border: 1px solid #3a332c;
+  border-radius: 12px;
+  background: #0c0a09;
+  font-size: 12px;
+}
+.byd-cap-spent { font-size: 22px; font-weight: 800; }
+.byd-cap-of { color: #8d847a; }
+.byd-cap-left { display: block; margin-top: 4px; color: #9aa981; }
+.byd-cap-over { display: block; margin-top: 4px; color: #ef476f; font-weight: 700; }
+.byd-clear { margin-top: 8px; border: 1px solid #4a4239; background: transparent; color: #c9bfae; border-radius: 8px; padding: 6px 10px; cursor: pointer; font-size: 11px; }
+.byd-clear:hover { border-color: #ffd166; color: #ffd166; }
+.byd-filters { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+.byd-filter {
+  border: 1px solid #3a342e;
+  background: #131110;
+  color: #b7aca0;
+  border-radius: 999px;
+  padding: 7px 13px;
+  font-size: 11px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.byd-filter.is-active { border-color: #ffd166; color: #ffd166; }
+.byd-error, .byd-loading { color: #a79d90; font-size: 12px; }
+.byd-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 14px;
+}
+.byd-card {
+  border: 1px solid #332d26;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #171311;
+  transition: transform .12s ease, border-color .12s ease;
+}
+.byd-card:hover { transform: translateY(-2px); border-color: #57493a; }
+.byd-card.is-drafted { border-color: #ffd166; box-shadow: 0 0 0 1px #ffd166 inset; }
+.byd-card-main {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.byd-art { display: block; aspect-ratio: 4 / 5; overflow: hidden; background: #221c17; }
+.byd-art img { width: 100%; height: 100%; object-fit: cover; image-rendering: auto; }
+.byd-badges { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 10px 0; }
+.byd-pos, .byd-class {
+  font-size: 10px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  border: 1px solid #4a4239;
+  border-radius: 999px;
+  padding: 3px 8px;
+  color: #cbbfae;
+}
+.byd-name { display: block; padding: 8px 10px 0; font-weight: 800; font-size: 15px; }
+.byd-nick { color: #ed4b25; font-size: 11px; font-weight: 700; letter-spacing: .06em; }
+.byd-meta { display: block; padding: 2px 10px 0; color: #8d847a; font-size: 11px; }
+.byd-playstyle { display: block; padding: 6px 10px 10px; color: #a79d90; font-size: 11px; }
+.byd-actions { display: flex; gap: 8px; padding: 0 10px 12px; }
+.byd-draft, .byd-quick {
+  flex: 1;
+  border: 1px solid #4a4239;
+  background: #221c17;
+  color: #f3eee4;
+  border-radius: 9px;
+  padding: 8px;
+  font-size: 11px;
+  cursor: pointer;
+}
+.byd-draft:hover, .byd-quick:hover { border-color: #ffd166; }
+.byd-scout { align-self: center; color: #8d847a; font-size: 11px; }
+.byd-scout:hover { color: #ffd166; }
+@media (max-width: 640px) {
+  .byd-board { padding: 14px; }
+  .byd-board h2 { font-size: 24px; }
+}

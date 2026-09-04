@@ -8,6 +8,8 @@ import FighterCreator from "./FighterCreator.jsx";
 import FighterJobModal from "./FighterJobModal.jsx";
 import ModalPage from "./ModalPage.jsx";
 import RetroHome from "./RetroHome.jsx";
+import BackyardDraftBoard from "./BackyardDraftBoard.jsx";
+import "./backyard.css";
 import SettingsModal from "./SettingsModal.jsx";
 import { matchesCharacterSearch } from "../shared/character-search.js";
 import { mergeCharactersBySlug } from "../shared/character-roster.js";
@@ -1684,6 +1686,21 @@ export default function App() {
           onPlay={selectCharacter}
           stage={!loadingSession && authorized && user ? "creator" : null}
           user={user}
+        />
+      )}
+
+      {!isCreatePage && (
+        <BackyardDraftBoard
+          onQuickMatch={(fighter) => {
+            const match = characters.find((c) => c.slug === fighter.slug);
+            selectCharacter(match || {
+              slug: fighter.slug,
+              name: fighter.display,
+              portrait: fighter.art,
+              portraitMedium: fighter.art,
+              base: fighter.base,
+            });
+          }}
         />
       )}
 

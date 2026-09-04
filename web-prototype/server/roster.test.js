@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { assignRosterBases, bundleForBase, DEFAULT_ROSTER_BASES } from "./roster.js";
+import { assignRosterBases, bundleForBase, DEFAULT_ROSTER_BASES, positionClassFor, assignPositionClasses, normalizePosition } from "./roster.js";
 
 const variants = [
   "fox", "donkey", "samus", "luigi", "link", "yoshi",
@@ -33,4 +33,29 @@ test("preferences constrain balancing and explicit experimental bases win", () =
 test("one OSB6 bundle serves every resolved base", () => {
   assert.equal(bundleForBase("michelleobama", "mario"), "michelleobama.osb6");
   assert.equal(bundleForBase("michelleobama", "captain"), "michelleobama.osb6");
+});
+
+test("backyard positions resolve to playstyle classes", () => {
+  assert.equal(positionClassFor("Design Engineer").class, "zoner");
+  assert.equal(positionClassFor("Brand Designer").class, "tricky");
+  assert.equal(positionClassFor("Wildcard").class, "heavy");
+  assert.equal(positionClassFor("Web Designer").class, "control");
+  assert.equal(positionClassFor("Product Designer").class, "rushdown");
+  assert.equal(positionClassFor("Design Leader").class, "captain");
+  assert.equal(positionClassFor("nope"), null);
+  assert.equal(normalizePosition("design engineer"), "Design Engineer");
+});
+
+test("assignPositionClasses fills defaults without overriding explicit picks", () => {
+  const assigned = assignPositionClasses([
+    { slug: "a", position: "Design Engineer" },
+    { slug: "b", position: "Brand Designer", base: "kirby" },
+    { slug: "c", position: "Wildcard", preferredBases: ["ness"] },
+  ]);
+  assert.equal(assigned[0].positionClass, "zoner");
+  assert.deepEqual(assigned[0].preferredBases, ["link", "samus", "fox", "pikachu"]);
+  assert.equal(assigned[1].positionClass, "tricky");
+  assert.equal(assigned[1].base, "kirby");
+  assert.equal(assigned[1].preferredBases, undefined);
+  assert.deepEqual(assigned[2].preferredBases, ["ness"]);
 });

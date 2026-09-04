@@ -23,7 +23,7 @@ import {
 import { CREATION_DISABLED_MESSAGE, creationEnabled } from "./creation-switch.js";
 import { withInitialState } from "./html-state.js";
 import { resolveProjectPaths } from "./project-paths.js";
-import { assignRosterBases, bundleForBase, FIGHTERS, readOsb6Targets } from "./roster.js";
+import { assignRosterBases, bundleForBase, FIGHTERS, readOsb6Targets, assignPositionClasses } from "./roster.js";
 import { characterAssetKind, engineBundleAssetKind, loadRemoteBakedRoster } from "./baked-remote.js";
 import { matchesCharacterSearch } from "../shared/character-search.js";
 import { bakedRosterEntries } from "../shared/baked-roster.js";
@@ -97,6 +97,10 @@ async function withOgSpriteSlot(task) {
 const SITE_ASSETS_ROOT = path.join(APP_ROOT, "visual", "assets");
 const CHARACTERS_CONFIG = path.join(APP_ROOT, "config", "characters.json");
 const BAKED_ASSETS_MANIFEST = path.join(APP_ROOT, "config", "baked-assets.json");
+// Backyard draft roster: art-only mode that works with no ROM, no engine
+// build, and no paid API keys. Refs live in <repo>/backyard/refs/.
+const BACKYARD_CONFIG = path.join(APP_ROOT, "config", "backyard-starter.json");
+const BACKYARD_REFS_ROOT = path.join(PIPELINE_PROJECT_ROOT, "backyard", "refs");
 // Where the baked fighters' bytes live:
 //  - local (default, development): play/ and play/ui/<slug> on this disk;
 //  - remote (production): nothing on disk. The roster is built from the
@@ -955,6 +959,24 @@ async function handleRequest(req, res, vite) {
     return jsonCompressed(req, res, 200, {
       characters: await configuredCharacters(url.searchParams.get("q") || "", user),
     });
+  }
+
+  if (req.method === "GET" && pathname === "/api/backyard-starter") {
+    try {
+      const raw = JSON.parse(await readFile(BACKYARD_CONFIG, "utf8"));
+      const enriched = assignPositionClasses(assignRosterBases(raw.map((e) => ({
+        ...e, name: e.display, variants: [],
+      }))));
+      return jsonCompressed(req, res, 200, { fighters: enriched }, { "Cache-Control": "public, max-age=300" });
+    } catch (error) {
+      return json(res, 404, { error: `Backyard starter unavailable: ${error.message}` });
+    }
+  }
+
+  if (req.method === "GET" && pathname.startsWith("/backyard-refs/")) {
+    const filePath = safeFile(BACKYARD_REFS_ROOT, pathname.slice("/backyard-refs/".length));
+    if (filePath && (await serveFile(req, res, filePath, "public, max-age=3600"))) return;
+    return json(res, 404, { error: "Backyard ref not found" });
   }
 
   if (req.method === "GET" && pathname === "/api/fighters") {

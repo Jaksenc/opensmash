@@ -66,6 +66,80 @@ export function assignRosterBases(characters) {
   });
 }
 
+// Backyard positions -> playstyle classes. Each class lists the Smash bases
+// whose moveset fits, in preference order, plus flavor for the draft board.
+// Salary (followers) is the cost/power knob from backyarddesigners.club.
+export const POSITION_CLASSES = {
+  "Design Leader": {
+    class: "captain",
+    label: "Captain",
+    playstyle: "all-rounder, team buffs",
+    bases: ["mario", "luigi", "captain", "samus"],
+  },
+  "Product Designer": {
+    class: "rushdown",
+    label: "Rushdown",
+    playstyle: "fast pressure, pixel-precise punishes",
+    bases: ["fox", "captain", "kirby", "pikachu"],
+  },
+  "Design Engineer": {
+    class: "zoner",
+    label: "Zoner",
+    playstyle: "traps + projectiles, toolbelt gadgets",
+    bases: ["link", "samus", "fox", "pikachu"],
+  },
+  "Brand Designer": {
+    class: "tricky",
+    label: "Tricky",
+    playstyle: "status / sleep setups, big brand moments",
+    bases: ["purin", "ness", "kirby", "luigi"],
+  },
+  "Web Designer": {
+    class: "control",
+    label: "Control",
+    playstyle: "capsule / egg control, stage coverage",
+    bases: ["yoshi", "link", "ness", "kirby"],
+  },
+  "Wildcard": {
+    class: "heavy",
+    label: "Heavy",
+    playstyle: "hard reads, beam finishers",
+    bases: ["donkey", "samus", "captain", "ness"],
+  },
+};
+
+export function normalizePosition(name) {
+  if (typeof name !== "string") return null;
+  const key = name.trim().toLowerCase();
+  for (const position of Object.keys(POSITION_CLASSES)) {
+    if (position.toLowerCase() === key) return position;
+  }
+  return null;
+}
+
+export function positionClassFor(position) {
+  const normalized = normalizePosition(position);
+  return normalized ? POSITION_CLASSES[normalized] : null;
+}
+
+// Attach `positionClass` + default `preferredBases` from backyard position
+// when the entry doesn't already pin them. Never overrides explicit picks.
+export function assignPositionClasses(characters) {
+  return characters.map((source) => {
+    const character = { ...source };
+    const info = positionClassFor(character.position);
+    if (info) {
+      character.positionClass = info.class;
+      character.positionLabel = info.label;
+      character.playstyle = info.playstyle;
+      if (!character.base && !character.preferredBases) {
+        character.preferredBases = [...info.bases];
+      }
+    }
+    return character;
+  });
+}
+
 // One OSB6 per character carries every built target; the engine picks the
 // block for the fighter it spawns, so the file name no longer encodes the base.
 export function bundleForBase(slug) {

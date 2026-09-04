@@ -1,0 +1,218 @@
+[
+  {
+    "slug": "ridddesign",
+    "handle": "ridd_design",
+    "display": "Ridd",
+    "short": "RIDD",
+    "base": "mario",
+    "preferredBases": [
+      "mario"
+    ],
+    "emblem": "a brown leather football",
+    "position": "Design Leader",
+    "nick": "THE COMMISSIONER",
+    "salary": 74500,
+    "salaryCap": 400000,
+    "rosterUrl": "https://backyarddesigners.club/roster/ridd_design/",
+    "art": "/backyard-refs/ridd_design_action.webp",
+    "thumb": "/backyard-refs/ridd_design_thumb.webp"
+  },
+  {
+    "slug": "designertom",
+    "handle": "designertom",
+    "display": "Tommy",
+    "short": "LORE",
+    "base": "luigi",
+    "preferredBases": [
+      "luigi"
+    ],
+    "emblem": "a vintage film camera",
+    "position": "Design Leader",
+    "nick": "THE LOREKEEPER",
+    "salary": 18700,
+    "salaryCap": 400000,
+    "rosterUrl": "https://backyarddesigners.club/roster/designertom/",
+    "art": "/backyard-refs/designertom_action.webp",
+    "thumb": "/backyard-refs/designertom_thumb.webp"
+  },
+  {
+    "slug": "raunofreiberg",
+    "handle": "raunofreiberg",
+    "display": "Rauno",
+    "short": "RAUNO",
+    "base": "fox",
+    "preferredBases": [
+      "fox"
+    ],
+    "emblem": "a pixel cursor arrow",
+    "position": "Product Designer",
+    "nick": "THE DETAILER",
+    "salary": 91500,
+    "salaryCap": 400000,
+    "rosterUrl": "https://backyarddesigners.club/roster/raunofreiberg/",
+    "art": "/backyard-refs/raunofreiberg_action.webp",
+    "thumb": "/backyard-refs/raunofreiberg_thumb.webp"
+  },
+  {
+    "slug": "pablostanley",
+    "handle": "pablostanley",
+    "display": "Pablo",
+    "short": "PABLO",
+    "base": "kirby",
+    "preferredBases": [
+      "kirby"
+    ],
+    "emblem": "a paintbrush",
+    "position": "Product Designer",
+    "nick": "THE ILLUSTRATOR",
+    "salary": 102700,
+    "salaryCap": 400000,
+    "rosterUrl": "https://backyarddesigners.club/roster/pablostanley/",
+    "art": "/backyard-refs/pablostanley_action.webp",
+    "thumb": "/backyard-refs/pablostanley_thumb.webp"
+  },
+  {
+    "slug": "joulee",
+    "handle": "joulee",
+    "display": "Julie",
+    "short": "ZHUO",
+    "base": "samus",
+    "preferredBases": [
+      "samus"
+    ],
+    "emblem": "an open book with glasses",
+    "position": "Design Leader",
+    "nick": "LOOKING GLASS",
+    "salary": 315049,
+    "salaryCap": 400000,
+    "rosterUrl": "https://backyarddesigners.club/roster/joulee/",
+    "art": "/backyard-refs/joulee_action.webp",
+    "thumb": "/backyard-refs/joulee_thumb.webp"
+  },
+  {
+    "slug": "lildill",
+    "handle": "lil_dill",
+    "display": "Katie",
+    "short": "DILL",
+    "base": "captain",
+    "preferredBases": [
+      "captain"
+    ],
+    "emblem": "a striped checkout receipt",
+    "position": "Design Leader",
+    "nick": "THE PILOT",
+    "salary": 35800,
+    "salaryCap": 400000,
+    "rosterUrl": "https://backyarddesigners.club/roster/lil_dill/",
+    "art": "/backyard-refs/lil_dill_action.webp",
+    "thumb": "/backyard-refs/lil_dill_thumb.webp"
+  },
+  {
+    "slug": "merycodes",
+    "handle": "merycodes",
+    "display": "Mery",
+    "short": "MERY",
+    "base": "link",
+    "preferredBases": [
+      "link"
+    ],
+    "emblem": "a drag handle with arrows",
+    "position": "Design Engineer",
+    "nick": "DRAG HANDLE",
+    "salary": 15400,
+    "salaryCap": 400000,
+    "rosterUrl": "https://backyarddesigners.club/roster/merycodes/",
+    "art": "/backyard-refs/merycodes_action.webp",
+    "thumb": "/backyard-refs/merycodes_thumb.webp"
+  },
+  {
+    "slug": "jh3yy",
+    "handle": "jh3yy",
+    "display": "Jhey",
+    "short": "JHEY",
+    "base": "pikachu",
+    "preferredBases": [
+      "pikachu"
+    ],
+    "emblem": "a lightning bolt plug",
+    "position": "Design Engineer",
+    "nick": "THE SHOWMAN",
+    "salary": 146400,
+    "salaryCap": 400000,
+    "rosterUrl": "https://backyarddesigners.club/roster/jh3yy/",
+    "art": "/backyard-refs/jh3yy_action.webp",
+    "thumb": "/backyard-refs/jh3yy_thumb.webp"
+  },
+  {
+    "slug": "apostraphi",
+    "handle": "apostraphi",
+    "display": "Phi",
+    "short": "PHI",
+    "base": "purin",
+    "preferredBases": [
+      "purin"
+    ],
+    "emblem": "a perplexity-style spark",
+    "position": "Brand Designer",
+    "nick": "THE FIGURE-OUTER",
+    "salary": 126100,
+    "salaryCap": 400000,
+    "rosterUrl": "https://backyarddesigners.club/roster/apostraphi/",
+    "art": "/backyard-refs/apostraphi_action.webp",
+    "thumb": "/backyard-refs/apostraphi_thumb.webp"
+  },
+  {
+    "slug": "vanschneider",
+    "handle": "vanschneider",
+    "display": "Tobias",
+    "short": "TOBIAS",
+    "base": "ness",
+    "preferredBases": [
+      "ness"
+    ],
+    "emblem": "a small potted seedling",
+    "position": "Brand Designer",
+    "nick": "THE GARDENER",
+    "salary": 121100,
+    "salaryCap": 400000,
+    "rosterUrl": "https://backyarddesigners.club/roster/vanschneider/",
+    "art": "/backyard-refs/vanschneider_action.webp",
+    "thumb": "/backyard-refs/vanschneider_thumb.webp"
+  },
+  {
+    "slug": "robhope",
+    "handle": "robhope",
+    "display": "Rob",
+    "short": "ROB",
+    "base": "yoshi",
+    "preferredBases": [
+      "yoshi"
+    ],
+    "emblem": "a single folded web page",
+    "position": "Web Designer",
+    "nick": "ABOVE THE FOLD",
+    "salary": 11345,
+    "salaryCap": 400000,
+    "rosterUrl": "https://backyarddesigners.club/roster/robhope/",
+    "art": "/backyard-refs/robhope_action.webp",
+    "thumb": "/backyard-refs/robhope_thumb.webp"
+  },
+  {
+    "slug": "darasoba",
+    "handle": "darasoba",
+    "display": "Dara",
+    "short": "DARA",
+    "base": "donkey",
+    "preferredBases": [
+      "donkey"
+    ],
+    "emblem": "a glowing beam cannon",
+    "position": "Wildcard",
+    "nick": "BEAMER",
+    "salary": 59200,
+    "salaryCap": 400000,
+    "rosterUrl": "https://backyarddesigners.club/roster/darasoba/",
+    "art": "/backyard-refs/darasoba_sprite.webp",
+    "thumb": "/backyard-refs/darasoba_sprite.webp"
+  }
+]
