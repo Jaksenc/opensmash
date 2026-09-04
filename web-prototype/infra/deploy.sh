@@ -13,7 +13,13 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WORKSPACE_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 BATTLESHIP_ROOT="$WORKSPACE_ROOT/BattleShip"
 SERVICE_NAME="${SERVICE_NAME:-opensmash-web}"
-WORKER_JOB="${WORKER_JOB:-opensmash-fighter-worker}"
+WORKER_SERVICE="${WORKER_SERVICE:-opensmash-worker}"
+# Warm fighter workers: each instance runs one fighter at a time and stays
+# resident, so a create starts in seconds instead of the 1-4 minutes a Cloud
+# Run Job execution spent provisioning. Idle minimum instances bill at the
+# always-allocated rate (about $0.09/h each for 4 vCPU / 8 GiB).
+WORKER_MIN_INSTANCES="${WORKER_MIN_INSTANCES:-2}"
+WORKER_MAX_INSTANCES="${WORKER_MAX_INSTANCES:-10}"
 ARTIFACT_REPOSITORY="${ARTIFACT_REPOSITORY:-opensmash}"
 PRIVATE_BUCKET="${PRIVATE_BUCKET:-${PROJECT_ID}-fighter-sources}"
 PUBLIC_BUCKET="${PUBLIC_BUCKET:-${PROJECT_ID}-fighter-assets}"
@@ -261,19 +267,28 @@ wait_for_builds() {
 }
 wait_for_builds "$API_BUILD_ID" "$WORKER_BUILD_ID"
 
-gcloud run jobs deploy "$WORKER_JOB" \
+gcloud run deploy "$WORKER_SERVICE" \
   --image "$WORKER_IMAGE" \
   --region "$REGION" \
   --service-account "$WORKER_IDENTITY" \
-  --cpu 4 --memory 8Gi \
-  --task-timeout 3600s --max-retries 0 --tasks 1 --parallelism 1 \
+  --no-allow-unauthenticated \
+  --ingress all \
+  --port 8080 --cpu 4 --memory 8Gi --concurrency 1 --no-cpu-throttling --cpu-boost \
+  --min-instances "$WORKER_MIN_INSTANCES" --max-instances "$WORKER_MAX_INSTANCES" --timeout 3600 \
   --set-env-vars "JOB_DATABASE=firestore,OBJECT_STORE=gcs,FIGHTER_JOBS_ROOT=/tmp/fighter-jobs,GOOGLE_CLOUD_PROJECT=${PROJECT_ID},GCS_PRIVATE_BUCKET=${PRIVATE_BUCKET},GCS_PUBLIC_BUCKET=${PUBLIC_BUCKET},ASSET_BASE_URL=${ASSET_BASE_URL}" \
   --set-secrets "OPENAI_API_KEY=opensmash-openai-api-key:latest,TRIPO_API_KEY=opensmash-tripo-api-key:latest,FAL_KEY=opensmash-fal-key:latest,MINIMAX_ANNOUNCER_VOICE_ID=opensmash-minimax-voice-id:latest"
 
-gcloud run jobs add-iam-policy-binding "$WORKER_JOB" \
+# Only the API may hand work to the worker (Cloud Run checks the API's
+# identity token; the worker itself has no application-level auth).
+gcloud run services add-iam-policy-binding "$WORKER_SERVICE" \
   --region "$REGION" \
   --member "serviceAccount:${API_IDENTITY}" \
-  --role roles/run.jobsExecutorWithOverrides >/dev/null
+  --role roles/run.invoker >/dev/null
+WORKER_URL="$(gcloud run services describe "$WORKER_SERVICE" --region "$REGION" --format 'value(status.url)')"
+if [[ -z "$WORKER_URL" ]]; then
+  echo "Could not resolve the ${WORKER_SERVICE} URL." >&2
+  exit 2
+fi
 
 # Fighter-creation killswitch. --set-env-vars replaces the whole environment,
 # so a deploy would otherwise silently reopen a lab that was paused with
@@ -287,7 +302,7 @@ gcloud run deploy "$SERVICE_NAME" \
   --ingress internal-and-cloud-load-balancing \
   --port 8080 --cpu 2 --memory 2Gi --concurrency 500 --cpu-boost \
   --min-instances 3 --max-instances 6 --timeout 3600 \
-  --set-env-vars "JOB_DATABASE=firestore,OBJECT_STORE=gcs,FIGHTER_JOBS_ROOT=/tmp/fighter-jobs,FIGHTER_EXECUTION_MODE=cloud-run,BAKED_ASSET_SOURCE=remote,GOOGLE_CLOUD_PROJECT=${PROJECT_ID},CLOUD_RUN_REGION=${REGION},CLOUD_RUN_WORKER_JOB=${WORKER_JOB},GCS_PRIVATE_BUCKET=${PRIVATE_BUCKET},GCS_PUBLIC_BUCKET=${PUBLIC_BUCKET},ASSET_BASE_URL=${ASSET_BASE_URL},ALLOWED_ORIGINS=${PUBLIC_ORIGIN},FIREBASE_AUTH_ENABLED=1,FIREBASE_PROJECT_ID=${PROJECT_ID},FIREBASE_API_KEY=${FIREBASE_API_KEY},FIREBASE_AUTH_DOMAIN=${FIREBASE_AUTH_DOMAIN},FIREBASE_APP_ID=${FIREBASE_APP_ID},FIREBASE_AUTH_PROVIDERS=google|apple|email,FIGHTER_MODERATION_ENABLED=1,CREATION_ENABLED=${CREATION_ENABLED:-1},TURNSTILE_SITE_KEY=${TURNSTILE_SITE_KEY}" \
+  --set-env-vars "JOB_DATABASE=firestore,OBJECT_STORE=gcs,FIGHTER_JOBS_ROOT=/tmp/fighter-jobs,FIGHTER_EXECUTION_MODE=cloud-run-service,FIGHTER_WORKER_URL=${WORKER_URL},BAKED_ASSET_SOURCE=remote,GOOGLE_CLOUD_PROJECT=${PROJECT_ID},GCS_PRIVATE_BUCKET=${PRIVATE_BUCKET},GCS_PUBLIC_BUCKET=${PUBLIC_BUCKET},ASSET_BASE_URL=${ASSET_BASE_URL},ALLOWED_ORIGINS=${PUBLIC_ORIGIN},FIREBASE_AUTH_ENABLED=1,FIREBASE_PROJECT_ID=${PROJECT_ID},FIREBASE_API_KEY=${FIREBASE_API_KEY},FIREBASE_AUTH_DOMAIN=${FIREBASE_AUTH_DOMAIN},FIREBASE_APP_ID=${FIREBASE_APP_ID},FIREBASE_AUTH_PROVIDERS=google|apple|email,FIGHTER_MODERATION_ENABLED=1,CREATION_ENABLED=${CREATION_ENABLED:-1},TURNSTILE_SITE_KEY=${TURNSTILE_SITE_KEY}" \
   --set-secrets "COOKIE_SECRET=${COOKIE_SECRET_NAME}:latest,COOKIE_SECRET_PREVIOUS=${COOKIE_SECRET_PREVIOUS_NAME}:latest,OPENAI_API_KEY=opensmash-openai-api-key:latest,TURNSTILE_SECRET_KEY=opensmash-turnstile-secret:latest${API_TURN_SECRETS}"
 
 if [[ -n "${CLOUDFLARE_API_TOKEN:-}" && -n "${CLOUDFLARE_ACCOUNT_ID:-}" ]]; then
@@ -296,4 +311,4 @@ else
   echo "Cloudflare credentials not provided; leaving existing DNS and Cache Rules unchanged."
 fi
 
-echo "Deployed ${SERVICE_NAME} and ${WORKER_JOB} at version ${VERSION}."
+echo "Deployed ${SERVICE_NAME} and ${WORKER_SERVICE} at version ${VERSION}."

@@ -27,4 +27,7 @@ RUN mkdir -p /workspace/pipeline/play/ui /workspace/BattleShip/web-dist/bundles 
     && chown -R node:node /workspace
 
 USER node
-CMD ["node", "server/worker.js"]
+EXPOSE 8080
+# Long-lived worker service (server/worker-service.js). server/worker.js is
+# the one-shot Cloud Run Job entry point, kept for manual runs.
+CMD ["node", "server/worker-service.js"]

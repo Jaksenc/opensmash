@@ -1,8 +1,9 @@
 # GCP deployment
 
 The deploy script provisions the two storage buckets, service accounts,
-Artifact Registry repository, container builds, Cloud Run API, and Cloud Run
-worker job. It intentionally does not choose Firestore's permanent location or
+Artifact Registry repository, container builds, the Cloud Run API service, and
+the Cloud Run worker service (warm instances that each run one fighter at a
+time; `WORKER_MIN_INSTANCES`/`WORKER_MAX_INSTANCES`, default 2/10). It intentionally does not choose Firestore's permanent location or
 create secret values on your behalf.
 
 ## One-time setup
@@ -109,7 +110,7 @@ and sibling `BattleShip` repositories (including untracked files under
 and the engine package; enables APIs, buckets, service accounts, secrets and
 IAM (idempotent); validates `config/baked-assets.json` against
 `config/characters.json` and refreshes the public bucket's CORS rule; runs
-the API and worker Cloud Builds in parallel and waits for both; deploys the worker job and the API service;
+the API and worker Cloud Builds in parallel and waits for both; deploys the worker service, grants the API `run.invoker` on it, and deploys the API service pointed at its URL;
 then reconciles Cloudflare if credentials were given. The first deploy creates
 `opensmash-cookie-secret-previous` by copying the current signing key;
 subsequent rotations maintain it. A deploy interrupted before
@@ -299,12 +300,12 @@ work. Do not update either provider's copy manually.
 
 ## Rollback
 
-Every deploy uses timestamped API and worker image tags. Repoint the API or job
+Every deploy uses timestamped API and worker image tags. Repoint either service
 without rebuilding:
 
 ```bash
 gcloud run services update opensmash-web --region "$REGION" --image API_IMAGE
-gcloud run jobs update opensmash-fighter-worker --region "$REGION" --image WORKER_IMAGE
+gcloud run services update opensmash-worker --region "$REGION" --image WORKER_IMAGE
 ```
 
 Only API images built after the bucket-served roster (tag `20260902-223754`
