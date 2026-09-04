@@ -245,9 +245,8 @@
     background-size: 9px 11px, 13px 15px, 100% 100%;
   }
   .replica-cell.is-search { cursor: text; }
-  /* Private fighters: a small padlock in the bottom-right corner of the tile
-     (the caption owns the top edge; generating tiles lift it above the
-     status line and progress bar). */
+  /* Private fighters: a small padlock in the bottom-right corner of the tile.
+     Generating tiles center it inside their spinner. */
   .replica-private-badge {
     position: absolute;
     bottom: 7%;
@@ -282,7 +281,13 @@
   .replica-manage-button:focus-visible { opacity: 1; }
   @media (hover: none) { .replica-manage-button { opacity: .85; } }
   .replica-manage-button:hover { background: #3a1a14; color: #fff; }
-  .fighter-job-cell.is-generating .replica-private-badge,
+  .fighter-job-cell.is-generating .replica-private-badge {
+    top: 55%;
+    right: auto;
+    bottom: auto;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
   .fighter-job-cell.is-failed .replica-private-badge { bottom: 32%; }
   .replica-search-input {
     position: absolute;

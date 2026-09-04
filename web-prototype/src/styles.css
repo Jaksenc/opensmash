@@ -182,6 +182,21 @@ main { width: min(1600px, calc(100% - 40px)); margin: 0 auto; }
 .create-page .auth-options .auth-email-action { height: 48px; min-height: 48px; }
 .create-page .auth-options .auth-provider-button,
 .create-page .auth-options .auth-cancel-button { background: #050303; }
+.create-page .auth-options .auth-provider-button {
+  border: 1px solid #5d3a2b;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 236, 190, .045),
+    inset 0 -3px rgba(38, 5, 0, .78),
+    0 3px 0 #160b08;
+}
+.create-page .auth-options .auth-provider-button:hover:not(:disabled),
+.create-page .auth-options .auth-provider-button:focus-visible {
+  border-color: #fff0b5;
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 240, 181, .88),
+    inset 0 -3px rgba(38, 5, 0, .78),
+    0 3px 0 #160b08;
+}
 .auth-message {
   margin: 3px 0 0;
   color: #ad947a;
