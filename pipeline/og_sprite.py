@@ -56,11 +56,12 @@ WIN_POSE = {8: "2", 9: "2", 10: "1"}
 # frozen N card tics in (SSB64_VSINTRO_FREEZE_TIC), then shot well after.
 # Global frame numbers drift with load time, so the freeze tic is what
 # selects the pose, not the shot frame. 120: every results pose has settled
-# (Luigi Win1 is the slowest). Kirby's Win2 spins and faces the camera
-# only at tics ~100-115.
+# (Luigi Win1 is the slowest). Kirby's Win2 spins and only settles, facing
+# the camera, from ~170 (an earlier mid-spin window looked right only on a
+# mesh that was itself authored backwards).
 DEFAULT_FRAME = 250
 DEFAULT_FREEZE_TIC = 120
-FREEZE_POSE = {8: 108}
+FREEZE_POSE = {8: 190}
 
 
 def boot(fkind, bundle, fill, frames, shots, win=(0, 40)):
