@@ -76,3 +76,21 @@ artifacts/experiments/*.osb
 config/wikipedia-roster-inclusions.txt
 config/wikipedia-roster-exclusions.txt
 artifacts/seed-roster/
+
+# Game-derived inputs (sprites, skeletons, part geometry, announcer
+# conditioning clips). Rebuilt from your own ROM by tools/derive_from_rom.py
+# and tools/derive_skeletons.py; never committed. See README "Game-derived inputs".
+skels/*.skel
+skels/reference/
+skels/*-all.log
+skels/*-parts.log
+skels/parts/
+web-prototype/asset-sources/css-font/portraits/
+web-prototype/asset-sources/css-font/locked/
+web-prototype/visual/assets/ui_refs/
+web-prototype/asset-sources/stone-tile/source-*
+eval/announcer_conditioning_corrected/
+
+# Local-only experiment outputs and source captures purged from history.
+eval/round2/
+web-prototype/asset-sources/n64-console-sketchfab-recovered.glb

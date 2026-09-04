@@ -9,7 +9,9 @@ original skeletons.
 No Nintendo assets are in this repo or served by the site. The engine is
 [BattleShip](https://github.com/turtlesoupy/BattleShip), a decomp-based PC
 port, and the game's assets are extracted in the player's browser from their
-own ROM.
+own ROM. The few generator inputs that come from the game (sprites, skeletons,
+announcer clips) are gitignored and rebuilt locally from your ROM; see
+[Game-derived inputs](#game-derived-inputs).
 
 ## Upstream projects
 
@@ -118,9 +120,9 @@ hosted generation flow are documented in
 - Python 3.11+ and `pip install -r requirements.txt`. `ffmpeg` on your PATH
   for the announcer audio.
 - The ROM, as above. The generator doesn't read it directly, but the
-  skeleton and sprite inputs it uses were derived from it (see
-  [Game-derived inputs](#game-derived-inputs)); they're committed, so you
-  only need the ROM to regenerate them.
+  skeleton and sprite inputs it uses are derived from it and are not in the
+  repo. Run `tools/derive_from_rom.py` and `tools/derive_skeletons.py` once
+  before generating (see [Game-derived inputs](#game-derived-inputs)).
 - Keys. Copy `.env.example` to `.env` in the repo root (gitignored; every
   pipeline script reads it):
 
@@ -216,8 +218,10 @@ script: [`web-prototype/infra/README.md`](web-prototype/infra/README.md).
 
 ## Game-derived inputs
 
-Some generator inputs come from the game itself. All of them can be rebuilt
-from your ROM:
+Some generator inputs come from the game itself. None of them are committed
+(they're gitignored, and were purged from history before the repo went
+public). Rebuild them from your ROM before running the generator or the
+worker Docker build, which copies `ui_refs/` into the image:
 
 | Files | What | Rebuilt by |
 |---|---|---|
@@ -227,10 +231,11 @@ from your ROM:
 | `eval/announcer_conditioning_corrected/` | Announcer lines the voice clone is conditioned on, at in-game pitch | `derive_from_rom.py` |
 | `web-prototype/asset-sources/stone-tile/source-*` | The character-select stone texture | `derive_from_rom.py` |
 
-Not derived: the hand-authored `skels/*.profile.json`, `skels/VALIDATION.md`,
-and `asset-sources/css-font/letters`. `skels/reference/mario.skel` is an old capture
-from a different engine build that `texture_check.py` still reads; the scripts
-report it as `LEGACY` and leave it alone.
+Not derived (and committed): the hand-authored `skels/*.profile.json`,
+`skels/VALIDATION.md`, and `asset-sources/css-font/letters`.
+`skels/reference/mario.skel` is an old capture from a different engine build
+that `texture_check.py` still reads; the scripts report it as `LEGACY` and
+leave it alone.
 
 Why run the engine for skeletons: the ROM stores joint trees and animations,
 not world-space rest frames. The dump hook runs the game's own setup and
