@@ -5,7 +5,7 @@ Usage: python3 tools/make-favicon.py
 
 Segments the yellow letter faces in visual/assets/smash-the-weights-logo.png,
 assigns every outline/glow pixel to its nearest letter, lifts the F (with its
-own outline) onto a jagged black burst like the wordmark's, and writes:
+own outline) inside a thick black F-shaped container, and writes:
   public/favicon.png (512), public/apple-touch-icon.png (180),
   public/favicon-16.png, public/favicon.ico (16 + 32).
 """
@@ -19,9 +19,8 @@ SRC = ROOT / 'visual/assets/smash-the-weights-logo.png'
 OUT = ROOT / 'public'
 THEME_BLACK = (9, 8, 7)     # matches <meta name="theme-color">
 TOUCH_TILE = (52, 44, 40)   # warm charcoal behind the burst on the iOS icon
-GLYPH_FILL = 0.62           # fraction of tile the glyph's long side occupies
-BURST_SPIKES = 16
-BURST_SEED = 7
+GLYPH_FILL = 0.92           # fraction of tile the glyph's long side occupies
+HALO_FRAC = 0.075           # black container thickness, fraction of glyph height
 
 im = Image.open(SRC).convert('RGBA')
 a = np.array(im).astype(int)
@@ -56,32 +55,20 @@ glyph = np.array(im)[y0:y1, x0_:x1].copy()
 glyph[..., 3] = np.where(f_mask[y0:y1, x0_:x1], glyph[..., 3], 0)
 glyph = Image.fromarray(glyph.astype(np.uint8), 'RGBA')
 
-def burst(size, ss=4):
-    spikes = BURST_SPIKES if size > 32 else 8  # fewer spikes survive 16/32 px
-    """Jagged black burst like the one behind the wordmark, drawn at ss x
-    supersampling for clean edges. Same seed every run, so it's stable."""
-    from PIL import ImageDraw
-    import math, random
-    rng = random.Random(BURST_SEED)
-    big = size * ss
-    cx = cy = big / 2
-    pts = []
-    for i in range(spikes):
-        base = 2 * math.pi * i / spikes
-        jitter = 2 * math.pi / spikes * 0.35
-        a_out = base + rng.uniform(-jitter, jitter)
-        a_in = base + math.pi / spikes + rng.uniform(-jitter, jitter)
-        r_out = big * rng.uniform(0.40, 0.50)
-        r_in = big * rng.uniform(0.27, 0.33)
-        pts.append((cx + r_out * math.cos(a_out), cy + r_out * math.sin(a_out)))
-        pts.append((cx + r_in * math.cos(a_in), cy + r_in * math.sin(a_in)))
-    im = Image.new('RGBA', (big, big), (0, 0, 0, 0))
-    ImageDraw.Draw(im).polygon(pts, fill=THEME_BLACK + (255,))
-    return im.resize((size, size), Image.LANCZOS)
+# Black container: the glyph's silhouette dilated outward, drawn underneath.
+halo_px = max(1, round(glyph.height * HALO_FRAC))
+pad = halo_px + 2
+alpha = np.array(glyph.getchannel('A')) > 0
+alpha = np.pad(alpha, pad)
+halo = ndimage.distance_transform_edt(~alpha) <= halo_px
+halo_im = Image.fromarray((halo * 255).astype(np.uint8), 'L')
+container = Image.new('RGBA', halo_im.size, THEME_BLACK + (255,))
+container.putalpha(halo_im.filter(ImageFilter.GaussianBlur(0.6)))
+container.alpha_composite(glyph, (pad, pad))
+glyph = container
 
 def tile(size, background=None):
     t = Image.new('RGBA', (size, size), (background or (0, 0, 0)) + (255 if background else 0,))
-    t.alpha_composite(burst(size))
     gw, gh = glyph.size
     scale = size * GLYPH_FILL / max(gw, gh)
     g = glyph.resize((max(1, round(gw * scale)), max(1, round(gh * scale))), Image.LANCZOS)
