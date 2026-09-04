@@ -15,7 +15,8 @@
     "slug": "jesuschrist"
   },
   {
-    "slug": "ludwigvanbeethov"
+    "slug": "ludwigvanbeethov",
+    "base": "kirby"
   },
   {
     "slug": "roon"
@@ -120,7 +121,8 @@
     "slug": "winstonchurchill"
   },
   {
-    "slug": "fridakahlo"
+    "slug": "fridakahlo",
+    "base": "kirby"
   },
   {
     "slug": "williamshakespea"
@@ -3117,7 +3119,8 @@
     "slug": "caseyaylward"
   },
   {
-    "slug": "thomasdimson"
+    "slug": "thomasdimson",
+    "base": "mario"
   },
   {
     "slug": "kache"
