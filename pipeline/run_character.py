@@ -270,7 +270,9 @@ def tripo_balance():
 def stage_needed(path, force, name):
     if force == name:
         return True
-    return not os.path.exists(path)
+    # An empty file is a stage that died mid-write (seen when expand crashed
+    # after its output file was already opened), not a finished stage.
+    return not os.path.exists(path) or os.path.getsize(path) == 0
 
 
 def main():
@@ -329,7 +331,10 @@ def main():
             cmd += ["--notes", a.notes]
         if a.emblem:
             cmd += ["--emblem", a.emblem]
-        open(F("character.json"), "w").write(sh(cmd, timeout=180))
+        # Run first, write second: open(..., "w") before sh() truncated the
+        # file, and a failing expand left an empty character.json behind.
+        expanded = sh(cmd, timeout=180)
+        open(F("character.json"), "w").write(expanded)
         bill("expand", json.loads(open(F("character.json")).read()).get("cost_usd"))
     cdef = json.loads(open(F("character.json")).read())
     # display = in-game name = announcer call ("Mozart", "Hercules", "Marilyn
