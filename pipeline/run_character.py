@@ -298,6 +298,9 @@ def main():
              "donkey/yoshi, while 'all' includes those experimental targets")
     ap.add_argument("--force-stage", default=None,
                     choices=["expand", "tpose", "mesh", "convert", "variants", "portrait", "stock", "emblem", "ui", "voice"])
+    ap.add_argument("--flip-facing", action="store_true",
+                    help="convert with the facing flipped and skip the vision gate; for a fighter "
+                         "verified backwards by eye that the gate keeps passing (or a gate false positive)")
     ap.add_argument("--publish", action="store_true",
                     help="after a successful run, validate and add this manual character to the baked roster")
     a = ap.parse_args()
@@ -452,7 +455,15 @@ def main():
         # Devil walked backwards). Render the bundle and let the vision
         # model compare against the t-pose, which is the front by
         # construction; redo the conversion with --flip-facing if needed.
-        try:
+        # --flip-facing on the command line is the human override: the
+        # judgement was made by eye, so skip the model entirely.
+        if a.flip_facing:
+            log("convert: --flip-facing given — reconverting flipped, skipping the facing gate")
+            sh(["python3", pipeline_script("convert_rigged.py"), "--mild-color", "--no-profile", "--flatten",
+                "--flip-facing", F("rigged.glb"), "skels/mario-frames.skel", F("bundle.json")], timeout=900)
+            open(F("facing_flipped"), "w").write("1")
+        else:
+          try:
             fc = json.loads(sh(["python3", pipeline_script("facing_check.py"), F("bundle.json"), F("tpose.png")],
                                timeout=300).strip().splitlines()[-1])
             bill("facing", fc.get("cost_usd"))
@@ -463,7 +474,7 @@ def main():
                 open(F("facing_flipped"), "w").write("1")
             else:
                 log(f"convert: facing check ok ({fc.get('confidence')})")
-        except Exception as e:  # never block a character on the gate itself
+          except Exception as e:  # never block a character on the gate itself
             log(f"convert: facing check unavailable ({str(e)[-120:]}) — keeping the converter's call")
         sh(["python3", pipeline_script("convert_rigged.py"), "--binary5", F("bundle.json"), osb], timeout=300)
 

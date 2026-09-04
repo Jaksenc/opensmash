@@ -4177,12 +4177,12 @@
       "slug": "michaeljordan",
       "assets": {
         "bundle": {
-          "sha256": "422c96274be915015b3a137ef1313255cb70c430c894aaac276ce41087f4b338",
-          "size": 1536540
+          "sha256": "23da056c0749ee2e9b56866d545d10ea098ee438427461b4c15bd28fb4c599de",
+          "size": 1536836
         },
         "metadata": {
-          "sha256": "9ec92228eb7d29e2908dfcef44b05b18ac58e8054253e87070915ebd22b33d45",
-          "size": 664
+          "sha256": "8d3f907830f7ebb1da6dd4e87c419bbad50e5114598cdc25906d5da7b26ebfe8",
+          "size": 695
         },
         "portrait": {
           "sha256": "0ee413c8108e6fee5833eca8703abbd918ede57099523bf81943cf1236bb3f4c",
@@ -4219,7 +4219,7 @@
       ],
       "metadata": {
         "display": "Michael Jordan",
-        "nameFull": null,
+        "nameFull": "Michael Jordan",
         "short": "JORDAN",
         "base": null,
         "preferredBases": null
@@ -8285,8 +8285,8 @@
       "slug": "easterislandmoai",
       "assets": {
         "bundle": {
-          "sha256": "719bd5d2c2804df1122f5b2297c1fa113e8d90ebd8ec34faef350bd117fa2f57",
-          "size": 1534172
+          "sha256": "174322ab8e07c5a7cb4e1e3383b799603bcc1a77514ccec03acc95112561a490",
+          "size": 1535396
         },
         "metadata": {
           "sha256": "07dd972f959f4fae5786c7cc3a3e047cb780cbd0584f6a3f494974823a033c81",
@@ -13433,12 +13433,12 @@
       "slug": "eddiehall",
       "assets": {
         "bundle": {
-          "sha256": "45abe609e8f41f08134f112138c267fc739e71aa3c13c4987702ceddded8a871",
-          "size": 1535756
+          "sha256": "d8f012b273b376cc9fa045ddee766a908e64d6c4bbd694e7f077838f3e66ab78",
+          "size": 1535264
         },
         "metadata": {
-          "sha256": "e2ce5c424ae7db73b30ae12b74e8e5a72d853341e8777b13ba039e5919c11b4e",
-          "size": 677
+          "sha256": "ad9b0832c8cc71ad198bc8041d239bd02083ea5c0876ab3d24a4235da9412146",
+          "size": 704
         },
         "portrait": {
           "sha256": "079fa8a4eb873f83bdc9cc63a4d9eb8b599e205c2785c299592bd3d8c5a06f5a",
@@ -13475,7 +13475,7 @@
       ],
       "metadata": {
         "display": "Eddie Hall",
-        "nameFull": null,
+        "nameFull": "Eddie Hall",
         "short": "EDDIEHALL",
         "base": null,
         "preferredBases": null
@@ -17703,8 +17703,8 @@
       "slug": "thechupacabra",
       "assets": {
         "bundle": {
-          "sha256": "24f6b73f9b6f2eafa0cb4fe0c6a9b052337080edb6800b811f149e7dfb940239",
-          "size": 1582164
+          "sha256": "9671a1849afe2f8363ea015409466632b7d16d8a25315e8a11e158f4f84e2707",
+          "size": 1582508
         },
         "metadata": {
           "sha256": "c1c1a35536e31dfca7b0f298f29bf2881ad503a799ba9ccfe84bc62b21d4e9a9",
@@ -18067,12 +18067,12 @@
       "slug": "batista",
       "assets": {
         "bundle": {
-          "sha256": "852d86409b75e3fa33777b5dc17b0f22d82bae420a3c64c7164987ff8e17c09e",
-          "size": 1503100
+          "sha256": "4d729a45ce766fb7b3a3449b1dc6b5379066bba134312f9bf8dec6de4e52e787",
+          "size": 1503484
         },
         "metadata": {
-          "sha256": "430249e1b20ae65948355040dd76def825045f2df4f632a5ab1f071c1534f3fd",
-          "size": 648
+          "sha256": "38aa2d12dadb355ea0cd20610a26480a3f3853d37b9fc4dd312b44205d4e6839",
+          "size": 672
         },
         "portrait": {
           "sha256": "0493403ea9474d0a311d1b8a45bd64093f24cd66bc45bc0daa6638fa07ff538c",
@@ -18109,7 +18109,7 @@
       ],
       "metadata": {
         "display": "Batista",
-        "nameFull": null,
+        "nameFull": "Batista",
         "short": "BATISTA",
         "base": null,
         "preferredBases": null
@@ -40377,8 +40377,8 @@
       "slug": "dojacat",
       "assets": {
         "bundle": {
-          "sha256": "5166cd30edbc2e265a1c5660822cbb5be607f2e18d2f551416465a8e4a63253c",
-          "size": 1539580
+          "sha256": "2b04d1a5e528f3ccdbaddcd20ef9858fda76c428df12fc0192e9f6a41f66bee2",
+          "size": 1539900
         },
         "metadata": {
           "sha256": "763fe21620d010d584b244dd6663e2fccf95691d597c12ccaaf46fc07b876c02",
@@ -41781,12 +41781,12 @@
       "slug": "shacarririchards",
       "assets": {
         "bundle": {
-          "sha256": "b6f168da6c049ddc2ca1b12946cddbfcdf7df73717ca7fcf79515f883e554828",
-          "size": 1561964
+          "sha256": "a54d11a76a9881e82680010e8c2b1f051cab6b510388c33f3e41c0fe7a0eccc9",
+          "size": 1562724
         },
         "metadata": {
-          "sha256": "64efd42da0828141d7bc189be5d087f01e090155d61084db4c1b70153f0f825e",
-          "size": 663
+          "sha256": "c062c8bde8d601650839b56c7532984fdb3c21c0a1ba6f4c604062a1efac821a",
+          "size": 700
         },
         "portrait": {
           "sha256": "d3d9efb9283820476e181d1e97a21aab1379d76060b533f40d2c7e406bcb81c4",
@@ -41823,7 +41823,7 @@
       ],
       "metadata": {
         "display": "Sha'Carri Richardson",
-        "nameFull": null,
+        "nameFull": "Sha'Carri Richardson",
         "short": "SHACARRI",
         "base": null,
         "preferredBases": null
@@ -42301,12 +42301,12 @@
       "slug": "evanderholyfield",
       "assets": {
         "bundle": {
-          "sha256": "9e5b48885145abd8a4ce0d207abfe127641d6d7221d2101c476037861570a16b",
-          "size": 1543092
+          "sha256": "3cae90065c4d65305a9b975295c4a4e1b7425ecad56c89b4efba4e435e5c58f7",
+          "size": 1542300
         },
         "metadata": {
-          "sha256": "d8532cf6236ea9130a85080e67a177bfbd5c00973b15d139814e4378befeb678",
-          "size": 708
+          "sha256": "97e6ef47b4042dacbf689730cde611b3625efcf2ef48f3bea57317e0f956ffc8",
+          "size": 742
         },
         "portrait": {
           "sha256": "b078c9095a3635909ae4674a501983b766aa1dd74f74b9aa022f989703e0ce0d",
@@ -42343,7 +42343,7 @@
       ],
       "metadata": {
         "display": "Evander Holyfield",
-        "nameFull": null,
+        "nameFull": "Evander Holyfield",
         "short": "HOLYFIELD",
         "base": null,
         "preferredBases": null
