@@ -6,6 +6,10 @@ mesh, a character-select portrait, a stock icon, a series emblem, and an
 announcer call, then injects the result into the game on one of the twelve
 original skeletons.
 
+https://github.com/user-attachments/assets/d3a589cf-1443-4926-8914-97371bd40b97
+
+Full trailer: [youtu.be/Uj3N_CbYMHs](https://youtu.be/Uj3N_CbYMHs). Play it at [smash.fun](https://smash.fun).
+
 No Nintendo assets are in this repo or served by the site. The engine is
 [BattleShip](https://github.com/turtlesoupy/BattleShip), a decomp-based PC
 port, and the game's assets are extracted in the player's browser from their
