@@ -321,7 +321,14 @@ if (!canvas) {
     );
     const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
     let animationFrame = 0;
-    let renderedFocusedGame = false;
+    // The last drawn frame is final (no animated noise/flicker/roll, the
+    // engine focused, or reduced motion): keep it until the viewport changes.
+    let renderedStill = false;
+    let lastDrawAt = -Infinity;
+    // Noise and flicker read the same at 30fps; every redraw makes the
+    // compositor re-run the full-viewport backdrop-filter, so halve them.
+    const FRAME_INTERVAL_MS = 30;
+    let appliedFilter = null;
 
     function applyCompositeFilter(focusedGame = false) {
       const filter = focusedGame ? 'none' : [
@@ -330,6 +337,8 @@ if (!canvas) {
         `contrast(${settings.contrast.toFixed(3)})`,
         `brightness(${settings.brightness.toFixed(3)})`,
       ].join(' ');
+      if (filter === appliedFilter) return;
+      appliedFilter = filter;
       canvas.style.webkitBackdropFilter = filter;
       canvas.style.backdropFilter = filter;
     }
@@ -352,13 +361,20 @@ if (!canvas) {
       animationFrame = 0;
       if (!settings.enabled) return;
       const focusedGame = document.body.classList.contains('is-game-running');
+      const stillImage = focusedGame || reducedMotion ||
+        (settings.noiseStrength <= 0 && settings.flickerStrength <= 0 && settings.rollingStrength <= 0);
       const matchesViewport = canvas.width === Math.max(1, Math.round(innerWidth)) &&
         canvas.height === Math.max(1, Math.round(innerHeight));
-      if (focusedGame && renderedFocusedGame && matchesViewport) {
+      if (stillImage && renderedStill && matchesViewport) {
         animationFrame = requestAnimationFrame(render);
         return;
       }
-      renderedFocusedGame = focusedGame;
+      if (!stillImage && milliseconds - lastDrawAt < FRAME_INTERVAL_MS) {
+        animationFrame = requestAnimationFrame(render);
+        return;
+      }
+      lastDrawAt = milliseconds;
+      renderedStill = stillImage;
       applyCompositeFilter(focusedGame);
       resize();
       gl.clearColor(0, 0, 0, 0);
@@ -396,7 +412,7 @@ if (!canvas) {
 
     function applySettings(nextSettings, options = {}) {
       settings = { ...settings, ...sanitizeSettings(nextSettings) };
-      renderedFocusedGame = false;
+      renderedStill = false;
       if (options.preset) activePreset = options.preset;
       else activePreset = 'custom';
       canvas.dataset.crtPreset = activePreset;

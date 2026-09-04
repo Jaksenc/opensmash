@@ -25,13 +25,18 @@ export default function ModalPage({
     onRequestCloseRef.current = onRequestClose;
   }, [onRequestClose]);
 
+  // `complete` runs in addition to onRequestClose, never instead of it: a
+  // callback that does not flip `open` itself (Settings "Log Out") would
+  // otherwise leave the page scroll-locked behind an invisible modal whose
+  // closingRef stays set, so it could never be reopened.
   const close = useCallback((complete) => {
     if (closingRef.current) return;
     closingRef.current = true;
     setIsVisible(false);
     window.clearTimeout(closeTimerRef.current);
     closeTimerRef.current = window.setTimeout(() => {
-      (complete || onRequestCloseRef.current)?.();
+      onRequestCloseRef.current?.();
+      complete?.();
     }, closeDuration);
   }, [closeDuration]);
 

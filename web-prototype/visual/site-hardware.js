@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
-import cartridgeLabelUrl from './assets/cartridge-label-art.png?url';
+import cartridgeLabelUrl from './assets/cartridge-label-art.webp?url';
 import cartridgeModelUrl from './assets/n64-cartridge-tripo.glb?url';
 import consoleModelUrl from './assets/hybrid-four-port-console-fitted.glb?url';
 import cursorModelUrl from './assets/hand-cursor-meshy.glb?url';
@@ -15,6 +15,10 @@ import {
 
 const CARTRIDGE_INTRO_ENABLED =
   document.documentElement.classList.contains('is-cartridge-intro');
+// The launch flow (game-launcher.js) loads the same cartridge/console/label
+// files through its own loaders; share one in-memory copy instead of
+// racing the HTTP cache for a second download of each.
+THREE.Cache.enabled = true;
 const STONE_BACKGROUND_SEED = 3075641479;
 const STONE_BACKGROUND_CANDIDATES = 96;
 let stoneBackgroundReady = false;
@@ -2642,6 +2646,7 @@ if (!CARTRIDGE_INTRO_ENABLED || DBG.includes('skipboot')) {
     ? clock.elapsedTime
     : clock.elapsedTime - HARDWARE_EXIT_DURATION;
 }
+let idleFrameCleared = false;
 function tick() {
   requestAnimationFrame(tick);
   if (window.innerWidth && renderer.domElement.width !== window.innerWidth) resize();
@@ -2653,6 +2658,19 @@ function tick() {
   const mobileGame = gameRunning &&
     document.body.classList.contains('uses-mobile-controls');
   if (mobileGame) return;
+  // Nothing to draw: no custom cursor (touch devices, WebGL lost), the intro
+  // rigs hidden, no live poof. Clear the last glove frame once and skip the
+  // two-pass full-screen render instead of burning it at 60fps.
+  if (!glove.visible && !CARTRIDGE_INTRO_ENABLED && !puffs.some(puff => puff.mesh.visible)) {
+    if (!idleFrameCleared) {
+      renderer.setRenderTarget(null);
+      renderer.setClearColor(0x000000, 0);
+      renderer.clear();
+      idleFrameCleared = true;
+    }
+    return;
+  }
+  idleFrameCleared = false;
   const t = clock.elapsedTime;
 
   if (!gameRunning) {

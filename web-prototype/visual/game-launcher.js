@@ -20,7 +20,7 @@ import { lockPageScroll } from '../shared/page-scroll-lock.js';
 import { holdScreenAwake, isHandoffSupported, receiveRomHandoff } from '../src/rom-handoff-client.js';
 import { controlEmbeddedTrailer } from '../src/embedded-trailer.js';
 import cartridgeChunkUrl from './assets/cartridge-chunk.wav?url';
-import cartridgeLabelUrl from './assets/cartridge-label-art.png?url';
+import cartridgeLabelUrl from './assets/cartridge-label-art.webp?url';
 import cartridgeModelUrl from './assets/n64-cartridge-tripo.glb?url';
 import consoleModelUrl from './assets/hybrid-four-port-console-fitted.glb?url';
 import controllerPunchUrl from './assets/controller-punch.wav?url';

@@ -63,7 +63,14 @@ function logCandidateTypes(pc, label) {
   pc.addEventListener("iceconnectionstatechange", () => console.info(`[handoff] ${label} ICE state:`, pc.iceConnectionState));
 }
 const POLL_INTERVAL_MS = 500;
+// A host can sit on the QR page for minutes. Poll fast while a pairing is
+// plausible, then back off so an idle handoff is not 1,200 room reads.
+const POLL_FAST_WINDOW_MS = 30 * 1000;
+const POLL_IDLE_INTERVAL_MS = 2000;
 const WAIT_FOR_PEER_MS = 10 * 60 * 1000;
+// A guest that stops draining the channel without closing it (backgrounded
+// phone) would otherwise leave the host's send loop waiting forever.
+const SEND_STALL_TIMEOUT_MS = 90 * 1000;
 // From the moment both descriptions are in place until the channel opens.
 const CONNECT_TIMEOUT_MS = 60 * 1000;
 // Local ICE candidates are batched so a host with many interfaces and six TURN
@@ -230,7 +237,10 @@ async function runSignalling({ pc, room, role, key, onRemote, until, signal, dea
         }
       }
     }
-    if (!until()) await sleep(POLL_INTERVAL_MS, signal);
+    if (!until()) {
+      const fast = remoteDescriptionSet || Date.now() - started < POLL_FAST_WINDOW_MS;
+      await sleep(fast ? POLL_INTERVAL_MS : POLL_IDLE_INTERVAL_MS, signal);
+    }
   }
   flush();
 }
@@ -253,6 +263,30 @@ function waitForChannelOpen(channel, signal, timeoutMs) {
     channel.addEventListener("error", done((event) => reject(event?.error || new Error("Data channel error."))), { once: true });
     channel.addEventListener("close", done(() => reject(new Error("The data channel closed before the transfer started."))), { once: true });
     signal?.addEventListener("abort", onAbort, { once: true });
+  });
+}
+
+/** Wait for the channel to drain below its low-water mark, or fail when it closes, errors, stalls, or the handoff is cancelled. */
+function waitForBufferedAmountLow(channel, signal) {
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) return reject(new HandoffCancelled());
+    if (channel.readyState !== "open") return reject(new Error("The connection dropped mid-transfer."));
+    if (channel.bufferedAmount <= channel.bufferedAmountLowThreshold) return resolve();
+    const cleanup = () => {
+      clearTimeout(timer);
+      channel.removeEventListener("bufferedamountlow", onLow);
+      channel.removeEventListener("close", onClose);
+      channel.removeEventListener("error", onClose);
+      signal?.removeEventListener("abort", onAbort);
+    };
+    const onLow = () => { cleanup(); resolve(); };
+    const onClose = () => { cleanup(); reject(new Error("The connection dropped mid-transfer.")); };
+    const onAbort = () => { cleanup(); reject(new HandoffCancelled()); };
+    const timer = setTimeout(() => { cleanup(); reject(new Error("The other device stopped receiving data.")); }, SEND_STALL_TIMEOUT_MS);
+    channel.addEventListener("bufferedamountlow", onLow);
+    channel.addEventListener("close", onClose);
+    channel.addEventListener("error", onClose);
+    signal?.addEventListener("abort", onAbort);
   });
 }
 
@@ -330,14 +364,15 @@ export function startRomHandoffHost({ loadRom, onState = () => {} }) {
       });
       channel.addEventListener("close", () => reject(new Error("The other device disconnected before confirming the transfer.")), { once: true });
     });
+    // Awaited only after the send loop; a rejection before then must not
+    // surface as an unhandled rejection (the loop reports the drop itself).
+    received.catch(() => {});
 
     let sent = 0;
     onState("sending", { sent, total });
     for (const [start, end] of chunkRanges(total, HANDOFF_CHUNK_SIZE)) {
       if (signal.aborted) throw new HandoffCancelled();
-      if (channel.bufferedAmount > BUFFER_HIGH_WATER) {
-        await new Promise((resolve) => channel.addEventListener("bufferedamountlow", resolve, { once: true }));
-      }
+      if (channel.bufferedAmount > BUFFER_HIGH_WATER) await waitForBufferedAmountLow(channel, signal);
       if (channel.readyState !== "open") throw new Error("The connection dropped mid-transfer.");
       channel.send(bytes.buffer.slice(bytes.byteOffset + start, bytes.byteOffset + end));
       sent = end;
@@ -490,7 +525,10 @@ export function holdScreenAwake() {
   const acquire = async () => {
     try {
       if (released || document.visibilityState !== "visible" || !navigator.wakeLock?.request) return;
-      sentinel = await navigator.wakeLock.request("screen");
+      const lock = await navigator.wakeLock.request("screen");
+      // Released while the request was in flight: let it go now, or it stays held.
+      if (released) { lock.release().catch(() => {}); return; }
+      sentinel = lock;
     } catch {
       sentinel = null;
     }

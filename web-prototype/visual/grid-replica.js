@@ -451,30 +451,39 @@ function renderRules(gridWidth, gridHeight, columns, cellCount) {
   const dst = new Uint8ClampedArray(gridWidth * gridHeight * 4);
   const xStride = CELL_W + RULE;
   const yStride = CELL_H + RULE;
-  const ruleMask = new Uint8Array(gridWidth * gridHeight);
+
+  // The sample position depends on one axis only; resolve each axis once
+  // instead of per pixel, and paint only the rule bands of each cell (about
+  // a tenth of the board) rather than masking and scanning every pixel.
+  const sourceX = new Uint16Array(gridWidth);
+  for (let x = 0; x < gridWidth; x++) sourceX[x] = mapRuleSample(x, gridWidth, CELL_W, sourceWidth);
+  const sourceY = new Uint16Array(gridHeight);
+  for (let y = 0; y < gridHeight; y++) sourceY[y] = mapRuleSample(y, gridHeight, CELL_H, sourceHeight);
+
+  const paintBand = (x0, y0, x1, y1) => {
+    x0 = Math.max(0, x0); y0 = Math.max(0, y0);
+    x1 = Math.min(gridWidth, x1); y1 = Math.min(gridHeight, y1);
+    for (let y = y0; y < y1; y++) {
+      const rowSource = sourceY[y] * sourceWidth;
+      for (let x = x0; x < x1; x++) {
+        const source = (rowSource + sourceX[x]) * 4;
+        put(
+          dst, gridWidth, x, y,
+          reference[source], reference[source + 1], reference[source + 2], reference[source + 3]
+        );
+      }
+    }
+  };
 
   for (let index = 0; index < cellCount; index++) {
     const left = (index % columns) * xStride;
     const top = Math.floor(index / columns) * yStride;
     const right = left + CELL_W + RULE * 2;
     const bottom = top + CELL_H + RULE * 2;
-    for (let y = top; y < bottom; y++) for (let x = left; x < right; x++) {
-      if (x < left + RULE || x >= right - RULE ||
-          y < top + RULE || y >= bottom - RULE) {
-        ruleMask[y * gridWidth + x] = 1;
-      }
-    }
-  }
-
-  for (let y = 0; y < gridHeight; y++) for (let x = 0; x < gridWidth; x++) {
-    if (!ruleMask[y * gridWidth + x]) continue;
-    const sourceX = mapRuleSample(x, gridWidth, CELL_W, sourceWidth);
-    const sourceY = mapRuleSample(y, gridHeight, CELL_H, sourceHeight);
-    const source = (sourceY * sourceWidth + sourceX) * 4;
-    put(
-      dst, gridWidth, x, y,
-      reference[source], reference[source + 1], reference[source + 2], reference[source + 3]
-    );
+    paintBand(left, top, right, top + RULE);
+    paintBand(left, bottom - RULE, right, bottom);
+    paintBand(left, top + RULE, left + RULE, bottom - RULE);
+    paintBand(right - RULE, top + RULE, right, bottom - RULE);
   }
   return dst;
 }
@@ -575,7 +584,7 @@ function setActionIcon(button, fileName, kind) {
   button.prepend(image);
 }
 
-function paintActionStatic(button, kind) {
+function paintActionStatic(button, kind, frameIndex = 0) {
   let canvas = button.querySelector('.replica-action-static-layer');
   if (!canvas) {
     canvas = document.createElement('canvas');
@@ -593,10 +602,32 @@ function paintActionStatic(button, kind) {
     });
     button.prepend(canvas);
   }
-  const native = new Uint8ClampedArray(ACTION_CELL_BACKGROUND_PIXELS[kind]);
-  drawActionStatic(native);
-  const framebuffer = scalePixels2x(native, CELL_W, CELL_H, false);
-  paintPixels(canvas, framebuffer.pixels, framebuffer.width, framebuffer.height);
+  const frame = actionStaticFrame(kind, frameIndex);
+  if (canvas.width !== frame.width || canvas.height !== frame.height) {
+    canvas.width = frame.width;
+    canvas.height = frame.height;
+  }
+  canvas.getContext('2d').putImageData(frame, 0, 0);
+}
+
+// The static is random noise, so a short loop of pre-rendered frames reads
+// the same as a fresh draw. Rendering one used to cost a 7.7 KB copy, ~1,800
+// random writes and a 2x upscale, twelve times a second, forever.
+const ACTION_STATIC_FRAME_COUNT = 8;
+const actionStaticFrames = new Map();
+function actionStaticFrame(kind, index) {
+  let frames = actionStaticFrames.get(kind);
+  if (!frames) {
+    frames = [];
+    actionStaticFrames.set(kind, frames);
+  }
+  if (!frames[index]) {
+    const native = new Uint8ClampedArray(ACTION_CELL_BACKGROUND_PIXELS[kind]);
+    drawActionStatic(native);
+    const framebuffer = scalePixels2x(native, CELL_W, CELL_H, false);
+    frames[index] = new ImageData(framebuffer.pixels, framebuffer.width, framebuffer.height);
+  }
+  return frames[index];
 }
 
 function ensureLabel(button) {
@@ -640,8 +671,9 @@ function setFindableText(button, captionText) {
   }));
 }
 
-async function paintExactCaption(button, value) {
-  await captionFontReady;
+// Synchronous once the caption font has loaded; the idle pre-render relies
+// on that so its deadline check measures real paint work.
+function paintCaptionNow(button, value) {
   const source = normalizeCaption(value);
   if (button.dataset.captionSource !== source) return;
   const text = fitCaption(source).text;
@@ -655,6 +687,11 @@ async function paintExactCaption(button, value) {
   const framebuffer = renderLabelFramebuffer(text);
   paintPixels(image, framebuffer.pixels, framebuffer.width, framebuffer.height);
   button.classList.add('has-bitmap-caption');
+}
+
+async function paintExactCaption(button, value) {
+  if (!captionFont) await captionFontReady;
+  paintCaptionNow(button, value);
 }
 
 const captionObserver = 'IntersectionObserver' in window
@@ -671,26 +708,35 @@ const captionObserver = 'IntersectionObserver' in window
 // but a fast scroll through 1000 tiles asks for hundreds of them in one
 // frame and the grid tears. Render the ones nobody has seen yet during idle
 // time, in roster order, so any later scroll only finds finished tiles.
+// Hard cap per idle slice on top of the deadline: a paint is ~1ms, so this
+// bounds the worst case (a fallback timer's fake deadline) to a few frames.
+const CAPTION_PRERENDER_BATCH = 24;
 let captionPrerenderHandle = 0;
+let captionPrerenderScheduled = false;
 function scheduleCaptionPrerender() {
-  if (captionPrerenderHandle || !captionObserver) return;
+  if (captionPrerenderScheduled || !captionObserver) return;
+  captionPrerenderScheduled = true;
   const idle = window.requestIdleCallback || ((fn) => setTimeout(() => fn({ timeRemaining: () => 8 }), 32));
-  const cancel = window.cancelIdleCallback || clearTimeout;
   const run = (deadline) => {
     captionPrerenderHandle = 0;
     const pending = [...cells.values()].filter(button =>
       button.dataset.captionSource && !button.classList.contains('has-bitmap-caption'));
     let painted = 0;
     for (const button of pending) {
+      if (painted >= CAPTION_PRERENDER_BATCH) break;
       if (deadline.timeRemaining() < 3 && painted > 0) break;
       captionObserver.unobserve(button);
-      void paintExactCaption(button, button.dataset.captionSource);
+      // Synchronous: the font is loaded by now, so the deadline check above
+      // sees the cost of each paint (an async paint returned at its first
+      // await and the whole roster was dispatched in one task).
+      paintCaptionNow(button, button.dataset.captionSource);
       painted += 1;
     }
     if (painted < pending.length) captionPrerenderHandle = idle(run);
+    else captionPrerenderScheduled = false;
   };
-  void cancel;
-  captionPrerenderHandle = idle(run);
+  // Wait for the font once, up front, instead of inside each paint.
+  captionFontReady.then(() => { captionPrerenderHandle = idle(run); });
 }
 
 function setCellLabel(button, value) {
@@ -838,10 +884,21 @@ CELL_IDS.forEach((id, index) => {
 const actionCells = [...cells.values()].filter(button =>
   button.dataset.kind === 'search' || button.dataset.kind === 'create'
 );
+// Only tiles in (or near) the viewport animate: the two statics sit at the
+// top of the roster, so a player deep in the grid or in a match pays nothing.
+const actionCellObserver = 'IntersectionObserver' in window
+  ? new IntersectionObserver(entries => {
+      for (const entry of entries) entry.target.dataset.staticOnScreen = entry.isIntersecting ? '1' : '';
+    }, { rootMargin: '100px 0px' })
+  : null;
+actionCells.forEach(button => actionCellObserver?.observe(button));
+let actionStaticFrameIndex = 0;
 setInterval(() => {
   if (document.hidden) return;
+  actionStaticFrameIndex = (actionStaticFrameIndex + 1) % ACTION_STATIC_FRAME_COUNT;
   actionCells.forEach(button => {
-    paintActionStatic(button, button.dataset.kind);
+    if (actionCellObserver && button.dataset.staticOnScreen === '') return;
+    paintActionStatic(button, button.dataset.kind, actionStaticFrameIndex);
   });
 }, 1000 / 12);
 
@@ -938,9 +995,10 @@ function visibleCellsInDisplayOrder() {
 }
 
 // The rule lattice is a full-board pixel buffer (several MB at 1000
-// fighters) and depends only on the board geometry, so typing in the search
-// box, which changes the visible set every keystroke, must not re-render it
-// unless the geometry actually changed. Keep the last few boards.
+// fighters) and depends only on the board geometry. Typing in the search box
+// changes the row count with most keystrokes, so boards are cheap to render
+// (rule bands only, see renderRules) and only the last two are kept: the
+// unfiltered roster plus the current query.
 const RULE_BOARDS = new Map();
 function rulesForBoard(width, height, columns, cellCount) {
   const key = `${width}x${height}:${columns}:${cellCount}`;
@@ -948,7 +1006,7 @@ function rulesForBoard(width, height, columns, cellCount) {
   if (!pixels) {
     pixels = renderRules(width, height, columns, cellCount);
     RULE_BOARDS.set(key, pixels);
-    if (RULE_BOARDS.size > 8) RULE_BOARDS.delete(RULE_BOARDS.keys().next().value);
+    if (RULE_BOARDS.size > 2) RULE_BOARDS.delete(RULE_BOARDS.keys().next().value);
   }
   return pixels;
 }
@@ -1257,21 +1315,33 @@ async function syncCharacters(characters = []) {
   for (const button of staticFighterCells) {
     if (nextSlugs.has(button.dataset.rosterCharacter)) continue;
     cells.delete(button.dataset.character);
+    captionObserver?.unobserve(button);
     button.remove();
   }
 
+  // One index per sync instead of a cells scan per character: with a
+  // 1000-fighter roster the per-character `[...cells.values()].find` was a
+  // million array copies and attribute reads on every roster refresh.
+  const rosterButtons = new Map();
+  for (const button of cells.values()) {
+    if (button.classList.contains('fighter-job-cell')) continue;
+    const slug = button.dataset.rosterCharacter;
+    if (slug && !rosterButtons.has(slug)) rosterButtons.set(slug, button);
+  }
+  const creationJobSlugs = new Set();
+  for (const candidate of jobCells.values()) {
+    if (candidate.dataset.kind === 'creation') creationJobSlugs.add(candidate.dataset.rosterCharacter);
+  }
+
   for (const character of nextRoster) {
-    let button = [...cells.values()].find(candidate =>
-      !candidate.classList.contains('fighter-job-cell') &&
-      candidate.dataset.rosterCharacter === character.asset
-    );
+    let button = rosterButtons.get(character.asset) || null;
     // A completed private fighter may already be represented by its job cell.
     // Keep that richer progress/ready cell instead of drawing a duplicate.
-    if (!button && [...jobCells.values()].some(candidate =>
-      candidate.dataset.kind === 'creation' &&
-      candidate.dataset.rosterCharacter === character.asset
-    )) continue;
-    if (!button) button = createRosterCell(character);
+    if (!button && creationJobSlugs.has(character.asset)) continue;
+    if (!button) {
+      button = createRosterCell(character);
+      rosterButtons.set(character.asset, button);
+    }
 
     button.dataset.label = character.label;
     button.dataset.rosterCharacter = character.asset;
@@ -1302,13 +1372,11 @@ async function syncCharacters(characters = []) {
   // The block keeps the slot of the first roster cell; everything else
   // (search, create, vanilla, job cells) stays where it is.
   const ordered = nextRoster
-    .map(character => [...cells.values()].find(candidate =>
-      !candidate.classList.contains('fighter-job-cell') &&
-      candidate.dataset.rosterCharacter === character.asset
-    ))
+    .map(character => rosterButtons.get(character.asset))
     .filter(Boolean);
+  const orderedSet = new Set(ordered);
   const current = [...grid.querySelectorAll(':scope > [data-roster-character]')]
-    .filter(button => !button.classList.contains('fighter-job-cell') && ordered.includes(button));
+    .filter(button => orderedSet.has(button));
   if (ordered.some((button, index) => button !== current[index])) {
     let after = current[0]?.previousSibling || null;
     for (const button of ordered) {
@@ -1503,6 +1571,7 @@ async function syncJobs(jobs = []) {
     cells.delete(jobCellId(jobId));
     jobCells.delete(jobId);
     jobDetails.delete(jobId);
+    captionObserver?.unobserve(button);
     button.remove();
   }
   await Promise.all(renderedJobs.map(updateJobCell));

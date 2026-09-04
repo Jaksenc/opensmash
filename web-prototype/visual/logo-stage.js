@@ -117,6 +117,7 @@ if (stage && canvas) {
     if (canvas.width !== outputWidth || canvas.height !== outputHeight) {
       renderer.setPixelRatio(pixelRatio);
       renderer.setSize(width, height, false);
+      renderedStill = false;
     }
 
     halfViewWidth = 5.45;
@@ -164,14 +165,25 @@ if (stage && canvas) {
   }, { rootMargin: '120px' });
   observer.observe(stage);
 
+  // The stage's viewport rect only changes on scroll/resize; reading it
+  // every frame is a forced layout beside the engine iframe.
+  let stageBounds = null;
+  const invalidateStageBounds = () => { stageBounds = null; };
+  window.addEventListener('scroll', invalidateStageBounds, { passive: true });
+  window.addEventListener('resize', invalidateStageBounds);
+  if ('ResizeObserver' in window) new ResizeObserver(invalidateStageBounds).observe(stage);
+  // Under reduced motion the logo only moves with the pointer/press; once
+  // those settle the last frame is final and re-rendering it is waste.
+  let renderedStill = false;
+  let renderedModel = null;
+
   function renderLogo(now) {
     requestAnimationFrame(renderLogo);
     if (!stageVisible) return;
-    // Phones run the engine on this same main thread; re-rendering a static
-    // logo at 60Hz beside it only steals frame time (and audio callbacks).
-    // The canvas keeps its last frame while we skip.
-    if (document.body.classList.contains('is-game-running') &&
-        document.body.classList.contains('uses-mobile-controls')) return;
+    // The engine shares this main thread (and, on phones, its audio
+    // callbacks); re-rendering a logo the player is not looking at during a
+    // match only steals frame time. The canvas keeps its last frame.
+    if (document.body.classList.contains('is-game-running')) return;
     resizeLogoRenderer();
     const seconds = now * 0.001;
     const dt = previousFrameTime
@@ -179,7 +191,7 @@ if (stage && canvas) {
       : 1 / 60;
     previousFrameTime = now;
 
-    const bounds = stage.getBoundingClientRect();
+    const bounds = stageBounds || (stageBounds = stage.getBoundingClientRect());
     const centerX = bounds.left + bounds.width * 0.5;
     const centerY = bounds.top + bounds.height * 0.5;
     const distanceX = pointerClientX < bounds.left
@@ -207,6 +219,10 @@ if (stage && canvas) {
     pointerY += (pointerYGoal - pointerY) * pointerFollow;
     pressAmount += ((logoPressed ? 1 : 0) - pressAmount) *
       (1 - Math.exp(-dt * (logoPressed ? 22 : 11)));
+
+    const stillFrame = reducedMotion.matches && !logoPressed && proximityGoal === 0 &&
+      pointerProximity < 0.002 && pressAmount < 0.002;
+    if (stillFrame && renderedStill && renderedModel === logoModel) return;
 
     cursorLightTarget.set(
       pointerX * halfViewWidth,
@@ -241,6 +257,8 @@ if (stage && canvas) {
 
     renderer.setRenderTarget(null);
     renderer.render(scene, camera);
+    renderedStill = stillFrame;
+    renderedModel = logoModel;
 
     // Keep the fallback above the canvas until a correctly sized model frame
     // has actually been drawn. This makes loading a cross-fade, not a snap.
