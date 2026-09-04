@@ -5,7 +5,10 @@ import { access, mkdir, open, readdir, readFile, rename, stat, unlink } from "no
 import http from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { promisify } from "node:util";
+import { gzip as gzipCallback } from "node:zlib";
 import { createFighterJobs } from "./fighter-jobs.js";
+import { createTurnstileVerifier } from "./turnstile.js";
 import { HandoffError, createHandoffRoomsFromEnv } from "./handoff-rooms.js";
 import { createIceServerProvider } from "./handoff-ice.js";
 import { createAuthService, isAuthHandlerPath } from "./auth.js";
@@ -121,6 +124,7 @@ const dispatcher = createJobDispatcher();
 const jobDatabase = createJobDatabase({
   jobsRoot: path.resolve(process.env.FIGHTER_JOBS_ROOT || path.join(APP_ROOT, "data", "fighter-jobs")),
 });
+const turnstile = createTurnstileVerifier();
 const fighterJobs = createFighterJobs({
   appRoot: APP_ROOT,
   repoRoot: PIPELINE_PROJECT_ROOT,
@@ -129,6 +133,7 @@ const fighterJobs = createFighterJobs({
   objectStore,
   jobDatabase,
   dispatcher,
+  turnstile,
 });
 
 const PORT = Number(process.env.PORT || 4174);
@@ -233,6 +238,35 @@ function redirectToBakedAsset(res, pathname, location) {
     ...securityHeaders(pathname),
   });
   res.end();
+}
+
+const gzip = promisify(gzipCallback);
+const COMPRESS_MIN_BYTES = 1024;
+
+// Cloudflare compresses toward browsers but pulls from the origin as-is, so
+// the 1.4 MB roster shell and /api/characters crossed to the edge (and
+// counted as Cloud Run egress) uncompressed. Only the handful of large
+// text responses use this; small JSON replies stay on json().
+async function compressed(req, res, status, body, headers) {
+  const accepts = /\bgzip\b/.test(String(req.headers["accept-encoding"] || ""));
+  let payload = body;
+  const extra = { Vary: "Accept-Encoding" };
+  if (accepts && body.length >= COMPRESS_MIN_BYTES) {
+    payload = await gzip(body);
+    extra["Content-Encoding"] = "gzip";
+  }
+  res.writeHead(status, { ...headers, ...extra, "Content-Length": payload.length });
+  if (req.method === "HEAD") res.end();
+  else res.end(payload);
+}
+
+async function jsonCompressed(req, res, status, data, headers = {}) {
+  return compressed(req, res, status, Buffer.from(JSON.stringify(data)), {
+    "Content-Type": "application/json; charset=utf-8",
+    "Cache-Control": "no-store",
+    ...BASE_SECURITY_HEADERS,
+    ...headers,
+  });
 }
 
 function json(res, status, data, headers = {}) {
@@ -696,15 +730,12 @@ async function serveAppShell(req, res) {
     console.warn(`Could not embed the public character roster: ${error.message}`);
   }
   const body = Buffer.from(withInitialState(html, initialState));
-  res.writeHead(200, {
+  await compressed(req, res, 200, body, {
     "Content-Type": "text/html; charset=utf-8",
-    "Content-Length": body.length,
     "Cache-Control": cacheControlForEnvironment(APP_SHELL_CACHE_CONTROL, IS_PRODUCTION),
     ...edgeCacheHeaders(APP_SHELL_EDGE_CACHE_CONTROL, IS_PRODUCTION),
     ...APP_SECURITY_HEADERS,
   });
-  if (req.method === "HEAD") res.end();
-  else res.end(body);
   return true;
 }
 
@@ -771,6 +802,7 @@ async function handleRequest(req, res, vite) {
       authorized: Boolean(romSession),
       authenticated: Boolean(user),
       creationEnabled: creationEnabled(),
+      turnstileSiteKey: turnstile.siteKey,
       user,
     });
   }
@@ -887,7 +919,7 @@ async function handleRequest(req, res, vite) {
   }
 
   if (req.method === "GET" && pathname === "/api/characters") {
-    return json(res, 200, {
+    return jsonCompressed(req, res, 200, {
       characters: await configuredCharacters(url.searchParams.get("q") || "", user),
     });
   }
@@ -1133,9 +1165,9 @@ async function handleRequest(req, res, vite) {
         ...(character.ui ? [`${character.slug}.osbui`] : []),
         ...(character.voice ? [`${character.slug}.wav`] : []),
       ]).sort();
-      return json(res, 200, names, { "Cache-Control": "public, no-cache" });
+      return jsonCompressed(req, res, 200, names, { "Cache-Control": "public, no-cache" });
     }
-    return json(res, 200, await engineRoster(), { "Cache-Control": "public, no-cache" });
+    return jsonCompressed(req, res, 200, await engineRoster(), { "Cache-Control": "public, no-cache" });
   }
 
   if (pathname.startsWith("/character-assets/")) {
