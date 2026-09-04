@@ -1,4 +1,4 @@
-export const TRAILER_VIDEO_ID = "e6mjUayq5qg";
+export const TRAILER_VIDEO_ID = "ASxqyiE9FUU";
 export const TRAILER_WATCH_URL = `https://youtu.be/${TRAILER_VIDEO_ID}`;
 
 export const TRAILER_EMBED_URL =
