@@ -348,7 +348,12 @@ export default function RetroHome({
     if (surface) cinematicFirstRectRef.current = surface.getBoundingClientRect();
     if (!demoTrailer) {
       window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      // Always restart from the top, even if the presenter paused or scrubbed
+      // the player by hand while positioning it (the site's play/pause dedupe
+      // would otherwise leave it paused at 0).
       controlEmbeddedTrailer(introVideoRef.current, "seekTo", [0, true]);
+      controlEmbeddedTrailer(introVideoRef.current, "playVideo");
+      trailerCommandRef.current.paused = false;
     }
     onDemoTrailer();
   };

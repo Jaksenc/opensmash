@@ -930,6 +930,15 @@ async function handleRequest(req, res, vite) {
       : json(res, 404, { error: "Fighter job not found." });
   }
 
+  const fighterDeleteMatch = pathname.match(/^\/api\/fighters\/([a-f0-9-]+)$/);
+  if (req.method === "DELETE" && fighterDeleteMatch) {
+    try {
+      return json(res, 200, { deleted: await fighterJobs.remove(fighterDeleteMatch[1], user.uid) });
+    } catch (error) {
+      return json(res, error.status || 400, { error: error.message || "Could not delete fighter." });
+    }
+  }
+
   const fighterRetryMatch = pathname.match(/^\/api\/fighters\/([a-f0-9-]+)\/retry$/);
   if (req.method === "POST" && fighterRetryMatch) {
     try {

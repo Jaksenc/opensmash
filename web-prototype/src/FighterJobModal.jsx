@@ -35,12 +35,14 @@ function statusHeadline(job) {
 // been running, the pipeline's last log lines, and retry when it failed.
 // Opened by tapping a generating or failed grid tile and automatically when a
 // job that was visible while it ran fails.
-export default function FighterJobModal({ job, onClose, onRetry, open }) {
+export default function FighterJobModal({ job, onClose, onDelete, onRetry, open }) {
   const closeRef = useRef(null);
   const [now, setNow] = useState(() => Date.now());
   const [logOpen, setLogOpen] = useState(false);
   const [retrying, setRetrying] = useState(false);
   const [retryError, setRetryError] = useState("");
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const active = ACTIVE.has(job?.status);
   useEffect(() => {
@@ -53,6 +55,8 @@ export default function FighterJobModal({ job, onClose, onRetry, open }) {
     setNow(Date.now());
     setLogOpen(job?.status === "failed");
     setRetryError("");
+    setConfirmDelete(false);
+    setDeleting(false);
   }, [open, job?.id, job?.status]);
 
   if (!job) return <ModalPage className="fighter-job-overlay" open={false} />;
@@ -76,6 +80,24 @@ export default function FighterJobModal({ job, onClose, onRetry, open }) {
       setRetryError(error.message || "Could not retry this fighter.");
     } finally {
       setRetrying(false);
+    }
+  }
+
+  async function remove(close) {
+    if (!onDelete || deleting) return;
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      return;
+    }
+    setDeleting(true);
+    setRetryError("");
+    try {
+      await onDelete(job);
+      close();
+    } catch (error) {
+      setRetryError(error.message || "Could not delete this fighter.");
+      setDeleting(false);
+      setConfirmDelete(false);
     }
   }
 
@@ -181,6 +203,16 @@ export default function FighterJobModal({ job, onClose, onRetry, open }) {
                   onClick={() => retry(close)}
                 >
                   {retrying ? "Retrying…" : retryLabel}
+                </button>
+              )}
+              {!active && onDelete && (
+                <button
+                  className={`launch-flow-action fighter-job-delete ${confirmDelete ? "is-confirming" : ""}`.trim()}
+                  type="button"
+                  disabled={deleting}
+                  onClick={() => remove(close)}
+                >
+                  {deleting ? "Deleting…" : confirmDelete ? "Really delete? Tap again" : "Delete fighter"}
                 </button>
               )}
               <button

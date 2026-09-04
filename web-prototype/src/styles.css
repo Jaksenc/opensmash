@@ -1210,7 +1210,10 @@ body.is-demo-mode .arena-surface {
 /* YouTube only shows its control bar while the pointer is over the player,
    and its hide timer can't be tuned; in a demo the mouse never reaches it.
    M / T / the header sound toggle are the controls instead. */
-body.is-demo-mode .intro-video { pointer-events: none; }
+/* Only while the fullscreen trailer is up: keeps YouTube's control bar hidden.
+   On the demo home page the player stays clickable so it can be paused,
+   scrubbed and positioned before the show starts. */
+body.is-demo-mode.is-trailer-cinematic .intro-video { pointer-events: none; }
 .game-surface-shell.is-demo-trailer .intro-video-frame .intro-game-frame {
   opacity: 0;
   transition: opacity 700ms ease 250ms;
@@ -1786,7 +1789,19 @@ body.retro-home.show-native-cursor * {
   min-height: 48px;
   background: #050303;
 }
-.fighter-job-retry[disabled] { opacity: .6; cursor: default; }
+.fighter-job-retry,
+.fighter-job-delete,
+.fighter-job-cancel { box-sizing: border-box; }
+.fighter-job-delete {
+  width: clamp(210px, 23vw, 300px);
+  min-width: clamp(210px, 23vw, 300px);
+  min-height: 48px;
+  background: #050303;
+  color: #ff947a;
+}
+.fighter-job-delete.is-confirming { background: #3a1a14; color: #fff; }
+.fighter-job-retry[disabled],
+.fighter-job-delete[disabled] { opacity: .6; cursor: default; }
 .fighter-job-title,
 .fighter-job-headline,
 .fighter-job-facts,

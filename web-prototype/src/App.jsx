@@ -581,6 +581,12 @@ export default function App() {
     return () => { cancelled = true; };
   }, []);
 
+  // Live demos show the public roster only: no private/own fighters, no jobs.
+  const gridCharacters = demoMode
+    ? characters.filter((character) => character.visibility !== "private" && !character.mine)
+    : characters;
+  const gridJobs = demoMode ? [] : fighterJobs;
+
   useEffect(() => {
     let cancelled = false;
     let timer;
@@ -588,7 +594,7 @@ export default function App() {
     function syncGridCharacters() {
       if (cancelled) return;
       if (window.characterGrid?.syncCharacters) {
-        Promise.resolve(window.characterGrid.syncCharacters(characters)).catch(() => {});
+        Promise.resolve(window.characterGrid.syncCharacters(gridCharacters)).catch(() => {});
         return;
       }
       attempts += 1;
@@ -599,7 +605,7 @@ export default function App() {
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [characters]);
+  }, [gridCharacters]);
 
   useEffect(() => {
     if (!authorized || !user) {
@@ -652,6 +658,17 @@ export default function App() {
     return result.job;
   }, [recordFighterJob]);
 
+  const deleteFighterJob = useCallback(async (job) => {
+    const response = await fetch(`/api/fighters/${encodeURIComponent(job.id)}`, { method: "DELETE" });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.error || "Could not delete this fighter.");
+    const slug = job.character?.slug || job.slug;
+    setFighterJobs((current) => current.filter((candidate) => candidate.id !== job.id));
+    setCharacters((current) => current.filter((character) => character.slug !== slug));
+    setDetailsJobId(null);
+    window.characterGrid?.select?.(null);
+  }, []);
+
   const activeFighterJobKey = fighterJobs
     .filter((job) => ACTIVE_FIGHTER_JOB_STATUSES.has(job.status))
     .map((job) => job.id)
@@ -681,7 +698,7 @@ export default function App() {
     function syncGridJobs() {
       if (cancelled) return;
       if (window.characterGrid?.syncJobs) {
-        Promise.resolve(window.characterGrid.syncJobs(fighterJobs)).catch(() => {});
+        Promise.resolve(window.characterGrid.syncJobs(gridJobs)).catch(() => {});
         return;
       }
       attempts += 1;
@@ -692,7 +709,7 @@ export default function App() {
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [fighterJobs]);
+  }, [gridJobs]);
 
   useEffect(() => {
     if (isCreatePage || createStage !== "rom") return undefined;
@@ -1344,6 +1361,11 @@ export default function App() {
       reportError(error) { setPageError(error.message || "Could not load the visual experience."); },
       reportGenerationError(job) { setPageError(formatFighterJobError(job)); },
       showGenerationDetails(job) { if (job?.id) setDetailsJobId(job.id); },
+      // Padlock/manage control on an own tile: open the job details (delete lives there).
+      manageFighter(slug) {
+        const job = fighterJobs.find((candidate) => (candidate.character?.slug || candidate.slug) === slug);
+        if (job) setDetailsJobId(job.id);
+      },
       validateCreateRom: validateCreateVisualRom,
       validateRom: validateVisualRom,
     });
@@ -1402,6 +1424,7 @@ export default function App() {
           open={Boolean(detailsJob)}
           onClose={() => setDetailsJobId(null)}
           onRetry={retryFighterJob}
+          onDelete={deleteFighterJob}
         />
         <SettingsModal
           accountConnected={Boolean(user)}

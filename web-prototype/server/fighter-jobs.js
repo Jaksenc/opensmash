@@ -1133,6 +1133,26 @@ export function createFighterJobs({
     return publicJob(job);
   }
 
+  // Owner-initiated delete. Generating jobs must finish or fail first (the
+  // worker holds the lease); afterwards the record and its slug reservation
+  // go, which also revokes the /engine/bundles/<slug> gate. Stored artifacts
+  // are content-addressed and left in place.
+  async function remove(id, ownerId) {
+    const job = ownedJob(id, ownerId);
+    if (!job) throw new HttpError(404, "Fighter job not found.");
+    if (ACTIVE_JOB_STATUSES.has(job.status)) {
+      throw new HttpError(409, "That fighter is still being generated. Wait for it to finish or fail first.");
+    }
+    try {
+      await jobDatabase.delete(job.id);
+    } catch (error) {
+      throw httpErrorFrom(error);
+    }
+    jobs.delete(job.id);
+    events.emit(job.id, { ...jobSnapshot(job), status: "deleted" });
+    return { id: job.id, slug: job.slug };
+  }
+
   return {
     async init({ loadAll = true } = {}) {
       if (loadAll) await loadJobs();
@@ -1212,6 +1232,9 @@ export function createFighterJobs({
     },
     async retry(id, ownerId) {
       return retry(id, ownerId);
+    },
+    async remove(id, ownerId) {
+      return remove(id, ownerId);
     },
     async cancel(id, ownerId) {
       return cancel(id, ownerId);

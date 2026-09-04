@@ -1,4 +1,4 @@
-import { mkdir, readFile, readdir, rename, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, rename, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { ACTIVE_JOB_STATUSES } from "./job-protocol.js";
@@ -107,6 +107,10 @@ class LocalJobDatabase {
     return null;
   }
 
+  async delete(id) {
+    await rm(path.join(this.root, id), { recursive: true, force: true });
+  }
+
   async claim(id, executionId, leaseSeconds) {
     const decision = claimDecision(await this.get(id), executionId);
     if (!decision.claimed) return decision;
@@ -182,6 +186,16 @@ class FirestoreJobDatabase {
       if (stored?.lease?.executionId !== executionId) throw leaseLostError(job.id);
       transaction.set(reference, job);
     });
+  }
+
+  async delete(id) {
+    const job = await this.get(id);
+    const batch = this.collection.firestore.batch();
+    batch.delete(this.collection.doc(id));
+    if (job?.slug) {
+      batch.delete(this.collection.firestore.collection(`${this.collectionName}Slugs`).doc(job.slug));
+    }
+    await batch.commit();
   }
 
   watch(listener) {

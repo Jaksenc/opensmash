@@ -261,6 +261,27 @@
     filter: drop-shadow(0 1px 0 #1a0a00) drop-shadow(0 0 2px rgba(0, 0, 0, .9));
     pointer-events: none;
   }
+  .replica-manage-button {
+    position: absolute;
+    top: 4%;
+    right: 4%;
+    z-index: 5;
+    width: clamp(14px, 1.6vw, 20px);
+    height: clamp(14px, 1.6vw, 20px);
+    padding: 0;
+    border: 1px solid #6b5a4a;
+    border-radius: 2px;
+    background: rgba(8, 5, 4, .85);
+    color: #d8c6b2;
+    font: bold 11px/1 sans-serif;
+    opacity: 0;
+    transition: opacity 120ms ease;
+  }
+  .replica-cell:hover .replica-manage-button,
+  .replica-cell:focus-within .replica-manage-button,
+  .replica-manage-button:focus-visible { opacity: 1; }
+  @media (hover: none) { .replica-manage-button { opacity: .85; } }
+  .replica-manage-button:hover { background: #3a1a14; color: #fff; }
   .fighter-job-cell.is-generating .replica-private-badge,
   .fighter-job-cell.is-failed .replica-private-badge { bottom: 32%; }
   .replica-search-input {

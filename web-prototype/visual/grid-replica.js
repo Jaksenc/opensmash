@@ -112,6 +112,32 @@ function liveRosterCharacter(character) {
   };
 }
 
+// The viewer's own fighters get a small "manage" control (opens the job
+// details, where delete lives). It sits on top of the tile and must not
+// trigger the tile's own select.
+function setCellManageControl(button, slug, mine) {
+  let control = button.querySelector('.replica-manage-button');
+  if (!mine) {
+    control?.remove();
+    return;
+  }
+  if (!control) {
+    control = document.createElement('button');
+    control.type = 'button';
+    control.className = 'replica-manage-button';
+    control.textContent = '\u00d7';
+    control.addEventListener('click', event => {
+      event.stopPropagation();
+      event.preventDefault();
+      APP_BRIDGE?.manageFighter?.(control.dataset.slug);
+    });
+    button.append(control);
+  }
+  control.dataset.slug = slug;
+  control.title = 'Manage or delete this fighter';
+  control.setAttribute('aria-label', `Manage ${button.dataset.displayName || slug}`);
+}
+
 // Private fighters (visible only to their uploader) get a small padlock badge
 // so the owner can tell them apart from the public roster at a glance.
 function setCellVisibility(button, visibility) {
@@ -1154,7 +1180,9 @@ function clearFighterSearch() {
 function getCell(name) {
   const value = String(name);
   const key = value.toUpperCase();
-  return cells.get(key) || [...cells.values()].find(cell =>
+  // Static cells are keyed CELL-### (upper case); cells added later for
+  // generated fighters are keyed ROSTER-<slug> with the slug's own case.
+  return cells.get(value) || cells.get(key) || [...cells.values()].find(cell =>
     cell.dataset.label === key || cell.dataset.rosterCharacter === value
   ) || null;
 }
@@ -1230,6 +1258,7 @@ async function syncCharacters(characters = []) {
     setCellVisibility(button, character.visibility);
     if (character.mine) button.dataset.mine = 'true';
     else delete button.dataset.mine;
+    setCellManageControl(button, character.asset, Boolean(character.mine));
     button.setAttribute('aria-label', character.visibility === 'private'
       ? `${character.name}, private`
       : character.name);
@@ -1365,6 +1394,7 @@ async function updateJobCell(job) {
     ? formatFighterJobCellError(job)
     : '';
   setCellVisibility(button, job.visibility);
+  setCellManageControl(button, job.character?.slug || job.slug, complete || failed);
   button.setAttribute('aria-label', complete
     ? `${job.character.name}, ready to fight${job.visibility === 'private' ? ', private' : ''}`
     : failed
