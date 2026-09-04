@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import flowMusicUrl from "../visual/assets/skyward-save.mp3?url";
 import viewportLogoUrl from "../visual/assets/branding/super-weights-bros-stacked-white.png?url";
 import AuthGate from "./AuthGate.jsx";
@@ -45,6 +45,13 @@ import {
   TRAILER_CPU_LEVEL,
   TRAILER_STAGE,
   createDemoMatchAction,
+  demoGridOrder,
+  DEMO_MUSIC_ON_SCROLL,
+  DEMO_PIN_ON_PLAY,
+  demoStageFor,
+  DEMO_PRESENTER,
+  DEMO_SCROLL_DURATION_MS,
+  DEMO_SCROLL_TARGET,
   createTrailerIntroAction,
   createTrailerMatchAction,
 } from "./trailer-preset.js";
@@ -326,10 +333,21 @@ export default function App() {
     !isCreatePage && new URLSearchParams(window.location.search).get("trailer") === "1"
   ));
   // `?demo=1`: fixed funny opponents on every pick, T hands off to the trailer.
-  const [demoMode] = useState(() => (
-    !isCreatePage && new URLSearchParams(window.location.search).get("demo") === "1"
-  ));
+  const [demoMode] = useState(() => {
+    const demo = !isCreatePage && new URLSearchParams(window.location.search).get("demo") === "1";
+    // The CRT overlay is a lazy module and the demo flag leaves the URL on
+    // load, so hand it a global: demos run with the filter off (projectors
+    // and screen recordings lose the picture under the scanlines).
+    if (demo) {
+      window.__opensmashDemo = true;
+      // The query is stripped before the CRT module loads: keep `?crt=` too.
+      window.__opensmashCrt = new URLSearchParams(window.location.search).get("crt");
+    }
+    return demo;
+  });
   const [demoTrailer, setDemoTrailer] = useState(false);
+  // "Loading trailer" curtain between the live match and the video (demo T).
+  const [demoCurtain, setDemoCurtain] = useState(false);
   // Demo background music (M toggles); always stops when a match starts.
   const [demoMusic, setDemoMusic] = useState(false);
   const [trailerRecording] = useState(() => (
@@ -582,9 +600,12 @@ export default function App() {
   }, []);
 
   // Live demos show the public roster only: no private/own fighters, no jobs.
-  const gridCharacters = demoMode
-    ? characters.filter((character) => character.visibility !== "private" && !character.mine)
-    : characters;
+  // Memoised: the grid effect below re-syncs every tile when this identity
+  // changes, and a fresh filtered array per render made every state change
+  // (engine boot, pin, Esc) repaint 1000 caption bitmaps in one task.
+  const gridCharacters = useMemo(() => (demoMode
+    ? demoGridOrder(characters.filter((character) => character.visibility !== "private" && !character.mine))
+    : characters), [characters, demoMode]);
   const gridJobs = demoMode ? [] : fighterJobs;
 
   useEffect(() => {
@@ -813,11 +834,36 @@ export default function App() {
       return {
         ...advancedOptions,
         bootMode: "free-for-all",
-        stage: DEMO_STAGE,
+        stage: demoStageFor(action.character?.slug),
         opponentLevel: DEMO_CPU_LEVEL,
       };
     }
     return advancedOptions;
+  }
+
+  // A pick from deep in the roster scrolls the page back to the game. Booting
+  // the engine in the same frame starves that scroll: every tile passing the
+  // viewport paints its caption while the wasm module loads, so the grid
+  // tears and stutters. Wait for the scroll to settle first (fallback timer
+  // for browsers without scrollend), then hand the iframe its URL.
+  const pendingBootRef = useRef(0);
+  function bootEngineAfterScroll(boot) {
+    const token = ++pendingBootRef.current;
+    if (window.scrollY <= 4) {
+      boot();
+      return;
+    }
+    let done = false;
+    let timer = 0;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      window.clearTimeout(timer);
+      window.removeEventListener("scrollend", finish);
+      if (pendingBootRef.current === token) boot();
+    };
+    timer = window.setTimeout(finish, 1200);
+    window.addEventListener("scrollend", finish, { once: true });
   }
 
   function launch(action) {
@@ -828,10 +874,19 @@ export default function App() {
         setTrailerEngineReady(false);
         setTrailerEngineStarted(false);
       }
-      setEngine({ src: engineUrl(launchAction, launchOptions, gamepads), action: launchAction });
+      const src = engineUrl(launchAction, launchOptions, gamepads);
       setPendingAction(null);
-      if (!action.trailerIntro) {
-        requestAnimationFrame(() => gameRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+      if (action.trailerIntro) {
+        setEngine({ src, action: launchAction });
+      } else {
+        requestAnimationFrame(() => gameRef.current?.scrollIntoView({
+          behavior: demoMode ? "instant" : "smooth",
+          block: "start",
+        }));
+        bootEngineAfterScroll(() => {
+          setEngine({ src, action: launchAction });
+          if (demoMode && DEMO_PIN_ON_PLAY) setImmersive(true);
+        });
       }
     } catch (error) {
       setPageError(error.message || "Could not apply those advanced options.");
@@ -1078,7 +1133,11 @@ export default function App() {
       const launchOptions = launchOptionsFor(action);
       const launchAction = prepareLaunchAction(action, launchOptions);
       const src = engineUrl(launchAction, launchOptions, gamepads);
-      setEngine({ src, action: launchAction });
+      if (action.trailerIntro) setEngine({ src, action: launchAction });
+      else bootEngineAfterScroll(() => {
+        setEngine({ src, action: launchAction });
+        if (demoMode && DEMO_PIN_ON_PLAY) setImmersive(true);
+      });
       setPendingAction(null);
       setPageError("");
       return src;
@@ -1216,6 +1275,14 @@ export default function App() {
     const target = fullscreenTarget();
     if (!target) return;
 
+    // Live demos never leave the tab: browser fullscreen repaints Chrome and
+    // flashes the transition. The pinned in-page shell (RetroHome FLIPs it)
+    // reads as fullscreen on a projector and Esc releases it.
+    if (demoMode) {
+      setImmersive((current) => !current);
+      return;
+    }
+
     if (immersive) {
       setImmersive(false);
       return;
@@ -1240,33 +1307,87 @@ export default function App() {
 
   // Demo hand-off: the looping trailer takes the whole screen over the live
   // match, then the engine is torn down once the video is covering it.
-  async function toggleDemoTrailer() {
-    const target = fullscreenTarget();
-    if (!target) return;
-    if (demoTrailer) {
-      const fullscreenElement = document.fullscreenElement || document.webkitFullscreenElement;
-      if (fullscreenElement) {
-        try {
-          const exitFullscreen = document.exitFullscreen || document.webkitExitFullscreen;
-          await exitFullscreen.call(document);
-        } catch {
-          // Fall through to the in-page release.
-        }
-      }
-      setDemoTrailer(false);
-      setTrailerCinematic(false);
+  // P: the presenter's match, booted from wherever the page is, straight
+  // into the pinned shell so the VS card lands framed for the recording.
+  function startDemoMatch() {
+    const character = characters.find((entry) => entry.slug === DEMO_PRESENTER);
+    if (!character) {
+      setPageError(`Demo presenter "${DEMO_PRESENTER}" is not in the roster.`);
       return;
     }
-    setDemoTrailer(true);
-    setTrailerCinematic(true);
-    try {
-      const requestFullscreen = target.requestFullscreen || target.webkitRequestFullscreen;
-      await requestFullscreen.call(target, { navigationUI: "hide" });
-    } catch {
-      // No element fullscreen (iPhone Safari): the fixed cinematic shell is enough.
+    window.clearTimeout(demoCurtainTimerRef.current);
+    setDemoTrailer(false);
+    setDemoCurtain(false);
+    setTrailerCinematic(false);
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    window.characterGrid?.select?.(character.slug);
+    launch({ type: "character", character, picks: [] });
+  }
+
+  // N: close the match and glide the roster down to the next pick. A custom
+  // eased scroll (not the browser's smooth scroll) so the glide is the same
+  // length every take and the engine is gone before any tile has to paint.
+  const demoScrollFrameRef = useRef(0);
+  function runDemoScroll() {
+    window.cancelAnimationFrame(demoScrollFrameRef.current);
+    window.clearTimeout(demoCurtainTimerRef.current);
+    setDemoTrailer(false);
+    setDemoCurtain(false);
+    setTrailerCinematic(false);
+    setImmersive(false);
+    setEngine(null);
+    window.characterGrid?.select?.(null);
+    if (DEMO_MUSIC_ON_SCROLL) {
+      setDemoMusic(true);
+      startFlowMusic();
     }
-    // Let the video cover the match before the engine (and its audio) go away.
-    window.setTimeout(() => setEngine(null), 1100);
+    const tile = document.querySelector(`#replica-grid [data-roster-character="${DEMO_SCROLL_TARGET}"]`);
+    if (!tile) {
+      setPageError(`Demo scroll target "${DEMO_SCROLL_TARGET}" is not on the grid.`);
+      return;
+    }
+    // Let React drop the pinned shell first so the tile's page position is
+    // measured against the normal layout.
+    window.setTimeout(() => {
+      const rect = tile.getBoundingClientRect();
+      const maxTop = document.documentElement.scrollHeight - window.innerHeight;
+      const target = Math.max(0, Math.min(maxTop, window.scrollY + rect.top + rect.height / 2 - window.innerHeight * 0.62));
+      const from = window.scrollY;
+      const started = performance.now();
+      const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+      const step = (now) => {
+        const t = Math.min(1, (now - started) / DEMO_SCROLL_DURATION_MS);
+        // Explicitly instant: the page's own scroll-behavior would turn every
+        // frame's scrollTo into a fresh smooth animation.
+        window.scrollTo({ top: from + (target - from) * ease(t), left: 0, behavior: "instant" });
+        if (t < 1) demoScrollFrameRef.current = window.requestAnimationFrame(step);
+      };
+      demoScrollFrameRef.current = window.requestAnimationFrame(step);
+    }, 60);
+  }
+
+  const demoCurtainTimerRef = useRef(0);
+  function toggleDemoTrailer() {
+    if (!fullscreenTarget()) return;
+    window.clearTimeout(demoCurtainTimerRef.current);
+    if (demoTrailer) {
+      setDemoTrailer(false);
+      setDemoCurtain(false);
+      setTrailerCinematic(false);
+      setImmersive(false);
+      return;
+    }
+    // Stay in the tab: the shell FLIPs to the pinned cinematic box, a
+    // "Loading trailer" curtain fades over the match, the engine goes away
+    // behind it, then the curtain lifts on the video already playing.
+    setDemoTrailer(true);
+    setDemoCurtain(true);
+    setTrailerCinematic(true);
+    setImmersive(false);
+    demoCurtainTimerRef.current = window.setTimeout(() => {
+      setEngine(null);
+      demoCurtainTimerRef.current = window.setTimeout(() => setDemoCurtain(false), 700);
+    }, 1400);
   }
 
   async function runTrailerControl() {
@@ -1394,7 +1515,10 @@ export default function App() {
           demoMusic={demoMusic}
           onDemoMusic={toggleDemoMusic}
           demoTrailer={demoTrailer}
+          demoCurtain={demoCurtain}
           onDemoTrailer={toggleDemoTrailer}
+          onDemoStart={startDemoMatch}
+          onDemoScroll={runDemoScroll}
           onResetRom={clearVerification}
           onSignOut={signOutUser}
           pageError={pageError}

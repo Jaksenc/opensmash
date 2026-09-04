@@ -667,13 +667,42 @@ const captionObserver = 'IntersectionObserver' in window
     }, { rootMargin: '600px 0px' })
   : null;
 
+// Captions are bitmaps rendered on first sight, which is fine for a browse
+// but a fast scroll through 1000 tiles asks for hundreds of them in one
+// frame and the grid tears. Render the ones nobody has seen yet during idle
+// time, in roster order, so any later scroll only finds finished tiles.
+let captionPrerenderHandle = 0;
+function scheduleCaptionPrerender() {
+  if (captionPrerenderHandle || !captionObserver) return;
+  const idle = window.requestIdleCallback || ((fn) => setTimeout(() => fn({ timeRemaining: () => 8 }), 32));
+  const cancel = window.cancelIdleCallback || clearTimeout;
+  const run = (deadline) => {
+    captionPrerenderHandle = 0;
+    const pending = [...cells.values()].filter(button =>
+      button.dataset.captionSource && !button.classList.contains('has-bitmap-caption'));
+    let painted = 0;
+    for (const button of pending) {
+      if (deadline.timeRemaining() < 3 && painted > 0) break;
+      captionObserver.unobserve(button);
+      void paintExactCaption(button, button.dataset.captionSource);
+      painted += 1;
+    }
+    if (painted < pending.length) captionPrerenderHandle = idle(run);
+  };
+  void cancel;
+  captionPrerenderHandle = idle(run);
+}
+
 function setCellLabel(button, value) {
   const source = normalizeCaption(value);
+  const alreadyRendered = button.classList.contains('has-bitmap-caption');
+  // Same caption, already painted: nothing to do. A roster re-sync must not
+  // re-render a thousand bitmaps.
+  if (alreadyRendered && button.dataset.captionSource === source) return button.dataset.label;
   const text = captionFont ? fitCaption(source).text : source.slice(0, 8);
   setFindableText(button, text);
   button.dataset.label = text;
   button.dataset.captionSource = source;
-  const alreadyRendered = button.classList.contains('has-bitmap-caption');
   button.classList.remove('has-bitmap-caption');
   if (!captionObserver || alreadyRendered || ['search', 'create'].includes(button.dataset.kind)) {
     void paintExactCaption(button, source);
@@ -687,7 +716,9 @@ function setNativePortrait(button, character) {
   let image = button.querySelector('.replica-portrait-layer');
   if (!image) {
     image = createImageLayer('replica-portrait-layer');
-    image.loading = 'lazy';
+    // Live demos scroll the whole roster in one glide; fetch every tile up
+    // front so nothing pops in on stage.
+    image.loading = document.body.classList.contains('is-demo-mode') ? 'eager' : 'lazy';
     image.width = CELL_W * RASTER_SCALE;
     image.height = CELL_H * RASTER_SCALE;
     button.prepend(image);
@@ -1266,7 +1297,36 @@ async function syncCharacters(characters = []) {
     setNativePortrait(button, character);
   }
 
+  // Cells are updated in place, so a roster whose ORDER changed (the demo's
+  // spotlight block, a re-sorted front row) has to move its buttons too.
+  // The block keeps the slot of the first roster cell; everything else
+  // (search, create, vanilla, job cells) stays where it is.
+  const ordered = nextRoster
+    .map(character => [...cells.values()].find(candidate =>
+      !candidate.classList.contains('fighter-job-cell') &&
+      candidate.dataset.rosterCharacter === character.asset
+    ))
+    .filter(Boolean);
+  const current = [...grid.querySelectorAll(':scope > [data-roster-character]')]
+    .filter(button => !button.classList.contains('fighter-job-cell') && ordered.includes(button));
+  if (ordered.some((button, index) => button !== current[index])) {
+    let after = current[0]?.previousSibling || null;
+    for (const button of ordered) {
+      grid.insertBefore(button, after ? after.nextSibling : grid.firstChild);
+      after = button;
+    }
+    // Layout order is the cells map's insertion order (fighters sort after
+    // the fixed cells regardless), so re-insert them in the new order too.
+    for (const button of ordered) {
+      const key = button.dataset.character;
+      cells.delete(key);
+      cells.set(key, button);
+    }
+    currentGridLayout = null;
+  }
+
   filterRoster(fighterSearch?.value || '');
+  scheduleCaptionPrerender();
   return cells;
 }
 

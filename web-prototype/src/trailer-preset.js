@@ -94,6 +94,50 @@ export const DEMO_STAGE = demoConfig.match.stage;
 export const DEMO_CPU_LEVEL = demoConfig.match.cpuLevel;
 export const DEMO_TRAILER_HOTKEY = demoConfig.trailerHotkey;
 export const DEMO_MUSIC_HOTKEY = demoConfig.musicHotkey;
+export const DEMO_START_HOTKEY = demoConfig.startHotkey;
+export const DEMO_SCROLL_HOTKEY = demoConfig.scrollHotkey;
+export const DEMO_PRESENTER = demoConfig.presenter;
+export const DEMO_SCROLL_TARGET = demoConfig.scrollTarget;
+export const DEMO_SCROLL_DURATION_MS = demoConfig.scrollDurationMs ?? 2500;
+export const DEMO_PIN_ON_PLAY = Boolean(demoConfig.pinOnPlay);
+export const DEMO_MUSIC_ON_SCROLL = Boolean(demoConfig.musicOnScroll);
+export function demoStageFor(slug) {
+  return demoConfig.match.stageFor?.[slug] ?? demoConfig.match.stage;
+}
+
+// Demo bodies: `bases` pins which built target a fighter spawns as. Mario is
+// in every OSB6; anything else has to be in the server's `variants` list.
+function withDemoBase(character) {
+  const meshName = demoConfig.match.bases?.[character?.slug];
+  if (!meshName) return character;
+  const mesh = CHARACTER_MESHES.find(({ value }) => value === meshName);
+  if (!mesh) throw new Error(`Demo base "${meshName}" is not a known fighter body.`);
+  if (mesh.fkind === character.fkind) return character;
+  const built = Array.isArray(character.variants) ? character.variants : null;
+  if (meshName !== "mario" && built && !built.includes(meshName)) {
+    throw new Error(`${character.name} has no ${mesh.label} body for the demo.`);
+  }
+  return { ...character, fkind: mesh.fkind, base: meshName };
+}
+
+// Demo grid order: the spotlight fighters leave their usual spots and line up,
+// in config order, right before the presenter's tile at the bottom.
+export function demoGridOrder(characters) {
+  const wanted = demoConfig.spotlight || [];
+  if (!wanted.length) return characters;
+  const bySlug = new Map(characters.map((character) => [character.slug, character]));
+  const anchor = demoConfig.spotlightBefore;
+  if (!bySlug.has(anchor)) return characters;
+  const spotlight = wanted.filter((slug) => bySlug.has(slug) && slug !== anchor);
+  const moved = new Set(spotlight);
+  const ordered = [];
+  for (const character of characters) {
+    if (moved.has(character.slug)) continue;
+    if (character.slug === anchor) ordered.push(...spotlight.map((slug) => bySlug.get(slug)));
+    ordered.push(character);
+  }
+  return ordered;
+}
 
 export function createDemoMatchAction(action, characters) {
   const selectedSlugs = new Set([
@@ -101,17 +145,23 @@ export function createDemoMatchAction(action, characters) {
     ...(action.picks || []).map((pick) => pick?.slug),
   ].filter(Boolean));
   const opponentCount = Math.max(0, 4 - selectedSlugs.size);
-  const opponents = demoConfig.match.opponents
+  const pool = demoConfig.match.opponentsFor?.[action.character?.slug] || demoConfig.match.opponents;
+  const opponents = pool
     .filter((entry) => typeof entry !== "string" || !selectedSlugs.has(entry))
     .slice(0, opponentCount)
     .map((entry) => {
       if (typeof entry !== "string") return { type: "vanilla", fkind: entry.vanilla };
       const character = characterBySlug(characters, entry);
       if (!character) throw new Error(`Demo opponent is unavailable: ${entry}`);
-      return { type: "character", character };
+      return { type: "character", character: withDemoBase(character) };
     });
   if (opponents.length !== opponentCount) {
     throw new Error(`Demo config needs ${opponentCount} available opponents outside the current picks.`);
   }
-  return { ...action, opponents };
+  return {
+    ...action,
+    character: withDemoBase(action.character),
+    picks: (action.picks || []).map(withDemoBase),
+    opponents,
+  };
 }

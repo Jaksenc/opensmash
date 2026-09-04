@@ -1161,7 +1161,7 @@ body.retro-home::before {
 .retro-home .modal-backdrop { z-index: 2100; }
 /* Touch controls stay mounted with the game but appear only on mobile-sized
    or coarse-pointer devices. Every interactive target meets the 44px minimum. */
-.game-surface-shell { width: 100%; }
+.game-surface-shell { position: relative; width: 100%; }
 .mobile-controls { display: none; }
 
 /* Temporary `?trailer=1` capture surface. Start Capture releases the staged
@@ -1219,6 +1219,43 @@ body.is-demo-mode.is-trailer-cinematic .intro-video { pointer-events: none; }
   transition: opacity 700ms ease 250ms;
 }
 .game-surface-shell.is-demo-trailer .game-fullscreen-control { display: none; }
+/* Curtain between the live match and the trailer: fades over the pinned
+   shell, holds while the engine is torn down, then lifts on the video. */
+.demo-trailer-curtain {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  background: #000;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 520ms ease, visibility 0s linear 520ms;
+}
+.demo-trailer-curtain.is-active {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 520ms ease, visibility 0s;
+}
+.demo-trailer-curtain-label {
+  color: #fff2d6;
+  font: 600 clamp(14px, 1.6vw, 22px)/1 "Kanit", sans-serif;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 420ms ease 260ms, transform 420ms ease 260ms;
+}
+.demo-trailer-curtain.is-active .demo-trailer-curtain-label {
+  opacity: .9;
+  transform: none;
+}
+.game-surface-shell.is-demo-trailer .intro-video-frame .intro-video {
+  transition-delay: 900ms;
+}
+/* Demo pseudo-fullscreen keeps its in-frame exit control reachable. */
+body.is-demo-mode .game-surface-shell.is-immersive .game-fullscreen-control { display: inline-flex; }
 body.is-trailer-mode.is-launch-flow-open .launch-flow-overlay { z-index: 3000; }
 .trailer-cinematic-control {
   position: fixed;

@@ -1,6 +1,6 @@
 const canvas = document.getElementById('crt-viewport-canvas');
 const tuner = document.getElementById('crt-tuner');
-const requestedPreset = new URLSearchParams(location.search).get('crt');
+const requestedPreset = new URLSearchParams(location.search).get('crt') ?? window.__opensmashCrt ?? null;
 const storageKey = 'opensmash.crt-tuning.v1';
 
 const strongPreset = Object.freeze({
@@ -102,9 +102,13 @@ let settings = requestedPreset === 'soft'
     ? { ...strongPreset }
     : { ...strongPreset, ...loadStoredSettings() };
 
-if (requestedPreset === 'off') settings.enabled = false;
+// `?demo=1` (App sets the global before this module loads): filter off for
+// the session without touching the stored preference; `?crt=` still wins.
+const demoSession = window.__opensmashDemo === true && requestedPreset == null;
+if (requestedPreset === 'off' || demoSession) settings.enabled = false;
 
 function persistSettings() {
+  if (demoSession) return;
   try {
     localStorage.setItem(storageKey, JSON.stringify(settings));
   } catch {

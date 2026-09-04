@@ -9,7 +9,7 @@ import {
   subscribeEmbeddedTrailer,
   TRAILER_EMBED_URL,
 } from "./embedded-trailer.js";
-import { DEMO_MUSIC_HOTKEY, DEMO_TRAILER_HOTKEY } from "./trailer-preset.js";
+import { DEMO_MUSIC_HOTKEY, DEMO_SCROLL_HOTKEY, DEMO_START_HOTKEY, DEMO_TRAILER_HOTKEY } from "./trailer-preset.js";
 import { startHomeRuntime } from "./visual-runtime.js";
 
 const MOBILE_CONTROLS_MEDIA = "(hover: none) and (pointer: coarse)";
@@ -230,7 +230,10 @@ export default function RetroHome({
   demoMusic = false,
   onDemoMusic,
   demoTrailer = false,
+  demoCurtain = false,
   onDemoTrailer,
+  onDemoStart,
+  onDemoScroll,
   audioActive = false,
   trailerSoundOptIn = false,
   onTrailerSoundChange,
@@ -327,7 +330,18 @@ export default function RetroHome({
       if (cinematicAnimationRef.current === animation) cinematicAnimationRef.current = null;
     });
     return () => animation.cancel();
-  }, [trailerCinematic]);
+  }, [trailerCinematic, immersive]);
+
+  // Demo pseudo-fullscreen: record where the shell sits so the pinned box
+  // (or its release) is a FLIP animation instead of a jump cut.
+  function runFullscreenControl() {
+    if (demoMode) {
+      const surface = gameSurfaceRef.current;
+      if (surface) cinematicFirstRectRef.current = surface.getBoundingClientRect();
+      if (!immersive) window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    }
+    onFullscreen?.();
+  }
 
   function runTrailerControl() {
     const surface = gameSurfaceRef.current;
@@ -341,6 +355,16 @@ export default function RetroHome({
   // The engine iframe is same-origin and owns keyboard focus during play, so
   // listen inside it as well as on the page.
   const demoHotkeyRef = useRef(null);
+  const demoTrailerRef = useRef(false);
+  demoTrailerRef.current = demoTrailer;
+  const immersiveRef = useRef(false);
+  immersiveRef.current = immersive;
+  const fullscreenControlRef = useRef(null);
+  fullscreenControlRef.current = runFullscreenControl;
+  const demoStartRef = useRef(null);
+  demoStartRef.current = onDemoStart;
+  const demoScrollRef = useRef(null);
+  demoScrollRef.current = onDemoScroll;
   demoHotkeyRef.current = () => {
     if (!demoMode || !onDemoTrailer) return;
     if (!engine && !demoTrailer) return;
@@ -361,11 +385,26 @@ export default function RetroHome({
     if (!demoMode) return undefined;
     const onKey = (event) => {
       const key = event.key?.toLowerCase();
-      if ((key !== DEMO_TRAILER_HOTKEY && key !== DEMO_MUSIC_HOTKEY) || event.repeat) return;
-      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      if (event.repeat || event.metaKey || event.ctrlKey || event.altKey) return;
+      // Keys the demo handles never reach the engine (Esc is its settings
+      // menu, T is D-pad up): this runs in the capture phase on the frame's
+      // own window, ahead of SDL's document listeners.
+      const swallow = () => { event.preventDefault(); event.stopImmediatePropagation(); };
+      if (key === "escape") {
+        // Esc releases whichever pinned view is up: the trailer, then the
+        // pseudo-fullscreen match.
+        if (demoTrailerRef.current) { swallow(); demoHotkeyRef.current?.(); }
+        else if (immersiveRef.current) { swallow(); fullscreenControlRef.current?.(); }
+        return;
+      }
+      const demoKeys = [DEMO_TRAILER_HOTKEY, DEMO_MUSIC_HOTKEY, DEMO_START_HOTKEY, DEMO_SCROLL_HOTKEY];
+      if (!demoKeys.includes(key)) return;
       const tag = event.target?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || event.target?.isContentEditable) return;
+      swallow();
       if (key === DEMO_MUSIC_HOTKEY) onDemoMusic?.();
+      else if (key === DEMO_START_HOTKEY) demoStartRef.current?.();
+      else if (key === DEMO_SCROLL_HOTKEY) demoScrollRef.current?.();
       else demoHotkeyRef.current?.();
     };
     const frame = engineRef.current;
@@ -598,7 +637,7 @@ export default function RetroHome({
                 type="button"
                 aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
                 title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-                onClick={onFullscreen}
+                onClick={runFullscreenControl}
               >
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                   {isFullscreen ? (
@@ -615,6 +654,11 @@ export default function RetroHome({
                 </svg>
               </button>}
             </div>
+            {demoMode && (
+              <div className={`demo-trailer-curtain ${demoCurtain ? "is-active" : ""}`} aria-hidden="true">
+                <span className="demo-trailer-curtain-label">Loading trailer…</span>
+              </div>
+            )}
             {trailerMode && trailerCinematic && (
               <button
                 className={`trailer-cinematic-control ${trailerEngineStarted && !trailerRecording ? "is-reveal" : ""}`}

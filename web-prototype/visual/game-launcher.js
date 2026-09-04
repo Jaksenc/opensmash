@@ -355,8 +355,12 @@ function scrollToPageTop() {
     scrollToPageTopAfterUnlock = true;
     return;
   }
-  const behavior = matchMedia('(prefers-reduced-motion: reduce)').matches
-    ? 'auto'
+  // Live demos jump: a smooth scroll from the bottom of a 1000-tile roster
+  // drags every tile through the viewport (captions, lazy portraits) right
+  // as the engine starts loading, and the grid tears on stage.
+  const behavior = matchMedia('(prefers-reduced-motion: reduce)').matches ||
+      document.body.classList.contains('is-demo-mode')
+    ? 'instant'
     : 'smooth';
   window.scrollTo({ top: 0, left: 0, behavior });
 }
