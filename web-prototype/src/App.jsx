@@ -336,10 +336,11 @@ export default function App() {
   // `?demo=1`: fixed funny opponents on every pick, T hands off to the trailer.
   const [demoMode] = useState(() => {
     const demo = !isCreatePage && new URLSearchParams(window.location.search).get("demo") === "1";
-    // The CRT overlay is a lazy module and the demo flag leaves the URL on
-    // load, so hand it a global: demos run with the filter off (projectors
-    // and screen recordings lose the picture under the scanlines).
-    if (demo) {
+    // The CRT overlay is a lazy module and the demo/trailer flags leave the
+    // URL on load, so hand it a global: demos and trailer captures run with
+    // the filter off (projectors and screen recordings lose the picture
+    // under the scanlines).
+    if (demo || trailerMode) {
       window.__opensmashDemo = true;
       // The query is stripped before the CRT module loads: keep `?crt=` too.
       window.__opensmashCrt = new URLSearchParams(window.location.search).get("crt");
