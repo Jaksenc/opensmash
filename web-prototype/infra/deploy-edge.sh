@@ -82,6 +82,14 @@ upsert_cache_rule "OpenSmash public engine assets" \
   "(http.host in {\"${DOMAIN}\" \"www.${DOMAIN}\"} and http.request.method in {\"GET\" \"HEAD\"} and starts_with(http.request.uri.path, \"/engine/\"))" \
   '{"cache":true,"edge_ttl":{"mode":"respect_origin"},"browser_ttl":{"mode":"respect_origin"}}'
 
+# Vite's hashed app bundle. JS and CSS fall under Cloudflare's default
+# extension list, but the title-screen .glb models (8 MB per visitor) do not,
+# so without this rule every page view pulled them from Cloud Run.
+echo "==> Enabling edge caching for the hashed app assets"
+upsert_cache_rule "OpenSmash app assets" \
+  "(http.host in {\"${DOMAIN}\" \"www.${DOMAIN}\"} and http.request.method in {\"GET\" \"HEAD\"} and starts_with(http.request.uri.path, \"/app-assets/\"))" \
+  '{"cache":true,"edge_ttl":{"mode":"respect_origin"},"browser_ttl":{"mode":"respect_origin"}}'
+
 # Portraits and announcer clips of baked fighters. PNGs already fall under
 # Cloudflare's default extension list, but .wav does not, so without this
 # rule every announcer play reaches the origin. The origin sends
@@ -90,6 +98,14 @@ echo "==> Enabling edge caching for baked character assets"
 upsert_cache_rule "OpenSmash baked character assets" \
   "(http.host in {\"${DOMAIN}\" \"www.${DOMAIN}\"} and http.request.method in {\"GET\" \"HEAD\"} and starts_with(http.request.uri.path, \"/character-assets/\"))" \
   '{"cache":true,"edge_ttl":{"mode":"respect_origin"},"browser_ttl":{"mode":"respect_origin"}}'
+
+# Smart Tiered Cache: edge colos fill from one upper-tier colo instead of each
+# missing to Cloud Run independently (the 15 s shell TTL alone means ~one
+# origin render per colo per 15 s without it). Free-plan feature.
+echo "==> Enabling smart tiered caching"
+curl -fsS -X PATCH \
+  "https://api.cloudflare.com/client/v4/zones/${zone_id}/cache/tiered_cache_smart_topology_enable" \
+  "${CF_AUTH[@]}" -H "Content-Type: application/json" --data '{"value":"on"}' | jq -e '.success == true' >/dev/null
 
 for hostname in "$DOMAIN" "www.${DOMAIN}"; do
   record_response="$(curl -fsS -G \
