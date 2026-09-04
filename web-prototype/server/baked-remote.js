@@ -4,8 +4,10 @@
 // the objects live in the public bucket under keys that contain that digest.
 // So the API never needs the ~3 GB of fighter files on its own disk: it
 // answers the roster from the manifest and points browsers at the immutable
-// object URLs (directly in /api/characters, and via a redirect for the
-// engine's relative bundles/<slug>.* fetches).
+// object URLs directly: /api/characters and /roster.json carry bundleUrl /
+// uiUrl / voiceUrl, so the site and the engine shell fetch the bucket with no
+// mutable name in between. The bundles/<slug>.* redirect stays only as a
+// fallback for callers that still build relative names (local dev, eval).
 import { readFile } from "node:fs/promises";
 import { bakedAssetFiles, bakedAssetUrl, validateBakedAssetManifest } from "../shared/baked-assets.js";
 import { assignRosterBases, bundleForBase, FIGHTERS } from "./roster.js";
@@ -35,6 +37,14 @@ export function buildRemoteBakedRoster({ manifest, entries, assetBaseUrl }) {
   validateBakedAssetManifest(manifest, entries.map((entry) => entry.slug));
   const bySlug = new Map(manifest.characters.map((character) => [character.slug, character]));
 
+  function assetUrl(slug, kind) {
+    const character = bySlug.get(slug);
+    if (!character) return null;
+    const asset = character.assets[kind];
+    if (!asset) return null;
+    return bakedAssetUrl(assetBaseUrl, bakedAssetFiles(slug)[kind], asset.sha256);
+  }
+
   const roster = assignRosterBases(entries.map((entry) => {
     const { slug } = entry;
     const { variants, metadata } = bySlug.get(slug);
@@ -49,16 +59,12 @@ export function buildRemoteBakedRoster({ manifest, entries, assetBaseUrl }) {
       variants: variants.filter((target) => target !== "mario").sort(),
       ui: true,
       voice: true,
+      // Immutable object URLs; the engine shell stages these directly.
+      bundleUrl: assetUrl(slug, "bundle"),
+      uiUrl: assetUrl(slug, "ui"),
+      voiceUrl: assetUrl(slug, "announcer"),
     };
   }));
-
-  function assetUrl(slug, kind) {
-    const character = bySlug.get(slug);
-    if (!character) return null;
-    const asset = character.assets[kind];
-    if (!asset) return null;
-    return bakedAssetUrl(assetBaseUrl, bakedAssetFiles(slug)[kind], asset.sha256);
-  }
 
   const characters = [];
   for (const character of roster) {
@@ -77,6 +83,9 @@ export function buildRemoteBakedRoster({ manifest, entries, assetBaseUrl }) {
       base: fighterName,
       fkind,
       bundle: bundleForBase(slug),
+      bundleUrl: character.bundleUrl,
+      uiUrl: character.uiUrl,
+      voiceUrl: character.voiceUrl,
       variants: character.variants,
       ui: character.ui,
       voice: character.voice,

@@ -47,6 +47,13 @@ test("roster and characters come from the manifest with immutable object URLs", 
 
   const [cleoCard] = baked.characters;
   assert.equal(cleoCard.bundle, "cleopatra.osb6");
+  assert.equal(cleoCard.bundleUrl, bakedAssetUrl(BASE, "play/cleopatra.osb6", digest("0")));
+  assert.equal(cleoCard.uiUrl, baked.assetUrl("cleopatra", "ui"));
+  assert.equal(cleoCard.voiceUrl, baked.assetUrl("cleopatra", "announcer"));
+  const cleoRoster = baked.roster.find((c) => c.slug === "cleopatra");
+  assert.equal(cleoRoster.bundleUrl, cleoCard.bundleUrl);
+  assert.equal(cleoRoster.uiUrl, cleoCard.uiUrl);
+  assert.equal(cleoRoster.voiceUrl, cleoCard.voiceUrl);
   assert.equal(cleoCard.fkind, 1);
   assert.equal(
     cleoCard.portrait,

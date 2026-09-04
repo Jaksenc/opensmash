@@ -15,6 +15,9 @@ let renderQueue = Promise.resolve();
 let renderer = null;
 
 function bundleUrl(character) {
+  // Production entries carry the immutable object URL; local dev falls back
+  // to the engine's relative name.
+  if (character?.bundleUrl) return character.bundleUrl;
   const bundle = character?.bundle;
   if (!bundle) throw new Error(`No in-game bundle for ${character?.name || "fighter"}`);
   if (/^(?:https?:)?\//.test(bundle)) return bundle;
