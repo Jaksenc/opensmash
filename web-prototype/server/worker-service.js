@@ -108,7 +108,9 @@ export function createWorkerServiceHandler({ claim, run, instanceId, heartbeatMs
   return {
     handler(req, res) {
       const { pathname } = new URL(req.url, "http://worker");
-      if (req.method === "GET" && ["/healthz", "/livez", "/readyz"].includes(pathname)) {
+      // Not /healthz: Cloud Run's frontend answers that path itself with a 404
+      // before the container sees it (verified 2026-09-04, hello image too).
+      if (req.method === "GET" && ["/livez", "/readyz"].includes(pathname)) {
         return json(res, 200, { ok: true, instance: instanceId, busy: current });
       }
       if (req.method === "POST" && pathname === "/run") {

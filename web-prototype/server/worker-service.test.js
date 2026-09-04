@@ -64,7 +64,7 @@ test("an unclaimable job is refused before any stream starts", async () => {
   }
 });
 
-test("a busy instance refuses a second job and reports it on healthz", async () => {
+test("a busy instance refuses a second job and reports it on readyz", async () => {
   let finish;
   const running = new Promise((resolve) => { finish = resolve; });
   const service = createWorkerServiceHandler({
@@ -82,7 +82,7 @@ test("a busy instance refuses a second job and reports it on healthz", async () 
     });
     // Wait until the first run is in flight.
     while (!service.isBusy()) await new Promise((resolve) => setTimeout(resolve, 5));
-    const health = await (await fetch(`${base}/healthz`)).json();
+    const health = await (await fetch(`${base}/readyz`)).json();
     assert.equal(health.busy.jobId, "job-00000001");
     const second = await fetch(`${base}/run`, {
       method: "POST",
