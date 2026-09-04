@@ -1,3 +1,7 @@
+.byd-home-wrap {
+  width: min(1600px, calc(100% - 40px));
+  margin: 0 auto;
+}
 .byd-board {
   margin: 28px 0 8px;
   padding: 20px;

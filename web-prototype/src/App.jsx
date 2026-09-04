@@ -1541,6 +1541,9 @@ export default function App() {
           trailerRecording={trailerRecording}
           user={user}
         />
+        <div className="byd-home-wrap">
+          <BackyardDraftBoard onQuickMatch={() => {}} />
+        </div>
         <CreateExperienceOverlay
           turnstileSiteKey={turnstileSiteKey}
           onAuthenticated={authenticatedForCreate}
@@ -1686,21 +1689,6 @@ export default function App() {
           onPlay={selectCharacter}
           stage={!loadingSession && authorized && user ? "creator" : null}
           user={user}
-        />
-      )}
-
-      {!isCreatePage && (
-        <BackyardDraftBoard
-          onQuickMatch={(fighter) => {
-            const match = characters.find((c) => c.slug === fighter.slug);
-            selectCharacter(match || {
-              slug: fighter.slug,
-              name: fighter.display,
-              portrait: fighter.art,
-              portraitMedium: fighter.art,
-              base: fighter.base,
-            });
-          }}
         />
       )}
 
