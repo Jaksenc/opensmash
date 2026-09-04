@@ -3,7 +3,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
-import { createJobDatabase } from "./job-database.js";
+import { FirestoreJobDatabase, createJobDatabase } from "./job-database.js";
 
 async function withDatabase(run) {
   const root = await mkdtemp(path.join(os.tmpdir(), "opensmash-jobdb-test-"));
@@ -81,4 +81,80 @@ test("insert enforces the quota against stored jobs", async () => {
       (error) => error.code === "DUPLICATE_SLUG",
     );
   });
+});
+
+// Minimal Firestore stand-in: enough of collection/query/count/transaction to
+// prove the insert path counts site-wide usage server-side instead of reading
+// every matching document.
+function fakeFirestore(seed) {
+  const docs = new Map(seed.map((job) => [job.id, job]));
+  const slugs = new Set(seed.map((job) => job.slug));
+  const reads = { documents: 0, aggregations: 0 };
+  const matches = (job, filters) => filters.every(([field, op, value]) => {
+    if (op === "==") return job[field] === value;
+    if (op === "in") return value.includes(job[field]);
+    if (op === ">=") return job[field] >= value;
+    throw new Error(`unsupported op ${op}`);
+  });
+  const query = (filters) => ({
+    where: (field, op, value) => query([...filters, [field, op, value]]),
+    limit: () => query(filters),
+    count: () => ({ kind: "aggregate", filters }),
+    kind: "query",
+    filters,
+  });
+  const collection = {
+    ...query([]),
+    doc: (id) => ({ kind: "doc", id }),
+    firestore: {
+      collection: () => ({ doc: (slug) => ({ kind: "slug", id: slug }) }),
+      runTransaction: async (run) => run({
+        get: async (target) => {
+          if (target.kind === "slug") return { exists: slugs.has(target.id) };
+          const rows = [...docs.values()].filter((job) => matches(job, target.filters));
+          if (target.kind === "aggregate") {
+            reads.aggregations += 1;
+            return { data: () => ({ count: rows.length }) };
+          }
+          reads.documents += rows.length;
+          return { docs: rows.map((job) => ({ id: job.id, data: () => job })) };
+        },
+        create: (target, value) => {
+          if (target.kind === "slug") slugs.add(target.id);
+          else docs.set(target.id, value);
+        },
+      }),
+    },
+  };
+  return { collection, reads, docs };
+}
+
+test("firestore insert counts site-wide usage with aggregations, not document reads", async () => {
+  const now = Date.now();
+  const iso = (offsetMs) => new Date(now - offsetMs).toISOString();
+  const seed = [];
+  for (let index = 0; index < 40; index += 1) {
+    seed.push({ id: `other-${index}`, slug: `other-${index}`, ownerId: `owner-${index}`, status: "queued", createdAt: iso(1000) });
+  }
+  const database = new FirestoreJobDatabase({ collectionName: "jobs" });
+  const fake = fakeFirestore(seed);
+  database.collection = fake.collection;
+
+  const quota = { maxActivePerOwner: 1, maxDailyPerOwner: 10, maxGlobalActive: 200, maxGlobalDaily: 5000 };
+  await database.insert({ id: "mine", slug: "mine", ownerId: "me", status: "queued", createdAt: iso(0) }, { quota });
+  assert.equal(fake.reads.aggregations, 2);
+  assert.equal(fake.reads.documents, 0, "only the owner's own (empty) jobs are read as documents");
+  assert.ok(fake.docs.has("mine"));
+
+  await assert.rejects(
+    database.insert({ id: "next", slug: "next", ownerId: "someone", status: "queued", createdAt: iso(0) }, { quota: { ...quota, maxGlobalActive: 41 } }),
+    (error) => error.code === "QUOTA_EXCEEDED" && error.reason === "global",
+  );
+  await assert.rejects(
+    database.insert({ id: "next", slug: "next", ownerId: "someone", status: "queued", createdAt: iso(0) }, { quota: { ...quota, maxGlobalDaily: 41 } }),
+    (error) => error.code === "QUOTA_EXCEEDED" && error.reason === "globalDaily",
+  );
+  // Jobs older than a day do not count toward the daily budget.
+  fake.docs.set("old", { id: "old", slug: "old", ownerId: "x", status: "complete", createdAt: iso(2 * 24 * 60 * 60 * 1000) });
+  await database.insert({ id: "next", slug: "next", ownerId: "someone", status: "queued", createdAt: iso(0) }, { quota: { ...quota, maxGlobalDaily: 42 } });
 });

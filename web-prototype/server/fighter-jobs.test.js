@@ -13,28 +13,32 @@ import {
   submissionSettings,
   uploaderToken,
 } from "./fighter-jobs.js";
+import { createTurnstileVerifier } from "./turnstile.js";
 
 // Keep the in-process queue from spawning the real pipeline during tests.
 process.env.FIGHTER_WORKER_DISABLED = "1";
 
 const PNG_HEADER = Buffer.from("89504e470d0a1a0a0000000d49484452", "hex");
 
-function uploadRequest({ name = "Test Fighter" } = {}) {
+function uploadRequest({ name = "Test Fighter", turnstileToken = null, headers = {} } = {}) {
   const boundary = "opensmash-test-boundary";
   const head = [
     `--${boundary}\r\nContent-Disposition: form-data; name="name"\r\n\r\n${name}\r\n`,
     `--${boundary}\r\nContent-Disposition: form-data; name="rightsAttested"\r\n\r\ntrue\r\n`,
+    turnstileToken === null
+      ? ""
+      : `--${boundary}\r\nContent-Disposition: form-data; name="cf-turnstile-response"\r\n\r\n${turnstileToken}\r\n`,
     `--${boundary}\r\nContent-Disposition: form-data; name="photo"; filename="fighter.png"\r\n`,
     "Content-Type: image/png\r\n\r\n",
   ].join("");
   const request = Readable.from([
     Buffer.concat([Buffer.from(head), PNG_HEADER, Buffer.from(`\r\n--${boundary}--\r\n`)]),
   ]);
-  request.headers = { "content-type": `multipart/form-data; boundary=${boundary}` };
+  request.headers = { "content-type": `multipart/form-data; boundary=${boundary}`, ...headers };
   return request;
 }
 
-async function harness({ storedJobs = [], moderator = async () => ({ status: "approved" }), driver = "local" } = {}) {
+async function harness({ storedJobs = [], moderator = async () => ({ status: "approved" }), driver = "local", turnstile = null } = {}) {
   const appRoot = await mkdtemp(path.join(os.tmpdir(), "opensmash-jobs-test-"));
   await mkdir(path.join(appRoot, "data", "fighter-jobs"), { recursive: true });
   const saved = [];
@@ -58,6 +62,7 @@ async function harness({ storedJobs = [], moderator = async () => ({ status: "ap
     jobDatabase,
     dispatcher: { driver, dispatch: async () => ({ executionName: "exec" }) },
     submissionModerator: moderator,
+    turnstile,
   });
   return { jobs, saved, cleanup: () => rm(appRoot, { recursive: true, force: true }) };
 }
@@ -151,6 +156,9 @@ test("manual retries count against the daily limit", async () => {
     id: "22222222-2222-2222-2222-222222222222", slug: "older",
     retry: { automaticCounts: { moderation: 0, transient: 0 }, nextAttemptAt: null, label: null, manualRetriesAt: [minutesAgo(5), minutesAgo(4)] },
   });
+  // Pin the per-account daily limit so the assertion does not track the default.
+  const previousLimit = process.env.MAX_DAILY_JOBS_PER_OWNER;
+  process.env.MAX_DAILY_JOBS_PER_OWNER = "3";
   const { jobs, cleanup } = await harness({ storedJobs: [recent, older] });
   try {
     await jobs.init();
@@ -160,6 +168,8 @@ test("manual retries count against the daily limit", async () => {
       (error) => error.status === 429 && /daily fighter limit/.test(error.message),
     );
   } finally {
+    if (previousLimit === undefined) delete process.env.MAX_DAILY_JOBS_PER_OWNER;
+    else process.env.MAX_DAILY_JOBS_PER_OWNER = previousLimit;
     await cleanup();
   }
 });
@@ -286,4 +296,52 @@ test("private fighter assets are only accessible to their uploader", () => {
   assert.equal(isJobAccessible(privateJob, "owner-2"), false);
   assert.equal(isJobAccessible(privateJob), false);
   assert.equal(isJobAccessible({ visibility: "public", ownerId: "owner-1" }), true);
+});
+
+test("the human check gates creation, sees the client address, and releases the quota slot on failure", async () => {
+  const calls = [];
+  const turnstile = createTurnstileVerifier({
+    secretKey: "secret",
+    siteKey: "site",
+    fetchImpl: async (url, init) => {
+      const body = Object.fromEntries(init.body);
+      calls.push(body);
+      return { json: async () => ({ success: body.response === "good-token" }) };
+    },
+  });
+  const { jobs, cleanup } = await harness({ turnstile });
+  try {
+    await jobs.init();
+    // Missing token: rejected before moderation, nothing created, and the
+    // account's single active slot is free again.
+    await assert.rejects(
+      jobs.create(uploadRequest({ name: "Alpha" }), { uid: "owner-1" }),
+      (error) => error.status === 403 && /human check/.test(error.message),
+    );
+    assert.equal(calls.length, 0, "no siteverify call without a token");
+    // Rejected token: siteverify was consulted with the forwarded address.
+    await assert.rejects(
+      jobs.create(uploadRequest({ name: "Alpha", turnstileToken: "bad-token", headers: { "x-forwarded-for": "203.0.113.7, 10.0.0.1" } }), { uid: "owner-1" }),
+      (error) => error.status === 403 && /failed/.test(error.message),
+    );
+    assert.deepEqual(calls.at(-1), { secret: "secret", response: "bad-token", remoteip: "203.0.113.7" });
+    // Accepted token: the same account can now create, proving the two
+    // failed attempts did not leak a reservation.
+    const created = await jobs.create(uploadRequest({ name: "Alpha", turnstileToken: "good-token" }), { uid: "owner-1" });
+    assert.equal(created.name, "Alpha");
+    assert.equal(calls.length, 2);
+  } finally {
+    await cleanup();
+  }
+});
+
+test("creation skips the human check when Turnstile is not configured", async () => {
+  const { jobs, cleanup } = await harness({ turnstile: createTurnstileVerifier({ secretKey: "", isProduction: false }) });
+  try {
+    await jobs.init();
+    const created = await jobs.create(uploadRequest({ name: "Alpha" }), { uid: "owner-1" });
+    assert.equal(created.name, "Alpha");
+  } finally {
+    await cleanup();
+  }
 });

@@ -379,6 +379,7 @@ body.is-create-experience-open { overflow: hidden; }
 .create-page .creator-cancel-button:focus-visible { background: rgba(255, 128, 44, .08); }
 .create-page .launch-flow-fire-cell:has(.launch-flow-action:disabled) { border-color: #4d2e23; box-shadow: inset 0 0 0 1px rgba(255, 236, 190, .04), 0 3px 0 #100806; filter: saturate(.22) brightness(.55); }
 .create-page .launch-flow-action:disabled { color: #ad9279; cursor: not-allowed; }
+.creator-turnstile:not(:empty) { margin: 16px 0 0; }
 .creator-error { margin: 20px 0 0; padding: 11px 13px; border-left: 2px solid #d94b2b; background: #27130e; color: #ff9d85; font-size: 10px; line-height: 1.55; }
 
 .generation-status { display: grid; grid-template-columns: 150px 1fr; min-height: 178px; margin-top: 28px; border: 1px solid #5d3a2b; background: #080504; box-shadow: 0 3px 0 #160b08; }

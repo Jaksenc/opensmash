@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import FlameAction from "./FlameAction.jsx";
 import plusIconUrl from "../visual/assets/ui/Plus.png";
 
@@ -8,7 +8,55 @@ async function readResult(response) {
   return result;
 }
 
-export default function FighterCreator({ onCancel, onCreated }) {
+const TURNSTILE_SCRIPT = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+let turnstileScript = null;
+function loadTurnstile() {
+  if (window.turnstile) return Promise.resolve(window.turnstile);
+  turnstileScript ||= new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = TURNSTILE_SCRIPT;
+    script.async = true;
+    script.onload = () => resolve(window.turnstile);
+    script.onerror = () => { turnstileScript = null; reject(new Error("Could not load the human check.")); };
+    document.head.appendChild(script);
+  });
+  return turnstileScript;
+}
+
+// Cloudflare Turnstile: managed mode with interaction-only appearance stays
+// invisible for most people and only shows a box when a challenge is needed.
+// Each token is single-use, so the widget resets after every submit.
+function useTurnstile(siteKey, onError) {
+  const containerRef = useRef(null);
+  const widgetRef = useRef(null);
+  const [token, setToken] = useState("");
+  useEffect(() => {
+    if (!siteKey || !containerRef.current) return undefined;
+    let cancelled = false;
+    loadTurnstile().then((turnstile) => {
+      if (cancelled || !containerRef.current) return;
+      widgetRef.current = turnstile.render(containerRef.current, {
+        sitekey: siteKey,
+        appearance: "interaction-only",
+        callback: (value) => setToken(value),
+        "expired-callback": () => setToken(""),
+        "error-callback": () => setToken(""),
+      });
+    }).catch((error) => onError?.(error.message));
+    return () => {
+      cancelled = true;
+      if (widgetRef.current && window.turnstile) window.turnstile.remove(widgetRef.current);
+      widgetRef.current = null;
+    };
+  }, [siteKey]);
+  const reset = () => {
+    setToken("");
+    if (widgetRef.current && window.turnstile) window.turnstile.reset(widgetRef.current);
+  };
+  return { containerRef, token, reset, ready: !siteKey || Boolean(token) };
+}
+
+export default function FighterCreator({ turnstileSiteKey = "", onCancel, onCreated }) {
   const [name, setName] = useState("");
   const [emblem, setEmblem] = useState("");
   const [photo, setPhoto] = useState(null);
@@ -16,6 +64,7 @@ export default function FighterCreator({ onCancel, onCreated }) {
   const [rightsAttested, setRightsAttested] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const turnstile = useTurnstile(turnstileSiteKey, setError);
 
   useEffect(() => () => {
     if (photoPreview) URL.revokeObjectURL(photoPreview);
@@ -41,6 +90,7 @@ export default function FighterCreator({ onCancel, onCreated }) {
       form.set("visibility", "private");
       form.set("rightsAttested", String(rightsAttested));
       form.set("photo", photo);
+      if (turnstileSiteKey) form.set("cf-turnstile-response", turnstile.token);
       const result = await readResult(await fetch("/api/fighters", { method: "POST", body: form }));
       setName("");
       setEmblem("");
@@ -51,6 +101,7 @@ export default function FighterCreator({ onCancel, onCreated }) {
       setError(submitError.message);
     } finally {
       setSubmitting(false);
+      if (turnstileSiteKey) turnstile.reset();
     }
     if (createdJob) onCreated?.(createdJob);
   }
@@ -129,6 +180,7 @@ export default function FighterCreator({ onCancel, onCreated }) {
           </div>
           </form>
 
+          {turnstileSiteKey && <div className="creator-turnstile" ref={turnstile.containerRef} />}
           {error && <p className="creator-error">{error}</p>}
         </div>
       </div>
@@ -139,9 +191,9 @@ export default function FighterCreator({ onCancel, onCreated }) {
           className="generate-button"
           type="submit"
           form="fighter-creator-form"
-          disabled={!photo || !name.trim() || !rightsAttested || submitting}
+          disabled={!photo || !name.trim() || !rightsAttested || submitting || !turnstile.ready}
         >
-          {submitting ? "Uploading…" : "Create Fighter"}
+          {submitting ? "Uploading…" : turnstile.ready ? "Create Fighter" : "Checking…"}
         </FlameAction>
         <button
           className="launch-flow-action creator-cancel-button"

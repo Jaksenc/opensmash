@@ -18,6 +18,7 @@ import { pipeline } from "node:stream/promises";
 import { promisify } from "node:util";
 import { ACTIVE_JOB_STATUSES, capabilityFor, jobSnapshot, publicJob } from "./job-protocol.js";
 import { QuotaError, assertQuota, quotaLimits, quotaUsage } from "./job-quota.js";
+import { TURNSTILE_FIELD } from "./turnstile.js";
 import { readOsb6Targets } from "./roster.js";
 import { moderateFighterSubmission } from "./submission-moderation.js";
 
@@ -191,7 +192,9 @@ async function receiveForm(req, jobRoot) {
       try {
         parser = Busboy({
           headers: req.headers,
-          limits: { files: 1, fileSize: MAX_PHOTO_BYTES, fields: 5, fieldSize: 512, parts: 6 },
+          // One extra field and a larger fieldSize for the Turnstile token
+          // (Cloudflare documents up to 2048 characters).
+          limits: { files: 1, fileSize: MAX_PHOTO_BYTES, fields: 6, fieldSize: 2048, parts: 7 },
         });
       } catch (error) {
         reject(new HttpError(400, error.message || "Could not read that form."));
@@ -199,7 +202,7 @@ async function receiveForm(req, jobRoot) {
       }
 
       parser.on("field", (name, value) => {
-        if (["name", "emblem", "visibility", "rightsAttested"].includes(name)) fields[name] = value;
+        if (["name", "emblem", "visibility", "rightsAttested", TURNSTILE_FIELD].includes(name)) fields[name] = value;
       });
       parser.on("file", (fieldName, stream, info) => {
         if (fieldName !== "photo" || photo) {
@@ -270,6 +273,7 @@ export function createFighterJobs({
   jobDatabase,
   dispatcher,
   submissionModerator = moderateFighterSubmission,
+  turnstile = null,
 }) {
   const jobsRoot = path.resolve(process.env.FIGHTER_JOBS_ROOT || path.join(appRoot, "data", "fighter-jobs"));
   const pipelineRoot = path.join(repoRoot, "pipeline");
@@ -966,6 +970,16 @@ export function createFighterJobs({
     const root = jobRoot(id);
     try {
       const { fields, photo } = await receiveForm(req, root);
+      // Human check runs before moderation and the object store so a bot
+      // never reaches the paid steps; the quota slot is released on failure.
+      if (turnstile?.enabled) {
+        const forwarded = String(req.headers["x-forwarded-for"] || "").split(",")[0].trim();
+        try {
+          await turnstile.verify(fields[TURNSTILE_FIELD], forwarded || req.socket?.remoteAddress || null);
+        } catch (error) {
+          throw new HttpError(error.status || 403, error.message);
+        }
+      }
       const name = String(fields.name || "").trim().replace(/\s+/g, " ");
       const emblem = String(fields.emblem || "").trim().replace(/\s+/g, " ");
       const { visibility } = submissionSettings(fields);

@@ -222,6 +222,13 @@ It also accepts the account's Global API Key (`CLOUDFLARE_API_KEY` with
 `CLOUDFLARE_EMAIL`, the pair in `pipeline/.env`) in place of the token;
 `DOMAIN` defaults to smash.fun.
 
+Fighter creation is gated by a Cloudflare Turnstile widget (managed mode,
+"smash.fun create fighter" in the Cloudflare dashboard). `deploy.sh` mounts
+its secret from Secret Manager (`opensmash-turnstile-secret`) and publishes
+the site key; production refuses to boot without the secret. Locally the
+server skips the check unless `TURNSTILE_SECRET_KEY` is set; the dev launch
+config uses Cloudflare's always-pass test keys so the widget still renders.
+
 `deploy-edge.sh` remains useful for an edge-only repair. Normally use
 `deploy.sh`, which refuses uncommitted build inputs, regenerates the engine
 package, and deploys Cloud Run. If Cloudflare credentials are present it also

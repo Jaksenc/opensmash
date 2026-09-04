@@ -178,6 +178,16 @@ if gcloud secrets describe opensmash-cloudflare-turn-key-id >/dev/null 2>&1 && \
 else
   echo "TURN relay: no Cloudflare TURN secrets; handoff will be STUN-only."
 fi
+# Turnstile human check on fighter creation (server/turnstile.js). The site
+# key is public; the secret lives in Secret Manager. Production refuses to
+# start without the secret, so the deploy fails here rather than at boot.
+TURNSTILE_SITE_KEY="${TURNSTILE_SITE_KEY:-0x4AAAAAAEnMDLVYxIQ7B3Q-}"
+if ! gcloud secrets describe opensmash-turnstile-secret >/dev/null 2>&1; then
+  echo "Secret opensmash-turnstile-secret is missing; create it from the Turnstile widget for ${DOMAIN}." >&2
+  exit 2
+fi
+gcloud secrets add-iam-policy-binding opensmash-turnstile-secret \
+  --member "serviceAccount:${API_IDENTITY}" --role roles/secretmanager.secretAccessor >/dev/null
 gcloud secrets add-iam-policy-binding opensmash-openai-api-key \
   --member "serviceAccount:${API_IDENTITY}" --role roles/secretmanager.secretAccessor >/dev/null
 for secret in opensmash-openai-api-key opensmash-tripo-api-key opensmash-fal-key opensmash-minimax-voice-id; do
@@ -277,8 +287,8 @@ gcloud run deploy "$SERVICE_NAME" \
   --ingress internal-and-cloud-load-balancing \
   --port 8080 --cpu 2 --memory 2Gi --concurrency 500 --cpu-boost \
   --min-instances 3 --max-instances 6 --timeout 3600 \
-  --set-env-vars "JOB_DATABASE=firestore,OBJECT_STORE=gcs,FIGHTER_JOBS_ROOT=/tmp/fighter-jobs,FIGHTER_EXECUTION_MODE=cloud-run,BAKED_ASSET_SOURCE=remote,GOOGLE_CLOUD_PROJECT=${PROJECT_ID},CLOUD_RUN_REGION=${REGION},CLOUD_RUN_WORKER_JOB=${WORKER_JOB},GCS_PRIVATE_BUCKET=${PRIVATE_BUCKET},GCS_PUBLIC_BUCKET=${PUBLIC_BUCKET},ASSET_BASE_URL=${ASSET_BASE_URL},ALLOWED_ORIGINS=${PUBLIC_ORIGIN},FIREBASE_AUTH_ENABLED=1,FIREBASE_PROJECT_ID=${PROJECT_ID},FIREBASE_API_KEY=${FIREBASE_API_KEY},FIREBASE_AUTH_DOMAIN=${FIREBASE_AUTH_DOMAIN},FIREBASE_APP_ID=${FIREBASE_APP_ID},FIREBASE_AUTH_PROVIDERS=google|apple|email,FIGHTER_MODERATION_ENABLED=1,CREATION_ENABLED=${CREATION_ENABLED:-1}" \
-  --set-secrets "COOKIE_SECRET=${COOKIE_SECRET_NAME}:latest,COOKIE_SECRET_PREVIOUS=${COOKIE_SECRET_PREVIOUS_NAME}:latest,OPENAI_API_KEY=opensmash-openai-api-key:latest${API_TURN_SECRETS}"
+  --set-env-vars "JOB_DATABASE=firestore,OBJECT_STORE=gcs,FIGHTER_JOBS_ROOT=/tmp/fighter-jobs,FIGHTER_EXECUTION_MODE=cloud-run,BAKED_ASSET_SOURCE=remote,GOOGLE_CLOUD_PROJECT=${PROJECT_ID},CLOUD_RUN_REGION=${REGION},CLOUD_RUN_WORKER_JOB=${WORKER_JOB},GCS_PRIVATE_BUCKET=${PRIVATE_BUCKET},GCS_PUBLIC_BUCKET=${PUBLIC_BUCKET},ASSET_BASE_URL=${ASSET_BASE_URL},ALLOWED_ORIGINS=${PUBLIC_ORIGIN},FIREBASE_AUTH_ENABLED=1,FIREBASE_PROJECT_ID=${PROJECT_ID},FIREBASE_API_KEY=${FIREBASE_API_KEY},FIREBASE_AUTH_DOMAIN=${FIREBASE_AUTH_DOMAIN},FIREBASE_APP_ID=${FIREBASE_APP_ID},FIREBASE_AUTH_PROVIDERS=google|apple|email,FIGHTER_MODERATION_ENABLED=1,CREATION_ENABLED=${CREATION_ENABLED:-1},TURNSTILE_SITE_KEY=${TURNSTILE_SITE_KEY}" \
+  --set-secrets "COOKIE_SECRET=${COOKIE_SECRET_NAME}:latest,COOKIE_SECRET_PREVIOUS=${COOKIE_SECRET_PREVIOUS_NAME}:latest,OPENAI_API_KEY=opensmash-openai-api-key:latest,TURNSTILE_SECRET_KEY=opensmash-turnstile-secret:latest${API_TURN_SECRETS}"
 
 if [[ -n "${CLOUDFLARE_API_TOKEN:-}" && -n "${CLOUDFLARE_ACCOUNT_ID:-}" ]]; then
   DOMAIN="$DOMAIN" "$SCRIPT_DIR/deploy-edge.sh"

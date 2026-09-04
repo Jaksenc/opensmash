@@ -2,7 +2,7 @@ import { mkdir, readFile, readdir, rename, rm, writeFile } from "node:fs/promise
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { ACTIVE_JOB_STATUSES } from "./job-protocol.js";
-import { assertQuota, quotaUsage } from "./job-quota.js";
+import { DAY_MS, assertQuota, quotaUsage } from "./job-quota.js";
 
 function duplicateSlugError(slug) {
   const error = new Error(`A fighter with slug '${slug}' already exists.`);
@@ -120,7 +120,7 @@ class LocalJobDatabase {
   }
 }
 
-class FirestoreJobDatabase {
+export class FirestoreJobDatabase {
   constructor({ collectionName }) {
     this.driver = "firestore";
     this.collectionName = collectionName;
@@ -152,22 +152,27 @@ class FirestoreJobDatabase {
       const slug = await transaction.get(slugRef);
       if (slug.exists) throw duplicateSlugError(job.slug);
       if (quota) {
-        // Both queries use single-field indexes only; the owner's own jobs are
-        // few enough to filter in memory. Reading them inside the transaction
-        // makes concurrent inserts for the same owner serialize.
-        const [ownerJobs, activeJobs] = await Promise.all([
+        // The owner's own jobs are few, so they are read and filtered in
+        // memory (and reading them inside the transaction serializes
+        // concurrent inserts for the same owner). The two site-wide limits
+        // use server-side count aggregations instead of fetching documents:
+        // one read per 1000 index entries, no matter how busy the site is.
+        // Each query needs only a single-field index; createdAt is an ISO
+        // string so the range compare works lexically.
+        const since = new Date(Date.now() - DAY_MS).toISOString();
+        const [ownerJobs, activeCount, recentCount] = await Promise.all([
           transaction.get(this.collection.where("ownerId", "==", job.ownerId)),
-          transaction.get(
-            this.collection
-              .where("status", "in", [...ACTIVE_JOB_STATUSES])
-              .limit(quota.maxGlobalActive),
-          ),
+          transaction.get(this.collection.where("status", "in", [...ACTIVE_JOB_STATUSES]).count()),
+          quota.maxGlobalDaily > 0
+            ? transaction.get(this.collection.where("createdAt", ">=", since).count())
+            : null,
         ]);
-        const seen = new Map();
-        for (const document of [...ownerJobs.docs, ...activeJobs.docs]) {
-          seen.set(document.id, document.data());
-        }
-        assertQuota(quotaUsage(seen.values(), job.ownerId), quota);
+        const usage = quotaUsage(ownerJobs.docs.map((document) => document.data()), job.ownerId);
+        usage.globalActive = activeCount.data().count;
+        // Counts creations only; manual retries of older jobs are bounded per
+        // job and per account and are not worth a second aggregation here.
+        usage.globalDaily = recentCount ? recentCount.data().count : 0;
+        assertQuota(usage, quota);
       }
       transaction.create(slugRef, { jobId: job.id, createdAt: job.createdAt });
       transaction.create(jobRef, job);

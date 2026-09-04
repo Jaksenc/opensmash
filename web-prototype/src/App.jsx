@@ -291,7 +291,7 @@ function RomModal({ action, onCancel, onValidated, onPrewarmError }) {
   );
 }
 
-function CreateExperienceOverlay({ onAuthenticated, onClose, onCreated, onPlay, stage, user }) {
+function CreateExperienceOverlay({ onAuthenticated, onClose, onCreated, onPlay, stage, turnstileSiteKey, user }) {
   const surfaceRef = useRef(null);
   const open = stage === "auth" || stage === "creator";
 
@@ -316,6 +316,7 @@ function CreateExperienceOverlay({ onAuthenticated, onClose, onCreated, onPlay, 
           {stage === "auth" && <AuthGate onAuthenticated={onAuthenticated} onCancel={() => close()} />}
           {stage === "creator" && user && (
             <FighterCreator
+              turnstileSiteKey={turnstileSiteKey}
               onCancel={() => close()}
               onCreated={(job) => close(() => onCreated(job))}
               onPlay={onPlay}
@@ -400,6 +401,7 @@ export default function App() {
   // answers; the value is re-read on every create click, so a flip takes
   // effect without the player reloading.
   const [creationOpen, setCreationOpen] = useState(true);
+  const [turnstileSiteKey, setTurnstileSiteKey] = useState("");
   const [flowMusicActive, setFlowMusicActive] = useState(false);
   const gameRef = useRef(null);
   const gameFrameRef = useRef(null);
@@ -578,6 +580,7 @@ export default function App() {
         setAuthorized(Boolean(session.authorized));
         setUser(session.user || null);
         setCreationOpen(session.creationEnabled !== false);
+        setTurnstileSiteKey(session.turnstileSiteKey || "");
         if (isCreatePage && session.user && !session.authorized) {
           setPendingAction({ type: "create" });
         }
@@ -1007,6 +1010,7 @@ export default function App() {
       setUser(session.user || null);
       const open = session.creationEnabled !== false;
       setCreationOpen(open);
+      setTurnstileSiteKey(session.turnstileSiteKey || "");
       if (!open) setCreateStage("paused");
       else if (!session.user) setCreateStage("auth");
       else setCreateStage(session.authorized ? "creator" : "rom");
@@ -1535,6 +1539,7 @@ export default function App() {
           user={user}
         />
         <CreateExperienceOverlay
+          turnstileSiteKey={turnstileSiteKey}
           onAuthenticated={authenticatedForCreate}
           onClose={() => setCreateStage(null)}
           onCreated={fighterCreated}
@@ -1671,6 +1676,7 @@ export default function App() {
 
       {isCreatePage && (
         <CreateExperienceOverlay
+          turnstileSiteKey={turnstileSiteKey}
           onAuthenticated={authenticated}
           onClose={() => window.location.assign("/")}
           onCreated={() => window.location.assign("/")}
