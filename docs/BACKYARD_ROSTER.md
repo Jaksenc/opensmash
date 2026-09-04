@@ -6,42 +6,51 @@ designers as Smash fighters.
 
 Upstream: `https://github.com/Jaksenc/opensmash` (fork) — this branch: `backyard-roster-v1`.
 
-## Status: implemented (art-only playable, 3D pending keys/ROM)
+## Status: fully staged locally (12/12 in baked roster, playable brawler)
 
 - [x] Simplified setup: `GET /api/backyard-starter` + `GET /backyard-refs/*`
-  work with no ROM, engine, or keys. `pnpm dev:safe` boots, baked roster 0,
-  draft board 12/12. Try: `pnpm backyard:fetch && pnpm backyard:mock`.
+  work with no ROM, engine, or keys. `pnpm dev:safe` boots.
 - [x] Movesets/balance: `POSITION_CLASSES` in `server/roster.js`
   (Leader=captain, Product=rushdown, Engineer=zoner, Brand=tricky, Web=control,
-  Wildcard=heavy) + `assignPositionClasses()` + 2 new tests (12/12 roster tests pass).
-- [x] UI/branding: `src/BackyardDraftBoard.jsx` + `src/backyard.css` wired into
-  `App.jsx` above character select — position filters, salary cap tracker
-  (400k), class/base badges, scout links. `pnpm build` green.
-- [x] Fighters dry-run: `scripts/mock_backyard_fighter.py --all` created
-  `play/ui/<slug>/{character.json,cost.json,portrait_*.png,announcer.txt}` for
-  all 12.
-- [x] Sprites (no keys, no ROM): `scripts/backyard_sprites.py` (venv:
-  `python3 -m venv .venv && .venv/bin/pip install -r requirements.txt`)
-  builds real `.osbui` packs from backyard art — portrait tile + caption,
-  bold panel name, stock icon, initial-letter series emblem — for all 12,
-  with `--preview` renders. Served at `/backyard-art/<slug>/*.png|osbui`;
-  the draft board shows generated sprites with ref-art fallback.
-  `scripts/synth_ui_refs.py` fakes the 10 ROM-derived `name_<fighter>.png`
-  panel dumps from the hand-authored font (local-only, 1:1 replaceable).
-  Still missing for a full fighter: `.osb6` (Tripo mesh + engine convert)
-  + `announcer.wav` (Fal) — see "Generate one" below.
+  Wildcard=heavy) + `assignPositionClasses()` + tests.
+- [x] UI/branding: `src/BackyardDraftBoard.jsx` + `src/backyard.css` — position
+  filters, salary cap tracker (400k), class/base badges, scout links,
+  click-to-announce, generated sprites with ref fallback.
+- [x] Sprites (no keys, no ROM): `scripts/backyard_sprites.py` builds real
+  `.osbui` packs (portrait + caption, panel name, stock icon, emblem) for all
+  12; `scripts/synth_ui_refs.py` stands in the 10 ROM-derived panel dumps.
+- [x] Statues (no Tripo, no ROM): `scripts/backyard_statues.py` authors real
+  single-target `.osb6` bundles — procedural chibi (~132 tris), backyard-textured
+  atlas, rigid single-joint rig. Verified by the repo's own preview parser
+  (`shared/backyard-statues.test.js`, 13/13) plus texel spot checks. They are
+  RIGID preview bodies, not animated fighters: in-engine motion needs the
+  ROM skeletons + Tripo rig from `run_character.py`.
+- [x] Announcer (no Fal): `scripts/backyard_announcer.py` renders all 12
+  `announcer.wav` clips with macOS `say` (Daniel, 16-bit PCM 22kHz).
+- [x] Staged: all 12 appended to `config/characters.json` → baked roster is
+  **12/12 with ui+voice true**, served via standard `/character-assets/` and
+  `/api/characters` (verified live).
+- [x] Playable today: `src/BackyardBrawl.jsx` — canvas platform fighter
+  (A/D move, W double-jump, J jab, K class special, Esc), % damage, blast KOs,
+  3 stocks, CPU AI, announcer intro. "Brawl ↗" on any draft card.
 - Pre-existing failure (not ours): `og-studio.test.js` "transformed fighter hit
   testing" fails on clean `e38b3b9` too.
 
-## Sprite-only quickstart (no keys, no ROM)
+## Build everything locally (no keys, no ROM)
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
-.venv/bin/python scripts/fetch_backyard_roster.py --starter-only  # needs nothing
+.venv/bin/python scripts/fetch_backyard_roster.py --starter-only
 .venv/bin/python scripts/synth_ui_refs.py
-.venv/bin/python scripts/backyard_sprites.py
-cd web-prototype && pnpm install && pnpm backyard:dev  # draft board + sprites
+.venv/bin/python scripts/backyard_sprites.py   # .osbui packs
+.venv/bin/python scripts/backyard_statues.py   # .osb6 statues
+python3 scripts/backyard_announcer.py          # announcer.wav
+cd web-prototype && pnpm install && pnpm backyard:dev
 ```
+
+Still needs your keys/ROM for the real thing: Tripo mesh + Fal voice
+(`run_character.py --force-stage mesh|voice`), NTSC-U ROM + `BattleShip`
+build to boot the N64 engine itself.
 
 ## Starter 12 (v1 scope)
 
@@ -96,15 +105,25 @@ clothes, no capes/skirts/hanging props, matte non-black palette, mouth closed.
    Brand = status/sleep (Purin/Ness), Leader = all-rounder buffs (Mario/Luigi),
    Web = capsule/egg control (Yoshi), Wildcard = heavy (Donkey/Kirby).
    Entry: `web-prototype/server/roster.js` (`preferredBases` + weights).
-3. **Simplified setup** — `backyard/` one-command fetch, `pnpm dev:safe` default
-   (no paid jobs), committed `backyard/starter12.json` so roster works without
-   ROM/API keys ( Lia: art-only mode reusing `-thumb.webp` as portraits).
-   ROM still required for real matches (NTSC-U v1.0, SHA-1 `e2929e10…`); engine
+3. **Simplified setup** — DONE: `backyard/` one-command fetch, `pnpm dev:safe` default
+   (no paid jobs), committed `backyard/starter12.json`, `/api/backyard-starter`
+   + `/backyard-refs/` + `/backyard-art/` serve everything with no ROM/keys,
+   and Backyard Brawl is playable in the browser today. ROM still required
+   for the N64 engine itself (NTSC-U v1.0, SHA-1 `e2929e10…`); engine
    lives in sibling `BattleShip/` fork (not in this repo).
 
 ## Files added this branch
 
 - `scripts/fetch_backyard_roster.py` — roster pull + ref download + starter JSON
+- `scripts/mock_backyard_fighter.py` — offline character.json/portrait dry-run
+- `scripts/backyard_sprites.py` — local .osbui packs from backyard art
+- `scripts/backyard_statues.py` — procedural statue .osb6 bundles
+- `scripts/backyard_announcer.py` — local announcer.wav via macOS `say`
+- `scripts/synth_ui_refs.py` — stand-in panel-name dumps (local only)
 - `web-prototype/config/backyard-starter.json` — 12-fighter draft roster
+- `web-prototype/src/BackyardDraftBoard.jsx` + `backyard.css` — draft board
+- `web-prototype/src/BackyardBrawl.jsx` — playable canvas brawler
+- `web-prototype/shared/backyard-statues.test.js` — bundle verification
+- `web-prototype/server/roster.js` — POSITION_CLASSES + assignPositionClasses
 - `docs/BACKYARD_ROSTER.md` — this file
 - `backyard/` (gitignored except JSON/txt) — refs + names, fetched locally

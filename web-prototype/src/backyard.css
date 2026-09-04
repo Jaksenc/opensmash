@@ -103,3 +103,33 @@
   .byd-board { padding: 14px; }
   .byd-board h2 { font-size: 24px; }
 }
+
+.byd-brawl { margin-bottom: 18px; }
+.byd-brawl-canvas {
+  width: 100%;
+  height: auto;
+  border: 1px solid #57493a;
+  border-radius: 12px;
+  background: #0e0c0b;
+}
+.byd-brawl-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+  font-size: 11px;
+  color: #8d847a;
+}
+.byd-brawl-match { color: #ffd166; font-weight: 700; }
+.byd-brawl-result {
+  margin-top: 10px;
+  padding: 14px;
+  border: 1px solid #ffd166;
+  border-radius: 12px;
+  background: #171311;
+  text-align: center;
+}
+.byd-brawl-result p { margin: 0 0 10px; font: 900 24px/1 "Barlow Condensed", sans-serif; }
+.byd-brawl-result div { display: flex; gap: 8px; justify-content: center; }

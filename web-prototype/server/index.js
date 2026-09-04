@@ -981,8 +981,9 @@ async function handleRequest(req, res, vite) {
 
   // Generated sprite packs (scripts/backyard_sprites.py, no keys needed):
   // play/ui/<slug>/{portrait_tile,portrait_medium,preview}.png + <slug>.osbui
+  // Local announcer clips (scripts/backyard_announcer.py, macOS `say`).
   if (req.method === "GET" && pathname.startsWith("/backyard-art/")) {
-    const match = pathname.match(/^\/backyard-art\/([a-z0-9]+)\/(portrait_tile\.png|portrait_medium\.png|portrait_raw\.png|preview\.png|[a-z0-9]+\.osbui)$/);
+    const match = pathname.match(/^\/backyard-art\/([a-z0-9]+)\/(portrait_tile\.png|portrait_medium\.png|portrait_raw\.png|preview\.png|announcer\.wav|[a-z0-9]+\.osbui)$/);
     if (!match || match[2].endsWith(".osbui") && match[2] !== `${match[1]}.osbui`) {
       return json(res, 404, { error: "Backyard art not found" });
     }

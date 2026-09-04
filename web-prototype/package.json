@@ -14,6 +14,9 @@
     "backyard:fetch": "python3 ../scripts/fetch_backyard_roster.py --starter-only",
     "backyard:mock": "python3 ../scripts/mock_backyard_fighter.py --all",
     "backyard:sprites": "../.venv/bin/python ../scripts/backyard_sprites.py",
+    "backyard:statues": "../.venv/bin/python ../scripts/backyard_statues.py",
+    "backyard:voices": "python3 ../scripts/backyard_announcer.py",
+    "backyard:all": "../.venv/bin/python ../scripts/backyard_sprites.py && ../.venv/bin/python ../scripts/backyard_statues.py && python3 ../scripts/backyard_announcer.py",
     "backyard:dev": "NODE_ENV=development FIGHTER_WORKER_DISABLED=1 node server/index.js"
   },
   "dependencies": {

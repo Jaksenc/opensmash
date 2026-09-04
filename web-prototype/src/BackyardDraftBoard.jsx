@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import BackyardBrawl from "./BackyardBrawl.jsx";
 import "./backyard.css";
 
 const CLASS_COLORS = {
@@ -36,6 +37,7 @@ export default function BackyardDraftBoard({ onQuickMatch }) {
   const [error, setError] = useState("");
   const [filter, setFilter] = useState("All");
   const [team, setTeam] = useState([]);
+  const [brawl, setBrawl] = useState(null);
   const CAP = 400000;
 
   useEffect(() => {
@@ -74,8 +76,19 @@ export default function BackyardDraftBoard({ onQuickMatch }) {
     setTeam((prev) => (prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug]));
   }
 
+  // Local announcer clip (scripts/backyard_announcer.py). Best-effort: the
+  // file only exists after sprites are built; a missing clip stays silent.
+  function announce(slug) {
+    try {
+      new Audio(`/backyard-art/${slug}/announcer.wav`).play().catch(() => {});
+    } catch { /* no audio in this browser */ }
+  }
+
   return (
     <section className="byd-board" aria-labelledby="byd-title">
+      {brawl && (
+        <BackyardBrawl p1={brawl.p1} cpu={brawl.cpu} onExit={() => setBrawl(null)} />
+      )}
       <div className="byd-head">
         <div>
           <p className="byd-eyebrow">Backyard Designers × DesignCrit</p>
@@ -119,7 +132,7 @@ export default function BackyardDraftBoard({ onQuickMatch }) {
           const color = CLASS_COLORS[f.positionClass] || "#fff";
           return (
             <article key={f.slug} className={drafted ? "byd-card is-drafted" : "byd-card"}>
-              <button className="byd-card-main" type="button" onClick={() => toggleDraft(f.slug)} aria-pressed={drafted}>
+              <button className="byd-card-main" type="button" onClick={() => { toggleDraft(f.slug); announce(f.slug); }} aria-pressed={drafted}>
                 <span className="byd-art">
                   <SpriteImg slug={f.slug} fallback={f.art} alt={`${f.display} backyard art`} />
                 </span>
@@ -145,8 +158,17 @@ export default function BackyardDraftBoard({ onQuickMatch }) {
                 </button>
                 <a className="byd-scout" href={f.rosterUrl} target="_blank" rel="noreferrer">Scout ↗</a>
                 {onQuickMatch && (
-                  <button className="byd-quick" type="button" onClick={() => onQuickMatch(f)}>
-                    Quick match ↗
+                  <button
+                    className="byd-quick"
+                    type="button"
+                    onClick={() => {
+                      const others = (fighters || []).filter((x) => x.slug !== f.slug);
+                      const cpu = others[Math.floor(Math.random() * others.length)] || f;
+                      announce(f.slug);
+                      setBrawl({ p1: f, cpu });
+                    }}
+                  >
+                    Brawl ↗
                   </button>
                 )}
               </div>
