@@ -70,7 +70,7 @@ upsert_cache_rule() {
 
 echo "==> Enabling short edge caching for the shared application shell"
 upsert_cache_rule "OpenSmash application shell" \
-  "(http.host in {\"${DOMAIN}\" \"www.${DOMAIN}\"} and http.request.method in {\"GET\" \"HEAD\"} and http.request.uri.path in {\"/\" \"/create\" \"/create/\" \"/index.html\"})" \
+  "(http.host in {\"${DOMAIN}\" \"www.${DOMAIN}\"} and http.request.method in {\"GET\" \"HEAD\"} and http.request.uri.path in {\"/\" \"/create\" \"/create/\" \"/og-studio\" \"/og-studio/\" \"/index.html\"})" \
   '{"cache":true,"browser_ttl":{"mode":"override_origin","default":15}}'
 
 # The origin marks generic, baked engine files public and owner-scoped files
