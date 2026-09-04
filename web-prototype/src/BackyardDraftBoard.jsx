@@ -16,6 +16,21 @@ function salaryFmt(n) {
   return String(n);
 }
 
+// Generated sprite pack (scripts/backyard_sprites.py) when present,
+// backyard ref art otherwise (works before sprites are built).
+function SpriteImg({ slug, fallback, alt }) {
+  const [src, setSrc] = useState(`/backyard-art/${slug}/portrait_medium.png`);
+  useEffect(() => setSrc(`/backyard-art/${slug}/portrait_medium.png`), [slug]);
+  return (
+    <img
+      src={src}
+      onError={() => { if (src !== fallback) setSrc(fallback); }}
+      alt={alt}
+      loading="lazy"
+    />
+  );
+}
+
 export default function BackyardDraftBoard({ onQuickMatch }) {
   const [fighters, setFighters] = useState(null);
   const [error, setError] = useState("");
@@ -106,7 +121,7 @@ export default function BackyardDraftBoard({ onQuickMatch }) {
             <article key={f.slug} className={drafted ? "byd-card is-drafted" : "byd-card"}>
               <button className="byd-card-main" type="button" onClick={() => toggleDraft(f.slug)} aria-pressed={drafted}>
                 <span className="byd-art">
-                  <img src={f.art} alt={`${f.display} backyard art`} loading="lazy" />
+                  <SpriteImg slug={f.slug} fallback={f.art} alt={`${f.display} backyard art`} />
                 </span>
                 <span className="byd-badges">
                   <span className="byd-pos">{f.position}</span>

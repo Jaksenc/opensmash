@@ -19,10 +19,29 @@ Upstream: `https://github.com/Jaksenc/opensmash` (fork) — this branch: `backya
   (400k), class/base badges, scout links. `pnpm build` green.
 - [x] Fighters dry-run: `scripts/mock_backyard_fighter.py --all` created
   `play/ui/<slug>/{character.json,cost.json,portrait_*.png,announcer.txt}` for
-  all 12. Real `.osb6`/`.osbui`/`announcer.wav` need `.env` keys + NTSC-U ROM +
-  `BattleShip` build — see "Generate one" below.
+  all 12.
+- [x] Sprites (no keys, no ROM): `scripts/backyard_sprites.py` (venv:
+  `python3 -m venv .venv && .venv/bin/pip install -r requirements.txt`)
+  builds real `.osbui` packs from backyard art — portrait tile + caption,
+  bold panel name, stock icon, initial-letter series emblem — for all 12,
+  with `--preview` renders. Served at `/backyard-art/<slug>/*.png|osbui`;
+  the draft board shows generated sprites with ref-art fallback.
+  `scripts/synth_ui_refs.py` fakes the 10 ROM-derived `name_<fighter>.png`
+  panel dumps from the hand-authored font (local-only, 1:1 replaceable).
+  Still missing for a full fighter: `.osb6` (Tripo mesh + engine convert)
+  + `announcer.wav` (Fal) — see "Generate one" below.
 - Pre-existing failure (not ours): `og-studio.test.js` "transformed fighter hit
   testing" fails on clean `e38b3b9` too.
+
+## Sprite-only quickstart (no keys, no ROM)
+
+```bash
+python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+.venv/bin/python scripts/fetch_backyard_roster.py --starter-only  # needs nothing
+.venv/bin/python scripts/synth_ui_refs.py
+.venv/bin/python scripts/backyard_sprites.py
+cd web-prototype && pnpm install && pnpm backyard:dev  # draft board + sprites
+```
 
 ## Starter 12 (v1 scope)
 

@@ -979,6 +979,18 @@ async function handleRequest(req, res, vite) {
     return json(res, 404, { error: "Backyard ref not found" });
   }
 
+  // Generated sprite packs (scripts/backyard_sprites.py, no keys needed):
+  // play/ui/<slug>/{portrait_tile,portrait_medium,preview}.png + <slug>.osbui
+  if (req.method === "GET" && pathname.startsWith("/backyard-art/")) {
+    const match = pathname.match(/^\/backyard-art\/([a-z0-9]+)\/(portrait_tile\.png|portrait_medium\.png|portrait_raw\.png|preview\.png|[a-z0-9]+\.osbui)$/);
+    if (!match || match[2].endsWith(".osbui") && match[2] !== `${match[1]}.osbui`) {
+      return json(res, 404, { error: "Backyard art not found" });
+    }
+    const filePath = safeFile(PIPELINE_UI_ROOT, `${match[1]}/${match[2]}`);
+    if (filePath && (await serveFile(req, res, filePath, "public, max-age=3600"))) return;
+    return json(res, 404, { error: "Backyard art not found" });
+  }
+
   if (req.method === "GET" && pathname === "/api/fighters") {
     return json(res, 200, { jobs: fighterJobs.list(user.uid) });
   }
