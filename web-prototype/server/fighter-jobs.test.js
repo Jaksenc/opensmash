@@ -38,7 +38,7 @@ function uploadRequest({ name = "Test Fighter", turnstileToken = null, headers =
   return request;
 }
 
-async function harness({ storedJobs = [], moderator = async () => ({ status: "approved" }), driver = "local", turnstile = null, reservedSlugs = undefined, watch = () => null } = {}) {
+async function harness({ storedJobs = [], moderator = async () => ({ status: "approved" }), driver = "local", dispatch = async () => ({ executionName: "exec" }), turnstile = null, reservedSlugs = undefined, watch = () => null } = {}) {
   const appRoot = await mkdtemp(path.join(os.tmpdir(), "opensmash-jobs-test-"));
   await mkdir(path.join(appRoot, "data", "fighter-jobs"), { recursive: true });
   const saved = [];
@@ -60,7 +60,7 @@ async function harness({ storedJobs = [], moderator = async () => ({ status: "ap
     pipelineUiRoot: path.join(appRoot, "ui"),
     objectStore,
     jobDatabase,
-    dispatcher: { driver, dispatch: async () => ({ executionName: "exec" }) },
+    dispatcher: { driver, dispatch },
     submissionModerator: moderator,
     turnstile,
     ...(reservedSlugs ? { reservedSlugs } : {}),
@@ -190,6 +190,34 @@ test("a queued job that was never dispatched is reconciled as interrupted", asyn
     // The owner can start something new again.
     const retried = await jobs.retry(stuck.id, "owner-1");
     assert.equal(retried.status, "queued");
+  } finally {
+    await cleanup();
+  }
+});
+
+test("the dispatch record is saved before the worker is contacted and never after", async () => {
+  const failed = storedJob({ status: "failed", stage: "failed", createdAt: minutesAgo(5), updatedAt: minutesAgo(5) });
+  let savesWhenDispatched = null;
+  let dispatchedSnapshot = null;
+  const { jobs, saved, cleanup } = await harness({
+    storedJobs: [failed],
+    driver: "cloud-run-service",
+    dispatch: async (job) => {
+      // A warm worker claims the job here; a save after this point would
+      // overwrite its lease with the API's stale copy.
+      savesWhenDispatched = saved.length;
+      dispatchedSnapshot = structuredClone(saved.at(-1));
+      return { executionName: "worker-1-7" };
+    },
+  });
+  try {
+    await jobs.init();
+    const retried = await jobs.retry(failed.id, "owner-1");
+    assert.equal(retried.status, "queued");
+    assert.equal(dispatchedSnapshot.status, "queued");
+    assert.equal(typeof dispatchedSnapshot.dispatch.dispatchedAt, "string");
+    assert.equal(dispatchedSnapshot.dispatch.executionName, null);
+    assert.equal(saved.length, savesWhenDispatched, "no save after the worker accepted");
   } finally {
     await cleanup();
   }

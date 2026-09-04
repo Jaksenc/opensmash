@@ -905,15 +905,22 @@ export function createFighterJobs({
       void runNext();
       return;
     }
+    // Record the dispatch BEFORE contacting the worker. A warm worker claims
+    // the job within milliseconds of accepting it, and a save after
+    // acceptance would replace the stored record (lease included) with this
+    // stale copy, so the worker lost its lease and stopped (2026-09-04).
+    // The worker's lease.executionId is the durable record of who ran it;
+    // executionName is kept in memory only.
+    job.dispatch = {
+      driver: dispatcher.driver,
+      executionName: null,
+      dispatchedAt: new Date().toISOString(),
+    };
+    job.stageLabel = "Generation worker scheduled";
+    await saveJob(job);
     try {
       const result = await dispatcher.dispatch(job);
-      job.dispatch = {
-        driver: dispatcher.driver,
-        executionName: result.executionName,
-        dispatchedAt: new Date().toISOString(),
-      };
-      job.stageLabel = "Generation worker scheduled";
-      await saveJob(job);
+      job.dispatch.executionName = result.executionName;
     } catch (error) {
       job.status = "failed";
       job.stage = "dispatch";
