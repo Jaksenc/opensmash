@@ -36,6 +36,13 @@ export function bakedAssetFiles(slug) {
   });
 }
 
+// GCS never compresses on the fly, so bundles are stored gzip-encoded and
+// served as-is to browsers (which decode transparently). PNG and WAV gain
+// nothing (a 115 KB announcer clip shrinks 8%), while an OSB6 halves.
+export function bakedAssetContentEncoding(filePath) {
+  return /\.(osb6|osbui|osb|json)$/i.test(filePath) ? "gzip" : null;
+}
+
 export function bakedAssetObjectKey(filePath, sha256) {
   if (!SHA256_PATTERN.test(sha256 || "")) throw new Error(`Invalid baked asset digest '${sha256}'`);
   return `baked/v1/objects/${sha256}/${path.posix.basename(filePath)}`;

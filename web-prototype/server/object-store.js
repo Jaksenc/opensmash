@@ -1,6 +1,7 @@
 import { createReadStream } from "node:fs";
 import { copyFile, mkdir, readFile, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { bakedAssetContentEncoding } from "../shared/baked-assets.js";
 
 function encodeObjectKey(key) {
   return key.split("/").map(encodeURIComponent).join("/");
@@ -107,6 +108,9 @@ class GcsObjectStore {
     await bucket.upload(sourcePath, {
       destination: key,
       resumable: false,
+      // Public bundles go straight from GCS to browsers, which never
+      // compresses on the fly. Reads through this store decode transparently.
+      gzip: isPublic && bakedAssetContentEncoding(key) === "gzip",
       metadata: {
         contentType: contentType || "application/octet-stream",
         cacheControl: isPublic
@@ -132,6 +136,7 @@ class GcsObjectStore {
     const bucket = isPublic ? this.publicBucket : this.privateBucket;
     await bucket.file(key).save(`${JSON.stringify(value, null, 2)}\n`, {
       resumable: false,
+      gzip: isPublic,
       contentType: "application/json",
       metadata: {
         cacheControl: isPublic

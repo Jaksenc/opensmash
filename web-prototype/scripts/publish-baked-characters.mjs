@@ -10,6 +10,7 @@ import {
   BAKED_ASSET_CACHE_CONTROL,
   BAKED_ASSET_KINDS,
   BAKED_ASSET_SCHEMA_VERSION,
+  bakedAssetContentEncoding,
   bakedAssetFiles,
   bakedAssetObjectKey,
   bakedCharacterMetadata,
@@ -119,6 +120,7 @@ const bucket = storage.bucket(bucketName);
 let uploaded = 0;
 let reused = 0;
 let repaired = 0;
+let recompressed = 0;
 await mapLimit(assets, concurrency, async (asset) => {
   const remote = bucket.file(asset.key);
   let existing = null;
@@ -127,7 +129,8 @@ await mapLimit(assets, concurrency, async (asset) => {
   } catch (error) {
     if (error.code !== 404) throw error;
   }
-  if (existing) {
+  const encoding = bakedAssetContentEncoding(asset.relativePath);
+  if (existing && (existing.contentEncoding || null) === encoding) {
     reused += 1;
     // Browsers and the edge are told to keep these for a year; an object
     // published by an older tool without that header would be re-fetched
@@ -138,17 +141,22 @@ await mapLimit(assets, concurrency, async (asset) => {
     }
     return;
   }
+  // Same content-addressed key; an object stored by an older tool without
+  // gzip encoding is overwritten in place with the compressed copy.
   await bucket.upload(asset.sourcePath, {
     destination: asset.key,
     resumable: false,
+    gzip: encoding === "gzip",
     metadata: {
       contentType: contentType(asset.relativePath),
       cacheControl: BAKED_ASSET_CACHE_CONTROL,
       metadata: { sha256: asset.sha256 },
     },
   });
-  uploaded += 1;
-  if (uploaded % 100 === 0) console.log(`Uploaded ${uploaded} new objects...`);
+  if (existing) recompressed += 1;
+  else uploaded += 1;
+  const done = uploaded + recompressed;
+  if (done % 100 === 0) console.log(`Uploaded ${done} objects (${uploaded} new, ${recompressed} recompressed)...`);
 });
 
 const body = `${JSON.stringify(manifest, null, 2)}\n`;
@@ -164,6 +172,6 @@ await bucket.file(`baked/v1/manifests/${manifestDigest}.json`).save(body, {
 
 console.log(
   `Published ${assets.length} objects (${(totalBytes / 1073741824).toFixed(2)} GiB): ` +
-  `${uploaded} uploaded, ${reused} reused, ${repaired} cache headers repaired.`,
+  `${uploaded} uploaded, ${recompressed} recompressed, ${reused} reused, ${repaired} cache headers repaired.`,
 );
 console.log(`Wrote ${path.relative(PIPELINE_ROOT, manifestPath)} (${manifestDigest}).`);

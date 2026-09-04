@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   BAKED_ASSET_KINDS,
+  bakedAssetContentEncoding,
   bakedAssetFiles,
   bakedAssetObjectKey,
   bakedAssetUrl,
@@ -63,4 +64,12 @@ test("baked asset URLs are content addressed and metadata keeps only roster fiel
 test("baked asset paths reject unsafe slugs and digests", () => {
   assert.throws(() => bakedAssetFiles("../fighter"), /Invalid baked fighter slug/);
   assert.throws(() => bakedAssetObjectKey("play/fighter.osb6", "bad"), /Invalid baked asset digest/);
+});
+
+test("bundles and metadata are stored gzip-encoded, images and audio are not", () => {
+  assert.equal(bakedAssetContentEncoding("play/foo.osb6"), "gzip");
+  assert.equal(bakedAssetContentEncoding("play/ui/foo/foo.osbui"), "gzip");
+  assert.equal(bakedAssetContentEncoding("play/ui/foo/character.json"), "gzip");
+  assert.equal(bakedAssetContentEncoding("play/ui/foo/portrait_raw.png"), null);
+  assert.equal(bakedAssetContentEncoding("play/ui/foo/announcer.wav"), null);
 });
