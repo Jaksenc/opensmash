@@ -7,12 +7,12 @@
 // entries if you want selecting one of these opponents to stay deterministic.
 export default Object.freeze({
   introFighters: Object.freeze([
-    "donaldtrump",
+    "abrahamlincoln",
     "guyfieri",
     "stevejobs",
     "justinbieber",
     "jesuschrist",
-    "ludwigvanbeethov",
+    "fridakahlo",
   ]),
   // Render bases for the six injectable cards above. These can differ from
   // the native card slots without changing the montage order.
@@ -27,7 +27,7 @@ export default Object.freeze({
   // The two fighters Master Hand handles in the opening room, in order:
   // first pulled from the grid, then dropped into the scene.
   introRoomPicks: Object.freeze([
-    "donaldtrump",
+    "abrahamlincoln",
     "guyfieri",
   ]),
   match: Object.freeze({

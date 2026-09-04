@@ -25,7 +25,9 @@
  },
  "parts": "skels/parts/vanilla-pikachu-parts.canonical.json",
  "blank_extra": [
-  5
+  5,
+  13,
+  14
  ],
  "snap_accessories": [
   29
