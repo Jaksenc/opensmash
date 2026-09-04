@@ -1501,6 +1501,33 @@ export default function App() {
 
     return (
       <>
+        {!loadingSession && (
+          <div className={authorized ? "byd-cart is-in" : "byd-cart"} role="status">
+            {authorized ? (
+              <span>● Cartridge in — N64 engine ready. The yard below plays without one.</span>
+            ) : (
+              <>
+                <span className="byd-cart-msg">◼ No cartridge — the N64 engine needs your Smash 64 ROM. The yard below plays right now.</span>
+                <span className="byd-cart-actions">
+                  <button
+                    type="button"
+                    className="byd-cart-go"
+                    onClick={() => document.querySelector(".byd-board")?.scrollIntoView({ behavior: "smooth" })}
+                  >
+                    Play Backyard Brawl
+                  </button>
+                  <button
+                    type="button"
+                    className="byd-cart-insert"
+                    onClick={() => requestLaunch({ type: "select" })}
+                  >
+                    Insert cartridge
+                  </button>
+                </span>
+              </>
+            )}
+          </div>
+        )}
         <RetroHome
           aboutOpen={aboutOpen}
           advancedActive={hasAdvancedOverrides(advancedOptions)}

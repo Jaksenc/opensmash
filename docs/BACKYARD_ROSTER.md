@@ -33,6 +33,9 @@ Upstream: `https://github.com/Jaksenc/opensmash` (fork) — this branch: `backya
 - [x] Playable today: `src/BackyardBrawl.jsx` — canvas platform fighter
   (A/D move, W double-jump, J jab, K class special, Esc), % damage, blast KOs,
   3 stocks, CPU AI, announcer intro. "Brawl ↗" on any draft card.
+- [x] Cartridge banner: no-ROM visitors get "◼ No cartridge" + Play Backyard
+  Brawl (scrolls to board) + Insert cartridge (opens ROM handoff) instead of
+  an error wall; ROM owners see "● Cartridge in". Click-verified headless.
 - Pre-existing failure (not ours): `og-studio.test.js` "transformed fighter hit
   testing" fails on clean `e38b3b9` too.
 

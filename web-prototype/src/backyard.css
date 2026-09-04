@@ -2,6 +2,43 @@
   width: min(1600px, calc(100% - 40px));
   margin: 0 auto;
 }
+.byd-cart {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  width: min(1600px, calc(100% - 40px));
+  margin: 12px auto 0;
+  padding: 10px 16px;
+  border: 1px solid #4a4239;
+  border-radius: 12px;
+  background: #171311;
+  font-size: 12px;
+  color: #cbbfae;
+}
+.byd-cart.is-in { border-color: #3f4a35; color: #9aa981; }
+.byd-cart-actions { display: flex; gap: 8px; }
+.byd-cart-go {
+  border: 1px solid #ffd166;
+  background: #ffd166;
+  color: #171311;
+  border-radius: 9px;
+  padding: 8px 14px;
+  font-weight: 800;
+  font-size: 12px;
+  cursor: pointer;
+}
+.byd-cart-insert {
+  border: 1px solid #4a4239;
+  background: transparent;
+  color: #cbbfae;
+  border-radius: 9px;
+  padding: 8px 14px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.byd-cart-insert:hover { border-color: #ffd166; color: #ffd166; }
 .byd-board {
   margin: 28px 0 8px;
   padding: 20px;
