@@ -206,7 +206,7 @@ export class FirestoreJobDatabase {
   watch(listener) {
     return this.collection.onSnapshot((snapshot) => {
       for (const change of snapshot.docChanges()) {
-        if (change.type !== "removed") listener(change.doc.data());
+        listener(change.doc.data(), { removed: change.type === "removed" });
       }
     }, (error) => console.error("Firestore fighter job watch failed:", error));
   }

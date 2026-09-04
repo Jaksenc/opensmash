@@ -25,13 +25,17 @@ import { moderateFighterSubmission } from "./submission-moderation.js";
 const execFileAsync = promisify(execFile);
 const CAPABILITY_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
-function randomCapability(length = 16) {
+const SLUG_SUFFIX_ALPHABET = "abcdefghijklmnopqrstuvwxyz0123456789";
+const SLUG_SUFFIX_LENGTH = 6;
+
+function randomCapability(length = 16, alphabet = CAPABILITY_ALPHABET) {
+  // Rejection sampling avoids modulo bias across the alphabet.
+  const limit = 256 - (256 % alphabet.length);
   let value = "";
   while (value.length < length) {
     for (const byte of randomBytes(length)) {
-      // Rejection sampling avoids modulo bias across the 62-character alphabet.
-      if (byte >= 248) continue;
-      value += CAPABILITY_ALPHABET[byte % CAPABILITY_ALPHABET.length];
+      if (byte >= limit) continue;
+      value += alphabet[byte % alphabet.length];
       if (value.length === length) break;
     }
   }
@@ -79,8 +83,16 @@ const CHECKPOINT_STAGES = new Set([
   "portrait", "stock", "emblem", "ui", "voice", "publish",
 ]);
 
-function slugFor(name) {
+export function slugFor(name) {
   return name.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 16);
+}
+
+// Generated fighters get a random suffix so two players can both make
+// "Steve Jobs" and neither collides with the baked roster's stevejobs, whose
+// bundle would otherwise shadow theirs everywhere the slug is the key.
+export function uniqueSlugFor(name) {
+  const base = slugFor(name);
+  return base ? `${base}${randomCapability(SLUG_SUFFIX_LENGTH, SLUG_SUFFIX_ALPHABET)}` : "";
 }
 
 // Public manifests carry an opaque per-account id rather than the account's
@@ -274,6 +286,8 @@ export function createFighterJobs({
   dispatcher,
   submissionModerator = moderateFighterSubmission,
   turnstile = null,
+  // Slugs that can never be issued to a generated fighter (the baked roster).
+  reservedSlugs = async () => new Set(),
 }) {
   const jobsRoot = path.resolve(process.env.FIGHTER_JOBS_ROOT || path.join(appRoot, "data", "fighter-jobs"));
   const pipelineRoot = path.join(repoRoot, "pipeline");
@@ -752,7 +766,12 @@ export function createFighterJobs({
       return publicJob(job);
     }
 
-    const args = [pipelineScript, job.name, "--photo", normalizedPhoto, "--out", path.join(pipelineUiRoot, job.slug)];
+    const args = [
+      pipelineScript, job.name,
+      "--slug", job.slug,
+      "--photo", normalizedPhoto,
+      "--out", path.join(pipelineUiRoot, job.slug),
+    ];
     if (job.emblem) args.push("--emblem", job.emblem);
     const child = spawn(process.env.PYTHON || "python3", args, {
       cwd: pipelineRoot,
@@ -963,6 +982,25 @@ export function createFighterJobs({
     return job && (!ownerId || job.ownerId === ownerId) ? job : null;
   }
 
+  // A fresh random slug that no baked fighter, known job, or on-disk output
+  // already uses. The Firestore slug reservation is the cross-instance check.
+  async function allocateSlug(name) {
+    const reserved = await reservedSlugs();
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+      const candidate = uniqueSlugFor(name);
+      if (reserved.has(candidate)) continue;
+      if ([...jobs.values()].some((job) => job.slug === candidate)) continue;
+      try {
+        await access(path.join(pipelineUiRoot, candidate));
+        continue;
+      } catch (error) {
+        if (error.code !== "ENOENT") throw error;
+      }
+      return candidate;
+    }
+    throw new HttpError(503, "Could not allocate a fighter id. Try again.");
+  }
+
   async function create(req, uploader) {
     const ownerId = uploader?.uid;
     const release = reserveCreation(ownerId);
@@ -985,18 +1023,8 @@ export function createFighterJobs({
       const { visibility } = submissionSettings(fields);
       if (!name || name.length > 80) throw new HttpError(400, "Enter a fighter name up to 80 characters.");
       if (emblem.length > 200) throw new HttpError(400, "Keep the emblem description under 200 characters.");
-      const slug = slugFor(name);
-      if (!slug) throw new HttpError(400, "The fighter name must contain at least one A–Z letter or number.");
-
-      const duplicate = [...jobs.values()].find((job) => job.slug === slug);
-      if (duplicate) throw new HttpError(409, `A generation for '${name}' already exists. Retry that job instead.`);
-      try {
-        await access(path.join(pipelineUiRoot, slug));
-        throw new HttpError(409, `The pipeline already has a fighter with the slug '${slug}'.`);
-      } catch (error) {
-        if (error instanceof HttpError) throw error;
-        if (error.code !== "ENOENT") throw error;
-      }
+      if (!slugFor(name)) throw new HttpError(400, "The fighter name must contain at least one A–Z letter or number.");
+      const slug = await allocateSlug(name);
 
       let moderation;
       try {
@@ -1077,7 +1105,7 @@ export function createFighterJobs({
       } catch (error) {
         jobs.delete(id);
         if (error.code === "DUPLICATE_SLUG") {
-          throw new HttpError(409, `A generation for '${name}' already exists.`);
+          throw new HttpError(503, "Could not allocate a fighter id. Try again.");
         }
         throw httpErrorFrom(error);
       }
@@ -1170,8 +1198,16 @@ export function createFighterJobs({
   return {
     async init({ loadAll = true } = {}) {
       if (loadAll) await loadJobs();
-      stopDatabaseWatch = loadAll ? jobDatabase.watch((job) => {
+      stopDatabaseWatch = loadAll ? jobDatabase.watch((job, { removed = false } = {}) => {
         const current = jobs.get(job.id);
+        if (removed) {
+          // Deleted on another instance: drop it here too, or this replica
+          // keeps listing the fighter and holding its slug until restart.
+          if (!current) return;
+          jobs.delete(job.id);
+          events.emit(job.id, { ...jobSnapshot(current), status: "deleted" });
+          return;
+        }
         if (!current || (job.revision || 0) > (current.revision || 0)) {
           jobs.set(job.id, job);
           events.emit(job.id, jobSnapshot(job));

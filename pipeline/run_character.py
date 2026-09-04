@@ -292,6 +292,10 @@ def main():
                          "Default: inferred from the name and photo. Also "
                          "editable afterwards as \"emblem\" in character.json.")
     ap.add_argument("--out", default=None)
+    ap.add_argument("--slug", default=None,
+                    help="bundle/output name ([a-z0-9]); default is derived from the name. "
+                         "The web fighter lab passes a suffixed one so players' fighters never "
+                         "collide with each other or with the baked roster")
     ap.add_argument(
         "--variants", default=None, metavar="TARGET,...|all",
         help="variant targets to build; default is every profile except "
@@ -305,7 +309,9 @@ def main():
                     help="after a successful run, validate and add this manual character to the baked roster")
     a = ap.parse_args()
 
-    slug = re.sub(r"[^a-z0-9]", "", a.name.lower())[:16]
+    slug = a.slug or re.sub(r"[^a-z0-9]", "", a.name.lower())[:16]
+    if not re.fullmatch(r"[a-z0-9]{1,32}", slug):
+        ap.error(f"--slug must be 1-32 lowercase letters/digits, got {slug!r}")
     out = a.out or os.path.join(HERE, "play", "ui", slug)
     os.makedirs(out, exist_ok=True)
     global OUT_DIR, SLUG

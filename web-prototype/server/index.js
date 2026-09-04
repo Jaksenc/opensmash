@@ -28,6 +28,7 @@ import { characterAssetKind, engineBundleAssetKind, loadRemoteBakedRoster } from
 import { matchesCharacterSearch } from "../shared/character-search.js";
 import { bakedRosterEntries } from "../shared/baked-roster.js";
 import { ROMS_BY_SHA1, UNSUPPORTED_ROMS_BY_SHA1 } from "../shared/rom-catalog.js";
+import { ACTIVE_JOB_STATUSES } from "./job-protocol.js";
 
 const APP_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const {
@@ -134,6 +135,7 @@ const fighterJobs = createFighterJobs({
   jobDatabase,
   dispatcher,
   turnstile,
+  reservedSlugs: async () => (await bakedRoster()).slugs,
 });
 
 const PORT = Number(process.env.PORT || 4174);
@@ -281,6 +283,15 @@ function json(res, status, data, headers = {}) {
   res.end(body);
 }
 
+// Live job progress. Streams end on their own once the job is terminal (the
+// client only opens them for active jobs and also polls every 15 s), after a
+// bounded lifetime (the browser reconnects transparently), and are capped per
+// instance: a full instance answers with a long retry hint instead of holding
+// the connection, so SSE can never crowd out ordinary requests.
+const MAX_EVENT_STREAMS = Number(process.env.MAX_EVENT_STREAMS || 200);
+const EVENT_STREAM_MAX_MS = Number(process.env.EVENT_STREAM_MAX_SECONDS || 20 * 60) * 1000;
+let openEventStreams = 0;
+
 function streamJobEvents(req, res, id, ownerId) {
   res.writeHead(200, {
     "Content-Type": "text/event-stream; charset=utf-8",
@@ -289,19 +300,41 @@ function streamJobEvents(req, res, id, ownerId) {
     "X-Accel-Buffering": "no",
   });
   res.flushHeaders?.();
-
-  const unsubscribe = fighterJobs.subscribe(id, ownerId, (event) => {
-    res.write(`id: ${event.job.revision}\nevent: job\ndata: ${JSON.stringify(event)}\n\n`);
-  });
-  if (!unsubscribe) {
-    res.end();
+  if (openEventStreams >= MAX_EVENT_STREAMS) {
+    res.end("retry: 30000\n\n");
     return;
   }
-  const keepAlive = setInterval(() => res.write(": keep-alive\n\n"), 15_000);
-  req.on("close", () => {
+  openEventStreams += 1;
+
+  let unsubscribe = null;
+  let keepAlive = null;
+  let lifetime = null;
+  let finished = false;
+  function finish() {
+    if (finished) return;
+    finished = true;
+    openEventStreams -= 1;
     clearInterval(keepAlive);
-    unsubscribe();
+    clearTimeout(lifetime);
+    unsubscribe?.();
+    if (!res.writableEnded) res.end();
+  }
+  unsubscribe = fighterJobs.subscribe(id, ownerId, (event) => {
+    if (finished) return;
+    res.write(`id: ${event.job.revision}\nevent: job\ndata: ${JSON.stringify(event)}\n\n`);
+    if (event.status === "deleted" || !ACTIVE_JOB_STATUSES.has(event.job.status)) finish();
   });
+  if (!unsubscribe) {
+    finish();
+    return;
+  }
+  if (finished) {
+    unsubscribe();
+    return;
+  }
+  keepAlive = setInterval(() => res.write(": keep-alive\n\n"), 15_000);
+  lifetime = setTimeout(finish, EVENT_STREAM_MAX_MS);
+  req.on("close", finish);
 }
 
 function parseCookies(req) {

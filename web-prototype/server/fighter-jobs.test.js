@@ -38,7 +38,7 @@ function uploadRequest({ name = "Test Fighter", turnstileToken = null, headers =
   return request;
 }
 
-async function harness({ storedJobs = [], moderator = async () => ({ status: "approved" }), driver = "local", turnstile = null } = {}) {
+async function harness({ storedJobs = [], moderator = async () => ({ status: "approved" }), driver = "local", turnstile = null, reservedSlugs = undefined, watch = () => null } = {}) {
   const appRoot = await mkdtemp(path.join(os.tmpdir(), "opensmash-jobs-test-"));
   await mkdir(path.join(appRoot, "data", "fighter-jobs"), { recursive: true });
   const saved = [];
@@ -46,7 +46,7 @@ async function harness({ storedJobs = [], moderator = async () => ({ status: "ap
     list: async () => storedJobs,
     insert: async () => {},
     save: async (job) => { saved.push(job); },
-    watch: () => null,
+    watch,
   };
   const objectStore = {
     putFile: async (key) => ({ key, url: null }),
@@ -63,6 +63,7 @@ async function harness({ storedJobs = [], moderator = async () => ({ status: "ap
     dispatcher: { driver, dispatch: async () => ({ executionName: "exec" }) },
     submissionModerator: moderator,
     turnstile,
+    ...(reservedSlugs ? { reservedSlugs } : {}),
   });
   return { jobs, saved, cleanup: () => rm(appRoot, { recursive: true, force: true }) };
 }
@@ -107,7 +108,7 @@ test("parallel uploads from one account cannot all pass the active-job quota", a
     releaseModeration();
     const job = await first;
     assert.equal(job.status, "queued");
-    assert.equal(job.slug, "alpha");
+    assert.match(job.slug, /^alpha[a-z0-9]{6}$/);
     // Once the job exists it still holds the slot on its own.
     await assert.rejects(
       jobs.create(uploadRequest({ name: "Delta" }), { uid: "owner-1" }),
@@ -341,6 +342,56 @@ test("creation skips the human check when Turnstile is not configured", async ()
     await jobs.init();
     const created = await jobs.create(uploadRequest({ name: "Alpha" }), { uid: "owner-1" });
     assert.equal(created.name, "Alpha");
+  } finally {
+    await cleanup();
+  }
+});
+
+test("generated fighters get unique slugs that avoid the baked roster and each other", async () => {
+  // Every candidate for "Alpha" is reserved except the one deterministic
+  // suffix we let through, proving the baked-roster set is consulted.
+  const seen = [];
+  const reservedSlugs = async () => ({
+    has: (slug) => {
+      seen.push(slug);
+      return seen.length < 3; // reject the first two candidates
+    },
+  });
+  const { jobs, cleanup } = await harness({ reservedSlugs });
+  try {
+    await jobs.init();
+    const first = await jobs.create(uploadRequest({ name: "Alpha" }), { uid: "owner-1" });
+    assert.equal(seen.length, 3);
+    assert.match(first.slug, /^alpha[a-z0-9]{6}$/);
+    assert.equal(first.name, "Alpha");
+    // A second player can make the same name: different slug, no 409.
+    const second = await jobs.create(uploadRequest({ name: "Alpha" }), { uid: "owner-2" });
+    assert.match(second.slug, /^alpha[a-z0-9]{6}$/);
+    assert.notEqual(second.slug, first.slug);
+  } finally {
+    await cleanup();
+  }
+});
+
+test("a delete observed from the database drops the job on this instance too", async () => {
+  let listener = null;
+  const stored = {
+    id: "33333333-3333-3333-3333-333333333333", slug: "goneabc123", ownerId: "owner-1", name: "Gone",
+    status: "complete", stage: "complete", visibility: "public", createdAt: minutesAgo(30),
+    retry: { automaticCounts: { moderation: 0, transient: 0 }, nextAttemptAt: null, label: null, manualRetriesAt: [] },
+  };
+  const { jobs, cleanup } = await harness({ storedJobs: [stored], watch: (fn) => { listener = fn; return () => {}; } });
+  try {
+    await jobs.init();
+    assert.equal(jobs.listVisible().length, 1);
+    const events = [];
+    jobs.subscribe(stored.id, "owner-1", (event) => events.push(event));
+    listener({ ...stored }, { removed: true });
+    assert.equal(jobs.listVisible().length, 0);
+    assert.equal(jobs.get(stored.id, "owner-1"), null);
+    assert.equal(events.at(-1).status, "deleted");
+    // The slug is free again for the same name on this instance.
+    assert.equal(jobs.isSlugPublic("goneabc123"), false);
   } finally {
     await cleanup();
   }
