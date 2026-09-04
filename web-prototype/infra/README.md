@@ -215,9 +215,12 @@ outside Cloudflare's default cacheable extensions).
 
 ```bash
 CLOUDFLARE_API_TOKEN=... \
-CLOUDFLARE_ACCOUNT_ID=... \
 ./infra/deploy-edge.sh
 ```
+
+It also accepts the account's Global API Key (`CLOUDFLARE_API_KEY` with
+`CLOUDFLARE_EMAIL`, the pair in `pipeline/.env`) in place of the token;
+`DOMAIN` defaults to smash.fun.
 
 `deploy-edge.sh` remains useful for an edge-only repair. Normally use
 `deploy.sh`, which refuses uncommitted build inputs, regenerates the engine

@@ -1,20 +1,24 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-required=(CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID)
-for name in "${required[@]}"; do
-  if [[ -z "${!name:-}" ]]; then
-    echo "$name is required" >&2
-    exit 2
-  fi
-done
+# Auth: a scoped API token (CLOUDFLARE_API_TOKEN) or the account's Global API
+# Key (CLOUDFLARE_API_KEY, the value pipeline/.env carries) plus the account
+# email (CLOUDFLARE_EMAIL). The Global Key is not a bearer token; sending it
+# as one fails with "Invalid API Token".
+if [[ -n "${CLOUDFLARE_API_TOKEN:-}" ]]; then
+  CF_AUTH=("${CF_AUTH[@]}")
+elif [[ -n "${CLOUDFLARE_API_KEY:-}" && -n "${CLOUDFLARE_EMAIL:-}" ]]; then
+  CF_AUTH=(-H "X-Auth-Email: ${CLOUDFLARE_EMAIL}" -H "X-Auth-Key: ${CLOUDFLARE_API_KEY}")
+else
+  echo "CLOUDFLARE_API_TOKEN, or CLOUDFLARE_API_KEY with CLOUDFLARE_EMAIL, is required" >&2
+  exit 2
+fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-DOMAIN="${DOMAIN:-smashtheweights.com}"
-export CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID
+DOMAIN="${DOMAIN:-smash.fun}"
 
 zone_response="$(curl -fsS -G "https://api.cloudflare.com/client/v4/zones" \
-  -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+  "${CF_AUTH[@]}" \
   --data-urlencode "name=${DOMAIN}" --data-urlencode "status=active")"
 zone_id="$(printf '%s' "$zone_response" | jq -r '.result[0].id // ""')"
 if [[ -z "$zone_id" ]]; then
@@ -32,7 +36,7 @@ upsert_cache_rule() {
     '{action:"set_cache_settings", action_parameters:$action_parameters, description:$description, enabled:true, expression:$expression}')"
   rulesets_response="$(curl -fsS \
     "https://api.cloudflare.com/client/v4/zones/${zone_id}/rulesets" \
-    -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}")"
+    "${CF_AUTH[@]}")"
   ruleset_id="$(printf '%s' "$rulesets_response" | jq -r \
     '.result[] | select(.kind == "zone" and .phase == "http_request_cache_settings") | .id' | head -n 1)"
 
@@ -41,23 +45,23 @@ upsert_cache_rule() {
       '{name:"OpenSmash cache rules", kind:"zone", phase:"http_request_cache_settings", rules:[$rule]}' | \
       curl -fsS -X POST \
         "https://api.cloudflare.com/client/v4/zones/${zone_id}/rulesets" \
-        -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+        "${CF_AUTH[@]}" \
         -H "Content-Type: application/json" --data @-)"
   else
     ruleset_response="$(curl -fsS \
       "https://api.cloudflare.com/client/v4/zones/${zone_id}/rulesets/${ruleset_id}" \
-      -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}")"
+      "${CF_AUTH[@]}")"
     rule_id="$(printf '%s' "$ruleset_response" | jq -r --arg description "$description" \
       '.result.rules[] | select(.description == $description) | .id' | head -n 1)"
     if [[ -z "$rule_id" ]]; then
       response="$(printf '%s' "$rule_payload" | curl -fsS -X POST \
         "https://api.cloudflare.com/client/v4/zones/${zone_id}/rulesets/${ruleset_id}/rules" \
-        -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+        "${CF_AUTH[@]}" \
         -H "Content-Type: application/json" --data @-)"
     else
       response="$(printf '%s' "$rule_payload" | curl -fsS -X PATCH \
         "https://api.cloudflare.com/client/v4/zones/${zone_id}/rulesets/${ruleset_id}/rules/${rule_id}" \
-        -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+        "${CF_AUTH[@]}" \
         -H "Content-Type: application/json" --data @-)"
     fi
   fi
@@ -67,7 +71,7 @@ upsert_cache_rule() {
 echo "==> Enabling short edge caching for the shared application shell"
 upsert_cache_rule "OpenSmash application shell" \
   "(http.host in {\"${DOMAIN}\" \"www.${DOMAIN}\"} and http.request.method in {\"GET\" \"HEAD\"} and http.request.uri.path in {\"/\" \"/create\" \"/create/\" \"/index.html\"})" \
-  '{cache:true, browser_ttl:{mode:"override_origin", default:15}}'
+  '{"cache":true,"browser_ttl":{"mode":"override_origin","default":15}}'
 
 # The origin marks generic, baked engine files public and owner-scoped files
 # private/no-store. Making the route cache-eligible while respecting those
@@ -76,7 +80,7 @@ upsert_cache_rule "OpenSmash application shell" \
 echo "==> Enabling origin-controlled caching for engine assets"
 upsert_cache_rule "OpenSmash public engine assets" \
   "(http.host in {\"${DOMAIN}\" \"www.${DOMAIN}\"} and http.request.method in {\"GET\" \"HEAD\"} and starts_with(http.request.uri.path, \"/engine/\"))" \
-  '{cache:true, edge_ttl:{mode:"respect_origin"}, browser_ttl:{mode:"respect_origin"}}'
+  '{"cache":true,"edge_ttl":{"mode":"respect_origin"},"browser_ttl":{"mode":"respect_origin"}}'
 
 # Portraits and announcer clips of baked fighters. PNGs already fall under
 # Cloudflare's default extension list, but .wav does not, so without this
@@ -85,12 +89,12 @@ upsert_cache_rule "OpenSmash public engine assets" \
 echo "==> Enabling edge caching for baked character assets"
 upsert_cache_rule "OpenSmash baked character assets" \
   "(http.host in {\"${DOMAIN}\" \"www.${DOMAIN}\"} and http.request.method in {\"GET\" \"HEAD\"} and starts_with(http.request.uri.path, \"/character-assets/\"))" \
-  '{cache:true, edge_ttl:{mode:"respect_origin"}, browser_ttl:{mode:"respect_origin"}}'
+  '{"cache":true,"edge_ttl":{"mode":"respect_origin"},"browser_ttl":{"mode":"respect_origin"}}'
 
 for hostname in "$DOMAIN" "www.${DOMAIN}"; do
   record_response="$(curl -fsS -G \
     "https://api.cloudflare.com/client/v4/zones/${zone_id}/dns_records" \
-    -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+    "${CF_AUTH[@]}" \
     --data-urlencode "type=A" --data-urlencode "name=${hostname}")"
   record_id="$(printf '%s' "$record_response" | jq -r '.result[0].id // ""')"
   record_content="$(printf '%s' "$record_response" | jq -r '.result[0].content // ""')"
@@ -102,13 +106,13 @@ for hostname in "$DOMAIN" "www.${DOMAIN}"; do
     '{type:"A", name:$name, content:$content, ttl:1, proxied:true}')"
   curl -fsS -X PUT \
     "https://api.cloudflare.com/client/v4/zones/${zone_id}/dns_records/${record_id}" \
-    -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+    "${CF_AUTH[@]}" \
     -H "Content-Type: application/json" --data "$payload" >/dev/null
 done
 
 curl -fsS -X PATCH \
   "https://api.cloudflare.com/client/v4/zones/${zone_id}/settings/ssl" \
-  -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+  "${CF_AUTH[@]}" \
   -H "Content-Type: application/json" --data '{"value":"strict"}' >/dev/null
 
 echo "Cloudflare proxy and origin-controlled cache rules are active for $DOMAIN."
