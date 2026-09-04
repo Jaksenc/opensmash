@@ -1,6 +1,6 @@
 # OpenSmash
 
-Super Smash Bros. 64 in the browser, with AI-generated fighters. Give it a
+Super Smash Bros. 64 in the browser, with new fighters from image uploads. Give it a
 name and (optionally) a photo, and the pipeline produces a low-poly rigged
 mesh, a character-select portrait, a stock icon, a series emblem, and an
 announcer call, then injects the result into the game on one of the twelve
